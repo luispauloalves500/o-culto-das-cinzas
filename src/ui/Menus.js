@@ -1,6 +1,6 @@
 // Telas: menu principal, opções, pausa, inventário, leitor de documentos, morte e fim de capítulo.
 import { DOCUMENTS } from '../data/documents.js';
-import { FLOORS, roomAt } from '../data/map.js';
+import { FLOORS, roomAt, mapChapter } from '../data/map.js';
 import { collectNotes } from './notes.js';
 import { WEAPONS, conditionLabel } from '../data/weapons.js';
 import { MapView } from './MapView.js';
@@ -24,6 +24,7 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
+    $('btnEndNext').onclick = () => { g.audio.init(); g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
     for (const el of document.querySelectorAll('.map-tab')) el.onclick = () => this.mapFloor(+el.dataset.floor);
@@ -80,16 +81,21 @@ export class Menus {
   drawMap() {
     const g = this.game, mv = this.mapView;
     this.lastMap = mv.draw(g);
-    for (const el of document.querySelectorAll('.map-tab')) el.classList.toggle('active', FLOORS[+el.dataset.floor].id === mv.floor);
+    const ch2 = mapChapter() === 2;
+    for (const el of document.querySelectorAll('.map-tab')) {
+      el.classList.toggle('active', FLOORS[+el.dataset.floor].id === mv.floor);
+      el.classList.toggle('hidden', ch2 && FLOORS[+el.dataset.floor].id !== 'up');
+      el.textContent = ch2 ? 'Bairro Operário' : FLOORS[+el.dataset.floor].name;
+    }
     const r = roomAt(g.player.pos);
     $('mapWhere').textContent = 'Você está em: ' + (r ? r.name : 'lugar nenhum que conste na planta');
-    $('mapPlan').textContent = g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
+    $('mapPlan').textContent = ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
     const notes = collectNotes(g);
     $('mapNotes').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
   }
   showChapterEnd(stats) {
     const t = Math.floor(stats.time);
-    $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${stats.docs}/${Object.keys(DOCUMENTS).length}`
+    $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${stats.docs}/${Object.values(DOCUMENTS).filter((d) => (d.ch || 1) === 1).length}`
       + `<br>Revelação RN 0: ${stats.rn0 ? 'vista' : 'não encontrada'}`;
     // desfecho: muda se Elias já entendeu quem ele é (rito da pia de batismo, no arquivo morto)
     const p = $('endRn0');

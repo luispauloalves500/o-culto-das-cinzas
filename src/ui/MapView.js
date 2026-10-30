@@ -1,14 +1,14 @@
 // Mapa (tecla M): desenha em canvas 2D os cômodos conhecidos do andar escolhido, portas anotadas, marcos e o jogador.
-import { FLOORS, MAP_MARKS, knownRooms, floorOf, doorFloor, roomAt } from '../data/map.js';
+import { MAP_MARKS, knownRooms, floorOf, doorFloor, roomAt, chapterFloors, mapChapter } from '../data/map.js';
 import { lockedNotes } from './notes.js';
 
 const X0 = -1, X1 = 47, Z0 = -4, Z1 = 39.5;
 
 export class MapView {
   constructor(canvas) { this.canvas = canvas; this.floor = 'up'; }
-  open(game) { this.floor = floorOf(game.player.pos.y); }
-  cycle(dir) { const i = FLOORS.findIndex((f) => f.id === this.floor); this.floor = FLOORS[(i + dir + FLOORS.length) % FLOORS.length].id; }
-  setFloor(i) { if (FLOORS[i]) this.floor = FLOORS[i].id; }
+  open(game) { this.floor = floorOf(game.player.pos.y); if (!chapterFloors().some((f) => f.id === this.floor)) this.floor = chapterFloors()[0].id; }
+  cycle(dir) { const F = chapterFloors(), i = F.findIndex((f) => f.id === this.floor); this.floor = F[(i + dir + F.length) % F.length].id; }
+  setFloor(i) { const F = chapterFloors(); if (F.length > 1 && F[i]) this.floor = F[i].id; }
 
   /** dados do mapa (testáveis sem DOM) */
   static model(game, floor) {
@@ -24,7 +24,7 @@ export class MapView {
       doors.push({ id, x: d.x, z: d.z, axis: d.axis, w: d.width || 1.4, open: d.open, locked: d.locked, noted: noted.has(id), label: d.label });
     }
     const ids = new Set(rooms.map((r) => r.id));
-    const marks = MAP_MARKS.filter((m) => m.floor === floor && ids.has(m.room));
+    const marks = MAP_MARKS.filter((m) => (m.ch || 1) === mapChapter() && m.floor === floor && ids.has(m.room));
     return { rooms, doors, marks };
   }
 
@@ -70,7 +70,7 @@ export class MapView {
       const [x, z] = P(m.x, m.z);
       if (m.kind === 'save') { ctx.fillStyle = '#e0b060'; ctx.fillRect(x - 4, z - 4, 8, 8); }
       else if (m.kind === 'stairs') { ctx.strokeStyle = '#d8d2b8'; ctx.lineWidth = 1.5; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x - 6, z + i * 3); ctx.lineTo(x + 6, z + i * 3); ctx.stroke(); } }
-      else if (m.kind === 'fire') { ctx.fillStyle = game.level?.furnace?.lit ? '#ff6a20' : '#5a4a40'; ctx.beginPath(); ctx.moveTo(x, z - 7); ctx.lineTo(x + 6, z + 5); ctx.lineTo(x - 6, z + 5); ctx.fill(); }
+      else if (m.kind === 'fire') { ctx.fillStyle = (game.level?.furnace?.lit || game.level?.fireLit) ? '#ff6a20' : '#5a4a40'; ctx.beginPath(); ctx.moveTo(x, z - 7); ctx.lineTo(x + 6, z + 5); ctx.lineTo(x - 6, z + 5); ctx.fill(); }
     }
     // jogador
     const pl = game.player;
