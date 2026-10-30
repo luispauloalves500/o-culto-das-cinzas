@@ -88,7 +88,7 @@ export function setupPeds(S) {
     prompt: 'Dar corda na caixinha de música', onInteract: () => windMusicBox(S) });
 }
 
-function giveAmmo(S, n) {
+export function giveAmmo(S, n) {
   const g = S.game; g.inventory.add('municao_38', n);
   g.hud.toast(`Munição .38 ×${n} (total ${g.inventory.count('municao_38')})`, 2.5);
 }
@@ -128,7 +128,7 @@ export function breakLock(S, instant) {
 
 function applyAmulet(S) { if (S.q.has('hasAmulet')) S.game.player.maxSt = 125; }
 
-function wakeEnemy(S, id) {
+export function wakeEnemy(S, id) {
   const g = S.game, w = g.enemies.find((e) => e.id === id);
   if (w && w.alive && w.dormant) { w.wake(); g.audio.play('groan', w.pos); }
 }
@@ -202,7 +202,7 @@ function revolverMesh(M) {
   gr.position.set(38.0, ROOF + 0.88, 18.1); gr.rotation.y = 0.6;
   return gr;
 }
-function ammoMesh(M, x, y, z, n) {
+export function ammoMesh(M, x, y, z, n) {
   const gr = new THREE.Group();
   for (let i = 0; i < n; i++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.035, 6), M.gold); b.position.set(x + (i % 3) * 0.025, y + 0.018, z + Math.floor(i / 3) * 0.025); gr.add(b); }
   return gr;

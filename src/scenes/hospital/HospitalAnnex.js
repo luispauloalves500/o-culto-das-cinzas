@@ -172,7 +172,7 @@ function admin(L) {
   // SECRETARIA x14..24 z14..22
   b.floor(14, 14, 24, 22, UP2, 'wood', 'secretaria');
   b.ceiling(14, 14, 24, 22, TOP2);
-  b.wallZ(14, 14, 22, H_UP, TOP2); b.wallX(14, 14, 24, H_UP, TOP2);
+  b.wallZ(14, 14, 22, H_UP, TOP2); b.wallX(14, 14, 24, H_UP, UP2); b.wallX(14, 14, 24, UP2, TOP2, [18.6]);
   for (const x0 of [15.4, 20]) {
     b.box(x0, UP2, 15.6, x0 + 1.8, UP2 + 0.76, 16.6, 'woodDark', PL);
     b.box(x0 + 0.5, UP2 + 0.76, 15.8, x0 + 1.0, UP2 + 0.96, 16.2, 'metal', NC);   // máquina de escrever
