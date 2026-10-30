@@ -104,16 +104,23 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
   - **Fábrica de fumaça** (setor explorável, pé-direito 7 m): portão de correr com cadeado (a chave é consumida), 3 fornos acesos, esteira, tanques, chaminés internas, mesa do mestre-fornalheiro (diário), munição e bandagem; autosave na entrada (`c2_factory`). A comporta da casa das fornalhas está travada pela pressão: **girar as válvulas A (fornos) e B (parede leste)** — o silvo do vapor faz barulho e acorda o carvoeiro dos tanques; com as duas, a comporta destrava. **Livro pré-chefe** (`c2_preboss`).
   - **Inimigo novo — Carvoeiro**: operário coberto de fuligem com boné, lenço e **pá** na mão, olhos em brasa; mais lento, mais vida (150) e golpe pesado. No capítulo: 4 caçadores e 3 carvoeiros (rua, carvoaria, fábrica), coerentes com os documentos.
   - **Chefe — Brás, o Guardião da Garganta** (`src/ai/FurnaceBoss.js`, deriva do Cirurgião sem alterá-lo no Cap. 1): mestre-fornalheiro de 1,55× com máscara de soldador, avental e pá gigante, 520 de vida. A arena tranca ao entrar (4 pilares de ferro, a fornalha "Garganta" acesa ao fundo). **Combate real**: o couro absorve golpes no corpo (×0,25); a **investida** contra um pilar o deixa **atordoado** e o **fole nas costas** é o ponto fraco (×1,6, golpe forte de cima). **3 fases**: fase 2 (60%) — mais rápido e **arremessa carvão em brasa** em arco (14, bloqueável) e a fumaça da sala engrossa; fase 3 (25%) — três brasas por arremesso e o **anel de fogo** (aviso de 1,3 s com o chão brilhando, 24 de dano não bloqueável num raio de 3,4 m). Barra do chefe com o nome dele. Morrer reinicia no livro pré-chefe; a arena nunca fica trancada ao carregar.
-  - **Fim do capítulo**: após o chefe, o **passe de latão da Linha 4** brilha na grelha (objetivo opcional) e a porta de serviço destrava → save `c2_end` → **tela "Fim do Capítulo 2 — Fumaça"** com texto próprio, estatísticas, documentos do capítulo (x/5) e se o passe foi pego; o botão "Capítulo 3 — A Confraria (em breve)" fica desativado. *Continuar* nesse save volta à porta de serviço com tudo restaurado.
+  - **Fim do capítulo**: após o chefe, o **passe de latão da Linha 4** brilha na grelha (objetivo opcional) e a porta de serviço destrava → save `c2_end` → **tela "Fim do Capítulo 2 — Fumaça"** com texto próprio, estatísticas, documentos do capítulo (x/5) e se o passe foi pego; o botão leva ao **Capítulo 3** (pt33u). *Continuar* nesse save volta à porta de serviço com tudo restaurado.
   - **Documentos novos**: *Escala do turno da noite*, *Diário do mestre-fornalheiro*, *Recado de Inês*; mapa do Cap. 2 com 4 áreas novas (Rua do Carvão, Carvoaria, Fábrica — salão, Casa das fornalhas) e limites ampliados.
   - **Desempenho**: orçamento de luzes do bairro reduzido para 13 pontos dinâmicos (+ luzes fixas = ≤ 16 visíveis), os brilhos dos livros entram no corte por distância.
   - *(unit: ordem dos objetivos/sem "prévia", save antigo segue para a rua, salas do mapa, carvoeiro, documentos, fases do chefe; smoke: portão do bonde, rua + autosave, carvoeiro sofre dano, carvoaria/chave/Quintino/escala/livro, portão da fábrica, autosave, válvulas, diário, livro pré-chefe, mapa, luzes ≤ 16 na rua/fábrica/arena, arena tranca, luta completa com 2+ atordoamentos, fases 1→2→3, carvão em brasa, anel de fogo com dano, derrota destrava, passe, saída, tela de fim do Cap. 2, recarregar e continuar — capturas `13-rua-do-carvao.png`, `14-fabrica.png`, `15-bras-chefe.png`, `16-fim-cap2.png`)*
+
+- **Capítulo 3 — A Confraria (primeira fatia jogável, pt33u) — Largo do Véu, Sede e arquivos subterrâneos**:
+  - **O passe do Brás destrava a transição**: no Cap. 2, a porta de serviço **recusa** a saída sem o passe ("o motorneiro só leva quem tem a fita vermelha"); com ele, a tela "Fim do Capítulo 2" agora tem o botão **"Seguir para o Capítulo 3 — A Confraria"** ativo. **Migração de save** (`makeChapter3Save`): capítulo 3, checkpoint `c3_tram`, mantém armas/desgaste/melhorias/documentos/tempo/estatísticas, **mantém o passe** e remove os itens-chave dos Caps. 1–2 (manivela, chave da fábrica…); vida 80–125.
+  - **Setor procedural PS2** (`src/scenes/sede/`): **Largo do Véu** (fim da Linha 4 com o bonde parado, chuva, lampiões, fachada com as **portas de bronze trancadas por fora**); **portaria** (o **postigo** só abre mostrando o passe; balcão com o *Livro da portaria*, bandagem e **livro de registros** `c3_lodge`); **salão nobre** com colunas, estátua velada, bancos e tapete (**autosave** `c3_hall`; a **tranca interna** abre as portas de bronze como atalho); **secretaria** (o *Regimento do arquivo* emoldurado, munição, bandagem); **portão de segredo** com **três discos de latão** (CINZA/OLHO/VÉU/CHAMA) e alavanca — a ordem do Regimento (art. 7º) abre; a ordem errada **toca o sino** (barulho que alerta o salão) e os discos voltam à CHAMA; **escada** até os **arquivos subterrâneos** (estantes, fichário, mesa de leitura; **autosave** `c3_archive` e livro de registros) com a *Ficha de entrada* de Inês e o **Dossiê RN 0 — Elias** na gaveta V do fichário. A **grade da cripta do Sacristão** fica trancada (fim da fatia).
+  - **Inimigo novo — Acólito da Confraria**: manto com véu, **turíbulo de latão** na corrente (golpe largo) e **punhal** (estocada rápida), olhos em brasa; 95 de vida, enxerga melhor que os caçadores. 5 acólitos (largo, salão, porteiro, escrivão adormecido na secretaria que acorda ao ler o Regimento, arquivista) e um **rastejador** sob um lençol que acorda ao pegar o dossiê.
+  - **Objetivos** próprios (postigo → salão → Regimento → portão → arquivos → dossiê) e opcionais (tranca das portas de bronze; ficha de entrada). **Mapa** do Cap. 3 com abas *Sede — térreo* e *Arquivos*. Documentos novos: *Livro da portaria*, *Regimento do arquivo*, *Ficha de entrada — I.*, *Dossiê RN 0 — Elias*. Orçamento de luzes ≤ 16.
+  - *(unit: save do Cap. 3, ordem dos objetivos, salas/andares do mapa, acólito, documentos, Regimento cita a ordem dos discos; smoke: saída recusada sem passe, botão ativo, Sede carregada, portas de bronze/postigo com e sem passe, livro da portaria, autosave do salão, tranca interna, sino na ordem errada, Regimento acorda o escrivão, discos certos abrem o portão, escada andando, autosave do arquivo, ficha, dossiê acorda o rastejador, cripta trancada, mapa, luzes, livro do arquivo, recarregar e continuar no Cap. 3 — capturas `17-largo-veu.png`, `18-portao-arquivo.png`, `19-arquivos.png`)*
 
 ### Sobre modelos e texturas
 
 Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, não foram usados GLB/texturas de terceiros: **o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
 
-## FALTA (Capítulo 1 completo e Capítulo 2, conforme o GDD)
+## FALTA (Capítulos 1–2 completos e a primeira fatia do Capítulo 3, conforme o GDD)
 
 - Modelos/animações artesanais para inimigos, chefe e cenário (só o Elias usa GLB); clipes próprios para lança, tiro, esquiva, defesa e dano (hoje poses procedurais no esqueleto do GLB); o modelo dedicado `machado_coletavel_80cm.glb`.
 - Maternidade e arquivo morto já entraram; faltam mais segredos e variações de rota (hoje há quatro: câmara fria, expurgo, Quarto 7 e sala de batismo).
@@ -124,7 +131,8 @@ Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, nã
 - Dano localizado/desmembramento estilizado, finalizações, opção de reduzir sangue.
 - Mais tipos de inimigo; mais cutscenes; remapeamento de teclas; ajuste fino de dificuldade.
 - Streaming por setores (hoje o capítulo é carregado inteiro — é pequeno).
-- Capítulo 2: jogável do início ao fim, mas sem cenas (só texto/toasts), sem modelos próprios (caçador, carvoeiro e Brás são bonecos procedurais) e sem a Rua da Fundição; o passe da Linha 4 ainda não tem uso. **Capítulo 3 — A Confraria** não existe (o botão da tela de fim fica desativado).
+- Capítulo 2: jogável do início ao fim, mas sem cenas (só texto/toasts), sem modelos próprios (caçador, carvoeiro e Brás são bonecos procedurais) e sem a Rua da Fundição.
+- **Capítulo 3 — A Confraria**: só a primeira fatia (Largo do Véu, portaria, salão, secretaria, arquivos). Faltam a **cripta** e o chefe **O Sacristão** (ataques de área e invocação limitada), mais mecanismos/segurança antiga, a investigação da organização (Dr. Silas Vernet, Dra. Helena Arcos), cenas e a tela de fim do capítulo; acólitos são bonecos procedurais.
 - Gamepad implementado mas **não testado** com controle físico; desempenho só medido em render por software no CI local.
 
 ## Estrutura
@@ -135,6 +143,7 @@ src/
   world/     CollisionWorld, LevelBuilder, Doors, Interactables, Navigation (A*), Textures, Materials
   gameplay/  PlayerController, EliasModel (GLB REV6) + rev6/, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem, Cutscene
   ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss, FurnaceBoss (Brás, Cap. 2)
+  scenes/sede/      SedeLevel (Largo do Véu, portaria, salão nobre, secretaria, arquivos — Cap. 3), SedeScript (postigo, discos, dossiê),
   scenes/bairro/    BairroLevel (Bairro Operário, Rua do Carvão, carvoaria, fábrica, casa das fornalhas — Cap. 2),
                     BairroScript (manivela, bonde, chave, válvulas, chefe Brás, fim do capítulo)
   scenes/hospital/  HospitalLevel (geometria, luzes, elevador, grafo), HospitalScript (puzzles, gatilhos, chefe),
@@ -145,8 +154,8 @@ src/
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
-  unit/run.mjs     33 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
-  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless e o Capítulo 2 (144 verificações)
+  unit/run.mjs     35 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
+  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless os Capítulos 2 e 3 (161 verificações)
 ```
 
 ## Licença
