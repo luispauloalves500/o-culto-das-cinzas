@@ -57,6 +57,7 @@ select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
 #inventory { justify-content: flex-start; padding-top: 8vh; }
 #invList, #docList { min-width: 360px; text-align: left; }
 .inv-item { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.inv-item.equipped { border-left: 3px solid #b8432f; }
 .doc-item { padding: 6px 10px; cursor: pointer; pointer-events: auto; color: #d9c690; }
 .doc-item:hover { background: rgba(255,255,255,.06); }
 .paper { background: #d8ccae; color: #2a2116; max-width: 620px; padding: 26px 34px; text-align: left; line-height: 1.6;

@@ -2,7 +2,7 @@
 import { FLOORS, MAP_MARKS, knownRooms, floorOf, doorFloor, roomAt } from '../data/map.js';
 import { lockedNotes } from './notes.js';
 
-const X0 = -1, X1 = 47, Z0 = -4, Z1 = 37;
+const X0 = -1, X1 = 47, Z0 = -4, Z1 = 39.5;
 
 export class MapView {
   constructor(canvas) { this.canvas = canvas; this.floor = 'up'; }
@@ -38,7 +38,7 @@ export class MapView {
     // grade de papel
     ctx.strokeStyle = 'rgba(160,170,140,0.06)'; ctx.lineWidth = 1;
     for (let x = 0; x <= 46; x += 2) { const [a] = P(x, 0); ctx.beginPath(); ctx.moveTo(a, 0); ctx.lineTo(a, H); ctx.stroke(); }
-    for (let z = -4; z <= 36; z += 2) { const [, b] = P(0, z); ctx.beginPath(); ctx.moveTo(0, b); ctx.lineTo(W, b); ctx.stroke(); }
+    for (let z = -4; z <= 38; z += 2) { const [, b] = P(0, z); ctx.beginPath(); ctx.moveTo(0, b); ctx.lineTo(W, b); ctx.stroke(); }
     const { rooms, doors, marks } = MapView.model(game, this.floor);
     const here = roomAt(game.player.pos);
     ctx.font = `${Math.max(9, Math.round(s * 0.7))}px monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

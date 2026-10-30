@@ -2,6 +2,7 @@
 import { DOCUMENTS } from '../data/documents.js';
 import { FLOORS, roomAt } from '../data/map.js';
 import { collectNotes } from './notes.js';
+import { WEAPONS } from '../data/weapons.js';
 import { MapView } from './MapView.js';
 
 const $ = (id) => document.getElementById(id);
@@ -53,8 +54,12 @@ export class Menus {
   showInventory() {
     const g = this.game;
     const items = g.inventory.list();
-    $('invList').innerHTML = (g.player.weapon ? '<div class="inv-item"><b>Machado de incêndio</b> — golpe rápido / forte</div>' : '') +
-      (items.length ? items.map((i) => `<div class="inv-item"><b>${i.name}</b> ×${i.n}<br><span class="small">${i.desc || ''}</span></div>`).join('') : (g.player.weapon ? '' : '<div class="inv-item small">Vazio</div>'));
+    const ws = (g.inventory.weapons || []).filter((id) => WEAPONS[id]);
+    const wHtml = ws.map((id) => { const w = WEAPONS[id], eq = g.player.weapon?.id === id;
+      return `<div class="inv-item${eq ? ' equipped' : ''}"><b>${w.name}</b>${eq ? ' — em mãos' : ''}${g.player.sharpened && w.sharpenable ? ' · afiado' : ''}<br><span class="small">${w.short || ''}</span></div>`; }).join('')
+      + (ws.length > 1 ? '<div class="inv-item small"><b>R</b> (LB): trocar de arma</div>' : '');
+    $('invList').innerHTML = wHtml +
+      (items.length ? items.map((i) => `<div class="inv-item"><b>${i.name}</b> ×${i.n}<br><span class="small">${i.desc || ''}</span></div>`).join('') : (ws.length ? '' : '<div class="inv-item small">Vazio</div>'));
     // anotações: pistas opcionais + portas trancadas já tentadas (e ainda trancadas)
     const notes = collectNotes(g);
     $('noteList').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
