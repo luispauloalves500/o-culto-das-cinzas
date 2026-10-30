@@ -1,5 +1,5 @@
 // Objetivos e flags persistentes (energia ligada, chefe vencido, etc.)
-import { OBJECTIVES } from '../data/chapters.js';
+import { OBJECTIVES, SIDE_OBJECTIVES } from '../data/chapters.js';
 
 export class QuestSystem {
   constructor(bus) { this.flags = {}; this.bus = bus; }
@@ -15,6 +15,8 @@ export class QuestSystem {
     for (const o of OBJECTIVES) if (!this.has(o.done)) return o.text;
     return '';
   }
+  /** objetivos opcionais ativos (revelados e ainda não concluídos) */
+  side() { return SIDE_OBJECTIVES.filter((o) => this.has(o.when) && !this.has(o.done)).map((o) => o.text); }
   serialize() { return { ...this.flags }; }
   restore(f) { this.flags = { ...(f || {}) }; }
 }

@@ -39,7 +39,12 @@ export class Enemy {
     const mats = d.mats === 'interno'
       ? { skin: M.deadSkin, shirt: M.gown, arms: M.deadSkin, pants: M.gown, legs: M.deadSkin, feet: M.deadSkin, head: M.deadSkin }
       : { skin: M.deadSkin, shirt: M.nurseCoat, arms: M.nurseCoat, pants: M.nurseCoat, legs: M.pantsGray, feet: M.leatherDark, head: M.deadSkin };
-    this.rig = createHumanoid({ scale: d.scale, mats, hunch: d.hunch, armLen: d.mats === 'interno' ? 0.34 : 0.32, torsoW: d.mats === 'interno' ? 0.4 : 0.42 });
+    this.rig = createHumanoid({ scale: d.scale, mats, hunch: d.hunch, armLen: d.mats === 'interno' ? 0.34 : 0.32, torsoW: d.mats === 'interno' ? 0.4 : 0.42 , legLen: d.crawler ? 0.2 : undefined });
+    if (d.crawler) {
+      // lençol do necrotério: cobre o corpo enquanto ele finge estar morto
+      this.sheet = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.12, 1.75), M.sheet || M.gown);
+      this.sheet.position.set(0, 0.16, 0.05); this.rig.root.add(this.sheet);
+    }
     const h = this.rig.head, s = d.scale;
     if (d.mats === 'interno') {
       const band = new THREE.Mesh(new THREE.BoxGeometry(0.25 * s, 0.07 * s, 0.27 * s), M.bandageDirty);
@@ -67,6 +72,14 @@ export class Enemy {
 
   hurtVolumes() {
     const d = this.def;
+    if (d.crawler) {
+      // corpo deitado: duas esferas baixas ao longo do tronco (golpes laterais passam por cima)
+      const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), y = this.pos.y + (this.state === 'dead' ? 0.15 : 0.3);
+      return [
+        { type: 'sphere', part: 'body', x: this.pos.x - fx * 0.15, y, z: this.pos.z - fz * 0.15, r: 0.4 },
+        { type: 'sphere', part: 'body', x: this.pos.x + fx * 0.45, y: y + 0.05, z: this.pos.z + fz * 0.45, r: 0.34 },
+      ];
+    }
     const top = this.state === 'dead' ? 0.4 : d.height - 0.15 - (d.hunch * 0.3);
     return [{ type: 'capsule', part: 'body', x: this.pos.x, z: this.pos.z, y0: this.pos.y + 0.35, y1: this.pos.y + top, r: this.radius }];
   }
@@ -337,6 +350,7 @@ export class Enemy {
     const r = this.rig;
     resetPose(r);
     const t = this.stateT;
+    if (this.def.crawler) { this._animateCrawler(dt, speed); return; }
     if (this.state === 'dead') {
       const k = Math.min(1, t / 0.9);
       r.body.rotation.x = -Math.PI / 2 * k * k;
@@ -385,5 +399,51 @@ export class Enemy {
       r.hips.position.y = r.baseHipY - 0.1 * k;
     }
     if (this.flinch > 0) { r.torso.rotation.x -= this.flinch * 1.2; r.head.rotation.x -= this.flinch; }
+  }
+
+  // Rastejador: corpo deitado de bruços, puxado pelos braços; tocos de perna arrastando
+  _animateCrawler(dt, speed) {
+    const r = this.rig, t = this.stateT;
+    if (this.sheet) this.sheet.visible = this.dormant;
+    r.body.rotation.x = 1.42; r.body.position.set(0, 0.16, -0.55);
+    r.torso.rotation.x = 0; r.head.rotation.x = -1.05;
+    r.legR.upper.rotation.x = 0.25; r.legL.upper.rotation.x = 0.35;
+    if (this.state === 'dead') {
+      r.body.position.y = 0.1; r.head.rotation.x = -0.2; r.head.rotation.z = 0.6;
+      r.armR.upper.rotation.x = -2.9; r.armR.upper.rotation.z = -0.6; r.armL.upper.rotation.x = -0.4; r.armL.upper.rotation.z = 0.5;
+      return;
+    }
+    if (this.dormant) { r.armR.upper.rotation.x = -0.2; r.armL.upper.rotation.x = -0.2; r.head.rotation.x = -0.3; return; }
+    let ph = this.walkPhase;
+    if (speed > 0.05) { this.walkPhase += speed * dt * 3.4; ph = this.walkPhase; }
+    const amt = speed > 0.05 ? 1 : 0.2, sN = Math.sin(ph);
+    // braços alternados alcançando à frente e puxando
+    r.armR.upper.rotation.x = -2.55 + sN * 0.55 * amt; r.armR.lower.rotation.x = -0.6 - Math.max(0, sN) * 0.6 * amt;
+    r.armL.upper.rotation.x = -2.55 - sN * 0.55 * amt; r.armL.lower.rotation.x = -0.6 - Math.max(0, -sN) * 0.6 * amt;
+    r.armR.upper.rotation.z = 0.35; r.armL.upper.rotation.z = -0.35;
+    r.body.rotation.z = sN * 0.08 * amt; r.body.position.y += Math.abs(sN) * 0.04 * amt;
+    r.head.rotation.y = Math.sin(this.animT * 1.7) * 0.25;
+    if (this.state === 'attack' && this.attack) {
+      const a = this.attack, w = a.windup, act = w + a.active;
+      const p = t < w ? t / w : t < act ? 1 + (t - w) / a.active : 2 + Math.min(1, (t - act) / a.recover);
+      if (a.id === 'claw') {
+        r.armR.upper.rotation.x = keys([[0, -2.5], [1, -3.6], [2, -1.9], [3, -2.5]], p);
+        r.armR.upper.rotation.z = keys([[0, 0.35], [1, -0.6], [2, 0.6], [3, 0.35]], p);
+        r.body.rotation.x = keys([[0, 1.42], [1, 1.1], [2, 1.5], [3, 1.42]], p);
+      } else { // ankle: agarra o tornozelo com as duas mãos
+        const k = keys([[0, 0], [1, 1], [2, 1.15], [3, 0.3]], p);
+        r.armR.upper.rotation.x = -2.5 - 0.7 * k; r.armL.upper.rotation.x = -2.5 - 0.7 * k;
+        r.armR.upper.rotation.z = 0.35 * (1 - k); r.armL.upper.rotation.z = -0.35 * (1 - k);
+        r.armR.lower.rotation.x = -0.2; r.armL.lower.rotation.x = -0.2;
+        r.head.rotation.x = -1.3 * k - 0.4;
+      }
+    } else if (this.state === 'grabbing') {
+      r.armR.upper.rotation.x = -3.0; r.armL.upper.rotation.x = -3.1; r.armR.lower.rotation.x = -0.9; r.armL.lower.rotation.x = -0.9;
+      r.head.rotation.x = -1.2 + Math.sin(this.animT * 12) * 0.15;
+    } else if (this.state === 'stagger') {
+      const k = Math.sin(Math.min(1, t / (this.staggerDur || 1)) * Math.PI);
+      r.body.rotation.x = 1.42 + 0.12 * k; r.body.rotation.z = 0.35 * k; r.head.rotation.x = -0.4 * k;
+    }
+    if (this.flinch > 0) { r.body.rotation.z += this.flinch * 0.6; r.head.rotation.x += this.flinch; }
   }
 }

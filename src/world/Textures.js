@@ -102,5 +102,25 @@ export function createTextures() {
   T.bandage = make(16, (g, s, r) => { g.fillStyle = '#cfc6ad'; g.fillRect(0, 0, s, s); g.fillStyle = 'rgba(0,0,0,.15)'; for (let y = 0; y < s; y += 3) g.fillRect(0, y, s, 1); grime(g, s, r, 6, 'rgba(120,10,5,A)', 2); }, 59);
   T.leather = make(16, (g, s, r) => { g.fillStyle = '#3a2618'; g.fillRect(0, 0, s, s); grime(g, s, r, 30, 'rgba(90,10,5,A)', 3); }, 61);
   T.hazard = make(32, (g, s) => { for (let i = -s; i < s * 2; i += 8) { g.fillStyle = (i / 8) % 2 ? '#b08a1c' : '#1b1a14'; g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 8, 0); g.lineTo(i + 8 - s, s); g.lineTo(i - s, s); g.fill(); } }, 67);
+  // Necrotério: azulejo branco-esverdeado (parede), piso com ralo, aço das gavetas
+  T.morgueWall = make(64, (g, s, r) => {
+    g.fillStyle = '#9fb3a4'; g.fillRect(0, 0, s, s);
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { const v = 0.9 + r() * 0.15; g.fillStyle = `rgba(${200 * v | 0},${220 * v | 0},${205 * v | 0},.55)`; g.fillRect(x * 8 + 1, y * 8 + 1, 6, 6); }
+    grime(g, s, r, 60, 'rgba(40,60,30,A)', 5);
+    for (let i = 0; i < 8; i++) { g.fillStyle = 'rgba(70,90,40,.22)'; const x = r() * s; g.fillRect(x, r() * s * 0.5, 1 + r() * 2, s); }
+  }, 71);
+  T.morgueFloor = make(64, (g, s, r) => {
+    g.fillStyle = '#5d6a60'; g.fillRect(0, 0, s, s);
+    g.strokeStyle = 'rgba(20,30,22,.8)';
+    for (let i = 0; i <= 8; i++) { g.beginPath(); g.moveTo(i * 8 + .5, 0); g.lineTo(i * 8 + .5, s); g.moveTo(0, i * 8 + .5); g.lineTo(s, i * 8 + .5); g.stroke(); }
+    grime(g, s, r, 70, 'rgba(60,10,5,A)', 6);
+    grime(g, s, r, 50, 'rgba(20,40,20,A)', 4);
+  }, 73);
+  T.steel = make(32, (g, s, r) => {
+    g.fillStyle = '#8b938e'; g.fillRect(0, 0, s, s);
+    for (let y = 0; y < s; y++) { g.fillStyle = `rgba(255,255,255,${r() * 0.07})`; g.fillRect(0, y, s, 1); }
+    grime(g, s, r, 25, 'rgba(40,30,20,A)', 3);
+    g.strokeStyle = 'rgba(20,20,20,.7)'; g.strokeRect(.5, .5, s - 1, s - 1);
+  }, 79);
   return T;
 }

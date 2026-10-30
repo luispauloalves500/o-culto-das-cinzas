@@ -44,6 +44,11 @@ export function createMaterials() {
     exitSign: new THREE.MeshBasicMaterial({ color: 0x3cff6a }),
     bloodDecal: new THREE.MeshLambertMaterial({ map: T.blood, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
     breakerOff: new THREE.MeshBasicMaterial({ color: 0x601010 }),
+    morgueWall: L({ map: T.morgueWall }),
+    morgueFloor: L({ map: T.morgueFloor }),
+    steel: L({ map: T.steel }),
+    steelDark: L({ map: T.steel, color: 0x7a827c }),
+    curtain: L({ map: T.gown, color: 0xa8b0a0, side: THREE.DoubleSide }),
     breakerOn: new THREE.MeshBasicMaterial({ color: 0x40ff60 }),
   };
   M.textures = T;
