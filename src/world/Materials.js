@@ -1,0 +1,51 @@
+// Materiais Lambert (baratos, visual PS2) a partir das texturas procedurais.
+import * as THREE from 'three';
+import { createTextures } from './Textures.js';
+
+export function createMaterials() {
+  const T = createTextures();
+  const L = (o) => new THREE.MeshLambertMaterial(o);
+  const M = {
+    tile: L({ map: T.tile }),
+    wall: L({ map: T.wall }),
+    wallLower: L({ map: T.wallLower }),
+    ceiling: L({ map: T.ceiling }),
+    metal: L({ map: T.metal }),
+    rust: L({ map: T.rust }),
+    wood: L({ map: T.wood }),
+    woodDark: L({ map: T.wood, color: 0x6a5040 }),
+    door: L({ map: T.wood, color: 0x8a9a84 }),
+    doorMetal: L({ map: T.metal, color: 0x8f9a8a }),
+    sheet: L({ map: T.sheet }),
+    concrete: L({ map: T.concrete }),
+    paper: L({ map: T.paper, emissive: 0x2a2416 }),
+    gown: L({ map: T.gown }),
+    skin: L({ map: T.skin }),
+    deadSkin: L({ map: T.deadSkin }),
+    bandage: L({ map: T.bandage }),
+    bandageDirty: L({ map: T.bandage, color: 0x9a8a70 }),
+    leather: L({ map: T.leather }),
+    leatherDark: L({ map: T.leather, color: 0x777777 }),
+    apron: L({ map: T.leather, color: 0xb0a090 }),
+    hazard: L({ map: T.hazard }),
+    pantsGray: L({ color: 0x4a4c48 }),
+    nurseCoat: L({ map: T.sheet, color: 0xb7b8a6 }),
+    mask: L({ color: 0x2b2a26 }),
+    axeMetal: L({ map: T.metal, color: 0xa02a1c }),
+    axeEdge: L({ color: 0xc8c8c0, emissive: 0x202020 }),
+    eyeGlow: new THREE.MeshBasicMaterial({ color: 0xffb060 }),
+    eyeGlowGreen: new THREE.MeshBasicMaterial({ color: 0x9cff8a }),
+    vial: L({ color: 0x3f8f3a, emissive: 0x4cff3a, emissiveIntensity: 0.6, transparent: true, opacity: 0.85 }),
+    lampOn: new THREE.MeshBasicMaterial({ color: 0xffd9a0 }),
+    lampGreen: new THREE.MeshBasicMaterial({ color: 0x9fe8a0 }),
+    lampRed: new THREE.MeshBasicMaterial({ color: 0xff4030 }),
+    lampOff: L({ color: 0x3a3a34 }),
+    glass: L({ color: 0x223028, transparent: true, opacity: 0.5 }),
+    exitSign: new THREE.MeshBasicMaterial({ color: 0x3cff6a }),
+    bloodDecal: new THREE.MeshLambertMaterial({ map: T.blood, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
+    breakerOff: new THREE.MeshBasicMaterial({ color: 0x601010 }),
+    breakerOn: new THREE.MeshBasicMaterial({ color: 0x40ff60 }),
+  };
+  M.textures = T;
+  return M;
+}
