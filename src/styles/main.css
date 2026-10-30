@@ -65,3 +65,19 @@ select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
 #controls { margin-top: 20px; font-size: 13px; opacity: .7; line-height: 1.7; }
 #stats { font-size: 14px; opacity: .8; margin: 10px; }
 #fatal pre { white-space: pre-wrap; max-width: 80%; color: #f99; }
+
+/* mapa (M) */
+#map { justify-content: flex-start; padding-top: 3vh; background: rgba(5,6,5,.97); }
+.map-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.map-tab { padding: 4px 14px; opacity: .6; }
+.map-tab.active { opacity: 1; border-color: #c9b98a; color: #c9b98a; }
+.map-wrap { display: flex; gap: 16px; align-items: flex-start; max-width: 96vw; }
+#mapCanvas { height: min(70vh, 600px); width: auto; max-width: 62vw; border: 1px solid rgba(255,255,255,.15); image-rendering: pixelated; background: #0d0f0c; }
+.map-side { width: min(30vw, 330px); max-height: 70vh; overflow-y: auto; text-align: left; }
+.map-side > div { margin-bottom: 6px; }
+.map-legend .lg { display: inline-block; width: 10px; height: 10px; margin: 0 3px 0 8px; vertical-align: middle; }
+.map-legend .lg.v { background: rgba(95,110,85,.8); border: 1px solid #a8b39a; }
+.map-legend .lg.p { border: 1px dashed rgba(130,150,190,.9); }
+.map-legend .lg.x { width: auto; color: #ff4a3a; font-weight: bold; }
+.map-legend .lg.s { background: #e0b060; }
+.track.blessed { border-color: rgba(224,176,96,.75); box-shadow: 0 0 6px rgba(224,176,96,.35); }

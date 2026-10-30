@@ -31,4 +31,12 @@ export const SIDE_OBJECTIVES = [
   { when: 'enteredEast', done: 'hasMorgueKey', text: 'Procure a chave do necrotério no posto de enfermagem da Ala Leste.' },
   { when: 'hasMorgueKey', done: 'enteredMorgue', text: 'Use a chave na porta do necrotério (hall do subsolo).' },
   { when: 'readEastChart', done: 'coldRoomOpen', text: '"A gaveta 13 não tem fundo." — necrotério.' },
+  { when: 'reachedLower', done: 'enteredLaundry', text: 'O hall do subsolo continua para oeste — lavanderia.' },
+  { when: 'enteredLaundry', done: 'furnaceWasOff', text: 'O incinerador está aceso. Procure o registro de gás (parede oeste da lavanderia).' },
+  { when: 'furnaceWasOff', done: 'hasStairKey', text: 'Com o gás fechado, recolha o que brilhava nas cinzas do incinerador.' },
+  { when: 'hasStairKey', done: 'reachedAdmin', text: 'A chave de ferro abre a escada de serviço (corredor do térreo).' },
+  { when: 'reachedAdmin', done: 'enteredChapel', text: 'No fim do corredor da administração, um coro dá para a capela.' },
+  { when: 'readHymn', done: 'relicOpen', text: 'Velas da capela: Brás, Luzia, Roque e, por último, Dimas.' },
+  { when: 'relicOpen', done: 'picked_relic', text: 'O relicário do altar está aberto.' },
+  { when: 'enteredChapel', done: 'chapelShortcut', text: 'Destranque a porta da capela por dentro (atalho para o corredor).' },
 ];
