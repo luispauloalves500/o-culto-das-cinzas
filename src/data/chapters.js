@@ -1,7 +1,7 @@
 // Capítulos e objetivos (o objetivo exibido é o primeiro ainda não concluído).
 export const CHAPTERS = [
   { id: 1, name: 'Despertar', place: 'Hospital São Dimas', playable: true },
-  { id: 2, name: 'Fumaça', place: 'Bairro Operário', playable: false },
+  { id: 2, name: 'Fumaça', place: 'Bairro Operário', playable: true, preview: true },
   { id: 3, name: 'A Confraria', place: 'Sede e arquivos subterrâneos', playable: false },
   { id: 4, name: 'Cidade Morta', place: 'Centro antigo de Véspera', playable: false },
   { id: 5, name: 'Águas Negras', place: 'Fábrica de bombeamento', playable: false },
@@ -60,3 +60,20 @@ export const SIDE_OBJECTIVES = [
   { when: 'foundBatismo', done: 'rn0Revealed', text: '"O zero e o sete": a pia de batismo espera a pulseira do altar e alguma coisa do Quarto 7.' },
   { when: 'picked_revolver', done: 'fireExitShortcut', text: 'A saída de incêndio da segurança desce até a escada principal — destrave a porta corta-fogo pelo lado de fora.' },
 ];
+
+// ---------- Capítulo 2 — Fumaça (Bairro Operário) · fatia jogável ----------
+export const OBJECTIVES_C2 = [
+  { done: 'c2_inDepot', text: 'A fumaça cobre a Rua dos Tecelões. Procure abrigo no depósito da tecelagem (lado norte da rua).' },
+  { done: 'c2_hasCrank', text: 'A porta de carga do depósito está emperrada. Procure a manivela no escritório do capataz.' },
+  { done: 'c2_shutterOpen', text: 'Use a manivela na porta de enrolar (parede leste do depósito).' },
+  { done: 'c2_sliceDone', text: 'Atravesse o pátio de carga até o ponto do bonde.' },
+  { done: 'c2_chapterDone', text: 'Fim da prévia do Capítulo 2 (Rua do Carvão em breve).' },
+];
+export const SIDE_OBJECTIVES_C2 = [
+  { when: 'c2_started', done: 'c2_readPaper', text: 'Um beco estreito entre as casas do lado norte — algo foi largado lá.' },
+  { when: 'c2_readNote', done: 'c2_lured', text: '"Eles vão atrás do barulho." Uma porta batida ou um golpe na parede pode atrair um caçador para longe.' },
+];
+
+/** objetivos (principal / opcionais) do capítulo */
+export function objectivesFor(ch) { return ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
+export function sideObjectivesFor(ch) { return ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }

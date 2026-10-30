@@ -13,5 +13,6 @@ export const ITEMS = {
   manivela: { name: 'Manivela de cama', desc: 'Manivela de ferro de um leito do alojamento, com encaixe quadrado. Serve em algum mecanismo manual.' },
   chave_arquivo_morto: { name: 'Chave do arquivo morto', desc: 'Chave de ferro grande e antiga. "ARQ. MORTO — SUBSOLO". O fundo do Arquivo tem uma porta de ferro.' },
   pulseira_recem_nascido: { name: 'Pulseira de recém-nascido', desc: 'Contas de louça soletrando "R N 0". Quem a carrega se cuida melhor: bandagens curam 65 em vez de 45.' },
+  manivela_carga: { name: 'Manivela da porta de carga', desc: 'Ferro fundido, cabo gasto de mão de operário. Encaixa no eixo da porta de enrolar do depósito da tecelagem.' },
   amuleto_menino: { name: 'Amuleto do menino', desc: 'Um dente de leite numa fita vermelha. Quem o carrega respira mais fundo: fôlego máximo +25.' },
 };

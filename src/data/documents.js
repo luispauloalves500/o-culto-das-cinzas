@@ -178,4 +178,22 @@ export const DOCUMENTS = {
 <p>Embaixo, riscado por cima com força: "O zero voltou."</p>
 <p class="small" style="margin-top:1.2em">No verso, a lápis, letra de criança: <i>"pode ficar com o meu dente. corre. — D."</i></p>`,
   },
+  // ---------- Capítulo 2 — Fumaça (Bairro Operário) ----------
+  jornal_vespera: {
+    ch: 2,
+    title: 'O Arauto de Véspera — edição extra',
+    body: `<p><b>FUMAÇA SOBRE O BAIRRO OPERÁRIO</b> — 14 de agosto de 1934</p>
+<p>Desde o incêndio na Fundição Meridional, uma fumaça parda não deixa as ruas dos Tecelões e do Carvão. A Prefeitura recomenda que os moradores <b>não saiam depois da sirene</b> e mantenham as janelas fechadas com pano molhado.</p>
+<p>Relatos de "homens encapuzados com ganchos de carga" circulando à noite foram desmentidos pelo delegado Aurélio Prates: "São turmas de limpeza da Fundição. Não há motivo para pânico."</p>
+<p class="small">Na margem, a carvão: <i>"limpeza de QUÊ? eles levaram o Tonho pelo pé. não corram — eles OUVEM."</i></p>`,
+  },
+  bilhete_capataz: {
+    ch: 2,
+    title: 'Bilhete do capataz Severino',
+    body: `<p>Zuleica,</p>
+<p>Tranquei a porta de carga e levei a manivela pro escritório, que ninguém mais sai por ali. Os encapuzados ficam rondando o pátio do bonde. Eles <b>não enxergam nada nessa fumaça</b> — vão atrás do barulho. Uma lata chutada, uma porta batida, e eles vêm.</p>
+<p>Se o Elias da Fundição aparecer (o que o pessoal do São Dimas levou), diz que a irmã dele passou aqui procurando por ele. Foi pros lados da Rua do Carvão, atrás do bonde.</p>
+<p style="text-align:right">— S.</p>
+<p class="small">Embaixo, outra letra: <i>"o bonde ainda anda. o motorneiro só leva quem tem a fita vermelha."</i></p>`,
+  },
 };

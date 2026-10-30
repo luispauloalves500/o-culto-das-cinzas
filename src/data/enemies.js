@@ -1,4 +1,4 @@
-// Arquétipos de inimigos do Capítulo 1. Tempos de ataque em segundos.
+// Arquétipos de inimigos (Capítulo 1 e Capítulo 2). Tempos de ataque em segundos.
 export const ENEMIES = {
   interno: {
     name: 'Interno',
@@ -40,5 +40,20 @@ export const ENEMIES = {
     ],
     mats: 'interno',
     groanPitch: 0.75,
+  },
+  // Capítulo 2 — Bairro Operário: operário encapuzado com um gancho de carga. Enxerga pouco na fumaça,
+  // mas ouve muito: corrida, golpes, portas e tiros o atraem de longe (e ele vem investigar).
+  cacador: {
+    name: 'Caçador',
+    hp: 85, poise: 45, radius: 0.38, height: 1.82, scale: 1.05, hunch: 0.3,
+    walk: 1.15, chase: 3.1, turn: 5,
+    sight: 8, fov: 65, hearing: 2.2,
+    attackTokens: 1,
+    attacks: [
+      { id: 'swipe', range: 1.7, windup: 0.55, active: 0.16, recover: 0.8, dmg: 16, knock: 2.6, weight: 2 },
+      { id: 'lunge', minRange: 2.0, range: 4.2, windup: 0.7, active: 0.34, recover: 1.0, dmg: 18, knock: 3.5, lunge: 6.5, weight: 1 },
+    ],
+    mats: 'cacador',
+    groanPitch: 0.85,
   },
 };
