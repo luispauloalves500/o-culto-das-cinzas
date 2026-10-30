@@ -129,7 +129,7 @@ export class Game {
   serialize(checkpoint) {
     const doors = {};
     for (const id in this.level.doors) doors[id] = this.level.doors[id].serialize();
-    if (this.script.bossActive) doors.arena = { open: false, locked: false };
+    if (this.script.bossActive) doors[this.script.arenaDoorId || 'arena'] = { open: false, locked: false };
     const E = this.level.elevator;
     return {
       ...createEmptySave(),
@@ -223,7 +223,7 @@ export class Game {
   onPlayerFellOut() { this.continueGame(); }
   endChapter() {
     this.state = 'end'; this.input.exitLock(); this.hud.show(false); this.audio.setIntensity(0);
-    this.menus.showChapterEnd({ time: this.playTime, kills: this.player.stats.kills, damageTaken: this.player.stats.damageTaken, docs: this.inventory.documents.length, rn0: this.quest.has('rn0Revealed') });
+    this.menus.showChapterEnd({ chapter: this.chapter || 1, time: this.playTime, kills: this.player.stats.kills, damageTaken: this.player.stats.damageTaken, docs: this.inventory.documents.length, docsList: this.inventory.documents.slice(), pass: this.inventory.has('passe_bonde') || this.quest.has('c2_hasPass'), rn0: this.quest.has('rn0Revealed') });
   }
 
   // ---------- interação ----------

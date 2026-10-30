@@ -2,7 +2,8 @@
 import { MAP_MARKS, knownRooms, floorOf, doorFloor, roomAt, chapterFloors, mapChapter } from '../data/map.js';
 import { lockedNotes } from './notes.js';
 
-const X0 = -1, X1 = 47, Z0 = -4, Z1 = 39.5;
+// limites do desenho por capítulo (o Bairro Operário se estende para o norte até a casa das fornalhas)
+const BOUNDS = { 1: [-1, 47, -4, 39.5], 2: [-1, 58, -4, 97] };
 
 export class MapView {
   constructor(canvas) { this.canvas = canvas; this.floor = 'up'; }
@@ -31,14 +32,15 @@ export class MapView {
   draw(game) {
     const c = this.canvas, ctx = c.getContext('2d');
     const W = c.width, H = c.height;
+    const [X0, X1, Z0, Z1] = BOUNDS[mapChapter()] || BOUNDS[1];
     const s = Math.min((W - 20) / (X1 - X0), (H - 20) / (Z1 - Z0));
     const ox = (W - s * (X1 - X0)) / 2 - X0 * s, oz = (H - s * (Z1 - Z0)) / 2 - Z0 * s;
     const P = (x, z) => [ox + x * s, oz + z * s];
     ctx.fillStyle = '#0d0f0c'; ctx.fillRect(0, 0, W, H);
     // grade de papel
     ctx.strokeStyle = 'rgba(160,170,140,0.06)'; ctx.lineWidth = 1;
-    for (let x = 0; x <= 46; x += 2) { const [a] = P(x, 0); ctx.beginPath(); ctx.moveTo(a, 0); ctx.lineTo(a, H); ctx.stroke(); }
-    for (let z = -4; z <= 38; z += 2) { const [, b] = P(0, z); ctx.beginPath(); ctx.moveTo(0, b); ctx.lineTo(W, b); ctx.stroke(); }
+    for (let x = Math.ceil(X0 / 2) * 2; x <= X1; x += 2) { const [a] = P(x, 0); ctx.beginPath(); ctx.moveTo(a, 0); ctx.lineTo(a, H); ctx.stroke(); }
+    for (let z = Math.ceil(Z0 / 2) * 2; z <= Z1; z += 2) { const [, b] = P(0, z); ctx.beginPath(); ctx.moveTo(0, b); ctx.lineTo(W, b); ctx.stroke(); }
     const { rooms, doors, marks } = MapView.model(game, this.floor);
     const here = roomAt(game.player.pos);
     ctx.font = `${Math.max(9, Math.round(s * 0.7))}px monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

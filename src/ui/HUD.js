@@ -7,7 +7,7 @@ const $ = (id) => document.getElementById(id);
 export class HUD {
   constructor() {
     this.el = { hud: $('hud'), hp: $('hp'), st: $('st'), weapon: $('weapon'), items: $('items'), objective: $('objective'), objective2: $('objective2'),
-      prompt: $('prompt'), hint: $('hint'), toast: $('toast'), boss: $('boss'), bossHp: $('bossHp'), struggle: $('struggle'),
+      prompt: $('prompt'), hint: $('hint'), toast: $('toast'), boss: $('boss'), bossHp: $('bossHp'), bossName: $('bossName'), struggle: $('struggle'),
       vignette: $('vignette'), fps: $('fps'), cond: $('cond'), condTrack: $('condTrack'), crosshair: $('crosshair') };
     this.toastT = 0; this.hintT = 0; this.dmgFlash = 0;
     this._last = {};
@@ -20,7 +20,7 @@ export class HUD {
   hint(html, dur = 6) { this.el.hint.innerHTML = html; this.el.hint.classList.remove('hidden'); this.hintT = dur; this.lastHint = html; }
   flashDamage() { this.dmgFlash = 1; }
   setStruggle(v) { this.el.struggle.classList.toggle('hidden', !v); }
-  showBoss(v) { this.el.boss.classList.toggle('hidden', !v); }
+  showBoss(v, name = 'O CIRURGIÃO') { this.el.boss.classList.toggle('hidden', !v); if (v && this.el.bossName) this.el.bossName.textContent = name; }
   reset() { this.toastT = 0; this.hintT = 0; this.el.toast.classList.add('hidden'); this.el.hint.classList.add('hidden'); this.setStruggle(false); this.showBoss(false); this.el.prompt.classList.add('hidden'); this._last = {}; }
 
   update(dt, game) {

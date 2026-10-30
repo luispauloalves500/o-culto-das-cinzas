@@ -161,7 +161,7 @@ export class SurgeonBoss {
     this.stateT += dt; this.animT += dt;
     this.flinch = Math.max(0, this.flinch - dt);
     this.chargeCd -= dt;
-    const fast = this.phase === 2 ? 1.25 : 1;
+    const fast = this.phase >= 3 ? 1.4 : this.phase === 2 ? 1.25 : 1;
     const dist = Math.hypot(p.pos.x - this.pos.x, p.pos.z - this.pos.z);
     this.speed = 0;
     const glow = this.state === 'stunned' ? 2.2 : this.state === 'chargeWind' ? 1.5 : 0.5;
@@ -181,7 +181,7 @@ export class SurgeonBoss {
         this.decideT -= dt;
         if (this.decideT <= 0) {
           this.decideT = 0.3;
-          if (dist < 2.8) this._set(Math.random() < (this.phase === 2 ? 0.4 : 0.3) && dist < 2.0 ? 'grab' : 'slash');
+          if (dist < 2.8) this._set(Math.random() < (this.phase >= 2 ? 0.4 : 0.3) && dist < 2.0 ? 'grab' : 'slash');
           else if (dist > 4.5 && this.chargeCd <= 0) this._set('chargeWind');
           else if (this.stateT > 6 && this.chargeCd <= 0) this._set('chargeWind');
         }
@@ -189,7 +189,7 @@ export class SurgeonBoss {
       }
       case 'slash': {
         // combo de 2 golpes (3 na fase 2)
-        const n = this.phase === 2 ? 3 : 2;
+        const n = this.phase >= 2 ? 3 : 2;
         const per = 1.25 / fast;
         const i = Math.floor(this.stateT / per), lt = (this.stateT % per) / per;
         if (i >= n) { this._set('stalk'); this.decideT = 0.6; break; }
@@ -214,7 +214,7 @@ export class SurgeonBoss {
             const y = Math.max(cap.y0, Math.min(cap.y1, tmp.y));
             if (Math.hypot(tmp.x - cap.x, tmp.y - y, tmp.z - cap.z) <= 0.5 + cap.r) {
               this.hitDone = true;
-              if (p.startGrab(this, this.phase === 2 ? 11 : 9)) { this._set('grabHold'); this.grabTick = 0.6; g.audio.play('roar', this.pos, { pitch: 1.3 }); }
+              if (p.startGrab(this, this.phase >= 2 ? 11 : 9)) { this._set('grabHold'); this.grabTick = 0.6; g.audio.play('roar', this.pos, { pitch: 1.3 }); }
             }
           }
         } else if (this.stateT > 2.0) this._set('stalk');
@@ -256,8 +256,8 @@ export class SurgeonBoss {
           g.audio.play('thud', this.pos); g.audio.play('clang', this.pos);
           g.combat.sparks({ x: this.pos.x + Math.sin(this.yaw) * 0.7, y: this.pos.y + 1.2, z: this.pos.z + Math.cos(this.yaw) * 0.7 }, 24);
           g.cameraCtl.addShake(0.8);
-          g.hud.toast(obst ? 'Ele se chocou! O frasco nas costas está exposto!' : 'Ele bateu na parede!');
-          this.chargeCd = this.phase === 2 ? 3 : 4.5;
+          g.hud.toast(obst ? (this.txt?.stunObst || 'Ele se chocou! O frasco nas costas está exposto!') : (this.txt?.stunWall || 'Ele bateu na parede!'));
+          this.chargeCd = this.phase >= 2 ? 3 : 4.5;
         } else if (this.stateT > 2.2) { this._set('recover'); this.chargeCd = 3.5; }
         break;
       }
@@ -301,7 +301,7 @@ export class SurgeonBoss {
         r.armR.upper.rotation.x = -0.5; r.armR.lower.rotation.x = -0.6; break;
       }
       case 'slash': {
-        const per = 1.25 / (this.phase === 2 ? 1.25 : 1);
+        const per = 1.25 / (this.phase >= 3 ? 1.4 : this.phase === 2 ? 1.25 : 1);
         const lt = (t % per) / per;
         const odd = Math.floor(t / per) % 2 === 1;
         r.armR.upper.rotation.x = keys([[0, -0.5], [0.42, -2.7], [0.6, -0.9], [1, -0.5]], lt);
