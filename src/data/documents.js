@@ -47,7 +47,39 @@ export const DOCUMENTS = {
     body: `<p>Elias,</p>
 <p>Se você encontrou a câmara do Morais, então ainda pensa como gente: procura o que está escondido em vez de fugir do que está à vista. Deixei aqui o que consegui tirar da farmácia antes de fecharem a Ala Leste.</p>
 <p>Você não é o paciente 17 por acaso. Os outros dezesseis queimaram por dentro; você só esfriou. Vernet chama isso de "resistência à cinza" e quer levá-lo à Torre antes que alguém entenda o que significa.</p>
-<p>As cinzas que eles chamam de remédio vêm do forno atrás do pátio. Não aceite nada que saia de um frasco verde. E não volte por mim.</p>
+<p>As cinzas que eles chamam de remédio vêm do incinerador do subsolo, atrás da lavanderia. Não aceite nada que saia de um frasco verde. E não volte por mim.</p>
 <p style="text-align:right">— H.</p>`,
+  },
+  ordem_lavanderia: {
+    title: 'Ordem de serviço — Lavanderia',
+    body: `<p><b>A TODA A EQUIPE DA ROUPARIA</b></p>
+<p>Os lençóis da Ala Leste não vão mais para as máquinas. Desçam pela calha e sigam direto para o incinerador. Não sacudir. Não respirar perto. A fuligem que fica no tecido <i>não é sujeira</i>.</p>
+<p>Quem precisar desligar o incinerador para limpar a grelha: o registro de gás fica na parede oeste da lavanderia, junto do cano vermelho. Ele faz barulho. Avisem antes.</p>
+<p style="text-align:right">— Chefia de Serviços Gerais</p>`,
+  },
+  diario_forneiro: {
+    title: 'Caderno do forneiro',
+    body: `<p>Terça. Doze sacos da Ala Leste, três da cirurgia. O Dr. Vernet desceu de novo para ver a cinza sair. Recolhe com uma colher de prata, como se fosse açúcar.</p>
+<p>Quinta. Perdi a chave da escada de serviço na grelha quando me curvei. Vai ficar lá até alguém fechar o gás — com o fogo aceso ninguém chega na boca sem virar torresmo.</p>
+<p>Sábado. Os de máscara não sentem o calor. Mas a carne deles sente. Vi um encostar na boca e cair sem entender.</p>`,
+  },
+  lista_transferencia: {
+    title: 'Lista de transferência — Torre',
+    body: `<p><b>REMOÇÃO À TORRE DE TRANSMISSÃO</b> — por ordem da Diretoria</p>
+<p>Pacientes 3, 6, 11 — <s>aptos</s> descartados.<br/>Paciente 14 — aguardando cinzas.<br/>Paciente 16 — necrotério.<br/><b>Paciente 17 (E. Varga)</b> — PRIORIDADE. Transporte sedado. Não informar a família.</p>
+<p class="small">Carimbo: Confraria — Seção de Véspera.</p>`,
+  },
+  memorando_diretoria: {
+    title: 'Memorando do Diretor',
+    body: `<p>À Dra. Helena Arcos,</p>
+<p>A senhora está afastada da Série Cinza a partir de hoje. Suas anotações sobre o Paciente 17 foram recolhidas e serão enviadas à Torre com ele. Não há "resistência": há <i>maturação</i>. Ele esfria porque a cinza está terminando de se acomodar.</p>
+<p>A capela fica trancada por dentro. As irmãs que ainda rezam lá não devem ser incomodadas — nem libertadas.</p>
+<p style="text-align:right">— Dr. Silas Vernet, Diretor</p>`,
+  },
+  hino_capela: {
+    title: 'Hinário da capela (página marcada)',
+    body: `<p><i>Antes de pedir ao Santo da casa, acende-se a luz dos que vieram antes:</i></p>
+<p>Primeiro <b>Brás</b>, que guarda a garganta da fumaça;<br/>depois <b>Luzia</b>, que guarda os olhos da cinza;<br/>então <b>Roque</b>, que guarda a carne da peste;<br/>e por último <b>Dimas</b>, o bom ladrão, que guarda a casa.</p>
+<p>Quem acende fora da ordem acorda os que dormem nos bancos.</p>`,
   },
 };

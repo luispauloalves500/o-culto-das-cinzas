@@ -122,5 +122,34 @@ export function createTextures() {
     grime(g, s, r, 25, 'rgba(40,30,20,A)', 3);
     g.strokeStyle = 'rgba(20,20,20,.7)'; g.strokeRect(.5, .5, s - 1, s - 1);
   }, 79);
+  // Forno / incinerador: tijolo refratário enegrecido de fuligem
+  T.brick = make(64, (g, s, r) => {
+    g.fillStyle = '#3a2a22'; g.fillRect(0, 0, s, s);
+    for (let y = 0; y < 8; y++) for (let x = -1; x < 4; x++) {
+      const v = 0.7 + r() * 0.35, ox = (y % 2) * 8;
+      g.fillStyle = `rgb(${120 * v | 0},${62 * v | 0},${44 * v | 0})`; g.fillRect(x * 16 + ox + 1, y * 8 + 1, 14, 6);
+    }
+    grime(g, s, r, 120, 'rgba(0,0,0,A)', 7);
+    for (let i = 0; i < 5; i++) { g.fillStyle = 'rgba(10,8,6,.35)'; g.fillRect(r() * s, 0, 3 + r() * 6, s * (0.4 + r() * 0.6)); }
+  }, 83);
+  // Capela: reboco amarelado com rodapé de pedra
+  T.chapelWall = make(64, (g, s, r) => {
+    g.fillStyle = '#8f8064'; g.fillRect(0, 0, s, s);
+    g.fillStyle = '#5c5446'; g.fillRect(0, s * 0.7, s, s * 0.3);
+    for (let x = 0; x < s; x += 16) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x, s * 0.7, 1, s * 0.3); }
+    g.fillStyle = '#3a342a'; g.fillRect(0, s * 0.68, s, 2);
+    grime(g, s, r, 90, 'rgba(40,30,15,A)', 6);
+    for (let i = 0; i < 4; i++) { g.fillStyle = 'rgba(30,20,10,.2)'; g.fillRect(r() * s, 0, 1 + r() * 2, s * r()); }
+  }, 89);
+  T.stone = make(64, (g, s, r) => {
+    g.fillStyle = '#6a665c'; g.fillRect(0, 0, s, s);
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 2; x++) { const v = 0.8 + r() * 0.3; g.fillStyle = `rgba(${150 * v | 0},${144 * v | 0},${128 * v | 0},.6)`; g.fillRect(x * 32 + (y % 2) * 16 + 1, y * 16 + 1, 30, 14); }
+    grime(g, s, r, 80, 'rgba(0,0,0,A)', 4);
+  }, 97);
+  T.ash = make(32, (g, s, r) => { g.fillStyle = '#2e2c29'; g.fillRect(0, 0, s, s); grime(g, s, r, 140, 'rgba(150,145,135,A)', 2); grime(g, s, r, 20, 'rgba(255,120,40,A)', 1); }, 101);
+  T.blueprint = make(32, (g, s, r) => {
+    g.fillStyle = '#2a4a78'; g.fillRect(0, 0, s, s); g.strokeStyle = 'rgba(220,230,255,.7)';
+    for (let i = 0; i < 6; i++) { g.strokeRect(2 + r() * 18, 2 + r() * 18, 4 + r() * 10, 4 + r() * 10); }
+  }, 103);
   return T;
 }
