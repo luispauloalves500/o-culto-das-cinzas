@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { EventBus } from './EventBus.js';
 import { Settings } from './Settings.js';
 import { InputManager } from './InputManager.js';
-import { SaveManager, createEmptySave } from './SaveManager.js';
+import { SaveManager, createEmptySave, makeChapter2Save } from './SaveManager.js';
 import { AudioManager } from './AudioManager.js';
 import { CollisionWorld } from '../world/CollisionWorld.js';
 import { Navigation } from '../world/Navigation.js';
@@ -19,6 +19,15 @@ import { PerceptionSystem } from '../ai/PerceptionSystem.js';
 import { EnemyDirector } from '../ai/EnemyDirector.js';
 import { HospitalLevel, CHECKPOINTS } from '../scenes/hospital/HospitalLevel.js';
 import { HospitalScript } from '../scenes/hospital/HospitalScript.js';
+import { BairroLevel, BAIRRO_CHECKPOINTS, BAIRRO_FOG } from '../scenes/bairro/BairroLevel.js';
+import { BairroScript } from '../scenes/bairro/BairroScript.js';
+import { setMapChapter } from '../data/map.js';
+
+// mundos por capítulo: geometria, roteiro, checkpoints e névoa padrão
+const WORLDS = {
+  1: { Level: HospitalLevel, Script: HospitalScript, checkpoints: CHECKPOINTS, start: 'ward_bed', fog: { fog: 0x050806, density: 0.075 } },
+  2: { Level: BairroLevel, Script: BairroScript, checkpoints: BAIRRO_CHECKPOINTS, start: 'c2_gate', fog: BAIRRO_FOG },
+};
 import { HUD } from '../ui/HUD.js';
 import { Menus } from '../ui/Menus.js';
 
@@ -78,9 +87,12 @@ export class Game {
   _buildWorld(save) {
     this._disposeWorld();
     this.bus = new EventBus();
+    this.chapter = save.chapter === 2 ? 2 : 1;
+    const W = WORLDS[this.chapter];
+    setMapChapter(this.chapter);
     const scene = (this.scene = new THREE.Scene());
-    scene.background = new THREE.Color(0x040605);
-    scene.fog = new THREE.FogExp2(0x050806, 0.075);
+    scene.background = new THREE.Color(W.fog.fog).multiplyScalar(0.8);
+    scene.fog = new THREE.FogExp2(W.fog.fog, W.fog.density);
     this.col = new CollisionWorld();
     this.nav = new Navigation();
     this.interact = new Interactables();
@@ -88,23 +100,23 @@ export class Game {
     this.perception = new PerceptionSystem(this.col);
     this.director = new EnemyDirector(2);
     this.inventory = new Inventory(this.bus);
-    this.quest = new QuestSystem(this.bus);
+    this.quest = new QuestSystem(this.bus, this.chapter);
     this.enemies = []; this.boss = null; this.cutscene = null;
     this.cameraCtl = new CameraController(this.camera, this.col, this.settings);
     this.player = new PlayerController(this);
-    this.level = new HospitalLevel(this).build();
+    this.level = new W.Level(this).build();
     this.quest.restore(save.flags);
     this.inventory.restore(save.inventory, save.documents);
-    this.script = new HospitalScript(this, this.level);
+    this.script = new W.Script(this, this.level);
     this.script.setup(save);
-    const cp = CHECKPOINTS[save.checkpoint] || CHECKPOINTS.ward_bed;
+    const cp = W.checkpoints[save.checkpoint] || W.checkpoints[W.start];
     this.player.spawn(cp, cp.yaw);
     this.cameraCtl.yaw = cp.yaw;
     this.player.setWeapon(save.inventory.weapon || null);
     this.player.hp = Math.min(this.player.maxHp, Math.max(30, save.player.hp ?? 100));
     this.player.stats = { kills: save.stats?.kills || 0, damageTaken: save.stats?.damageTaken || 0 };
     this.playTime = save.playTime || 0;
-    this.checkpoint = save.checkpoint;
+    this.checkpoint = W.checkpoints[save.checkpoint] ? save.checkpoint : W.start;
     // luz de preenchimento discreta em volta do jogador (legibilidade no escuro)
     this.fill = new THREE.PointLight(0xffd2a0, 0.9, 5.5, 1.8);
     scene.add(this.fill);
@@ -121,6 +133,7 @@ export class Game {
     const E = this.level.elevator;
     return {
       ...createEmptySave(),
+      chapter: this.chapter || 1,
       checkpoint,
       player: { hp: Math.round(this.player.hp) },
       inventory: { items: { ...this.inventory.items }, weapon: this.player.weapon ? this.player.weapon.id : null, weapons: [...this.inventory.weapons], wear: { ...this.inventory.wear }, loaded: { ...this.inventory.loaded },
@@ -130,7 +143,7 @@ export class Game {
       doors,
       deadEnemies: this.enemies.filter((e) => !e.alive).map((e) => e.id),
       documents: [...this.inventory.documents],
-      elevatorLevel: E.moving ? E.targetLevel : E.level,
+      elevatorLevel: E ? (E.moving ? E.targetLevel : E.level) : 'upper',
       playTime: this.playTime,
       stats: { ...this.player.stats },
     };
@@ -156,9 +169,20 @@ export class Game {
   continueGame() {
     const s = this.saves.load();
     if (!s) return this.newGame();
-    if (s.flags.chapterDone) { this._buildWorld(s); this._enterPlay(); this.hud.toast('Capítulo 1 concluído. O Capítulo 2 ainda não está disponível.', 5); return; }
+    // save do Capítulo 1 já concluído (inclusive de versões anteriores, quando o Cap. 2 não existia): segue para o Cap. 2
+    if ((s.chapter || 1) === 1 && s.flags.chapterDone) return this.startChapter2(s);
     this._buildWorld(s);
     this._enterPlay();
+    if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
+  }
+  /** passagem real do Capítulo 1 para o 2: monta o save inicial do Bairro Operário a partir do estado atual */
+  startChapter2(prev) {
+    const from = prev || (this.scene && this.chapter === 1 ? this.serialize(this.checkpoint || 'yard') : this.saves.load());
+    const s = makeChapter2Save(from);
+    this.saves.write(s);
+    this._buildWorld(s);
+    this._enterPlay();
+    this.script.intro?.();
   }
   pause() {
     if (this.state !== 'playing') return;
