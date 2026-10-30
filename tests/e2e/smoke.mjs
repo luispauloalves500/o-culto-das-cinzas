@@ -1269,6 +1269,7 @@ try {
     out.rn0 = document.getElementById('endRn0').textContent; out.stats = document.getElementById('stats').textContent;
     out.next = { dis: document.getElementById('btnEndNext').disabled, txt: document.getElementById('btnEndNext').textContent };
     const s = S(); out.save = { cp: s.checkpoint, ch: s.chapter, done: s.flags.c3_chapterDone, boss: s.flags.c3_bossDead, ribbon: (s.inventory?.items || s.items || {}).fita_ines };
+    out.raw = localStorage.getItem('ocdc_save');
     return out;
   });
   await page.screenshot({ path: SHOTS + '21-fim-cap3.png' });
@@ -1277,17 +1278,189 @@ try {
   check('Cap. 3: invocação limitada (≤ 2 vivos, ≤ 4 no total)', c3e.c.summonN >= 2 && c3e.c.summonN <= 4 && c3e.log.maxAlive <= 2 && c3e.summonsAlive === 0, JSON.stringify({ n: c3e.c.summonN, calls: c3e.c.calls, max: c3e.log.maxAlive, alive: c3e.summonsAlive }));
   check('Cap. 3: morte do Sacristão libera arena e galeria', c3e.dead && !c3e.gallery.locked && c3e.gallery.open && !c3e.arenaAfter && c3e.cloudsLeft === 0 && c3e.hudOff && /catacumbas/.test(c3e.obj), JSON.stringify({ g: c3e.gallery, a: c3e.arenaAfter, o: c3e.obj }));
   check('Cap. 3: ordem de transferência e fita de Inês no altar', c3e.doc === 'ok' && c3e.docHave && c3e.ribbon === 'ok' && c3e.ribbonHave, JSON.stringify({ d: c3e.doc, r: c3e.ribbon }));
-  check('Cap. 3: galeria → tela de fim do Cap. 3 com gancho do Cap. 4', c3e.exit === 'ok' && c3e.st === 'end' && /Capítulo 3/.test(c3e.title) && /Capítulo 4/.test(c3e.note) && /Vigia/.test(c3e.rn0) && /Fita de Inês: com Elias/.test(c3e.stats) && c3e.next.dis && /Capítulo 4/.test(c3e.next.txt), JSON.stringify({ e: c3e.exit, g: c3e.galPos, t: c3e.title, n: c3e.next }));
+  check('Cap. 3: galeria → tela de fim do Cap. 3 com gancho do Cap. 4', c3e.exit === 'ok' && c3e.st === 'end' && /Capítulo 3/.test(c3e.title) && /Capítulo 4/.test(c3e.note) && /Vigia/.test(c3e.rn0) && /Fita de Inês: com Elias/.test(c3e.stats) && !c3e.next.dis && /Seguir para o Capítulo 4/.test(c3e.next.txt), JSON.stringify({ e: c3e.exit, g: c3e.galPos, t: c3e.title, n: c3e.next }));
   check('Cap. 3: save final do capítulo (c3_end)', c3e.save.cp === 'c3_end' && c3e.save.ch === 3 && c3e.save.done && c3e.save.boss, JSON.stringify(c3e.save));
+  // --- Cap. 3 → 4: botão da tela de fim abre a Cidade Morta (save migrado)
+  await page.click('#btnEndNext');
+  await new Promise((r) => setTimeout(r, 800));
+  await inject();
+  const c4s = await page.evaluate(() => {
+    const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    T.run(0.3); const s = S();
+    return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), obj: g.quest.current(),
+      ribbon: g.inventory.has('fita_ines'), sig: g.inventory.has('sinete_chama'), axe: g.inventory.weapons.includes('machado') && !!g.player.weapon,
+      flags: { c3: !!s.flags.c3_chapterDone, ch1: !!s.flags.chapterDone, c2: !!s.flags.c2_chapterDone, st: !!s.flags.c4_started }, hp: g.player.maxHp,
+      boss: g.boss?.id, bstate: g.boss?.state, by: +(g.boss?.pos.y || 0).toFixed(2), bvis: g.boss?.rig.root.visible,
+      types: [...new Set(g.enemies.map((e) => e.type))], lights: lights(), rev6: !!g.player.model?.sistema };
+  });
+  await page.screenshot({ path: SHOTS + '22-cap4-beco.png' });
+  check('Cap. 4: botão do fim do Cap. 3 inicia a Cidade Morta (save migrado)', c4s.st === 'playing' && c4s.ch === 4 && c4s.sch === 4 && c4s.cp === 'c4_drain' && Math.abs(c4s.pos[2] - 3.6) < 0.6 && /beco|rua/i.test(c4s.obj) && c4s.ribbon && !c4s.sig && c4s.axe && c4s.flags.c3 && c4s.flags.ch1 && c4s.flags.c2 && c4s.flags.st && c4s.rev6, JSON.stringify(c4s));
+  check('Cap. 4: O Vigia de pé na varanda da Torre (dormente) e cinzentos no setor', c4s.boss === 'vigia' && c4s.bstate === 'dormant' && c4s.by > 8 && c4s.bvis && c4s.types.includes('cinzento'), JSON.stringify({ b: c4s.boss, s: c4s.bstate, y: c4s.by, t: c4s.types }));
+  check('Cap. 4: orçamento de luzes no beco (≤ 16)', c4s.lights <= 16, 'v=' + c4s.lights);
+  // save antigo (fim do Cap. 3) continuado → migra para o Cap. 4
+  await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c3e.raw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c3z = await page.evaluate(() => {
+  const c4m = await page.evaluate(() => {
+    document.getElementById('btnContinue').click();
+    const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.3);
+    return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), ribbon: g.inventory.has('fita_ines'), sig: g.inventory.has('sinete_chama'), boss: g.boss?.state };
+  });
+  check('Cap. 4: continuar um save do fim do Cap. 3 migra para o Cap. 4', c4m.st === 'playing' && c4m.ch === 4 && c4m.sch === 4 && c4m.cp === 'c4_drain' && Math.abs(c4m.pos[2] - 3.6) < 0.6 && c4m.ribbon && !c4m.sig && c4m.boss === 'dormant', JSON.stringify(c4m));
+  // --- Cap. 4: beco → rua → farmácia (chave) → relojoaria (livro de registro)
+  const c4a = await page.evaluate(() => {
+    const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
+    const out = {};
+    T.tp(7, 0, 8, 0); T.hold('KeyW', 1.4); T.run(0.1);
+    out.street = g.quest.has('c4_inStreet'); out.z = +g.player.pos.z.toFixed(2);
+    E('cin_rua1').setDeadInstant();
+    // cinzento: vê Elias de perto, corre e golpeia com a barra
+    const c = E('cin_rua2'); out.cType = c.type; out.cHp = c.hp;
+    g.player.hp = g.player.maxHp; T.tp(7.2, 0, 38.5, -Math.PI / 2);
+    const st = new Set(); for (let k = 0; k < 40; k++) { T.run(0.1); st.add(c.state); if (g.player.state === 'grabbed') for (let j = 0; j < 25; j++) T.press('Mouse0'); }
+    out.cStates = [...st]; out.cDmg = g.player.maxHp - g.player.hp;
+    c.setDeadInstant(); g.player.hp = g.player.maxHp;
+    // relojoaria trancada
+    T.tp(8.9, 0, 35, Math.PI / 2); out.watchTry = T.interactAt('door_c4_watch'); out.watchLocked = g.level.doors.c4_watch.locked && g.quest.has('c4_sawWatchLock');
+    out.obj1 = g.quest.current();
+    // bonde tombado: barricada e edital
+    T.tp(7, 0, 44.2, 0); T.run(0.1); out.barr = g.quest.has('c4_sawBarricade');
+    T.hold('KeyW', 1.0); out.barrZ = +g.player.pos.z.toFixed(2);
+    T.tp(7, 0, 44.2, 0); out.edital = T.interactAt('doc_edital_toque'); T.run(0.1); out.editalFlag = g.quest.has('c4_readEdital');
+    // farmácia: porta, diário e a chave na gaveta do caixa
+    T.tp(5.2, 0, 23, -Math.PI / 2); out.pharm = T.interactAt('door_c4_pharm'); T.run(0.8); out.pharmOpen = g.level.doors.c4_pharm.open;
+    T.tp(5.4, 0, 23, -Math.PI / 2); T.hold('KeyW', 1.2); out.inPharmX = +g.player.pos.x.toFixed(2);
+    out.farmDormant = E('cin_farm').dormant;
+    T.tp(0.6, 0, 25, -Math.PI / 2); out.diario = T.interactAt('doc_diario_farmaceutico'); T.run(0.1); out.diarioFlag = g.quest.has('c4_readDiario');
+    T.tp(0.6, 0, 21.5, -Math.PI / 2); out.key = T.interactAt('pick_c4_watchkey'); T.run(0.1);
+    out.hasKey = g.inventory.has('chave_relojoaria') && g.quest.has('c4_hasWatchKey'); out.farmAwake = !E('cin_farm').dormant;
+    out.obj2 = g.quest.current();
+    E('cin_farm').setDeadInstant(); g.player.hp = g.player.maxHp;
+    // abre a relojoaria com a chave
+    T.tp(8.9, 0, 35, Math.PI / 2); out.watch = T.interactAt('door_c4_watch'); T.run(0.9);
+    out.watchOpen = g.level.doors.c4_watch.open && !g.level.doors.c4_watch.locked && g.quest.has('c4_watchOpen') && !g.inventory.has('chave_relojoaria');
+    T.tp(9.2, 0, 35, Math.PI / 2); T.hold('KeyW', 1.0); out.inWatchX = +g.player.pos.x.toFixed(2); out.inWatch = g.quest.has('c4_inWatch');
+    T.tp(16.2, 0, 34.5, Math.PI / 2); out.caderno = T.interactAt('doc_caderno_relojoeiro'); T.run(0.1); out.cadernoFlag = g.quest.has('c4_readCaderno');
+    out.deadIds = g.enemies.filter((e) => !e.alive).map((e) => e.id);
+    T.tp(16.2, 0, 33, Math.PI / 2); out.book = T.interactAt('c4_watch_book'); const s = S();
+    out.save = { cp: s.checkpoint, ch: s.chapter, open: !!s.flags.c4_watchOpen, dead: s.deadEnemies.length, docs: (s.inventory?.documents || s.documents || []).length };
+    out.obj3 = g.quest.current();
+    T.key('KeyM'); out.mapState = g.state; out.map = g.menus.lastMap; g.closeOverlay();
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '23-cap4-relojoaria.png' });
+  check('Cap. 4: beco → rua (objetivo)', c4a.street, JSON.stringify({ z: c4a.z }));
+  check('Cap. 4: cinzento vê Elias, corre e golpeia', c4a.cType === 'cinzento' && c4a.cHp === 80 && c4a.cStates.includes('chase') && (c4a.cStates.includes('attack') || c4a.cStates.includes('grabbing')) && c4a.cDmg > 0, JSON.stringify({ s: c4a.cStates, d: c4a.cDmg }));
+  check('Cap. 4: relojoaria trancada e bonde tombado barra a rua', c4a.watchTry === 'ok' && c4a.watchLocked && c4a.barr && c4a.barrZ < 46.2 && /Praça do Relógio/.test(c4a.obj1), JSON.stringify({ w: c4a.watchTry, z: c4a.barrZ, o: c4a.obj1 }));
+  check('Cap. 4: documentos (edital, diário do farmacêutico, caderno do relojoeiro)', c4a.edital === 'ok' && c4a.editalFlag && c4a.diario === 'ok' && c4a.diarioFlag && c4a.caderno === 'ok' && c4a.cadernoFlag, JSON.stringify({ e: c4a.edital, d: c4a.diario, c: c4a.caderno }));
+  check('Cap. 4: chave da relojoaria na gaveta do caixa (o cinzento da farmácia acorda)', c4a.pharm === 'ok' && c4a.pharmOpen && c4a.inPharmX < 3.4 && c4a.farmDormant && c4a.key === 'ok' && c4a.hasKey && c4a.farmAwake && /relojoaria/i.test(c4a.obj2), JSON.stringify(c4a));
+  check('Cap. 4: chave abre a relojoaria', c4a.watch === 'ok' && c4a.watchOpen && c4a.inWatchX > 10.6 && c4a.inWatch, JSON.stringify({ w: c4a.watch, x: c4a.inWatchX }));
+  check('Cap. 4: livro de registro da relojoaria salva', c4a.book === 'ok' && c4a.save.cp === 'c4_watch' && c4a.save.ch === 4 && c4a.save.open && c4a.save.dead >= 3, JSON.stringify(c4a.save) + ' ' + c4a.deadIds);
+  check('Cap. 4: mapa da Cidade Morta', c4a.mapState === 'map' && c4a.map?.rooms >= 3, JSON.stringify(c4a.map));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c4r = await page.evaluate(() => {
     document.getElementById('btnContinue').click();
     const g = __ocdc; T.run(0.3);
-    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), bossDead: !g.boss.alive, gallery: !g.level.doors.c3_gallery.locked, grate: g.level.grate.position.y,
-      ribbon: g.inventory.has('fita_ines'), ribbonHidden: !g.level.pickupMeshes.c3_ribbon.visible, exit: g.interact.list.find((i) => i.id === 'c3_exit').enabled() };
+    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), watch: g.level.doors.c4_watch.open && !g.level.doors.c4_watch.locked, tower: g.level.doors.c4_tower.locked,
+      key: g.inventory.has('chave_relojoaria'), keyHidden: !g.level.pickupMeshes.c4_watchkey.visible, dead: g.enemies.filter((e) => !e.alive).length, boss: g.boss.state, obj: g.quest.current() };
   });
-  check('Cap. 3: continuar após o fim restaura cripta vencida e saída', c3z.st === 'playing' && c3z.ch === 3 && c3z.pos[0] > 33 && c3z.bossDead && c3z.gallery && c3z.grate >= 2.49 && c3z.ribbon && c3z.ribbonHidden && c3z.exit, JSON.stringify(c3z));
+  check('Cap. 4: continuar restaura a relojoaria (porta, chave usada, inimigos)', c4r.st === 'playing' && c4r.ch === 4 && Math.abs(c4r.pos[0] - 16.2) < 0.6 && Math.abs(c4r.pos[2] - 33) < 0.6 && c4r.watch && c4r.tower && !c4r.key && c4r.keyHidden && c4r.dead >= 3 && c4r.boss === 'dormant', JSON.stringify(c4r));
+  // --- Cap. 4: pátio → Praça do Relógio → O Vigia (primeiro confronto) → chave → Torre
+  const c4b = await page.evaluate(() => {
+    const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id), B = g.boss;
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const out = {};
+    T.tp(14, 0, 38.9, 0); out.back = T.interactAt('door_c4_back'); T.run(0.8);
+    T.tp(14, 0, 39.0, 0); T.hold('KeyW', 0.9); out.yardZ = +g.player.pos.z.toFixed(2);
+    E('aco_patio').setDeadInstant(); g.player.hp = g.player.maxHp;
+    out.rasDormant = E('ras_patio').dormant;
+    T.tp(15.2, 0, 45.6, 0); T.run(0.2); out.rasWoke = g.quest.has('c4_rasWoke') && !E('ras_patio').dormant;
+    E('ras_patio').setDeadInstant(); g.player.hp = g.player.maxHp;
+    T.tp(14, 0, 49.2, 0); T.hold('KeyW', 1.0); T.run(0.05);
+    out.plaza = g.quest.has('c4_inPlaza'); out.plazaCp = S().checkpoint; out.bossIdle = !g.script.bossActive && B.state === 'dormant';
+    out.lights = lights();
+    // gatilho: o sino toca e o Vigia salta da varanda
+    T.tp(14, 0, 54, 0); T.run(0.1);
+    out.active = g.script.bossActive; out.hud = !g.hud.el.boss.classList.contains('hidden'); out.bossName = g.hud.el.bossName?.textContent || document.getElementById('bossName')?.textContent;
+    out.immune = B.takeHit({ dmg: 999, poise: 99, heavy: true, from: g.player.pos, point: B.pos.clone() });
+    T.run(2.6); out.dropState = B.state; out.dropY = +B.pos.y.toFixed(2);
+    T.run(1.6); out.landY = +B.pos.y.toFixed(2); out.landState = B.state;
+    T.run(2.0); out.afterIntro = B.state;
+    out.inTargets = g.targets().includes(B);
+    // território: o Vigia não sai da praça
+    let minZ = 99; g.player.hp = g.player.maxHp;
+    T.tp(14, 0, 47.5, Math.PI); for (let k = 0; k < 40; k++) { T.run(0.1); minZ = Math.min(minZ, B.pos.z); if (g.player.state === 'grabbed') for (let j = 0; j < 25; j++) T.press('Mouse0'); }
+    out.minZ = +minZ.toFixed(2);
+    // luta: investidas contra chafariz/pedestais/banca e golpe forte no lampião
+    const obst = [[15, 62, 3.9], [6, 68, 2.5], [24, 68, 2.5], [24, 56, 2.5]];
+    const log = { stuns: 0, phases: [], beamWoke: 0, maxX: 0, minX: 99, maxZ: 0, minZ: 99 };
+    let t = 0, wasStunned = false;
+    while (B.alive && !B.retreated && t < 300) {
+      g.player.hp = Math.max(g.player.hp, g.player.maxHp * 0.8);
+      if (g.player.state === 'grabbed') for (let k = 0; k < 25; k++) T.press('Mouse0');
+      if (!log.phases.includes(B.phase)) log.phases.push(B.phase);
+      log.maxX = Math.max(log.maxX, B.pos.x); log.minX = Math.min(log.minX, B.pos.x); log.maxZ = Math.max(log.maxZ, B.pos.z); log.minZ = Math.min(log.minZ, B.pos.z);
+      for (const e of g.enemies) if (e !== B && e.alive && !e.dormant && e.pos.distanceTo(g.player.pos) < 2.6) { log.beamWoke++; e.takeHit({ dmg: 999, poise: 99, heavy: true, from: g.player.pos, point: e.pos.clone() }); }
+      if (B.state === 'stunned') {
+        if (!wasStunned) log.stuns++; wasStunned = true;
+        const bx = Math.sin(B.yaw), bz = Math.cos(B.yaw);
+        T.tp(B.pos.x - bx * 1.0, 0, B.pos.z - bz * 1.0, Math.atan2(bx, bz));
+        T.press('Mouse2'); T.run(1.1); t += 1.1;
+      } else {
+        wasStunned = false;
+        if (B.state !== 'chargeWind' && B.state !== 'charge' && B.state !== 'beam') {
+          let best = null, bd = -1;
+          for (const [x, z, r] of obst) {
+            const dx = x - B.pos.x, dz = z - B.pos.z, d = Math.hypot(dx, dz) || 1;
+            const sx = x + dx / d * r, sz = z + dz / d * r;
+            if (sx < 1.6 || sx > 28.4 || sz < 52 || sz > 74.6) continue;
+            if (d > bd) { bd = d; best = [sx, sz]; }
+          }
+          if (best) T.tp(best[0], 0, best[1], Math.atan2(B.pos.x - best[0], B.pos.z - best[1]));
+        }
+        T.run(0.5); t += 0.5;
+      }
+    }
+    out.t = t; out.hpPct = +(B.hp / B.maxHp).toFixed(2); out.phase = B.phase; out.log = log; out.beamN = B.beamN; out.weak = B.weakHits;
+    out.pracaAwake = ['cin_praca1', 'cin_praca2'].map((id) => { const e = E(id); return !e.alive || !e.dormant; });
+    out.retreatState = B.state; out.hitRetreat = B.takeHit({ dmg: 999, poise: 99, heavy: true, from: g.player.pos, point: B.pos.clone() });
+    g.player.hp = g.player.maxHp; T.tp(6, 0, 56, Math.PI / 4);
+    let seen = new Set(); for (let k = 0; k < 140 && B.state !== 'gone'; k++) { T.run(0.1); seen.add(B.state); }
+    T.run(0.2);
+    out.retreatSeen = [...seen]; out.gone = B.state === 'gone' && !B.rig.root.visible && !B.alive;
+    out.retreatFlag = g.quest.has('c4_vigiaRetreat'); out.hudOff = g.hud.el.boss.classList.contains('hidden'); out.activeAfter = g.script.bossActive;
+    const s1 = S(); out.save1 = { cp: s1.checkpoint, retreat: !!s1.flags.c4_vigiaRetreat };
+    out.obj4 = g.quest.current();
+    for (const id of ['cin_praca1', 'cin_praca2']) E(id).alive && E(id).setDeadInstant();
+    // molho de chaves → porta da Torre → fim da fatia
+    out.keyVis = !!g.level.pickupMeshes.c4_towerkey?.visible;
+    T.tp(15.6, 0, 73.0, 0); out.tkey = T.interactAt('pick_c4_towerkey'); out.hasTKey = g.inventory.has('chave_torre') && g.quest.has('c4_hasTowerKey');
+    T.tp(15, 0, 75.0, 0); out.tower = T.interactAt('door_c4_tower'); T.run(0.9); out.towerOpen = g.level.doors.c4_tower.open && !g.level.doors.c4_tower.locked;
+    T.tp(15, 0, 75.2, 0); T.hold('KeyW', 1.2); T.run(0.1);
+    out.towerZ = +g.player.pos.z.toFixed(2); out.slice = g.quest.has('c4_sliceDone');
+    const s2 = S(); out.save2 = { cp: s2.checkpoint, ch: s2.chapter, slice: !!s2.flags.c4_sliceDone, open: !!s2.flags.c4_towerOpen };
+    out.obj5 = g.quest.current(); out.lightsTower = lights();
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '24-cap4-torre.png' });
+  check('Cap. 4: pátio (rastejador sob o lençol) e autosave na Praça do Relógio', c4b.back === 'ok' && c4b.yardZ > 40.4 && c4b.rasDormant && c4b.rasWoke && c4b.plaza && c4b.plazaCp === 'c4_plaza' && c4b.bossIdle, JSON.stringify({ b: c4b.back, z: c4b.yardZ, r: c4b.rasWoke, p: c4b.plaza, c: c4b.plazaCp }));
+  check('Cap. 4: orçamento de luzes na praça (≤ 16)', c4b.lights <= 16 && c4b.lightsTower <= 16, 'v=' + c4b.lights + '/' + c4b.lightsTower);
+  check('Cap. 4: o sino toca e O Vigia salta da varanda (imune na descida)', c4b.active && c4b.hud && c4b.immune === 'immune' && c4b.dropState === 'drop' && c4b.dropY < 9 && c4b.landY === 0 && ['intro', 'stalk', 'roar'].includes(c4b.landState) && c4b.inTargets, JSON.stringify({ a: c4b.active, h: c4b.hud, n: c4b.bossName, i: c4b.immune, d: [c4b.dropState, c4b.dropY], l: [c4b.landState, c4b.landY], ai: c4b.afterIntro }));
+  check('Cap. 4: o Vigia não sai da praça', c4b.minZ >= 50.9 && c4b.log.minZ >= 50.9 && c4b.log.maxZ <= 75.5 && c4b.log.minX >= 0.8 && c4b.log.maxX <= 29.2, JSON.stringify({ m: c4b.minZ, l: c4b.log }));
+  check('Cap. 4: combate do Vigia (investida nos obstáculos, lampião nas costas, lanterna acorda a praça)', c4b.hpPct <= 0.45 && c4b.log.stuns >= 2 && c4b.weak >= 2 && c4b.phase === 2 && c4b.beamN >= 1 && c4b.pracaAwake.every(Boolean), JSON.stringify({ t: c4b.t, hp: c4b.hpPct, w: c4b.weak, b: c4b.beamN, l: c4b.log, p: c4b.pracaAwake }));
+  check('Cap. 4: abaixo de 45% o Vigia recua, escala a Torre e some (save)', c4b.hitRetreat === 'immune' && c4b.retreatSeen.includes('climb') && c4b.gone && c4b.retreatFlag && c4b.hudOff && !c4b.activeAfter && c4b.save1.cp === 'c4_plaza' && c4b.save1.retreat && /chave|molho|Torre/i.test(c4b.obj4), JSON.stringify({ s: c4b.retreatSeen, g: c4b.gone, sv: c4b.save1, o: c4b.obj4 }));
+  check('Cap. 4: molho de chaves abre a Torre → fim da primeira fatia com save', c4b.keyVis && c4b.tkey === 'ok' && c4b.hasTKey && c4b.tower === 'ok' && c4b.towerOpen && c4b.towerZ > 77 && c4b.slice && c4b.save2.cp === 'c4_tower' && c4b.save2.ch === 4 && c4b.save2.slice && c4b.save2.open, JSON.stringify({ k: c4b.tkey, t: c4b.tower, z: c4b.towerZ, s: c4b.save2, o: c4b.obj5 }));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c4z = await page.evaluate(() => {
+    document.getElementById('btnContinue').click();
+    const g = __ocdc; T.run(0.5);
+    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), boss: g.boss.state, bvis: g.boss.rig.root.visible, active: g.script.bossActive, hudOff: g.hud.el.boss.classList.contains('hidden'),
+      tower: g.level.doors.c4_tower.open && !g.level.doors.c4_tower.locked, watch: g.level.doors.c4_watch.open, keyHidden: !g.level.pickupMeshes.c4_towerkey.visible, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length };
+  });
+  check('Cap. 4: continuar após a fatia restaura a Torre aberta e o Vigia ausente', c4z.st === 'playing' && c4z.ch === 4 && c4z.pos[2] > 77 && c4z.boss === 'gone' && !c4z.bvis && !c4z.active && c4z.hudOff && c4z.tower && c4z.watch && c4z.keyHidden && c4z.dead === c4z.n, JSON.stringify(c4z));
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));

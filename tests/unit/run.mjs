@@ -512,5 +512,68 @@ test('Cap. 3: O Sacristão — fases, invocação limitada, cripta e saves', () 
   assert.ok(old && SEDE_CHECKPOINTS[old.checkpoint] && !old.flags.c3_cryptOpen && !old.flags.c3_bossDead);
 });
 
+const { makeChapter4Save, CH3_KEY_ITEMS, CH2_KEY_ITEMS } = await import('../../src/core/SaveManager.js');
+const { OBJECTIVES_C4, SIDE_OBJECTIVES_C4, objectivesFor, sideObjectivesFor } = await import('../../src/data/chapters.js');
+const { CIDADE_CHECKPOINTS, PLAZA, PLAZA_OBSTACLES, VIGIA_BALCONY } = await import('../../src/scenes/cidade/CidadeLevel.js');
+const { C4_BOSS_TRIGGER, CIDADE_SPAWNS } = await import('../../src/scenes/cidade/CidadeScript.js');
+const { VIGIA_RETREAT, VIGIA_BOUNDS } = await import('../../src/ai/VigiaBoss.js');
+test('Cap. 4: migração do save do fim do Cap. 3 (bueiro), itens e flags', () => {
+  const end3 = migrateSave({ ...createEmptySave(), chapter: 3, checkpoint: 'c3_end', player: { hp: 40 },
+    inventory: { items: { bandagem: 2, municao_38: 7, sinete_chama: 1, passe_bonde: 1, fita_ines: 1, dossie_elias: 1, chave_fabrica: 1, fusivel: 1 }, weapon: 'machado', weapons: ['machado', 'revolver'], possuiMachado: true, machadoEquipado: true },
+    flags: { c3_started: true, c3_bossDead: true, c3_chapterDone: true, hasBracelet: true, sharpened: true }, doors: { c3_arena: { open: true } }, deadEnemies: ['aco_hall'], documents: ['ordem_transferencia', 'dossie_elias'], playTime: 3600 });
+  const s = makeChapter4Save(end3);
+  assert.equal(s.chapter, 4); assert.equal(s.checkpoint, 'c4_drain'); assert.ok(CIDADE_CHECKPOINTS[s.checkpoint]);
+  assert.equal(s.player.hp, 80);
+  for (const k of [...CH1_KEY_ITEMS, ...CH2_KEY_ITEMS, ...CH3_KEY_ITEMS]) assert.equal(s.inventory.items[k], undefined, k);
+  for (const k of ['fita_ines', 'dossie_elias', 'passe_bonde', 'bandagem', 'municao_38']) assert.ok(s.inventory.items[k] > 0, k);
+  assert.ok(s.inventory.possuiMachado && s.inventory.weapons.includes('revolver'));
+  assert.ok(s.flags.c3_chapterDone && s.flags.ch3Done && s.flags.c4_started && s.flags.hasBracelet && s.flags.sharpened);
+  assert.deepEqual(s.doors, {}); assert.deepEqual(s.deadEnemies, []);
+  assert.deepEqual(s.documents, ['ordem_transferencia', 'dossie_elias']); assert.equal(s.playTime, 3600);
+  assert.ok(migrateSave(JSON.parse(JSON.stringify(s))).chapter === 4);
+  assert.equal(CHAPTERS.find((c) => c.id === 4).playable, true);
+  assert.ok(ITEMS.chave_relojoaria && ITEMS.chave_torre);
+});
+test('Cap. 4: objetivos, mapa do centro antigo, cinzento e documentos', () => {
+  assert.equal(objectivesFor(4), OBJECTIVES_C4); assert.equal(sideObjectivesFor(4), SIDE_OBJECTIVES_C4);
+  assert.equal(objectivesFor(3).length > 0 && objectivesFor(3) !== OBJECTIVES_C4, true);
+  const q = new QuestSystem(null, 4);
+  assert.equal(OBJECTIVES_C4[0].done, 'c4_inStreet'); assert.equal(q.current(), OBJECTIVES_C4[0].text);
+  for (const k of ['c4_hasWatchKey', 'c4_watchOpen', 'c4_inPlaza', 'c4_vigiaRetreat', 'c4_hasTowerKey', 'c4_sliceDone']) assert.ok(OBJECTIVES_C4.some((o) => o.done === k), k);
+  assert.equal(OBJECTIVES_C4[OBJECTIVES_C4.length - 1].done, 'c4_never');
+  for (const o of SIDE_OBJECTIVES_C4) assert.ok(o.when && o.done && o.text);
+  try {
+    setMapChapter(4);
+    assert.deepEqual(chapterFloors().map((f) => f.id), ['up']);
+    assert.equal(roomAt({ x: 7, y: 0, z: 3 }).id, 'c4_beco');
+    assert.equal(roomAt({ x: 7, y: 0, z: 30 }).id, 'c4_rua');
+    assert.equal(roomAt({ x: 0, y: 0, z: 22 }).id, 'c4_farmacia');
+    assert.equal(roomAt({ x: 14, y: 0, z: 35 }).id, 'c4_relojoaria');
+    assert.equal(roomAt({ x: 14, y: 0, z: 45 }).id, 'c4_patio');
+    assert.equal(roomAt({ x: 20, y: 0, z: 60 }).id, 'c4_praca');
+    assert.equal(roomAt({ x: 15, y: 0, z: 80 }).id, 'c4_torre');
+  } finally { setMapChapter(1); }
+  assert.equal(roomAt({ x: 14, y: 0, z: 35 })?.id?.startsWith('c4_') ?? false, false);
+  const c = ENEMIES.cinzento;
+  assert.ok(c && c.chase > c.walk * 3 && c.hearing < ENEMIES.acolito.hearing && c.attacks.length >= 2 && c.attacks.every((k) => k.windup > 0));
+  for (const id of ['edital_toque', 'diario_farmaceutico', 'caderno_relojoeiro']) assert.equal(DOCUMENTS[id]?.ch, 4, id);
+  assert.ok(/gaveta do caixa/.test(DOCUMENTS.diario_farmaceutico.body) && /lampião/.test(DOCUMENTS.caderno_relojoeiro.body) && /3h07/.test(DOCUMENTS.edital_toque.body));
+  for (const s of CIDADE_SPAWNS) assert.ok(ENEMIES[s.type], s.id);
+});
+test('Cap. 4: O Vigia — praça, gatilho, retirada e obstáculos', () => {
+  const inP = (x, z) => x > PLAZA.minX && x < PLAZA.maxX && z > PLAZA.minZ && z < PLAZA.maxZ;
+  const T = C4_BOSS_TRIGGER;
+  assert.ok(T.minZ > PLAZA.minZ + 2 && T.maxZ <= PLAZA.maxZ && T.minX >= PLAZA.minX && T.maxX <= PLAZA.maxX);
+  assert.ok(CIDADE_CHECKPOINTS.c4_plaza.z < T.minZ && inP(CIDADE_CHECKPOINTS.c4_plaza.x, CIDADE_CHECKPOINTS.c4_plaza.z));
+  for (const [x, z] of PLAZA_OBSTACLES) assert.ok(inP(x, z));
+  assert.ok(VIGIA_RETREAT > 0.2 && VIGIA_RETREAT < 0.7);
+  assert.ok(VIGIA_BOUNDS.minX >= PLAZA.minX && VIGIA_BOUNDS.maxX <= PLAZA.maxX && VIGIA_BOUNDS.minZ > PLAZA.minZ && VIGIA_BOUNDS.maxZ < PLAZA.maxZ);
+  assert.ok(VIGIA_BALCONY.y > 6 && Math.abs(VIGIA_BALCONY.z - PLAZA.maxZ) < 1.5);
+  for (const id of ['c4_drain', 'c4_watch', 'c4_plaza', 'c4_tower']) assert.ok(CIDADE_CHECKPOINTS[id] && CIDADE_CHECKPOINTS[id].y === 0, id);
+  // um save antigo do Cap. 3 concluído vira Cap. 4 ao continuar (Game.continueGame usa makeChapter4Save)
+  const old = migrateSave({ ...makeChapter3Save(null), checkpoint: 'c3_end', flags: { c3_chapterDone: true } });
+  assert.ok(old.flags.c3_chapterDone && makeChapter4Save(old).chapter === 4);
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);

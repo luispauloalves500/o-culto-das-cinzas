@@ -1,7 +1,7 @@
 # O Culto das Cinzas
 
 Survival horror em terceira pessoa feito com **Three.js + Vite**, com visual low‑poly inspirado no PS2 (verde doentio + âmbar).
-Este repositório contém o **Capítulo 1 — Hospital São Dimas** (véspera, 1934) e o **Capítulo 2 — Fumaça** (Bairro Operário → Rua do Carvão → fábrica de fumaça → chefe Brás → tela de fim do capítulo), ambos jogáveis do início ao fim.
+Este repositório contém o **Capítulo 1 — Hospital São Dimas** (véspera, 1934), o **Capítulo 2 — Fumaça** e o **Capítulo 3 — A Confraria**, jogáveis do início ao fim, e a **primeira fatia jogável do Capítulo 4 — Cidade Morta** (beco → Rua do Comércio → relojoaria → Praça do Relógio → primeiro confronto com O Vigia → porta da Torre).
 
 ▶ **Jogar no navegador:** https://luispauloalves500.github.io/o-culto-das-cinzas/
 
@@ -118,15 +118,23 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
   - **Cripta destravada por mecanismo real (pt34u)**: a grade de ferro agora é um **portão de barras** erguido por um **sarilho** (manivela + tambor + corrente) ao lado esquerdo, travado por um **selo de latão com a CHAMA** em baixo-relevo. Sem o anel, o sarilho recusa (com aviso que muda se Elias já leu o dossiê). O **sinete da CHAMA** fica **no dedo do arquivista** — só aparece (e acompanha) o corpo dele depois de morto; o dossiê ganhou o recibo do almoxarifado que dá a pista. Com o sinete no selo, a manivela gira e a grade **sobe animada (2,8 s)**, faz barulho de metal que alerta o arquivo, e a passagem libera. **Escada da cripta** (16 degraus, −4,5 → −8,5 m) até um patamar com **livro de registros** e **autosave** `c3_preboss`.
   - **Cripta do Sacristão** (arena 22 × 22 m, procedural PS2): 4 **pilares**, **ossuários** com crânios nas paredes, braseiros, lustre de ossos, **altar** com pano, velas e a inscrição *IN CINERE VITA*; porta da arena que **bate e tranca** quando a luta começa; **galeria das catacumbas** a leste (porta de ferro trancada até a morte do chefe).
   - **Chefe — O Sacristão** (`src/ai/SacristanBoss.js`, 640 de vida, 3 fases a 65 %/30 %): batina com capuz, estola dourada, olhos em brasa, **turíbulo** na corrente e **sino** na mão; dorme ajoelhado diante do altar e se levanta quando Elias entra. A batina absorve golpes (25 %); o **ponto fraco é o relicário de âmbar nas costas** (×1,6) — exposto quando ele **investe contra um pilar** e fica atordoado (mesma lógica do Cirurgião). Ataques novos: **varredura em área** (o chão acende 0,9 s antes; giro de 360° com o turíbulo, 20 de dano **não bloqueável**, 2 giros na fase 3), **nuvens de incenso** (fase 2+, 1 → 3 nuvens no chão que avisam e queimam 6 a cada 0,5 s) e **invocação limitada**: ao entrar nas fases 2 e 3 ele toca o sino e **dois noviços** (acólitos fracos, 60 de vida) saem dos ossuários — no máximo **2 vivos** e **4 no total**; morrem com ele. Save durante a luta nunca deixa a arena trancada.
-  - **Fim do Capítulo 3**: com o Sacristão morto, a galeria destrava; no altar, a **Ordem de transferência — Cripta → Torre** (Inês foi levada à Torre pelo centro antigo/**Cidade Morta**; o **Vigia** abre a passagem do Relógio) e a **fita de cabelo de Inês** (opcional). A saída das catacumbas grava o save `c3_end` e mostra a **tela "Fim do Capítulo 3 — A Confraria"** com texto, estatísticas (documentos x/5, fita, ordem lida) e o **gancho do Capítulo 4 — Cidade Morta** (botão "em breve", desativado). *Continuar* nesse save volta à galeria com a cripta vencida.
+  - **Fim do Capítulo 3**: com o Sacristão morto, a galeria destrava; no altar, a **Ordem de transferência — Cripta → Torre** (Inês foi levada à Torre pelo centro antigo/**Cidade Morta**; o **Vigia** abre a passagem do Relógio) e a **fita de cabelo de Inês** (opcional). A saída das catacumbas grava o save `c3_end` e mostra a **tela "Fim do Capítulo 3 — A Confraria"** com texto, estatísticas (documentos x/5, fita, ordem lida) e o **gancho do Capítulo 4 — Cidade Morta** (o botão foi ativado em pt35u — ver abaixo). *Continuar* nesse save volta à galeria com a cripta vencida.
   - **Saves**: o estado da cripta é derivado das flags (`c3_hasSignet`, `c3_cryptOpen`, `c3_bossDead`, `c3_chapterDone`) — saves antigos do Cap. 3 (fatia pt33u) continuam válidos e seguem do arquivo. Objetivos novos (sinete → sarilho → Sacristão → galeria) e opcionais (papéis do altar, fita); mapa com *Escada da cripta*, *Cripta do Sacristão* e *Galeria das catacumbas*. Orçamento de luzes ≤ 16 na cripta.
   - *(unit: ordem dos objetivos, fases/limites de invocação, posições de chefe/nichos/pilares/gatilho, checkpoints, ordem de transferência/sinete/itens, salas do mapa, save antigo do Cap. 3; smoke: sarilho recusa sem sinete, sinete no corpo do arquivista, grade sobe animada, escada + autosave `c3_preboss`, luzes, recarregar com a grade erguida, chefe desperta e tranca a porta, luta real com golpe forte (botão direito) no relicário após atordoamento no pilar, varredura com dano, incenso com dano, fases 1→2→3, invocação ≤ 2 vivos/≤ 4 total, morte libera arena/galeria, ordem + fita, saída → tela de fim do Cap. 3, save `c3_end`, recarregar e continuar — capturas `20-cripta-escada.png`, `21-fim-cap3.png`)*
+
+- **Capítulo 4 — Cidade Morta · primeira fatia jogável (pt35u)**:
+  - **Botão ativo + migração de save**: na tela "Fim do Capítulo 3" o botão **"Seguir para o Capítulo 4 — Cidade Morta"** agora funciona; *Continuar* num save `c3_end` (com `c3_chapterDone`) também migra. `makeChapter4Save`: capítulo 4, checkpoint `c4_drain` (saída do bueiro), mantém armas/desgaste/melhorias/documentos/tempo/estatísticas e a **fita de Inês**, remove o item-chave do Cap. 3 (sinete da CHAMA); vida 80–125.
+  - **Setor procedural PS2** (`src/scenes/cidade/`): **beco do bueiro** → **Rua do Comércio** (sobrados em ruínas, cinza caindo, lampiões, **bonde tombado** que barra a rua, com o *Edital — Toque de recolher*), **Farmácia Central** (oeste; balcão com o *Diário do Dr. Lauro* e a **chave da relojoaria** na gaveta do caixa), **Relojoaria Ponteiro** (leste; trancada — a chave abre e é consumida; relógios, bancada com o *Caderno do relojoeiro Ponteiro*, **livro de registros** `c4_watch`), **pátio dos fundos** (rastejador sob um lençol) e o **arco** para a **Praça do Relógio** (autosave `c4_plaza`): chafariz, pedras/bancos de pedra, a **Torre do Relógio** com varanda e porta de ferro. Colisão, grafo de navegação, mapa do Cap. 4 (7 áreas) e orçamento de luzes ≤ 16.
+  - **Inimigo novo — Cinzento**: morador coberto de cinza, lento parado e rápido na corrida (2,8 m/s), visão curta (9 m, 70°) mas sente quem chega a menos de 1,8 m; 80 de vida. 7 inimigos na fatia (cinzentos na rua, na farmácia — acorda ao pegar a chave — e na praça, um acólito e um rastejador). Mortos continuam mortos ao recarregar.
+  - **Chefe — O Vigia, primeiro confronto** (`src/ai/VigiaBoss.js`, 560 de vida, deriva do Cirurgião sem alterá-lo): de pé na varanda da Torre até o **sino tocar**; salta para a praça (**imune na descida**). Sobretudo e chapéu de aba larga, **gancho de sineiro** e o **lampião de luz fria nas costas** (ponto fraco). O corpo absorve 75 %; investir contra as **pedras/chafariz** o atordoa e expõe o lampião (×1,1). Fase 2 (70 %): a **lanterna** varre a praça, acorda os cinzentos e emenda uma investida. **Território**: não sai da praça. **Abaixo de 45 %** ele não morre — recua, **escala a fachada** e some na Torre, deixando cair o **molho de chaves da Torre** (save). A chave abre a porta de ferro: entrar conclui a fatia (save `c4_tower`, objetivo "a subida da Torre continua na próxima atualização").
+  - **Objetivos** em ordem (rua → praça → chave → relojoaria → praça → Vigia → chave → Torre) e opcionais (edital, diário, caderno). Documentos novos: *Edital — Toque de recolher*, *Diário do Dr. Lauro, farmacêutico*, *Caderno do relojoeiro Ponteiro*.
+  - *(unit: migração Cap. 3 → 4, ordem dos objetivos, mapa, cinzento, Vigia (praça, gatilho, retirada, obstáculos); smoke: botão do fim do Cap. 3, save `c3_end` migra ao continuar, Vigia dormente na varanda, luzes ≤ 16 no beco e na praça, cinzento vê/corre/golpeia, relojoaria trancada, barricada, 3 documentos, chave acorda o cinzento da farmácia, livro `c4_watch`, mapa, recarregar e continuar, rastejador do pátio, autosave da praça, sino + descida imune, território, luta real (2 atordoamentos, fases 1→2, lanterna), recuo/escalada/sumiço com save, molho de chaves, Torre aberta, recarregar com o Vigia ausente e 7/7 mortos — capturas `22-cap4-beco.png`, `23-cap4-relojoaria.png`, `24-cap4-torre.png`)*
 
 ### Sobre modelos e texturas
 
 Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, não foram usados GLB/texturas de terceiros: **o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
 
-## FALTA (Capítulos 1–3 jogáveis do início ao fim, conforme o GDD)
+## FALTA (Capítulos 1–3 jogáveis do início ao fim; Capítulo 4 com a primeira fatia, conforme o GDD)
 
 - Modelos/animações artesanais para inimigos, chefe e cenário (só o Elias usa GLB); clipes próprios para lança, tiro, esquiva, defesa e dano (hoje poses procedurais no esqueleto do GLB); o modelo dedicado `machado_coletavel_80cm.glb`.
 - Maternidade e arquivo morto já entraram; faltam mais segredos e variações de rota (hoje há quatro: câmara fria, expurgo, Quarto 7 e sala de batismo).
@@ -139,7 +147,7 @@ Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, nã
 - Streaming por setores (hoje o capítulo é carregado inteiro — é pequeno).
 - Capítulo 2: jogável do início ao fim, mas sem cenas (só texto/toasts), sem modelos próprios (caçador, carvoeiro e Brás são bonecos procedurais) e sem a Rua da Fundição.
 - **Capítulo 3 — A Confraria**: jogável do largo à galeria das catacumbas (cripta, O Sacristão e tela de fim). Faltam a investigação da organização (Dr. Silas Vernet, Dra. Helena Arcos), mais mecanismos/segurança antiga além dos discos e do sarilho, cenas (só texto/toasts) e modelos próprios (acólitos, noviços e o Sacristão são bonecos procedurais).
-- **Capítulo 4 — Cidade Morta** (centro antigo de Véspera, chefe **O Vigia**): só o gancho (ordem de transferência + tela de fim do Cap. 3); nada jogável ainda.
+- **Capítulo 4 — Cidade Morta**: só a primeira fatia (beco → praça → porta da Torre). Faltam a **subida da Torre do Relógio** (interior, mecanismo do relógio), o **segundo confronto com O Vigia** (morte real, a "passagem do Relógio"), o resgate/pista de Inês, o resto do centro antigo, a tela de fim do Cap. 4, cenas e modelos próprios (cinzentos e o Vigia são bonecos procedurais).
 - Gamepad implementado mas **não testado** com controle físico; desempenho só medido em render por software no CI local.
 
 ## Estrutura
@@ -149,7 +157,8 @@ src/
   core/      Game (loop fixo 60 Hz, estados), Input, Settings, Save, Audio, EventBus
   world/     CollisionWorld, LevelBuilder, Doors, Interactables, Navigation (A*), Textures, Materials
   gameplay/  PlayerController, EliasModel (GLB REV6) + rev6/, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem, Cutscene
-  ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss, FurnaceBoss (Brás, Cap. 2), SacristanBoss (O Sacristão, Cap. 3)
+  ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss, FurnaceBoss (Brás, Cap. 2), SacristanBoss (O Sacristão, Cap. 3), VigiaBoss (O Vigia, Cap. 4)
+  scenes/cidade/    CidadeLevel (beco, Rua do Comércio, farmácia, relojoaria, pátio, Praça do Relógio — Cap. 4), CidadeScript (chaves, sino, Vigia, Torre)
   scenes/sede/      SedeLevel (Largo do Véu, portaria, salão nobre, secretaria, arquivos, cripta — Cap. 3), SedeScript (postigo, discos, dossiê, sinete/sarilho, chefe, fim),
   scenes/bairro/    BairroLevel (Bairro Operário, Rua do Carvão, carvoaria, fábrica, casa das fornalhas — Cap. 2),
                     BairroScript (manivela, bonde, chave, válvulas, chefe Brás, fim do capítulo)
@@ -161,8 +170,8 @@ src/
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
-  unit/run.mjs     36 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
-  e2e/smoke.mjs    joga os Capítulos 1, 2 e 3 inteiros no Chromium headless (174 verificações)
+  unit/run.mjs     39 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
+  e2e/smoke.mjs    joga os Capítulos 1, 2 e 3 inteiros e a fatia do Cap. 4 no Chromium headless (194 verificações)
 ```
 
 ## Licença
