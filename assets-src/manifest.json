@@ -1,0 +1,16 @@
+{
+  "note": "gerado por scripts/assets.mjs --pack",
+  "assets": [
+    {
+      "out": "public/models/elias_rev6.glb",
+      "size": 7549980,
+      "sha256": "a83657066e318b5d4b6946c0b84842d1d3c9b2a22679c6edaf90ac1c0869358f",
+      "parts": [
+        "elias_rev6.glb.b64.part01",
+        "elias_rev6.glb.b64.part02",
+        "elias_rev6.glb.b64.part03",
+        "elias_rev6.glb.b64.part04"
+      ]
+    }
+  ]
+}
