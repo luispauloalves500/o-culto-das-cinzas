@@ -98,9 +98,12 @@ export class BairroScript extends HospitalScript {
       this._giveItem('passe_bonde'); this.q.set('c2_hasPass');
     }, () => this._passMesh(45, 0.5, 92.1), () => this.q.has('c2_bossDead'));
     g.interact.add({ id: 'c2_exit', pos: { x: 55.2, y: 1.2, z: 87 }, radius: 1.8,
-      prompt: () => (this.q.has('c2_bossDead') ? 'Sair pela porta de serviço (Rua da Fundição)' : 'A porta de serviço está trancada por dentro da fornalha'),
+      prompt: () => (!this.q.has('c2_bossDead') ? 'A porta de serviço está trancada por dentro da fornalha'
+        : this._hasPass() ? 'Sair pela porta de serviço e mostrar o passe ao motorneiro da Linha 4' : 'Sair pela porta de serviço (Rua da Fundição)'),
       onInteract: () => {
         if (!this.q.has('c2_bossDead')) { g.audio.play('locked', null); g.hud.toast('A tranca está presa. Não enquanto aquilo respira.'); return; }
+        // o passe da Linha 4 é a passagem para o Capítulo 3: sem a fita vermelha o motorneiro não leva ninguém
+        if (!this._hasPass()) { g.audio.play('locked', null); g.hud.toast('Lá fora, o bonde da Linha 4 espera — mas o motorneiro só leva quem tem a fita vermelha. Procure na grelha da Garganta.', 5); return; }
         this.q.set('c2_chapterDone');
         g.saveGame('c2_end');
         g.endChapter();
@@ -203,6 +206,7 @@ export class BairroScript extends HospitalScript {
     g.perception.noise(d, 5, 'door');
   }
 
+  _hasPass() { return this.game.inventory.has('passe_bonde') || this.q.has('c2_hasPass'); }
   _applyState(save) {
     const g = this.game, L = this.level, f = save.flags, pl = g.player;
     for (const id in save.doors) L.doors[id]?.restore(save.doors[id]);

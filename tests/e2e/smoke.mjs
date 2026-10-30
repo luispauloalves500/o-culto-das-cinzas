@@ -999,6 +999,8 @@ try {
     out.dead = g.quest.has('c2_bossDead'); out.unlocked = !g.level.doors.c2_arena.locked; out.bossBar = !document.getElementById('boss').classList.contains('hidden');
     out.obj = g.quest.current();
     // passe do bonde na grelha e a saída
+    // sem o passe, o motorneiro não leva ninguém: a saída recusa
+    T.tp(54.4, 0, 87, Math.PI / 2); out.exitNoPass = T.interactAt('c2_exit'); out.stNoPass = g.state; out.cpNoPass = JSON.parse(localStorage.getItem('ocdc_save')).checkpoint;
     T.tp(45, 0, 90.4, 0); out.pass = T.interactAt('pick_c2_pass'); out.hasPass = g.quest.has('c2_hasPass');
     T.tp(54.4, 0, 87, Math.PI / 2); out.exit = T.interactAt('c2_exit');
     const s = JSON.parse(localStorage.getItem('ocdc_save'));
@@ -1014,7 +1016,8 @@ try {
   check('Cap. 2: Brás usa carvão em brasa (fase 2+) e o anel de fogo (fase 3)', c2fight.thrown >= 1 && c2fight.vent >= 1 && c2fight.ventHit >= 1 && c2fight.ventDmg >= 20 && c2fight.minHp < 100, JSON.stringify({ t: c2fight.thrown, v: c2fight.vent, h: c2fight.ventHit, dmg: c2fight.ventDmg, m: c2fight.minHp, dbg: c2fight.ventDbg }));
   check('Cap. 2: derrota destrava a arena e esconde a barra', c2fight.dead && c2fight.unlocked && !c2fight.bossBar && /porta de serviço/.test(c2fight.obj), JSON.stringify({ d: c2fight.dead, u: c2fight.unlocked, b: c2fight.bossBar, o: c2fight.obj }));
   check('Cap. 2: passe do bonde e saída encerram o capítulo com save', c2fight.pass === 'ok' && c2fight.hasPass && c2fight.exit === 'ok' && c2fight.state === 'end' && c2fight.save.cp === 'c2_end' && c2fight.save.ch === 2 && c2fight.save.done && c2fight.save.bossDead, JSON.stringify(c2fight.save) + ' ' + c2fight.state + ' ' + c2fight.pass + ' ' + c2fight.exit);
-  check('Cap. 2: tela de fim do Capítulo 2 (Cap. 3 em breve)', /Fim do Capítulo 2/.test(end2.title || '') && /Capítulo 3/.test(end2.btn) && end2.dis && end2.vis, JSON.stringify(end2));
+  check('Cap. 2: saída recusada sem o passe do bonde', c2fight.exitNoPass === 'ok' && c2fight.stNoPass === 'playing' && c2fight.cpNoPass !== 'c2_end', JSON.stringify({ e: c2fight.exitNoPass, s: c2fight.stNoPass, c: c2fight.cpNoPass }));
+  check('Cap. 2: tela de fim libera o Capítulo 3 (passe do bonde)', /Fim do Capítulo 2/.test(end2.title || '') && /Seguir para o Capítulo 3/.test(end2.btn) && !end2.dis && end2.vis, JSON.stringify(end2));
   await page.screenshot({ path: SHOTS + '16-fim-cap2.png' });
   // recarregar a página e "Continuar" volta ao Capítulo 2 com o estado salvo
   await page.reload({ waitUntil: 'networkidle0' });
@@ -1030,6 +1033,126 @@ try {
   });
   check('Cap. 2: continuar restaura o Bairro Operário (portas, coleta, inimigo morto, melhorias)', c2b.st === 'playing' && c2b.ch === 2 && Math.abs(c2b.pos[0] - 53) < 0.6 && Math.abs(c2b.pos[2] - 87) < 0.6 && c2b.bossDead && c2b.fac && c2b.gate && c2b.arenaFree && c2b.pass && !c2b.active && c2b.shut && c2b.dep && c2b.crankHidden && c2b.dead && c2b.maxSt === 125 && c2b.heal === 65 && c2b.sharp, JSON.stringify(c2b));
   await page.screenshot({ path: SHOTS + '12-bairro-rua.png' });
+  // ---------------- Capítulo 3 — A Confraria: o passe do Brás leva à Sede ----------------
+  const c3go = await page.evaluate(() => {
+    const g = __ocdc;
+    T.tp(54.4, 0, 87, Math.PI / 2); const ex = T.interactAt('c2_exit');
+    return { ex, st: g.state };
+  });
+  await new Promise((r) => setTimeout(r, 300));
+  await page.click('#btnEndNext');
+  await new Promise((r) => setTimeout(r, 800));
+  await inject();
+  const c3a = await page.evaluate(() => {
+    const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    T.run(0.3);
+    const s0 = S();
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const out = { start: { st: g.state, ch: g.chapter, sch: s0.chapter, cp: s0.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), pass: g.inventory.has('passe_bonde'),
+      noKeys: !g.inventory.has('manivela_carga') && !g.inventory.has('chave_fabrica'), axe: g.inventory.weapons.includes('machado'), docs: g.inventory.documents.length,
+      enemies: g.enemies.map((e) => e.type), obj: g.quest.current(), mainLocked: g.level.doors.c3_main.locked, wicketLocked: g.level.doors.c3_wicket.locked, crypt: g.level.doors.c3_crypt.locked } };
+    out.lights0 = lights();
+    // portas de bronze: trancadas por fora
+    T.tp(12, 0, 10.6, 0); out.mainOut = T.interactAt('door_c3_main'); out.mainStill = g.level.doors.c3_main.locked;
+    // postigo sem o passe: recusa
+    T.tp(22.7, 0, 8, Math.PI / 2);
+    const had = g.inventory.count('passe_bonde'); g.inventory.remove('passe_bonde', had); const hf = g.quest.flags.c2_hasPass; delete g.quest.flags.c2_hasPass;
+    out.wNo = T.interactAt('door_c3_wicket'); out.wNoLocked = g.level.doors.c3_wicket.locked;
+    g.inventory.add('passe_bonde', had); g.quest.flags.c2_hasPass = hf;
+    out.wYes = T.interactAt('door_c3_wicket'); T.run(1.2); out.wOpen = g.level.doors.c3_wicket.open && !g.level.doors.c3_wicket.locked && g.quest.has('c3_wicketOpen');
+    out.obj1 = g.quest.current();
+    T.tp(4, 0, 4.5, Math.PI * 0.62); T.run(0.4);
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '17-largo-veu.png' });
+  check('Cap. 3: saída do Cap. 2 com o passe → botão leva à Sede (save do Cap. 3)', c3go.ex === 'ok' && c3a.start.st === 'playing' && c3a.start.ch === 3 && c3a.start.sch === 3 && c3a.start.cp === 'c3_tram' && Math.abs(c3a.start.pos[0] - 6) < 0.4 && c3a.start.pass && c3a.start.noKeys && c3a.start.axe && /postigo/.test(c3a.start.obj), JSON.stringify(c3a.start));
+  check('Cap. 3: acólitos e rastejador na Sede', c3a.start.enemies.filter((t) => t === 'acolito').length === 5 && c3a.start.enemies.includes('rastejador'), JSON.stringify(c3a.start.enemies));
+  check('Cap. 3: portas de bronze trancadas por fora; postigo recusa sem passe e abre com ele', c3a.mainStill && c3a.wNo === 'ok' && c3a.wNoLocked && c3a.wYes === 'ok' && c3a.wOpen && /salão/.test(c3a.obj1), JSON.stringify(c3a));
+  check('Cap. 3: orçamento de luzes no largo (≤ 16)', c3a.lights0 <= 16, 'v=' + c3a.lights0);
+  const c3b = await page.evaluate(() => {
+    const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
+    const out = {};
+    const ac = E('aco_hall'); out.aco = { hp: ac.hp, type: ac.type, veil: !!ac.rig?.root };
+    // atravessa a portaria até o salão nobre: autosave
+    T.tp(25.5, 0, 8, Math.PI / 2); T.hold('KeyW', 0.8); out.lodgeX = +g.player.pos.x.toFixed(2);
+    T.tp(29.2, 0, 9.6, 0); out.book = T.interactAt('c3_lodge_book'); out.bookCp = S().checkpoint;
+    T.tp(28.2, 0, 6.6, Math.PI); out.portaria = T.interactAt('doc_livro_portaria');
+    T.tp(27, 0, 11, 0); T.interactAt('door_c3_lodge'); T.run(1.0); T.hold('KeyW', 1.2); T.run(0.2);
+    out.hall = g.quest.has('c3_inHall'); out.hallCp = S().checkpoint; out.hallZ = +g.player.pos.z.toFixed(2);
+    ['aco_largo', 'aco_hall', 'aco_porteiro'].forEach((id) => E(id).setDeadInstant()); g.player.hp = g.player.maxHp;
+    // tranca das portas de bronze por dentro
+    T.tp(12, 0, 13.4, Math.PI); out.bar = T.interactAt('door_c3_main'); T.run(1.2);
+    out.mainOpen = g.level.doors.c3_main.open && g.quest.has('c3_mainOpen') && !g.level.mainBar.visible;
+    // alavanca com a ordem errada: o sino toca e os discos voltam
+    T.tp(26.3, 0, 28.6, 0); out.lever0 = T.interactAt('c3_lever'); T.run(0.3);
+    out.bell = g.quest.has('c3_bellRung') && g.level.doors.c3_vault.locked && g.level.dials.every((d) => d.value === 3);
+    out.secDormant = E('aco_sec').dormant;
+    // secretaria: o Regimento acorda o escrivão
+    T.tp(10, 0, 28.6, 0); out.sec = T.interactAt('door_c3_secret'); T.run(1.2);
+    T.tp(10.1, 0, 36.6, 0); out.reg = T.interactAt('doc_regimento_arquivo'); T.run(0.1);
+    out.regFlag = g.quest.has('c3_readRegimento'); out.secAwake = !E('aco_sec').dormant;
+    E('aco_sec').setDeadInstant(); g.player.hp = g.player.maxHp;
+    T.tp(7.9, 0, 33.4, 0); out.ammo = T.interactAt('pick_c3_ammo_sec');
+    // discos: CINZA · OLHO · VÉU e alavanca
+    const turn = (i, n) => { T.tp(g.level.dials[i].x, 0, 28.7, 0); for (let k = 0; k < n; k++) { const r = T.interactAt('c3_dial' + i); if (r !== 'ok') return r; } return 'ok'; };
+    out.d0 = turn(0, 1); out.d1 = turn(1, 2); out.d2 = turn(2, 3);
+    out.vals = g.level.dials.map((d) => d.value);
+    T.tp(26.3, 0, 28.6, 0); out.lever1 = T.interactAt('c3_lever'); T.run(2.0);
+    out.vault = g.level.doors.c3_vault.open && g.quest.has('c3_vaultOpen');
+    out.obj = g.quest.current();
+    T.tp(24, 0, 25, 0); T.run(0.4);
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '18-portao-arquivo.png' });
+  check('Cap. 3: portaria, livro de registros e autosave no salão nobre', c3b.book === 'ok' && c3b.bookCp === 'c3_lodge' && c3b.portaria === 'ok' && c3b.hall && c3b.hallCp === 'c3_hall' && c3b.aco.hp === 95, JSON.stringify(c3b));
+  check('Cap. 3: tranca interna abre as portas de bronze (atalho)', c3b.bar === 'ok' && c3b.mainOpen, JSON.stringify({ b: c3b.bar, m: c3b.mainOpen }));
+  check('Cap. 3: ordem errada toca o sino e reinicia os discos', c3b.lever0 === 'ok' && c3b.bell && c3b.secDormant, JSON.stringify({ l: c3b.lever0, b: c3b.bell }));
+  check('Cap. 3: Regimento na secretaria (escrivão desperta)', c3b.sec === 'ok' && c3b.reg === 'ok' && c3b.regFlag && c3b.secAwake && c3b.ammo === 'ok', JSON.stringify({ s: c3b.sec, r: c3b.reg, f: c3b.regFlag, a: c3b.secAwake, m: c3b.ammo }));
+  check('Cap. 3: discos CINZA·OLHO·VÉU abrem o portão do arquivo', c3b.d0 === 'ok' && c3b.d1 === 'ok' && c3b.d2 === 'ok' && c3b.vals.join() === '0,1,2' && c3b.lever1 === 'ok' && c3b.vault && /escada/.test(c3b.obj), JSON.stringify({ d: [c3b.d0, c3b.d1, c3b.d2], v: c3b.vals, l: c3b.lever1, o: c3b.obj }));
+  const c3c = await page.evaluate(() => {
+    const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const out = {};
+    // desce a escada andando
+    T.tp(24, 0, 30.8, 0); T.hold('KeyW', 4.5); T.run(0.2);
+    out.stairY = +g.player.pos.y.toFixed(2); out.stairZ = +g.player.pos.z.toFixed(2);
+    if (g.player.pos.y > -4) T.tp(24, -4.5, 41.8, 0);
+    T.run(0.2);
+    out.arch = g.quest.has('c3_inArchive'); out.archCp = S().checkpoint;
+    E('aco_arq').setDeadInstant(); g.player.hp = g.player.maxHp;
+    T.tp(25.8, -4.5, 44.6, Math.PI / 2); out.ficha = T.interactAt('doc_ficha_ines'); T.run(0.1); out.fichaFlag = g.quest.has('c3_readFicha');
+    out.rasDormant = E('ras_arq').dormant;
+    T.tp(33.1, -4.5, 56, Math.PI / 2); out.dos = T.interactAt('pick_c3_dossier'); T.run(0.1);
+    out.dossier = g.quest.has('c3_hasDossier') && g.inventory.has('dossie_elias') && g.inventory.documents.includes('dossie_elias');
+    out.rasAwake = !E('ras_arq').dormant;
+    E('ras_arq').setDeadInstant(); g.player.hp = g.player.maxHp;
+    T.tp(25, -4.5, 56.6, 0); out.crypt = T.interactAt('door_c3_crypt'); out.cryptLocked = g.level.doors.c3_crypt.locked;
+    out.obj = g.quest.current();
+    out.lights = lights();
+    T.key('KeyM'); out.mapState = g.state; out.map = g.menus.lastMap;
+    out.tabs = [...document.querySelectorAll('.map-tab')].filter((e) => !e.classList.contains('hidden')).map((e) => e.textContent);
+    g.closeOverlay();
+    T.tp(15.6, -4.5, 40.6, 0); out.book = T.interactAt('c3_arq_book'); const s = S();
+    out.save = { cp: s.checkpoint, ch: s.chapter, dos: s.flags.c3_hasDossier, vault: s.flags.c3_vaultOpen, dead: s.deadEnemies.length };
+    T.tp(24.5, -4.5, 42.5, 0); T.run(0.5);
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '19-arquivos.png' });
+  check('Cap. 3: escada desce aos arquivos e autosave', c3c.stairY < -3.5 && c3c.arch && c3c.archCp === 'c3_archive', JSON.stringify({ y: c3c.stairY, z: c3c.stairZ, a: c3c.arch, c: c3c.archCp }));
+  check('Cap. 3: ficha de Inês e dossiê de Elias (rastejador desperta)', c3c.ficha === 'ok' && c3c.fichaFlag && c3c.rasDormant && c3c.dos === 'ok' && c3c.dossier && c3c.rasAwake, JSON.stringify(c3c));
+  check('Cap. 3: cripta do Sacristão trancada (fim da fatia)', c3c.crypt === 'ok' && c3c.cryptLocked && /cripta/.test(c3c.obj), c3c.obj);
+  check('Cap. 3: mapa com térreo e arquivos', c3c.mapState === 'map' && c3c.tabs.length === 2 && c3c.tabs.includes('Arquivos') && c3c.map?.rooms >= 2, JSON.stringify({ t: c3c.tabs, m: c3c.map }));
+  check('Cap. 3: orçamento de luzes nos arquivos (≤ 16)', c3c.lights <= 16, 'v=' + c3c.lights);
+  check('Cap. 3: livro do arquivo salva com o dossiê', c3c.book === 'ok' && c3c.save.cp === 'c3_archive' && c3c.save.ch === 3 && c3c.save.dos && c3c.save.vault && c3c.save.dead >= 6, JSON.stringify(c3c.save));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c3r = await page.evaluate(() => {
+    document.getElementById('btnContinue').click();
+    const g = __ocdc; T.run(0.3);
+    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), vault: g.level.doors.c3_vault.open, wicket: g.level.doors.c3_wicket.open, main: g.level.doors.c3_main.open, bar: g.level.mainBar.visible,
+      dos: g.inventory.has('dossie_elias'), hidden: !g.level.pickupMeshes.c3_dossier.visible, dead: g.enemies.filter((e) => !e.alive).length, crypt: g.level.doors.c3_crypt.locked, obj: g.quest.current(), dials: g.level.dials.map((d) => d.value).join() };
+  });
+  check('Cap. 3: continuar restaura a Sede (portas, discos, dossiê, inimigos)', c3r.st === 'playing' && c3r.ch === 3 && Math.abs(c3r.pos[1] + 4.5) < 0.3 && Math.abs(c3r.pos[2] - 41.8) < 0.6 && c3r.vault && c3r.wicket && c3r.main && !c3r.bar && c3r.dos && c3r.hidden && c3r.dead >= 6 && c3r.crypt && c3r.dials === '0,1,2', JSON.stringify(c3r));
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));

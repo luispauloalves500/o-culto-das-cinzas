@@ -446,5 +446,43 @@ test('Cap. 2: Brás tem 3 fases (limiares de vida)', () => {
   assert.ok(FURNACE_PHASES.p2 > FURNACE_PHASES.p3 && FURNACE_PHASES.p3 > 0);
 });
 
+const { makeChapter3Save } = await import('../../src/core/SaveManager.js');
+const { OBJECTIVES_C3 } = await import('../../src/data/chapters.js');
+const { VAULT_CODE } = await import('../../src/scenes/sede/SedeScript.js');
+const { DIAL_SYMBOLS, SEDE_CHECKPOINTS } = await import('../../src/scenes/sede/SedeLevel.js');
+test('Cap. 3: save mantém o passe, remove itens-chave do Cap. 1/2 e começa no bonde', () => {
+  const prev = createEmptySave(); prev.chapter = 2; prev.flags = { c2_hasPass: true, sharpened: true, hasAmulet: true };
+  prev.inventory.items = { passe_bonde: 1, manivela_carga: 1, chave_fabrica: 1, fusivel: 1, bandagem: 2 };
+  prev.inventory.weapons = ['machado', 'revolver']; prev.documents = ['recado_ines']; prev.player.hp = 30;
+  const s = makeChapter3Save(prev);
+  assert.equal(s.chapter, 3); assert.equal(s.checkpoint, 'c3_tram');
+  assert.equal(s.inventory.items.passe_bonde, 1); assert.equal(s.inventory.items.bandagem, 2);
+  for (const k of ['manivela_carga', 'chave_fabrica', ...CH1_KEY_ITEMS]) assert.ok(!s.inventory.items[k], k);
+  assert.ok(s.flags.c2_chapterDone && s.flags.c3_started && s.flags.sharpened && s.flags.hasAmulet);
+  assert.deepEqual(s.deadEnemies, []); assert.ok(s.documents.includes('recado_ines'));
+  assert.ok(s.player.hp >= 80, 'chega ao Cap. 3 com vida mínima');
+  assert.ok(makeChapter3Save(null).inventory.items.passe_bonde >= 1, 'sem save anterior também leva o passe');
+  assert.ok(SEDE_CHECKPOINTS[s.checkpoint]);
+});
+test('Cap. 3: objetivos, mapa da Sede, acólito, documentos e segredo do Regimento', () => {
+  assert.equal(CHAPTERS.find((c) => c.id === 3).playable, true);
+  assert.deepEqual(OBJECTIVES_C3.map((o) => o.done), ['c3_wicketOpen', 'c3_inHall', 'c3_readRegimento', 'c3_vaultOpen', 'c3_inArchive', 'c3_hasDossier', 'c3_never']);
+  try {
+    setMapChapter(3);
+    assert.deepEqual(chapterFloors().map((f) => f.id).sort(), ['lo', 'up']);
+    assert.equal(roomAt({ x: 18, y: 0, z: 20 }).id, 'c3_salao');
+    assert.equal(roomAt({ x: 25, y: -4.5, z: 50 }).id, 'c3_arquivo');
+    assert.equal(roomAt({ x: 10, y: 0, z: 34 }).id, 'c3_secretaria');
+  } finally { setMapChapter(1); }
+  const a = ENEMIES.acolito;
+  assert.ok(a && a.hp > ENEMIES.cacador.hp && a.attacks.length >= 2 && a.attacks.every((k) => k.windup > 0 && k.dmg > 0));
+  for (const id of ['livro_portaria', 'regimento_arquivo', 'ficha_ines', 'dossie_elias']) assert.equal(DOCUMENTS[id]?.ch, 3, id);
+  assert.ok(ITEMS.dossie_elias && /Véu/.test(ITEMS.passe_bonde.desc));
+  // o Regimento cita a ordem que abre o portão
+  const body = DOCUMENTS.regimento_arquivo.body;
+  const order = VAULT_CODE.map((i) => DIAL_SYMBOLS[i]);
+  let at = -1; for (const w of order) { const k = body.indexOf(w, at + 1); assert.ok(k > at, w); at = k; }
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);
