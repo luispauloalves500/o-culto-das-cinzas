@@ -6,6 +6,10 @@ import { migrateSave, createEmptySave, SaveManager, SAVE_KEY, SAVE_VERSION } fro
 import { CombatSystem, testVolume } from '../../src/gameplay/CombatSystem.js';
 import { WEAPONS } from '../../src/data/weapons.js';
 import { DOCUMENTS } from '../../src/data/documents.js';
+import { ENEMIES } from '../../src/data/enemies.js';
+import { ITEMS } from '../../src/data/items.js';
+import { SIDE_OBJECTIVES } from '../../src/data/chapters.js';
+import { QuestSystem } from '../../src/gameplay/QuestSystem.js';
 
 let ok = 0, fail = 0;
 function test(name, fn) {
@@ -129,8 +133,42 @@ test('dados: ataques do machado têm janela ativa dentro da duração', () => {
 
 test('dados: documentos têm título e corpo', () => {
   const docs = Object.values(DOCUMENTS);
-  assert.ok(docs.length >= 4);
+  assert.ok(docs.length >= 7);
+  for (const id of ['prontuario_leste', 'registro_necroterio', 'carta_helena']) assert.ok(DOCUMENTS[id], id);
   for (const d of docs) assert.ok(d.title && d.body);
+});
+
+test('dados: Rastejador é baixo, rastejante e com ataques válidos; chave do necrotério existe', () => {
+  const r = ENEMIES.rastejador;
+  assert.ok(r && r.crawler && r.height < 1);
+  for (const a of r.attacks) assert.ok(a.range > 0 && a.windup > 0 && a.recover > 0);
+  assert.ok(ITEMS.chave_necroterio?.name);
+});
+
+test('objetivos opcionais aparecem só depois da pista e somem ao concluir', () => {
+  const q = new QuestSystem();
+  assert.equal(q.side().length, 0);
+  q.set('power');
+  assert.equal(q.side().length, 1);
+  q.set('enteredEast');
+  assert.ok(q.side()[0].includes('chave do necrotério'));
+  q.set('hasMorgueKey'); q.set('enteredMorgue'); q.set('readEastChart');
+  assert.ok(q.side()[0].includes('gaveta 13'));
+  q.set('coldRoomOpen');
+  assert.equal(q.side().length, 0);
+  for (const o of SIDE_OBJECTIVES) assert.ok(o.when && o.done && o.text);
+});
+
+test('A*: câmara fria só é alcançável com o painel secreto aberto', () => {
+  const n = new Navigation();
+  n.addNode('hall', 20, -5, 12); n.addNode('mor', 21, -5, 5); n.addNode('cold', 21.5, -5, -1.6);
+  const morgue = { open: false }, cold = { open: false };
+  n.link('hall', 'mor', morgue); n.link('mor', 'cold', cold);
+  assert.equal(n.findPath('hall', 'cold'), null);
+  morgue.open = true;
+  assert.equal(n.findPath('hall', 'cold'), null);
+  cold.open = true;
+  assert.deepEqual(n.findPath('hall', 'cold').map((x) => x.id ?? x), ['hall', 'mor', 'cold']);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

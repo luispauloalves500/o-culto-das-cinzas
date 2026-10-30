@@ -15,7 +15,21 @@ export const ENEMY_SPAWNS = [
   { id: 'int_wake', type: 'interno', x: 10, y: UP, z: 13.3, yaw: Math.PI, dormant: true },
   { id: 'enf_lh', type: 'enfermeiro', x: 34, y: LO, z: 12, patrol: [{ x: 33, y: LO, z: 12 }, { x: 17, y: LO, z: 12 }] },
   { id: 'int_arq', type: 'interno', x: 32.5, y: LO, z: 4.6, yaw: 0 },
+  // Ala Leste (quarentena)
+  { id: 'enf_east', type: 'enfermeiro', x: 21, y: UP, z: 4.5, patrol: [{ x: 20, y: UP, z: 4.5 }, { x: 28, y: UP, z: 4.5 }, { x: 28, y: UP, z: 1.5 }, { x: 20, y: UP, z: 1.5 }] },
+  { id: 'int_east', type: 'interno', x: 35.2, y: UP, z: 8.4, yaw: Math.PI, dormant: true },
+  // necrotério
+  { id: 'int_morgue', type: 'interno', x: 24.7, y: LO, z: 2.4, yaw: Math.PI },
+  { id: 'ras_morgue', type: 'rastejador', x: 21, y: LO, z: 5.2, yaw: -Math.PI / 2, dormant: true },
 ];
+
+// gavetas do necrotério que abrem de verdade e o que há nelas
+const DRAWER_NOTES = {
+  5: 'Um corpo coberto. Etiqueta no pé: "Paciente 9".',
+  13: 'Vazia — e funda demais. O fundo range, como se fosse oco.',
+  20: 'Um saco de cinzas etiquetado "Paciente 12". Enfiada ao lado, uma bandagem.',
+  26: 'Vazia. Cheira a cal.',
+};
 
 export class HospitalScript {
   constructor(game, level) {
@@ -52,20 +66,37 @@ export class HospitalScript {
       const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.25, 6), M.paper); m.rotation.z = Math.PI / 2; m.position.set(19, 0.92, 21.4); return m;
     });
     this._pickup('band_arq', { x: 31.5, y: LO + 0.9, z: 3.0 }, 'Pegar bandagem', () => this._giveItem('bandagem'), () => this._bandMesh(31.5, LO + 0.86, 2.7));
+    // Ala Leste: chave do necrotério (acorda o paciente do isolamento)
+    this._pickup('morgue_key', { x: 33.2, y: UP + 1.0, z: -2.4 }, 'Pegar chave do necrotério', () => {
+      this._giveItem('chave_necroterio'); this.q.set('hasMorgueKey');
+      const w = g.enemies.find((e) => e.id === 'int_east');
+      if (w && w.alive && w.dormant) { w.wake(); g.audio.play('groan', w.pos, { pitch: 0.9 }); }
+    }, () => this._keyMesh(33.2, UP + 0.92, -2.45));
+    // necrotério: bandagem escondida na gaveta 20 (só aparece com a gaveta aberta)
+    this._pickup('band_morgue', { x: 22.75, y: LO + 1.0, z: 1.0 }, 'Pegar bandagem', () => this._giveItem('bandagem'), () => this._bandMesh(22.75, LO + 1.0, 0.95),
+      () => L.drawers[20].open && L.drawers[20].t > 0.8);
+    { const m = L.pickupMeshes.band_morgue, dg = L.drawers[20].g; dg.add(m); m.position.set(0.12, -0.12, -0.3); m.rotation.z = Math.PI / 2; }
+    // câmara fria (área secreta): recompensa do Morais
+    this._pickup('band_cold', { x: 23.3, y: LO + 0.9, z: -2.5 }, 'Pegar bandagens (×2)', () => { this.game.inventory.add('bandagem', 2); this.game.hud.toast('Bandagem ×2 obtida'); },
+      () => { const gr = new THREE.Group(); gr.add(this._bandMesh(23.15, LO + 0.85, -2.55)); gr.add(this._bandMesh(23.4, LO + 0.85, -2.45)); return gr; });
     this._pickup('band_sc', { x: 23.5, y: LO + 0.9, z: 18.6 }, 'Pegar bandagem', () => this._giveItem('bandagem'), () => this._bandMesh(23.5, LO + 0.9, 18));
 
     // ---------- documentos ----------
     this._doc('ficha_elias', { x: 2.15, y: 0.7, z: 2.95 }, 2.15, 0.62, 2.95);
     this._doc('aviso_maquinas', { x: 37.4, y: 1.5, z: 17 }, 37.88, 1.5, 17, true);
     this._doc('relatorio_quarentena', { x: 31, y: LO + 0.85, z: 3.0 }, 30.7, LO + 0.82, 2.7);
+    this._doc('prontuario_leste', { x: 29.2, y: UP + 0.95, z: -2.45 }, 29.2, UP + 0.91, -2.45);
+    this._doc('registro_necroterio', { x: 16.8, y: LO + 0.9, z: 2.2 }, 16.8, LO + 0.86, 2.2);
+    this._doc('carta_helena', { x: 22.6, y: LO + 0.85, z: -2.55 }, 22.6, LO + 0.81, -2.55);
     this._doc('diario_cirurgiao', { x: 23.5, y: LO + 0.9, z: 17 }, 23.5, LO + 0.88, 17);
 
     // ---------- livros de registro (save) ----------
     this._saveBook('book_ward', { x: 7.1, y: 0.9, z: -2.2 }, 7.1, 0.86, -2.45, 'ward_bed');
+    this._saveBook('book_east', { x: 34.6, y: UP + 0.98, z: -2.45 }, 34.6, UP + 0.94, -2.45, 'east_ward');
     this._saveBook('book_yard', { x: 38.6, y: LO + 0.95, z: 25.6 }, 38.6, LO + 0.92, 24.8, 'yard');
 
     // ---------- portas comuns ----------
-    for (const id of ['ward', 'shortcut', 'storage', 'machines', 'archive', 'arena']) {
+    for (const id of ['ward', 'shortcut', 'storage', 'machines', 'archive', 'arena', 'eastWard', 'eastLanding', 'morgue']) {
       const d = L.doors[id];
       g.interact.add({
         id: 'door_' + id, radius: 1.7,
@@ -73,6 +104,16 @@ export class HospitalScript {
         prompt: () => (d.locked ? 'Abrir ' + d.label : d.open ? 'Fechar ' + d.label : 'Abrir ' + d.label),
         onInteract: () => this._useDoor(d),
       });
+    }
+
+    // ---------- gavetas do necrotério ----------
+    for (const n of L.openableDrawers) {
+      const dw = L.drawers[n], sl = L.drawerSlots[n];
+      g.interact.add({ id: 'drawer_' + n, pos: { x: sl.x, y: sl.y, z: sl.z + 0.35 }, radius: 1.0,
+        // com a bandagem ainda na bandeja, o foco vai para ela (não para a gaveta)
+        enabled: () => !(n === 20 && dw.open && dw.t > 0.8 && !this.q.has('picked_band_morgue')),
+        prompt: () => (this._canPushBack(n) ? 'Empurrar o fundo da gaveta 13' : (dw.open ? 'Fechar' : 'Abrir') + ' gaveta ' + n),
+        onInteract: () => this._useDrawer(n) });
     }
 
     // ---------- quebra-cabeça elétrico ----------
@@ -123,14 +164,21 @@ export class HospitalScript {
     const hd = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.17, 0.05), M.axeMetal); hd.position.set(0.1, 0.3, 0); gr.add(hd);
     gr.position.set(x, y, z); gr.rotation.z = 0.15; return gr;
   }
+  _keyMesh(x, y, z) {
+    const M = this.game.materials, gr = new THREE.Group();
+    const ring = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.015, 0.07), M.axeMetal); gr.add(ring);
+    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.015, 0.16), M.steel); shaft.position.z = 0.1; gr.add(shaft);
+    const tag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.01, 0.05), M.paper); tag.position.set(0.07, 0, -0.03); gr.add(tag);
+    gr.position.set(x, y, z); gr.rotation.y = 0.6; return gr;
+  }
   _bandMesh(x, y, z) {
     const m = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.1, 8), this.game.materials.bandage);
     m.position.set(x, y, z); return m;
   }
-  _pickup(id, pos, prompt, give, meshFn) {
+  _pickup(id, pos, prompt, give, meshFn, cond = null) {
     const g = this.game;
     const mesh = meshFn(); this.level.b.group.add(mesh); this.level.pickupMeshes[id] = mesh;
-    g.interact.add({ id: 'pick_' + id, pos, radius: 1.4, prompt, enabled: () => !this.q.has('picked_' + id),
+    g.interact.add({ id: 'pick_' + id, pos, radius: 1.4, prompt, enabled: () => !this.q.has('picked_' + id) && (!cond || cond()),
       onInteract: () => { this.q.set('picked_' + id); mesh.visible = false; g.audio.play('pickup', null); give(); } });
   }
   _giveItem(id) { this.game.inventory.add(id); this.game.hud.toast((ITEMS[id]?.name || id) + ' obtido'); if (id === 'bandagem') this.hint('heal', '<b>H</b>: usar bandagem (+45 de vida). <b>Tab</b>: inventário e documentos.', 7); }
@@ -164,10 +212,57 @@ export class HospitalScript {
         g.hud.toast('Você puxou o ferrolho. Atalho aberto para a enfermaria.');
         return;
       }
+      if (d.id === 'eastLanding' && p.x > 16) {
+        d.locked = false; d.setOpen(true); this.q.set('eastShortcutOpen');
+        g.hud.toast('Você puxou o ferrolho. A Ala Leste agora dá para o patamar da escada.');
+        return;
+      }
+      if (d.id === 'morgue' && g.inventory.has('chave_necroterio')) {
+        g.inventory.remove('chave_necroterio');
+        d.locked = false; d.setOpen(true); this.q.set('morgueUnlocked');
+        g.audio.play('switch', d);
+        g.hud.toast('A chave gira com esforço. O necrotério está aberto.');
+        g.perception.noise(d, 7, 'door');
+        return;
+      }
+      this.q.set('note_' + d.id); // vai para as Anotações do inventário
       g.audio.play('locked', d); g.hud.toast(d.lockMsg); return;
     }
     d.setOpen(!d.open);
     g.perception.noise(d, 5, 'door');
+  }
+
+  // ---------- necrotério: gavetas e câmara secreta ----------
+  _canPushBack(n) {
+    return n === 13 && this.level.drawers[13].open && this.level.doors.coldRoom.locked && this.game.inventory.documents.includes('prontuario_leste');
+  }
+  _useDrawer(n) {
+    const g = this.game, L = this.level, dw = L.drawers[n], sl = L.drawerSlots[n];
+    const at = { x: sl.x, y: LO, z: sl.z + 0.5 };
+    if (this._canPushBack(n)) {
+      const d = L.doors.coldRoom;
+      d.locked = false; d.setOpen(true); this.q.set('coldRoomOpen');
+      g.audio.play('thud', d);
+      g.perception.noise(at, 10, 'door');
+      g.hud.toast('O fundo cede com um estalo. Ao lado das gavetas, um painel de azulejos desliza: a câmara fria do Morais.');
+      return;
+    }
+    dw.open = !dw.open;
+    this.q.set('drawer_' + n, dw.open);
+    g.audio.play('door', at);
+    // o rangido do trilho é alto: atrai quem estiver no necrotério e desperta o Rastejador
+    g.perception.noise(at, 9, 'drawer');
+    if (dw.open) {
+      this._wakeCrawler();
+      g.hud.toast(DRAWER_NOTES[n] + (n === 13 && g.inventory.documents.includes('prontuario_leste') ? ' (Empurre o fundo.)' : ''));
+    }
+  }
+  _wakeCrawler() {
+    const g = this.game, c = g.enemies.find((e) => e.id === 'ras_morgue');
+    if (c && c.alive && c.dormant) {
+      c.wake(); g.audio.play('groan', c.pos, { pitch: 0.7 });
+      this.hint('crawler', 'Um <b>Rastejador</b>: baixo demais para golpes laterais. Use o <b>golpe forte</b> (botão direito), de cima para baixo, e cuidado com as mãos nos tornozelos.', 9);
+    }
   }
 
   // ---------- quebra-cabeça ----------
@@ -207,7 +302,7 @@ export class HospitalScript {
     if (w && w.alive) { w.wake(); w.lastKnown = { x: 33, y: UP, z: 15 }; w.state = 'investigate'; w.stateT = 0; }
     g.saveGame('machine_room');
   }
-  _applyPower() { this.level.setPower(true); }
+  _applyPower() { this.level.setPower(true); this.level.doors.eastWard.locked = false; }
 
   // ---------- elevador ----------
   _callElevator(lvl) {
@@ -239,6 +334,8 @@ export class HospitalScript {
     if (f.breakersOk) { this.breakerSeq = [...BREAKER_ORDER]; for (const b of L.breakers) { b.g.rotation.z = 0.5; b.led.material = g.materials.breakerOn; } }
     if (f.power) { L.lever.rotation.z = 0.7; this._applyPower(); const w = g.enemies.find((e) => e.id === 'int_wake'); if (w && w.alive) w.dormant = false; }
     for (const k in f) if (k.startsWith('picked_') && L.pickupMeshes[k.slice(7)]) L.pickupMeshes[k.slice(7)].visible = false;
+    for (const n of L.openableDrawers) if (f['drawer_' + n]) { const dw = L.drawers[n]; dw.open = true; dw.t = 1; dw.g.position.z = dw.z + 0.62; }
+    if (f.hasMorgueKey) { const w = g.enemies.find((e) => e.id === 'int_east'); if (w && w.alive) w.dormant = false; }
     if (f.gateOpen) { L.doors.gate.locked = false; L.doors.gate.setOpen(true, true); }
     // elevador
     const lvl = save.elevatorLevel || 'upper';
@@ -260,6 +357,16 @@ export class HospitalScript {
     if (!this.q.has('leftWard') && p.z > 10.4 && p.y > -1) this.q.set('leftWard');
     // atalho visto do patamar
     if (!this.tut.shown.shortcut && p.x > 12.2 && p.x < 16 && p.z < 0.2 && p.y > -0.5 && L.doors.shortcut.locked) this.hint('shortcut', 'Há um ferrolho nesta porta. Abra-a (<b>E</b>) para criar um atalho até a enfermaria.', 7);
+    // Ala Leste / necrotério: progressão opcional
+    if (!this.q.has('enteredEast') && p.y > -1 && p.x > 16.3 && p.x < 38 && p.z > -3 && p.z < 9.5) this.q.set('enteredEast');
+    if (!this.q.has('readEastChart') && g.inventory.documents.includes('prontuario_leste')) this.q.set('readEastChart');
+    if (!this.q.has('enteredMorgue') && p.y < -3 && p.x > 16 && p.x < 26 && p.z > 0 && p.z < 9.4) {
+      this.q.set('enteredMorgue'); g.saveGame('morgue'); g.hud.toast('Progresso salvo automaticamente.');
+    }
+    { const c = g.enemies.find((e) => e.id === 'ras_morgue');
+      if (c && c.dormant && c.alive && p.y < -3 && Math.hypot(p.x - c.pos.x, p.z - c.pos.z) < 2.4) this._wakeCrawler(); }
+    // descer pela escada (atalho da Ala Leste) também conta como chegar ao subsolo
+    if (!this.q.has('reachedLower') && !E.moving && p.y < -4.5 && p.x < 40) { this.q.set('reachedLower'); g.saveGame('lower_hall'); }
     // elevador
     if (E.moving) {
       if (E.delay > 0) E.delay -= dt;

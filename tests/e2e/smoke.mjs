@@ -67,6 +67,8 @@ try {
   });
   await inject();
 
+  const locks0 = await page.evaluate(() => { const D = __ocdc.level.doors; return { east: D.eastWard.locked, morgue: D.morgue.locked, cold: D.coldRoom.locked, landing: D.eastLanding.locked }; });
+  check('Ala Leste, necrotério e câmara fria começam trancados', locks0.east && locks0.morgue && locks0.cold && locks0.landing, JSON.stringify(locks0));
   // --- Colisão: andar contra a parede oeste da enfermaria
   const col = await page.evaluate(() => { const g = __ocdc; T.tp(0.8, 0, 6, -Math.PI / 2); g.cameraCtl.yaw = -Math.PI / 2; T.hold('KeyW', 2); return g.player.pos.x; });
   check('colisão com parede (x ≥ raio)', col >= 0.3 && col < 0.6, 'x=' + col.toFixed(3));
@@ -120,7 +122,7 @@ try {
   // --- Quebra-cabeça elétrico
   const puzzle = await page.evaluate(() => {
     const g = __ocdc; const out = {};
-    g.enemies.forEach((e) => { if (e.alive && e.pos.y > -1) e.setDeadInstant(); });
+    g.enemies.forEach((e) => { if (e.alive && e.pos.y > -1 && !e.id.endsWith('_east')) e.setDeadInstant(); });
     T.tp(19, 0, 20.3, 0); out.fuse = T.interactAt('pick_fuse');
     T.tp(36.6, 0, 16, Math.PI / 2); out.panel = T.interactAt('fusepanel');
     T.tp(36.7, 0, 18, Math.PI / 2); out.wrong = T.interactAt('breaker0'); out.afterWrong = g.script.breakerSeq.length; g.player.hp = 100; T.run(1);
@@ -151,6 +153,83 @@ try {
   });
   check('escada sobe ao térreo', sc.yTop > -0.2, JSON.stringify(sc));
   check('atalho destrancado por dentro', sc.unlocked && sc.open, JSON.stringify(sc));
+  // --- Ala Leste: porta liberada pela energia, atalho para o patamar, chave e prontuário
+  const east = await page.evaluate(() => {
+    const g = __ocdc, D = g.level.doors, out = {};
+    out.unlockedByPower = !D.eastWard.locked;
+    T.tp(24, 0, 11.3, Math.PI); out.door = T.interactAt('door_eastWard'); T.run(0.8);
+    g.cameraCtl.yaw = Math.PI; T.hold('KeyW', 1.4); out.z = g.player.pos.z; T.run(0.1);
+    out.entered = g.quest.has('enteredEast');
+    g.enemies.forEach((e) => { if (e.alive && e.id === 'enf_east') e.setDeadInstant(); });
+    T.tp(17.2, 0, -1.5, -Math.PI / 2); out.landing = T.interactAt('door_eastLanding');
+    out.landingOpen = D.eastLanding.open && g.quest.has('eastShortcutOpen');
+    const w = g.enemies.find((e) => e.id === 'int_east'); out.dormantBefore = w.dormant;
+    T.tp(33.2, 0, -1.3, Math.PI); out.key = T.interactAt('pick_morgue_key');
+    out.hasKey = g.inventory.has('chave_necroterio'); out.wokeIso = !w.dormant;
+    w.setDeadInstant(); g.player.hp = 100;
+    T.tp(29.2, 0, -1.4, Math.PI); out.doc = T.interactAt('doc_prontuario_leste'); T.run(0.1);
+    out.chart = g.quest.has('readEastChart');
+    T.tp(34.6, 0, -1.4, Math.PI); out.book = T.interactAt('book_east'); out.cp = g.checkpoint;
+    return out;
+  });
+  check('energia libera a porta da Ala Leste', east.unlockedByPower && east.door === 'ok' && east.z < 9.6 && east.entered, JSON.stringify(east));
+  check('atalho Ala Leste → patamar destrancado por dentro', east.landing === 'ok' && east.landingOpen, JSON.stringify(east));
+  check('chave do necrotério coletada (acorda o isolado)', east.hasKey && east.dormantBefore && east.wokeIso, JSON.stringify(east));
+  check('prontuário lido e livro de registro da Ala Leste', east.chart && east.cp === 'east_ward', JSON.stringify(east));
+  await page.screenshot({ path: SHOTS + '05-ala-leste.png' });
+  // --- Necrotério: chave, gavetas, Rastejador, câmara fria secreta
+  const morgue = await page.evaluate(() => {
+    const g = __ocdc, D = g.level.doors, out = {};
+    g.player.hp = 100;
+    T.tp(20, -5, 11.3, Math.PI); out.door = T.interactAt('door_morgue'); T.run(0.8);
+    out.open = D.morgue.open && !D.morgue.locked; out.keyUsed = !g.inventory.has('chave_necroterio');
+    g.cameraCtl.yaw = Math.PI; T.hold('KeyW', 1.2); T.run(0.1);
+    out.entered = g.quest.has('enteredMorgue'); out.cp = g.checkpoint;
+    const im = g.enemies.find((e) => e.id === 'int_morgue'); im.setDeadInstant();
+    const c = g.enemies.find((e) => e.id === 'ras_morgue'); out.crawlerDormant = c.dormant;
+    const sl = g.level.drawerSlots[13];
+    T.tp(sl.x, -5, 1.7, Math.PI); out.d13 = T.interactAt('drawer_13'); T.run(0.8);
+    out.d13open = g.level.drawers[13].open; out.crawlerWoke = !c.dormant;
+    out.coldBefore = D.coldRoom.locked;
+    const aim = () => { T.tp(c.pos.x - 1.1, -5, c.pos.z + 0.6, 0); const y = Math.atan2(c.pos.x - g.player.pos.x, c.pos.z - g.player.pos.z); g.player.yaw = y; g.cameraCtl.yaw = y; };
+    // golpe leve (horizontal) passa por cima do Rastejador
+    g.player.hp = 100; aim(); const hpL = c.hp; T.press('Mouse0'); T.run(0.9); out.lightDmg = hpL - c.hp;
+    // Rastejador: golpes fortes (de cima para baixo)
+    let swings = 0; const hp0 = c.hp;
+    for (let i = 0; i < 40 && c.alive; i++) {
+      aim();
+      g.player.hp = 100; if (g.player.state === 'grabbed') { for (let k = 0; k < 20; k++) T.press('Mouse0'); }
+      // como um jogador faria: espera a garra passar (fora do alcance) e golpeia na recuperação
+      for (let k = 0; k < 120 && c.alive && (c.state === 'attack' || c.state === 'grabbing' || g.player.state !== 'free'); k++) { T.tp(c.pos.x - 2.6, -5, c.pos.z + 1.2, 0); T.run(1 / 60); g.player.hp = 100; }
+      aim(); T.press('Mouse2'); swings++; T.run(1.1);
+    }
+    out.crawler = { alive: c.alive, hp0, hp: c.hp, swings };
+    g.player.hp = 100;
+    T.tp(sl.x, -5, 1.7, Math.PI); out.push = T.interactAt('drawer_13'); T.run(1.5);
+    out.coldOpen = D.coldRoom.open && g.quest.has('coldRoomOpen');
+    // a câmara fria é alcançável pela navegação e pelo corpo do jogador
+    T.tp(21.5, -5, 0.9, Math.PI); g.cameraCtl.yaw = Math.PI; T.hold('KeyW', 1.2); out.coldZ = g.player.pos.z;
+    const b0 = g.inventory.items.bandagem || 0;
+    T.tp(23.3, -5, -1.5, Math.PI); out.band = T.interactAt('pick_band_cold');
+    T.tp(22.6, -5, -1.55, Math.PI); out.letter = T.interactAt('doc_carta_helena');
+    out.bandGain = (g.inventory.items.bandagem || 0) - b0; out.hasLetter = g.inventory.documents.includes('carta_helena');
+    const s20 = g.level.drawerSlots[20];
+    T.tp(s20.x, -5, 2.0, Math.PI); out.hidden20 = T.interactAt('pick_band_morgue') !== 'ok';
+    out.d20 = T.interactAt('drawer_20'); T.run(1); out.band20 = T.interactAt('pick_band_morgue');
+    T.tp(16.8, -5, 3.1, Math.PI); out.reg = T.interactAt('doc_registro_necroterio');
+    g.saveGame('morgue');
+    const sv = JSON.parse(localStorage.getItem('ocdc_save'));
+    out.saved = { cold: sv.doors.coldRoom, morgue: sv.doors.morgue, d13: sv.flags.drawer_13, docs: sv.documents?.length };
+    return out;
+  });
+  check('chave abre o necrotério e autosave na entrada', morgue.door === 'ok' && morgue.open && morgue.keyUsed && morgue.entered, JSON.stringify(morgue));
+  check('gaveta rangendo desperta o Rastejador', morgue.d13 === 'ok' && morgue.d13open && morgue.crawlerDormant && morgue.crawlerWoke, JSON.stringify(morgue));
+  check('Rastejador morto com golpes fortes', !morgue.crawler.alive, JSON.stringify({ ...morgue.crawler, lightDmg: morgue.lightDmg }));
+  check('fundo da gaveta 13 abre a câmara fria (secreta)', morgue.coldBefore && morgue.push === 'ok' && morgue.coldOpen && morgue.coldZ < -0.2, JSON.stringify(morgue));
+  check('recompensa secreta: bandagens ×2 + carta', morgue.bandGain === 2 && morgue.hasLetter, JSON.stringify(morgue));
+  check('bandagem escondida só aparece com a gaveta 20 aberta', morgue.hidden20 && morgue.d20 === 'ok' && morgue.band20 === 'ok', JSON.stringify(morgue));
+  check('portas e gavetas do necrotério persistem no save', morgue.saved.cold?.open && morgue.saved.morgue?.open && morgue.saved.d13, JSON.stringify(morgue.saved));
+  await page.screenshot({ path: SHOTS + '06-necroterio.png' });
   // --- Chefe
   const boss = await page.evaluate(() => {
     const g = __ocdc; const b = g.boss;
