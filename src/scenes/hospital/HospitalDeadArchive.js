@@ -86,6 +86,7 @@ function rooms(L) {
   // SALA DE BATISMO: pia batismal de pedra cheia de cinza, velas, pequenas pulseiras penduradas
   b.box(FONT.x - 0.6, LO, FONT.z - 0.6, FONT.x + 0.6, LO + 0.9, FONT.z + 0.6, 'stone', PL);
   const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.04, 14), M.ash); ash.position.set(FONT.x, LO + 0.88, FONT.z); b.group.add(ash);
+  L.fontAsh = ash; // escurece depois da revelação RN 0
   b.box(38.2, LO, -6.4, 39.4, LO + 0.9, -5.6, 'woodDark', PL);                       // altar lateral (recompensa)
   for (const [x, z] of [[38.4, -6.2], [39.2, -6.2], [42.8, -6.3], [43.6, -3.4]]) {
     b.box(x - 0.03, LO + (x < 40 ? 0.9 : 0), z - 0.03, x + 0.03, LO + (x < 40 ? 1.08 : 0.2), z + 0.03, 'candle', NC);
@@ -106,7 +107,7 @@ export const DEAD_ARCHIVE_DOORS = ['deadArchive'];
 function lights(L) {
   L.lamp(41, CEIL_LO, 8.6, 0xd8c8a0, 1.2, 9, { flicker: true });
   L.lamp(41.9, CEIL_LO, 2.2, 0xb8c0a0, 0.9, 8, { flicker: true });
-  L.lamp(41, CEIL_LO, -4.8, 0xffa050, 1.0, 6);                                        // sala de batismo
+  L.batismoLamp = L.lamp(41, CEIL_LO, -4.8, 0xffa050, 1.0, 6);                       // sala de batismo
 }
 
 function nav(L) {

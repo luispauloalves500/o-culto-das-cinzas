@@ -17,6 +17,7 @@
         <div class="bar"><span>VIDA</span><div class="track"><div id="hp" class="fill hp"></div></div></div>
         <div class="bar"><span>FÔLEGO</span><div class="track"><div id="st" class="fill st"></div></div></div>
         <div id="weapon">Desarmado</div>
+        <div id="condTrack" class="track cond hidden"><div id="cond" class="fill cond"></div></div>
         <div id="items"></div>
       </div>
       <div id="objective"></div>
@@ -98,6 +99,9 @@
       <p class="small">← → ou 1/2/3 troca o andar · M, Tab ou Esc para fechar</p>
     </div>
 
+    <!-- cena curta (faixas de cinema + legenda) -->
+    <div id="cutscene" class="hidden"><div class="cs-bar top"></div><div class="cs-bar bottom"></div><div id="csCaption"></div><div id="csSkip">E: pular</div></div>
+
     <div id="reader" class="screen hidden">
       <div class="paper"><h3 id="docTitle"></h3><div id="docBody"></div></div>
       <div class="buttons"><button id="btnDocClose">Fechar (E)</button></div>
@@ -114,6 +118,7 @@
     <div id="chapterEnd" class="screen hidden">
       <h2>Fim do Capítulo 1 — Hospital São Dimas</h2>
       <p>Elias atravessa o portão de serviço. Lá fora, a fuligem do Bairro Operário cai como neve suja.</p>
+      <p id="endRn0" class="hidden"></p>
       <p class="small">Capítulo 2 — Fumaça: em desenvolvimento. Seu progresso foi salvo.</p>
       <div id="stats"></div>
       <div class="buttons"><button id="btnEndMenu">Menu principal</button></div>

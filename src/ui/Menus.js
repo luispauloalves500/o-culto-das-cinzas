@@ -2,7 +2,7 @@
 import { DOCUMENTS } from '../data/documents.js';
 import { FLOORS, roomAt } from '../data/map.js';
 import { collectNotes } from './notes.js';
-import { WEAPONS } from '../data/weapons.js';
+import { WEAPONS, conditionLabel } from '../data/weapons.js';
 import { MapView } from './MapView.js';
 
 const $ = (id) => document.getElementById(id);
@@ -56,8 +56,10 @@ export class Menus {
     const items = g.inventory.list();
     const ws = (g.inventory.weapons || []).filter((id) => WEAPONS[id]);
     const wHtml = ws.map((id) => { const w = WEAPONS[id], eq = g.player.weapon?.id === id;
-      return `<div class="inv-item${eq ? ' equipped' : ''}"><b>${w.name}</b>${eq ? ' — em mãos' : ''}${g.player.sharpened && w.sharpenable ? ' · afiado' : ''}<br><span class="small">${w.short || ''}</span></div>`; }).join('')
-      + (ws.length > 1 ? '<div class="inv-item small"><b>R</b> (LB): trocar de arma</div>' : '');
+      return `<div class="inv-item${eq ? ' equipped' : ''}"><b>${w.name}</b>${eq ? ' — em mãos' : ''}${g.player.sharpened && w.sharpenable ? ' · afiado' : ''}${Menus.condText(w, g.inventory)}<br><span class="small">${w.short || ''}</span></div>`; }).join('')
+      + (ws.length > 1 ? '<div class="inv-item small"><b>R</b> (LB): trocar de arma</div>' : '')
+      + (ws.some((id) => WEAPONS[id].durability) ? `<div class="inv-item small"><b>G</b> (↓): reparar a arma em mãos — kit de reparo ×${g.inventory.count('kit_reparo')}${g.inventory.has('pedra_afiar') ? ' · pedra de afiar (lâminas até 60%)' : ''}</div>` : '')
+      + (ws.includes('revolver') ? '<div class="inv-item small"><b>T</b> (↑): recarregar · <b>Q</b> (LT) segurado: mira manual</div>' : '');
     $('invList').innerHTML = wHtml +
       (items.length ? items.map((i) => `<div class="inv-item"><b>${i.name}</b> ×${i.n}<br><span class="small">${i.desc || ''}</span></div>`).join('') : (ws.length ? '' : '<div class="inv-item small">Vazio</div>'));
     // anotações: pistas opcionais + portas trancadas já tentadas (e ainda trancadas)
@@ -87,7 +89,23 @@ export class Menus {
   }
   showChapterEnd(stats) {
     const t = Math.floor(stats.time);
-    $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${stats.docs}/${Object.keys(DOCUMENTS).length}`;
+    $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${stats.docs}/${Object.keys(DOCUMENTS).length}`
+      + `<br>Revelação RN 0: ${stats.rn0 ? 'vista' : 'não encontrada'}`;
+    // desfecho: muda se Elias já entendeu quem ele é (rito da pia de batismo, no arquivo morto)
+    const p = $('endRn0');
+    if (p) {
+      p.classList.remove('hidden');
+      p.innerHTML = stats.rn0
+        ? 'Elias sabe agora o que a Confraria contou: ele é o RN 0, o primeiro batizado na cinza, e voltou como estava escrito. Mas o Quarto 7 está vazio — o sete foi liberado. Na boca, o gosto de cinza; no bolso, um dente de leite preso numa fita vermelha.'
+        : '<span class="small">Algo no subsolo ainda espera por Elias. A cinza da pia de batismo não esqueceu o nome dele.</span>';
+    }
     this.show('chapterEnd');
+  }
+  /** conservação no inventário */
+  static condText(w, inv) {
+    if (w.cylinder) return ` · tambor ${inv.rounds(w.id)}/${w.cylinder} · reserva ${inv.count(w.ammo)}`;
+    if (!w.durability) return '';
+    const c = inv.condition(w.id);
+    return ` · <span class="${c <= 0 ? 'cond-broken' : c < 0.5 ? 'cond-worn' : ''}">${Math.round(c * 100)}% ${conditionLabel(c)}</span>`;
   }
 }

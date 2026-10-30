@@ -53,6 +53,23 @@ select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
   background: radial-gradient(ellipse at center, transparent 45%, rgba(140,0,0,.75) 100%); transition: opacity .15s; }
 #fps { position: absolute; right: 8px; bottom: 6px; font: 12px monospace; color: #8f8; }
 #crosshair { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; background: rgba(255,255,255,.25); border-radius: 50%; }
+/* mira manual do revólver: anel + ponto */
+#crosshair.aiming { width: 22px; height: 22px; margin: -12px; background: radial-gradient(circle, rgba(255,230,190,.9) 0 2px, transparent 3px);
+  border: 1px solid rgba(255,230,190,.7); box-shadow: 0 0 4px #000; }
+#crosshair.aiming.onTarget { border-color: #ff5a3a; }
+/* conservação da arma */
+.track.cond { flex: none; height: 4px; width: 160px; margin-top: 3px; }
+.fill.cond { background: linear-gradient(#a8a28a, #5c5848); }
+.fill.cond.worn { background: linear-gradient(#c08a3a, #6a4a1a); }
+.fill.cond.broken { background: linear-gradient(#a33a2a, #501810); }
+/* cena curta */
+#cutscene { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
+#cutscene .cs-bar { position: absolute; left: 0; right: 0; height: 11vh; background: #000; }
+#cutscene .cs-bar.top { top: 0; } #cutscene .cs-bar.bottom { bottom: 0; }
+#csCaption { position: absolute; left: 50%; bottom: 13vh; transform: translateX(-50%); width: 70%; text-align: center; font-size: 19px;
+  color: #e6dcc0; text-shadow: 0 0 6px #000, 0 2px 2px #000; font-style: italic; line-height: 1.45; }
+#csCaption b { color: #d9b77a; font-style: normal; letter-spacing: .08em; }
+#csSkip { position: absolute; right: 22px; bottom: 3.5vh; font-size: 12px; color: #776f5c; }
 
 #inventory { justify-content: flex-start; padding-top: 8vh; }
 #invList, #docList { min-width: 360px; text-align: left; }
@@ -82,3 +99,5 @@ select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
 .map-legend .lg.x { width: auto; color: #ff4a3a; font-weight: bold; }
 .map-legend .lg.s { background: #e0b060; }
 .track.blessed { border-color: rgba(224,176,96,.75); box-shadow: 0 0 6px rgba(224,176,96,.35); }
+
+.cond-worn { color: #d0a050; } .cond-broken { color: #d05a40; }
