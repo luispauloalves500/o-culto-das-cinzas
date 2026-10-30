@@ -41,8 +41,11 @@ export class Enemy {
       : d.mats === 'cacador'
       // Capítulo 2: macacão de operário encardido, avental de couro, capuz de saco
       ? { skin: M.deadSkin, shirt: M.apron, arms: M.pantsGray, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.bandageDirty }
+      : d.mats === 'carvoeiro'
+      // carvoeiro: pele enegrecida de coque, avental de couro, calça de brim
+      ? { skin: M.coal, shirt: M.leatherDark, arms: M.coal, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.coal }
       : { skin: M.deadSkin, shirt: M.nurseCoat, arms: M.nurseCoat, pants: M.nurseCoat, legs: M.pantsGray, feet: M.leatherDark, head: M.deadSkin };
-    this.rig = createHumanoid({ scale: d.scale, mats, hunch: d.hunch, armLen: d.mats === 'interno' ? 0.34 : 0.32, torsoW: d.mats === 'interno' ? 0.4 : 0.42 , legLen: d.crawler ? 0.2 : undefined });
+    this.rig = createHumanoid({ scale: d.scale, mats, hunch: d.hunch, armLen: d.mats === 'interno' || d.mats === 'carvoeiro' ? 0.34 : 0.32, torsoW: d.mats === 'interno' ? 0.4 : d.mats === 'carvoeiro' ? 0.52 : 0.42 , legLen: d.crawler ? 0.2 : undefined });
     if (d.crawler) {
       // lençol do necrotério: cobre o corpo enquanto ele finge estar morto
       this.sheet = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.12, 1.75), M.sheet || M.gown);
@@ -58,6 +61,13 @@ export class Enemy {
       const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.3), M.rust); shaft.position.set(0, -0.03, 0.15);
       const hook = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.014, 4, 8, Math.PI * 1.3), M.rust); hook.position.set(0, 0.04, 0.32); hook.rotation.y = Math.PI / 2;
       this.rig.armR.end.add(shaft); this.rig.armR.end.add(hook);
+    } else if (d.mats === 'carvoeiro') {
+      // boné de feltro, lenço na boca e a pá de coque (cabo longo, lâmina larga)
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.27 * s, 0.07 * s, 0.3 * s), M.woodDark); cap.position.set(0, 0.29 * s, 0.01 * s); h.add(cap);
+      const scarf = new THREE.Mesh(new THREE.BoxGeometry(0.25 * s, 0.09 * s, 0.05 * s), M.bandageDirty); scarf.position.set(0, 0.04 * s, 0.12 * s); h.add(scarf);
+      const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.85), M.woodDark); shaft.position.set(0, -0.03, 0.3);
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 0.32), M.rust); blade.position.set(0, -0.03, 0.86); blade.rotation.x = 0.25;
+      this.rig.armR.end.add(shaft); this.rig.armR.end.add(blade);
     } else if (d.mats === 'interno') {
       const band = new THREE.Mesh(new THREE.BoxGeometry(0.25 * s, 0.07 * s, 0.27 * s), M.bandageDirty);
       band.position.y = 0.17 * s; h.add(band);
@@ -70,12 +80,12 @@ export class Enemy {
       blade.position.set(0, -0.03, 0.2); this.rig.armR.end.add(blade);
     }
     // olhos fracos: ajudam a ler o inimigo no escuro (caçadores: furos do capuz com brilho de brasa)
-    const eyeMat = d.mats === 'cacador' ? (M.ember || M.eyeGlow) : M.eyeGlow;
+    const eyeMat = d.mats === 'cacador' || d.mats === 'carvoeiro' ? (M.ember || M.eyeGlow) : M.eyeGlow;
     for (const x of [-0.05, 0.05]) {
       const e = new THREE.Mesh(new THREE.BoxGeometry(0.03 * s, 0.02 * s, 0.01), eyeMat);
       e.position.set(x * s, 0.19 * s, (d.mats === 'cacador' ? 0.15 : 0.125) * s); h.add(e);
     }
-    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : 0.38);
+    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : 0.38);
     this.rig.armR.end.add(this.hand);
     this.rig.root.position.copy(this.pos);
     this.rig.root.rotation.y = this.yaw;

@@ -53,6 +53,8 @@ export function createMaterials() {
     chapelWall: L({ map: T.chapelWall }),
     stone: L({ map: T.stone }),
     ash: L({ map: T.ash }),
+    coal: L({ map: T.stone, color: 0x34302c }),
+    soot: L({ map: T.brick, color: 0x6a5a50 }),
     blueprint: L({ map: T.blueprint, emissive: 0x0a1424 }),
     gold: L({ color: 0xb08a3a, emissive: 0x2a1a06 }),
     pew: L({ map: T.wood, color: 0x7a5a44 }),

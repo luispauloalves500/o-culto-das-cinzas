@@ -78,6 +78,10 @@ export const ROOMS_C2 = [
   { id: 'c2_deposito', floor: 'up', ch: 2, name: 'Depósito da tecelagem', rect: [18, 8, 40, 24] },
   { id: 'c2_escritorio', floor: 'up', ch: 2, name: 'Escritório do capataz', rect: [34, 18, 40, 24] },
   { id: 'c2_patio', floor: 'up', ch: 2, name: 'Pátio de carga', rect: [40, 8, 46, 30] },
+  { id: 'c2_carvao', floor: 'up', ch: 2, name: 'Rua do Carvão', rect: [38, 30, 50, 60] },
+  { id: 'c2_carvoaria', floor: 'up', ch: 2, name: 'Carvoaria São Brás', rect: [30, 38, 38, 48] },
+  { id: 'c2_fabrica', floor: 'up', ch: 2, name: 'Fábrica de fumaça — salão', rect: [34, 60, 56, 78] },
+  { id: 'c2_fornalhas', floor: 'up', ch: 2, name: 'Casa das fornalhas', rect: [34, 78, 56, 96] },
 ];
 for (const r of ROOMS_C2) ROOMS.push(r);
 
@@ -105,6 +109,10 @@ export const MAP_MARKS = [
   // Capítulo 2
   { kind: 'save', ch: 2, floor: 'up', x: 38.9, z: 23.2, room: 'c2_escritorio' },
   { kind: 'fire', ch: 2, floor: 'up', x: 37, z: 4, room: 'c2_rua' },
+  { kind: 'save', ch: 2, floor: 'up', x: 35.7, z: 39.9, room: 'c2_carvoaria' },
+  { kind: 'fire', ch: 2, floor: 'up', x: 48.2, z: 53, room: 'c2_carvao' },
+  { kind: 'save', ch: 2, floor: 'up', x: 47.7, z: 77.3, room: 'c2_fabrica' },
+  { kind: 'fire', ch: 2, floor: 'up', x: 45, z: 93, room: 'c2_fornalhas' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
