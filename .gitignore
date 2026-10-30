@@ -5,3 +5,5 @@ dist/
 tests/e2e/*.png
 .dbg/
 tests/e2e/shots/
+_incoming/
+public/models/*.glb

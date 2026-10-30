@@ -5,6 +5,11 @@
   "description": "O Culto das Cinzas — survival horror em Three.js (Capítulo 1: Hospital São Dimas)",
   "type": "module",
   "scripts": {
+    "assets": "node scripts/assets.mjs",
+    "predev": "node scripts/assets.mjs",
+    "prebuild": "node scripts/assets.mjs",
+    "prepreview": "node scripts/assets.mjs",
+    "pretest": "node scripts/assets.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
