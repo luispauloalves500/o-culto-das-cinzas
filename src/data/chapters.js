@@ -57,5 +57,6 @@ export const SIDE_OBJECTIVES = [
   { when: 'hasDeadArchiveKey', done: 'deadArchiveOpen', text: 'O arquivo morto fica no fundo do Arquivo do subsolo — porta de ferro na parede leste.' },
   { when: 'note_rolling', done: 'shelfMoved', text: 'O arquivo deslizante do arquivo morto só anda com uma manivela de encaixe quadrado.' },
   { when: 'shelfMoved', done: 'picked_pulseira', text: 'Atrás do arquivo deslizante, uma sala com cheiro de vela.' },
+  { when: 'foundBatismo', done: 'rn0Revealed', text: '"O zero e o sete": a pia de batismo espera a pulseira do altar e alguma coisa do Quarto 7.' },
   { when: 'picked_revolver', done: 'fireExitShortcut', text: 'A saída de incêndio da segurança desce até a escada principal — destrave a porta corta-fogo pelo lado de fora.' },
 ];

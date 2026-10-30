@@ -148,7 +148,7 @@ export const DOCUMENTS = {
 <p style="text-align:right">— Rosa</p>`,
   },
   livro_partos: {
-    title: 'Livro de partos (1950–1960)',
+    title: 'Livro de partos (1904–1934)',
     body: `<p>Livro grosso, encadernado em couro. Nomes, horas, pesos. A partir de certa página, uma coluna nova à mão: <b>"C"</b>.</p>
 <p>Todos os recém-nascidos com "C" foram "transferidos ao berçário (3º)". Nenhum tem alta registrada.</p>
 <p>Na primeira folha, separado de todos os outros, um único registro antigo, sem data: <b>"RN 0 — Varga. Mãe: M. Varga (óbito). Prontuário selado — ARQUIVO MORTO."</b></p>
@@ -168,5 +168,14 @@ export const DOCUMENTS = {
 <p>"Que ele esfrie em vez de queimar. Que cresça longe, sem saber. E que, maduro, retorne à Torre por vontade própria."</p>
 <p style="text-align:right">— assinado com as iniciais <b>S. V.</b> e mais doze sinais de cruz</p>
 <p class="small">Pendurada no altar, uma pulseira de recém-nascido com contas de louça: R · N · 0.</p>`,
+  },
+  contagem_confraria: {
+    title: 'A contagem da Confraria',
+    body: `<p><i>Folha seca, achada no fundo da pia de batismo depois que a cinza assentou. A letra é a mesma da ata, mais velha.</i></p>
+<p><b>0</b> — Varga, filho de M. Varga. Batizado primeiro. Mandado para longe, para esfriar. <b>Retorno previsto em trinta anos.</b></p>
+<p><b>1 a 6</b> — lote "C", berçário do 3º. Entre eles o da cama 2, Tomé. "Servem de cinza para o zero, quando ele vier."</p>
+<p><b>7</b> — Davi, sete anos, Quarto 7 da pediatria. <b>Reserva.</b> "Se o zero não voltar, o sete serve. Quando o zero retornar, o sete pode ser liberado."</p>
+<p>Embaixo, riscado por cima com força: "O zero voltou."</p>
+<p class="small" style="margin-top:1.2em">No verso, a lápis, letra de criança: <i>"pode ficar com o meu dente. corre. — D."</i></p>`,
   },
 };
