@@ -47,6 +47,9 @@ export class Enemy {
       : d.mats === 'acolito'
       // Capítulo 3: túnica vermelho-sangue até os pés, mãos cinzentas, cabeça coberta pelo véu negro
       ? { skin: M.deadSkin, shirt: M.robe || M.altarCloth, arms: M.robe || M.altarCloth, pants: M.robe || M.altarCloth, legs: M.robe || M.altarCloth, feet: M.leatherDark, head: M.veil || M.coal }
+      : d.mats === 'cinzento'
+      // Capítulo 4: morador da Cidade Morta, coberto de cinza dos pés à cabeça, terno puído de domingo
+      ? { skin: M.ash || M.deadSkin, shirt: M.pantsGray, arms: M.pantsGray, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.ash || M.deadSkin }
       : { skin: M.deadSkin, shirt: M.nurseCoat, arms: M.nurseCoat, pants: M.nurseCoat, legs: M.pantsGray, feet: M.leatherDark, head: M.deadSkin };
     this.rig = createHumanoid({ scale: d.scale, mats, hunch: d.hunch, armLen: d.mats === 'interno' || d.mats === 'carvoeiro' ? 0.34 : 0.32, torsoW: d.mats === 'interno' ? 0.4 : d.mats === 'carvoeiro' ? 0.52 : 0.42 , legLen: d.crawler ? 0.2 : undefined });
     if (d.crawler) {
@@ -82,6 +85,12 @@ export class Enemy {
       this.rig.armR.end.add(chain); this.rig.armR.end.add(censer);
       const dagger = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.24), M.axeEdge); dagger.position.set(0, -0.03, 0.12);
       this.rig.armL.end.add(dagger);
+    } else if (d.mats === 'cinzento') {
+      // chapéu de feltro empoeirado e a barra de ferro arrancada de uma porta de enrolar
+      const brim = new THREE.Mesh(new THREE.BoxGeometry(0.34 * s, 0.025 * s, 0.34 * s), M.woodDark); brim.position.set(0, 0.27 * s, 0.01 * s); h.add(brim);
+      const crown = new THREE.Mesh(new THREE.BoxGeometry(0.22 * s, 0.1 * s, 0.22 * s), M.woodDark); crown.position.set(0, 0.33 * s, 0.01 * s); h.add(crown);
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.7), M.rust); bar.position.set(0, -0.03, 0.3);
+      this.rig.armR.end.add(bar);
     } else if (d.mats === 'interno') {
       const band = new THREE.Mesh(new THREE.BoxGeometry(0.25 * s, 0.07 * s, 0.27 * s), M.bandageDirty);
       band.position.y = 0.17 * s; h.add(band);
@@ -99,7 +108,7 @@ export class Enemy {
       const e = new THREE.Mesh(new THREE.BoxGeometry(0.03 * s, 0.02 * s, 0.01), eyeMat);
       e.position.set(x * s, 0.19 * s, (d.mats === 'cacador' || d.mats === 'acolito' ? 0.16 : 0.125) * s); h.add(e);
     }
-    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : 0.38);
+    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : d.mats === 'cinzento' ? 0.6 : 0.38);
     this.rig.armR.end.add(this.hand);
     this.rig.root.position.copy(this.pos);
     this.rig.root.rotation.y = this.yaw;
