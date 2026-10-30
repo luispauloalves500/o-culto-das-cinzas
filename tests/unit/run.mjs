@@ -466,7 +466,7 @@ test('Cap. 3: save mantém o passe, remove itens-chave do Cap. 1/2 e começa no 
 });
 test('Cap. 3: objetivos, mapa da Sede, acólito, documentos e segredo do Regimento', () => {
   assert.equal(CHAPTERS.find((c) => c.id === 3).playable, true);
-  assert.deepEqual(OBJECTIVES_C3.map((o) => o.done), ['c3_wicketOpen', 'c3_inHall', 'c3_readRegimento', 'c3_vaultOpen', 'c3_inArchive', 'c3_hasDossier', 'c3_never']);
+  assert.deepEqual(OBJECTIVES_C3.map((o) => o.done), ['c3_wicketOpen', 'c3_inHall', 'c3_readRegimento', 'c3_vaultOpen', 'c3_inArchive', 'c3_hasDossier', 'c3_hasSignet', 'c3_cryptOpen', 'c3_bossDead', 'c3_chapterDone', 'c3_never']);
   try {
     setMapChapter(3);
     assert.deepEqual(chapterFloors().map((f) => f.id).sort(), ['lo', 'up']);
@@ -482,6 +482,34 @@ test('Cap. 3: objetivos, mapa da Sede, acólito, documentos e segredo do Regimen
   const body = DOCUMENTS.regimento_arquivo.body;
   const order = VAULT_CODE.map((i) => DIAL_SYMBOLS[i]);
   let at = -1; for (const w of order) { const k = body.indexOf(w, at + 1); assert.ok(k > at, w); at = k; }
+});
+
+const { SACRISTAN_PHASES, SACRISTAN_SUMMON, SWEEP_R } = await import('../../src/ai/SacristanBoss.js');
+const { C3_BOSS_TRIGGER } = await import('../../src/scenes/sede/SedeScript.js');
+const { CRYPT, CRYPT_NICHES, SACRISTAN_POS, CRYPT_PILLARS } = await import('../../src/scenes/sede/SedeLevel.js');
+test('Cap. 3: O Sacristão — fases, invocação limitada, cripta e saves', () => {
+  assert.ok(SACRISTAN_PHASES.p2 > SACRISTAN_PHASES.p3 && SACRISTAN_PHASES.p3 > 0);
+  assert.ok(SACRISTAN_SUMMON.maxAlive <= 2 && SACRISTAN_SUMMON.maxTotal <= 4 && SACRISTAN_SUMMON.perCall <= SACRISTAN_SUMMON.maxAlive);
+  assert.ok(SWEEP_R > 2 && SWEEP_R < 4.5);
+  // chefe, nichos e pilares dentro da arena; gatilho dentro da arena e depois da porta (z 68)
+  const T = C3_BOSS_TRIGGER, inA = (x, z) => x > 14 && x < 36 && z > 68 && z < 90;
+  assert.ok(inA(SACRISTAN_POS.x, SACRISTAN_POS.z) && SACRISTAN_POS.y === CRYPT && CRYPT < -6);
+  for (const n of CRYPT_NICHES) assert.ok(inA(n.x, n.z));
+  for (const [x, z] of CRYPT_PILLARS) assert.ok(inA(x, z));
+  assert.ok(T.minZ > 68 && T.maxZ < 90 && T.minX >= 14 && T.maxX <= 36);
+  for (const id of ['c3_preboss', 'c3_end']) assert.ok(SEDE_CHECKPOINTS[id] && SEDE_CHECKPOINTS[id].y === CRYPT, id);
+  assert.equal(DOCUMENTS.ordem_transferencia?.ch, 3);
+  assert.ok(/Vigia/.test(DOCUMENTS.ordem_transferencia.body) && /Cidade Morta/.test(DOCUMENTS.ordem_transferencia.body));
+  assert.ok(/sinete/i.test(DOCUMENTS.dossie_elias.body) && ITEMS.sinete_chama && ITEMS.fita_ines);
+  try {
+    setMapChapter(3);
+    assert.equal(roomAt({ x: 25, y: CRYPT, z: 80 }).id, 'c3_cripta');
+    assert.equal(roomAt({ x: 25, y: CRYPT, z: 62 }).id, 'c3_cripta_escada');
+    assert.equal(roomAt({ x: 38, y: CRYPT, z: 86 }).id, 'c3_galeria');
+  } finally { setMapChapter(1); }
+  // um save antigo do Cap. 3 (fatia anterior, sem as flags da cripta) continua válido
+  const old = migrateSave({ ...makeChapter3Save(null), checkpoint: 'c3_archive', flags: { c3_started: true, c3_hasDossier: true } });
+  assert.ok(old && SEDE_CHECKPOINTS[old.checkpoint] && !old.flags.c3_cryptOpen && !old.flags.c3_bossDead);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

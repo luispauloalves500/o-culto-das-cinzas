@@ -177,7 +177,7 @@ export class Game {
     this._buildWorld(s);
     this._enterPlay();
     if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
-    if (this.chapter === 3) this.hud.toast('Capítulo 3 — A Confraria · Sede do Véu', 3);
+    if (this.chapter === 3) this.hud.toast(s.flags.c3_chapterDone ? 'Capítulo 3 concluído · a galeria das catacumbas leva ao Capítulo 4 (em breve)' : 'Capítulo 3 — A Confraria · Sede do Véu', 3.5);
   }
   /** passagem do Capítulo 2 para o 3: o passe da Linha 4 leva Elias até o Largo do Véu */
   startChapter3(prev) {
@@ -236,7 +236,8 @@ export class Game {
   onPlayerFellOut() { this.continueGame(); }
   endChapter() {
     this.state = 'end'; this.input.exitLock(); this.hud.show(false); this.audio.setIntensity(0);
-    this.menus.showChapterEnd({ chapter: this.chapter || 1, time: this.playTime, kills: this.player.stats.kills, damageTaken: this.player.stats.damageTaken, docs: this.inventory.documents.length, docsList: this.inventory.documents.slice(), pass: this.inventory.has('passe_bonde') || this.quest.has('c2_hasPass'), rn0: this.quest.has('rn0Revealed') });
+    this.menus.showChapterEnd({ chapter: this.chapter || 1, time: this.playTime, kills: this.player.stats.kills, damageTaken: this.player.stats.damageTaken, docs: this.inventory.documents.length, docsList: this.inventory.documents.slice(), pass: this.inventory.has('passe_bonde') || this.quest.has('c2_hasPass'), rn0: this.quest.has('rn0Revealed'),
+      ribbon: this.inventory.has('fita_ines') || this.quest.has('c3_hasRibbon'), order: this.inventory.documents.includes('ordem_transferencia') });
   }
 
   // ---------- interação ----------

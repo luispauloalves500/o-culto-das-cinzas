@@ -24,7 +24,7 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
-    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
+    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter === 3) return; if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
     for (const el of document.querySelectorAll('.map-tab')) el.onclick = () => this.mapFloor(+el.dataset.floor);
@@ -99,8 +99,22 @@ export class Menus {
     const docsCh = Object.values(DOCUMENTS).filter((d) => (d.ch || 1) === ch).length;
     const docsHave = stats.docsList ? stats.docsList.filter((id) => (DOCUMENTS[id]?.ch || 1) === ch).length : stats.docs;
     $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${Math.min(docsHave, docsCh)}/${docsCh}`
-      + (ch === 1 ? `<br>Revelação RN 0: ${stats.rn0 ? 'vista' : 'não encontrada'}` : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
+      + (ch === 1 ? `<br>Revelação RN 0: ${stats.rn0 ? 'vista' : 'não encontrada'}`
+        : ch === 3 ? `<br>Fita de Inês: ${stats.ribbon ? 'com Elias' : 'ficou no altar da cripta'} · Ordem de transferência: ${stats.order ? 'lida' : 'não lida'}`
+          : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
     const next = $('btnEndNext');
+    if (ch === 3) {
+      $('endTitle').textContent = 'Fim do Capítulo 3 — A Confraria';
+      $('endText').textContent = 'O Sacristão cai diante do altar e a chama do relicário se apaga. Pela porta de ferro, as catacumbas sobem em degraus de osso até um bueiro do centro antigo. Lá em cima, Véspera está em silêncio: ruas vazias, vitrines cobertas de cinza e, acima de tudo, o mostrador parado do Relógio.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Próximo: Capítulo 4 — Cidade Morta (centro antigo de Véspera). Em produção.';
+      $('endRn0').classList.remove('hidden');
+      $('endRn0').innerHTML = stats.order
+        ? 'A ordem do altar não deixa dúvida: Inês segue para a <b>Torre</b>, pela Cidade Morta, e só o <b>Vigia</b> abre a passagem do Relógio. ' + (stats.ribbon ? 'No bolso de Elias, a fita de cabelo dela, ao lado do passe da Linha 4.' : 'A fita vermelha dela ficou presa no prego do altar.')
+        : '<span class="small">Sobre o altar havia papéis com o lacre da Confraria. Quem os escreveu sabe para onde Inês foi levada.</span>';
+      if (next) { next.disabled = true; next.textContent = 'Capítulo 4 — Cidade Morta (em breve)'; }
+      this.show('chapterEnd');
+      return;
+    }
     if (ch === 2) {
       $('endTitle').textContent = 'Fim do Capítulo 2 — Fumaça';
       $('endText').textContent = 'Brás tomba sobre a grelha e a Garganta engasga. Pela porta de serviço, Elias sai para a Rua da Fundição. O bonde da Linha 4 espera com o motor ligado; o motorneiro olha a fita vermelha, acena e fecha a porta. Os trilhos sobem para o centro, até a Sede da Confraria.';

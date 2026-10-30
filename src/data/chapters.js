@@ -93,11 +93,17 @@ export const OBJECTIVES_C3 = [
   { done: 'c3_vaultOpen', text: 'Gire os três discos na ordem do Regimento e puxe a alavanca do portão do arquivo.' },
   { done: 'c3_inArchive', text: 'Desça a escada para os arquivos subterrâneos.' },
   { done: 'c3_hasDossier', text: 'Procure o dossiê de Elias no fichário do fundo do arquivo (gaveta V).' },
-  { done: 'c3_never', text: 'Dossiê em mãos. A grade da cripta do Sacristão não cede — o Capítulo 3 continua em breve.' },
+  { done: 'c3_hasSignet', text: 'A grade da cripta só sobe pelo sarilho, e o selo dele pede o sinete da CHAMA — que o arquivista leva no dedo.' },
+  { done: 'c3_cryptOpen', text: 'Encaixe o sinete no selo do sarilho, à esquerda da grade da cripta, e gire a manivela.' },
+  { done: 'c3_bossDead', text: 'Desça à cripta. O Sacristão guarda o altar — e o que sobrou de Inês.' },
+  { done: 'c3_chapterDone', text: 'A porta de ferro da galeria destravou. Siga pelas catacumbas (leste da cripta) rumo ao centro antigo.' },
+  { done: 'c3_never', text: 'Capítulo 3 concluído. Inês foi levada à Torre, pela Cidade Morta.' },
 ];
 export const SIDE_OBJECTIVES_C3 = [
   { when: 'c3_inHall', done: 'c3_mainOpen', text: 'As portas de bronze do largo só abrem por dentro: erga a tranca no salão nobre (atalho).' },
   { when: 'c3_inArchive', done: 'c3_readFicha', text: 'Há uma ficha de entrada recente na mesa de leitura do arquivo.' },
+  { when: 'c3_bossDead', done: 'c3_readOrdem', text: 'Há papéis no altar da cripta, ao lado de uma fita vermelha.' },
+  { when: 'c3_bossDead', done: 'c3_hasRibbon', text: 'Algo vermelho está preso num prego do altar.' },
 ];
 
 export function objectivesFor(ch) { return ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
