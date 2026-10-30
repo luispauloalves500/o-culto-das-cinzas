@@ -43,6 +43,35 @@ export function migrateSave(data) {
   return { ...base, ...s, player: { ...base.player, ...s.player }, inventory: { ...base.inventory, ...s.inventory } };
 }
 
+// itens-chave do Capítulo 1 que não seguem para o Capítulo 2 (consumíveis, armas, desgaste e lembranças seguem)
+export const CH1_KEY_ITEMS = ['fusivel', 'chave_necroterio', 'chave_escada', 'planta_hospital', 'chave_seguranca', 'chave_maternidade', 'manivela', 'chave_arquivo_morto'];
+
+/**
+ * Save inicial do Capítulo 2 a partir do estado final do Capítulo 1 (ou de um save antigo com chapterDone).
+ * Mantém armas, munição, desgaste, documentos, estatísticas e as flags do Cap. 1 (melhorias: vida, fôlego,
+ * cura, afiação); zera portas/inimigos mortos (outro mapa) e remove itens-chave do hospital.
+ */
+export function makeChapter2Save(prev) {
+  const base = createEmptySave();
+  const p = (prev && migrateSave({ version: SAVE_VERSION, ...prev })) || base;
+  const items = { ...(p.inventory.items || {}) };
+  for (const k of CH1_KEY_ITEMS) delete items[k];
+  return {
+    ...base,
+    chapter: 2,
+    checkpoint: 'c2_gate',
+    player: { hp: Math.max(80, Math.min(125, p.player?.hp ?? 100)) },
+    inventory: { ...p.inventory, items },
+    flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_started: true },
+    doors: {},
+    deadEnemies: [],
+    documents: [...(p.documents || [])],
+    elevatorLevel: 'upper',
+    playTime: p.playTime || 0,
+    stats: { ...(p.stats || {}) },
+  };
+}
+
 export class SaveManager {
   constructor(storage = globalThis.localStorage) { this.storage = storage; }
   hasSave() { return !!this.load(); }

@@ -71,6 +71,16 @@ export const ROOMS = [
   { id: 'batismo', floor: 'lo', name: 'Sala de batismo', rect: [38, -6.6, 44, -3], secret: true },
 ];
 
+// Capítulo 2 — Bairro Operário (tudo no nível da rua, y 0; campo ch: 2)
+export const ROOMS_C2 = [
+  { id: 'c2_rua', floor: 'up', ch: 2, name: 'Rua dos Tecelões', rect: [1, 0, 38, 8] },
+  { id: 'c2_beco', floor: 'up', ch: 2, name: 'Beco', rect: [9.5, 8, 12.5, 16] },
+  { id: 'c2_deposito', floor: 'up', ch: 2, name: 'Depósito da tecelagem', rect: [18, 8, 40, 24] },
+  { id: 'c2_escritorio', floor: 'up', ch: 2, name: 'Escritório do capataz', rect: [34, 18, 40, 24] },
+  { id: 'c2_patio', floor: 'up', ch: 2, name: 'Pátio de carga', rect: [40, 8, 46, 30] },
+];
+for (const r of ROOMS_C2) ROOMS.push(r);
+
 // pontos de interesse desenhados no mapa quando o cômodo é conhecido
 export const MAP_MARKS = [
   { kind: 'save', floor: 'up', x: 7.1, z: -2.3, room: 'ward' },
@@ -92,7 +102,18 @@ export const MAP_MARKS = [
   { kind: 'stairs', floor: 'up2', x: 42.2, z: 19, room: 'fireEscape' },
   { kind: 'stairs', floor: 'roof', x: 42.2, z: 15.2, room: 'fireEscapeTop' },
   { kind: 'save', floor: 'up2', x: 36.6, z: 2.7, room: 'postoObst' },
+  // Capítulo 2
+  { kind: 'save', ch: 2, floor: 'up', x: 38.9, z: 23.2, room: 'c2_escritorio' },
+  { kind: 'fire', ch: 2, floor: 'up', x: 37, z: 4, room: 'c2_rua' },
 ];
+
+// capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
+let MAP_CHAPTER = 1;
+export function setMapChapter(ch) { MAP_CHAPTER = ch === 2 ? 2 : 1; }
+export function mapChapter() { return MAP_CHAPTER; }
+const inChapter = (r) => (r.ch || 1) === MAP_CHAPTER;
+/** andares com abas no mapa para o capítulo ativo */
+export function chapterFloors() { return MAP_CHAPTER === 2 ? FLOORS.filter((f) => f.id === 'up') : FLOORS; }
 
 /** andar a partir da altura dos pés */
 export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }
@@ -102,7 +123,7 @@ export function roomAt(p) {
   const f = floorOf(p.y);
   let best = null, area = Infinity;
   for (const r of ROOMS) {
-    if (r.floor !== f) continue;
+    if (r.floor !== f || !inChapter(r)) continue;
     const [x0, z0, x1, z1] = r.rect;
     if (p.x >= x0 && p.x <= x1 && p.z >= z0 && p.z <= z1) {
       const a = (x1 - x0) * (z1 - z0);
@@ -115,7 +136,7 @@ export function roomAt(p) {
 /** cômodos visíveis no mapa: visitados, ou (com a planta) todos os não secretos */
 export function knownRooms(flags, floor) {
   const plan = !!flags.hasMapPlan;
-  return ROOMS.filter((r) => r.floor === floor && (flags['seen_' + r.id] || (plan && !r.secret)))
+  return ROOMS.filter((r) => r.floor === floor && inChapter(r) && (flags['seen_' + r.id] || (plan && !r.secret)))
     .map((r) => ({ ...r, visited: !!flags['seen_' + r.id] }));
 }
 
