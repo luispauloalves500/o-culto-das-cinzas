@@ -13,6 +13,14 @@ export const ELIAS_URL = './models/elias_rev6.glb';
 // marcadores da hitbox no espaço local de Machado_Equipado (cabo em +Y a partir da pegada, lâmina em −X)
 export const AXE_TIP = [-0.12, 0.48, 0];
 export const AXE_MID = [-0.01, 0.2, 0];
+/**
+ * Pegada do machado: transform local de Machado_Equipado dentro de SocketMachado_Direita.
+ * O socket do REV6 já passa o cabo (+Y) pelo eixo do punho fechado (polegar→mindinho), mas virava a lâmina (−X)
+ * para o lado da palma (−Z da mão), ou seja, o fio apontava para a coxa/para os dedos. Girar −90° em Y (eixo do cabo)
+ * leva o fio para +Y da mão (direção dos nós dos dedos, a mesma da face de um martelo), coerente com o golpe.
+ * Posição: o socket (0, 0.12, −0.025 na mão) já cai no centro do punho fechado; escala 1.
+ */
+export const AXE_GRIP = { pos: [0, 0, 0], rotDeg: [0, -90, 0], scale: 1 };
 
 /** remove o deslocamento horizontal do quadril (root motion dos combos) e trilhas de escala constantes */
 export function prepareClips(clips) {
@@ -26,6 +34,60 @@ export function prepareClips(clips) {
     if (hp) { const v = hp.values, x0 = v[0], z0 = v[2]; for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } }
   }
   return clips;
+}
+
+/**
+ * Idle "Elias_Idle": o clipe parado do pacote (_01a17993…) segura o braço direito erguido à frente (guarda de lanterna),
+ * o que deixava o machado espetado no ar. Mantém o corpo/respiração do clipe e troca a cadeia do braço direito
+ * (ombro, braço, antebraço, mão) pela pose relaxada do Walking em IDLE_ARM_T (mão ao lado da coxa, passo neutro).
+ */
+export const IDLE_CLIP = 'Elias_Idle';
+export const IDLE_ARM_T = 0.47;
+const ARM_R = /^mixamorigRight(Shoulder|Arm|ForeArm|Hand)\.quaternion$/;
+export function makeIdleClips(clips) {
+  const src = clips.find((c) => c.name === CLIP.idleSrc), walk = clips.find((c) => c.name === CLIP.walk);
+  if (!src || !walk || clips.some((c) => c.name === IDLE_CLIP)) return clips;
+  const tracks = src.tracks.map((tr) => {
+    if (!ARM_R.test(tr.name)) return tr.clone();
+    const w = walk.tracks.find((x) => x.name === tr.name);
+    if (!w) return tr.clone();
+    const q = Array.from(w.createInterpolant().evaluate(IDLE_ARM_T));
+    return new THREE.QuaternionKeyframeTrack(tr.name, [0, src.duration], [...q, ...q]);
+  });
+  const idle = new THREE.AnimationClip(IDLE_CLIP, src.duration, tracks);
+  const idleM = idle.clone(); idleM.name = IDLE_CLIP + '_Machado';
+  clips.push(idle, idleM);
+  for (const c of clips) if (CARRY_CLIPS.includes(c.name)) applyCarry(c);
+  return clips;
+}
+
+/**
+ * Pegada de transporte (idle/andar/correr armado). Nos clipes Mixamo a mão direita pende com a palma para trás e o
+ * polegar para dentro, então o eixo do punho (por onde passa o cabo) ficava atravessado na frente da coxa / para trás.
+ * Correção constante no espaço do osso, calculada em .dbg/carryq.mjs a partir do Elias_Idle_Machado t=0:
+ *  - CARRY_HAND_R: mão-mundo → polegar (cabo) 30° abaixo da horizontal apontando para a frente, palma voltada para a coxa;
+ *  - CARRY_FORE_Q: 60% da torção (63° em torno do eixo do antebraço) vai para o antebraço, o resto fica no punho
+ *    (mão' = CARRY_FORE_Q⁻¹ · mão · CARRY_HAND_R), para a pele do pulso não “torcer como papel de bala”.
+ * Ataques, bloqueio e mira não são tocados (o clipe de golpe já orienta o punho).
+ */
+export const CARRY_CLIPS = ['Elias_Idle_Machado', 'Walking_Machado', 'Running_Machado'];
+export const CARRY_HAND_R = [-0.3193, 0.738, -0.1886, 0.5637];
+export const CARRY_FORE_Q = [0, 0.5236, 0, 0.8519];
+function applyCarry(clip) {
+  if (clip.userData?.carry) return;
+  const R = new THREE.Quaternion().fromArray(CARRY_HAND_R).normalize(), F = new THREE.Quaternion().fromArray(CARRY_FORE_Q).normalize();
+  const Fi = F.clone().invert(), q = new THREE.Quaternion();
+  for (const tr of clip.tracks) {
+    const hand = tr.name === 'mixamorigRightHand.quaternion', fore = tr.name === 'mixamorigRightForeArm.quaternion';
+    if (!hand && !fore) continue;
+    const v = tr.values;
+    for (let i = 0; i < v.length; i += 4) {
+      q.fromArray(v, i);
+      if (hand) q.premultiply(Fi).multiply(R); else q.multiply(F);
+      q.toArray(v, i);
+    }
+  }
+  clip.userData = { ...(clip.userData || {}), carry: true };
 }
 
 const BONES = {
@@ -45,7 +107,7 @@ let _shared = null;
 const _progress = new Set();
 function loadShared(url) {
   if (!_shared) {
-    _shared = new Promise((resolve, reject) => new GLTFLoader().load(url, (g) => { prepareClips(g.animations); resolve(g); },
+    _shared = new Promise((resolve, reject) => new GLTFLoader().load(url, (g) => { makeIdleClips(prepareClips(g.animations)); resolve(g); },
       (ev) => { if (ev.total) for (const m of _progress) m.progress = ev.loaded / ev.total; }, reject));
     _shared.catch(() => { _shared = null; });
   }
@@ -92,6 +154,7 @@ export class EliasModel {
     this.axe = root.getObjectByName('Machado_Equipado');
     // malha do machado para o cenário (sem marcadores)
     this.axeGeometry = this.axe.geometry; this.axeMaterial = this.axe.material;
+    this.axe.position.fromArray(AXE_GRIP.pos); this.axe.rotation.set(...AXE_GRIP.rotDeg.map((d) => THREE.MathUtils.degToRad(d))); this.axe.scale.setScalar(AXE_GRIP.scale);
     this.axeTip = new THREE.Object3D(); this.axeTip.position.fromArray(AXE_TIP); this.axeTip.name = 'MachadoHitboxPonta'; this.axe.add(this.axeTip);
     this.axeMid = new THREE.Object3D(); this.axeMid.position.fromArray(AXE_MID); this.axeMid.name = 'MachadoHitboxCabo'; this.axe.add(this.axeMid);
     // adaptador: referencial das armas procedurais (cabo em −Y, frente em +Z) → referencial do socket (cabo +Y, lâmina −X)
@@ -112,7 +175,7 @@ export class EliasModel {
   /** arma na mão: só o machado usa Machado_Equipado; as demais ficam no adaptador com os dedos fechados */
   syncWeapon(id, ownsAxe) {
     if (!this.ready) return;
-    const S = this.sistema;
+    const S = this.sistema; this.armed = !!id;
     if ((ownsAxe || id === 'machado') && !S.possuiMachado) S.restaurar({ possuiMachado: true, machadoEquipado: false });
     S.equipar(id === 'machado');
     S.empunhar(!!id && id !== 'machado');
@@ -128,7 +191,8 @@ export class EliasModel {
         if (!a || S.nomeBase !== CLIP.fidget || a.time >= a.getClip().duration - 0.05) { this.fidget = false; this.idleT = 0; }
         else return;
       }
-      if (this.idleT > 14) { this.fidget = true; S.tocar(CLIP.fidget, { repetir: false, fade: 0.3 }); return; }
+      // o gesto ergue as duas mãos à cabeça: só desarmado
+      if (this.idleT > 14 && !this.armed) { this.fidget = true; S.tocar(CLIP.fidget, { repetir: false, fade: 0.3 }); return; }
       S.tocar(CLIP.idle, { fade: 0.2 });
       return;
     }

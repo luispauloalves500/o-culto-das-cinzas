@@ -14,15 +14,17 @@ export const CONFIG_MACHADO = {
     Run_and_Shoot: 'Run_and_Shoot_Machado',
     Triple_Combo_Attack: 'Triple_Combo_Attack_Machado',
     open_door_4: 'open_door_4_Machado',
+    Elias_Idle: 'Elias_Idle_Machado', // gerado no carregamento (EliasModel.makeIdleClips)
   },
-  loopClips: ['Running', 'Walking', '_01a17993_5941_740d_a212_2815e139919a', 'Run_and_Shoot'],
+  loopClips: ['Elias_Idle', 'Running', 'Walking', '_01a17993_5941_740d_a212_2815e139919a', 'Run_and_Shoot'],
 };
 
 // Clipes inspecionados (quadro a quadro, posição da ponta do machado):
 // _01a17993… = parado em guarda (braço direito à frente, loop) → idle
 // _01a18db3… = gesto de "coçar a cabeça / olhar em volta" (uma vez) → ocioso prolongado
 export const CLIP = {
-  idle: '_01a17993_5941_740d_a212_2815e139919a',
+  idle: 'Elias_Idle', // _01a17993… com o braço direito relaxado (ver EliasModel.makeIdleClips)
+  idleSrc: '_01a17993_5941_740d_a212_2815e139919a',
   fidget: '_01a18db3_0c5f_71a4_b3b9_c9119504c268',
   walk: 'Walking',
   run: 'Running',
