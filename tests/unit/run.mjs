@@ -233,5 +233,25 @@ test('mapa: ala cirúrgica superior, expurgo secreto e telhado', () => {
   assert.ok(SIDE_OBJECTIVES.some((o) => o.done === 'wallBroken') && SIDE_OBJECTIVES.some((o) => o.done === 'hasHammer'));
 });
 
+test('3º andar: facão, revólver com munição, pediatria no mapa, Quarto 7 secreto', () => {
+  const f = WEAPONS.facao, r = WEAPONS.revolver, a = WEAPONS.machado;
+  assert.ok(f && f.sharpenable && f.attacks.light1.dur < a.attacks.light1.dur && f.attacks.light1.stamina < a.attacks.light1.stamina);
+  assert.ok(r && r.ranged && ITEMS[r.ammo] && r.attacks.heavy.shoot && r.shot.range >= 15 && r.shot.dmg > a.attacks.heavy.dmg);
+  assert.equal(weaponDamage(r, r.attacks.light1, true), r.attacks.light1.dmg);   // pedra de afiar não vale para o revólver
+  const inv = new Inventory({ emit() {} });
+  assert.equal(inv.count('municao_38'), 0);
+  inv.add('municao_38', 3); inv.remove('municao_38');
+  assert.equal(inv.count('municao_38'), 2);
+  assert.equal(roomAt({ x: 27, y: 7.3, z: 18 }).id, 'bercario');
+  assert.equal(roomAt({ x: 20, y: 7.3, z: 24 }).id, 'pedCorridor');
+  assert.equal(roomAt({ x: 14, y: 7.3, z: 18 }).id, 'quarto7');
+  assert.equal(roomAt({ x: 42.2, y: 4, z: 22.6 }).id, 'fireEscape');
+  assert.equal(roomAt({ x: 22, y: 7.3, z: 30 }).id, 'roof');
+  assert.ok(!knownRooms({ hasMapPlan: true }, 'roof').some((x) => x.id === 'quarto7'));
+  for (const id of ['desenho_crianca', 'ficha_bercario', 'ordem_seguranca', 'diario_menino']) assert.ok(DOCUMENTS[id]?.body, id);
+  assert.ok(ITEMS.amuleto_menino && ITEMS.chave_seguranca);
+  for (const d of ['picked_facao', 'picked_revolver', 'lockBroken', 'fireExitShortcut']) assert.ok(SIDE_OBJECTIVES.some((o) => o.done === d), d);
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);

@@ -397,6 +397,129 @@ try {
   check('livro da recuperação e save com armas/parede/afiação/cilindro', wing.book === 'ok' && wing.cpRec === 'recovery' && wing.saved.weapons?.length === 2 && wing.saved.wall && wing.saved.sharp && wing.saved.tank && wing.saved.ms && wing.saved.hammer, JSON.stringify(wing.saved));
   check('mapa: aba Telhado', wing.mapRoof === 'roof' && wing.mapRoofRooms >= 2, JSON.stringify({ f: wing.mapRoof, n: wing.mapRoofRooms }));
   await page.screenshot({ path: SHOTS + '08-ala-cirurgica.png' });
+  // --- 3º andar: ala pediátrica (facão, revólver, Quarto 7, caixinha de música, escada de incêndio)
+  const peds = await page.evaluate(() => {
+    const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id);
+    const ROOF = 7.3, UP2 = 4, PI = Math.PI;
+    const PEDS = ['enf_ped', 'int_brinq', 'ras_berc', 'int_seg'];
+    g.enemies.forEach((e) => { if (e.alive && e.pos.y > 3 && !PEDS.includes(e.id)) e.setDeadInstant(); });
+    g.player.hp = 100;
+    // a porta da escada de incêndio não abre pelo patamar (atalho só por fora)
+    T.tp(40.2, UP2, 23.15, PI / 2); out.feInside = T.interactAt('door_fireExit'); T.run(0.3); out.feLockedInside = D.fireExit.locked && !D.fireExit.open;
+    // telhado → corredor da pediatria (autosave)
+    T.tp(27, ROOF, 27.4, PI); out.pedDoor = T.interactAt('door_pedRoof'); T.run(0.8);
+    g.cameraCtl.yaw = PI; T.hold('KeyW', 1.2); T.run(0.1);
+    out.inPeds = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.entered = g.quest.has('enteredPeds'); out.cp = g.checkpoint;
+    // berçário: facão cravado no berço
+    T.tp(27, ROOF, 23.2, PI); out.bercDoor = T.interactAt('door_bercario'); T.run(0.8);
+    const rb = E('ras_berc'); out.crawlerDormant = rb.dormant;
+    T.tp(27, ROOF, 17.0, PI); out.facao = T.interactAt('pick_facao'); out.wFacao = g.player.weapon?.id; out.crawlerWoke = !rb.dormant;
+    T.tp(29.4, ROOF, 16.8, PI); out.ficha = T.interactAt('doc_ficha_bercario');
+    rb.setDeadInstant();
+    // facão em combate real: Enfermeiro da pediatria
+    const e = E('enf_ped'); const hp0 = e.hp; let swings = 0, firstDmg = 0;
+    for (let i = 0; i < 70 && e.alive; i++) {
+      g.player.hp = 100;
+      if (g.player.state === 'grabbed') for (let k = 0; k < 20; k++) T.press('Mouse0');
+      T.tp(e.pos.x - 1.1, ROOF, e.pos.z, PI / 2);
+      const y = Math.atan2(e.pos.x - g.player.pos.x, e.pos.z - g.player.pos.z); g.player.yaw = y; g.cameraCtl.yaw = y;
+      const hb = e.hp; T.press('Mouse0'); swings++; T.run(0.55); if (!firstDmg && e.hp < hb) firstDmg = hb - e.hp;
+    }
+    out.fight = { alive: e.alive, hp0, swings, firstDmg };
+    // posto de enfermagem: chave, munição, livro de registros
+    g.player.setWeapon('facao'); g.player.hp = 100;
+    T.tp(33.5, ROOF, 23.2, PI); out.postoDoor = T.interactAt('door_postoPed'); T.run(0.8);
+    T.tp(34.0, ROOF, 21.0, PI); out.key = T.interactAt('pick_key_seg');
+    T.tp(32.7, ROOF, 15.6, -PI / 2); out.ammo1 = T.interactAt('pick_ammo_posto'); out.ammoA = g.inventory.count('municao_38');
+    T.tp(34.8, ROOF, 15.8, PI); out.book = T.interactAt('book_peds'); out.cpPosto = g.checkpoint;
+    // segurança: chave → revólver (+3) e mais munição
+    out.segLocked = D.seguranca.locked;
+    T.tp(38.5, ROOF, 23.2, PI); out.segDoor = T.interactAt('door_seguranca'); T.run(0.8); out.segOpen = D.seguranca.open && g.quest.has('securityOpen');
+    const s = E('int_seg'); out.segDormant = s.dormant;
+    T.tp(38.0, ROOF, 19.3, PI); out.rev = T.interactAt('pick_revolver'); out.wRev = g.player.weapon?.id; out.segWoke = !s.dormant;
+    T.tp(38.9, ROOF, 20.4, PI); out.ammo2 = T.interactAt('pick_ammo_seg'); out.ammoB = g.inventory.count('municao_38');
+    // tiro: botão direito acerta o Interno e gasta 1 bala
+    let shots = 0; const sHp0 = s.hp; let firstShot = null;
+    for (let i = 0; i < 5 && s.alive; i++) {
+      g.player.hp = 100;
+      if (g.player.state === 'grabbed') for (let k = 0; k < 20; k++) T.press('Mouse0');
+      const px = s.pos.x - 2.6, pz = s.pos.z + 0.4; T.tp(Math.max(36.6, Math.min(40.4, px)), ROOF, Math.max(14.6, Math.min(21.4, pz + 1.5)), 0);
+      const y = Math.atan2(s.pos.x - g.player.pos.x, s.pos.z - g.player.pos.z); g.player.yaw = y; g.cameraCtl.yaw = y;
+      const a0 = g.inventory.count('municao_38'), h0 = s.hp; T.press('Mouse2'); T.run(0.9); shots++;
+      if (!firstShot) firstShot = { ammo: [a0, g.inventory.count('municao_38')], hp: [h0, s.hp] };
+    }
+    out.shot = { alive: s.alive, sHp0, shots, firstShot, ammo: g.inventory.count('municao_38') };
+    // R troca de arma em ciclo
+    out.weapons = [...g.inventory.weapons];
+    const cyc = []; for (let i = 0; i < 4; i++) { T.press('KeyR'); cyc.push(g.player.weapon?.id); T.run(0.1); } out.cycle = cyc;
+    T.tp(38.5, ROOF, 18.8, PI); out.ordem = T.interactAt('doc_ordem_seguranca');
+    // escada de incêndio: porta externa no 3º, desce e abre o atalho para o patamar do 2º
+    T.tp(39.8, ROOF, 15.1, PI / 2); out.feTop = T.interactAt('door_fireExitTop'); T.run(0.8);
+    g.cameraCtl.yaw = PI / 2; T.hold('KeyW', 1.3); out.feOut = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    T.tp(42.2, ROOF, 15.4, 0); g.cameraCtl.yaw = 0; T.hold('KeyW', 4.5); T.run(0.2);
+    out.feBottom = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.feReached = g.quest.has('reachedFireEscape'); out.cpFe = g.checkpoint;
+    T.tp(42.1, UP2, 23.3, -PI / 2); out.feDoor = T.interactAt('door_fireExit'); T.run(0.8);
+    out.feOpen = D.fireExit.open && !D.fireExit.locked && g.quest.has('fireExitShortcut');
+    T.tp(41.9, UP2, 23.2, -PI / 2); g.cameraCtl.yaw = -PI / 2; T.hold('KeyW', 1.0); out.feIn = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    // caixinha de música: o barulho atrai um inimigo do andar (jogador longe, no 2º andar)
+    const pp = g.player.pos.clone();
+    T.tp(19.5, ROOF, 23.2, PI); out.brDoor = T.interactAt('door_brinq'); T.run(0.8);
+    const noises = []; const pn = g.perception.noise.bind(g.perception); g.perception.noise = (at, r, k) => { noises.push(k); return pn(at, r, k); };
+    T.tp(22.1, ROOF, 15.9, PI); out.music = T.interactAt('musicbox'); out.musicFlag = g.quest.has('musicBoxUsed');
+    T.tp(pp.x, pp.y, pp.z, -PI / 2); T.run(0.2);
+    const ib = E('int_brinq'); ib.dormant = false; ib.alerted = false; ib._set('idle'); ib.pos.set(27, ROOF, 24.2); ib.yaw = 0;
+    const d0 = Math.hypot(ib.pos.x - 22.1, ib.pos.z - 14.7);
+    const trail = []; for (let i = 0; i < 9; i++) { T.run(1); trail.push([+ib.pos.x.toFixed(1), +ib.pos.z.toFixed(1)]); }
+    out.lure = { trail, state: ib.state, d0: +d0.toFixed(2), d1: +Math.hypot(ib.pos.x - 22.1, ib.pos.z - 14.7).toFixed(2), lk: ib.lastKnown && [+ib.lastKnown.x.toFixed(1), +ib.lastKnown.z.toFixed(1)], music: noises.filter((k) => k === 'music').length };
+    g.perception.noise = pn; ib.setDeadInstant();
+    T.run(9);
+    // segredo: desenho → teatrinho → cadeado (só bala) → Quarto 7
+    g.player.hp = 100;
+    T.tp(19.5, ROOF, 17.6, PI); out.drawing = T.interactAt('doc_desenho_crianca'); T.run(0.1); out.readDrawing = g.quest.has('readChildDrawing');
+    out.q7Hidden = !g.interact.list.find((i) => i.id === 'door_quarto7').enabled();
+    T.tp(17.9, ROOF, 18.0, -PI / 2); out.theater = T.interactAt('theater'); T.run(1.2);
+    out.moved = g.quest.has('theaterMoved'); out.theaterZ = +g.level.theater.collider.min.z.toFixed(2);
+    g.player.setWeapon('facao'); T.tp(17.0, ROOF, 18.25, -PI / 2); g.cameraCtl.yaw = -PI / 2; T.press('Mouse0'); T.run(0.7);
+    out.lockAfterMelee = !g.quest.has('lockBroken');
+    g.player.setWeapon('revolver'); g.inventory.add('municao_38', 1); const la = g.inventory.count('municao_38');
+    T.tp(18.6, ROOF, 18.25, -PI / 2); g.cameraCtl.yaw = -PI / 2; g.player.yaw = -PI / 2; T.press('Mouse2'); T.run(0.9);
+    out.lockShot = { broken: g.quest.has('lockBroken'), ammo: [la, g.inventory.count('municao_38')], unlocked: !D.quarto7.locked };
+    T.tp(17.0, ROOF, 18.0, -PI / 2); out.q7Door = T.interactAt('door_quarto7'); T.run(0.8);
+    T.tp(17.2, ROOF, 18.4, -PI / 2); g.cameraCtl.yaw = -PI / 2; T.hold('KeyW', 1.2); T.run(0.1);
+    out.q7Pos = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.found = g.quest.has('foundQuarto7');
+    const am0 = g.inventory.count('municao_38');
+    T.tp(13.0, ROOF, 20.0, 0); out.amulet = T.interactAt('pick_amulet'); out.maxSt = g.player.maxSt; out.amuletAmmo = g.inventory.count('municao_38') - am0;
+    T.tp(13.6, ROOF, 15.7, -PI / 2); out.diary = T.interactAt('doc_diario_menino');
+    // tambor vazio: clique seco, nada muda
+    const keep = g.inventory.count('municao_38'); g.inventory.items.municao_38 = 0;
+    const dry0 = g.player.dryFires || 0; T.press('Mouse2'); T.run(0.8); out.dry = (g.player.dryFires || 0) - dry0; out.dryAmmo = g.inventory.count('municao_38');
+    g.inventory.items.municao_38 = keep;
+    g.hud.update(1 / 60, g); out.hud = document.getElementById('weapon')?.textContent || '';
+    g.saveGame('postoPed');
+    const sv = JSON.parse(localStorage.getItem('ocdc_save'));
+    out.saved = { weapons: sv.inventory.weapons, ammo: sv.inventory.items.municao_38, lock: sv.flags.lockBroken, theater: sv.flags.theaterMoved, amulet: sv.flags.hasAmulet, fe: sv.flags.fireExitShortcut, feDoor: sv.doors.fireExit?.open };
+    T.key('KeyM'); T.key('Digit4'); out.mapRooms = g.menus.lastMap?.rooms; T.key('KeyM');
+    g.player.setWeapon('machado');
+    return out;
+  });
+  check('escada de incêndio trancada pelo patamar do 2º', peds.feInside === 'ok' && peds.feLockedInside, JSON.stringify(peds));
+  check('ala pediátrica: porta pelo telhado e autosave', peds.pedDoor === 'ok' && peds.entered && peds.cp === 'peds' && peds.inPeds[2] < 25.6, JSON.stringify(peds.inPeds));
+  check('facão: coleta no berço, equipa e acorda o Rastejador', peds.facao === 'ok' && peds.wFacao === 'facao' && peds.crawlerDormant && peds.crawlerWoke && peds.ficha === 'ok', JSON.stringify(peds));
+  check('facão mata o Enfermeiro da pediatria', !peds.fight.alive && peds.fight.firstDmg >= 15, JSON.stringify(peds.fight));
+  check('posto: chave da segurança, munição ×2 e livro de registros', peds.key === 'ok' && peds.ammo1 === 'ok' && peds.ammoA === 2 && peds.cpPosto === 'postoPed', JSON.stringify(peds));
+  check('chave abre a segurança; revólver (+3) e munição (+3)', peds.segLocked && peds.segDoor === 'ok' && peds.segOpen && peds.rev === 'ok' && peds.wRev === 'revolver' && peds.segWoke && peds.ammoB === peds.ammoA + 6, JSON.stringify(peds));
+  check('tiro do revólver fere o Interno e gasta 1 bala', peds.shot.firstShot && peds.shot.firstShot.ammo[1] === peds.shot.firstShot.ammo[0] - 1 && peds.shot.firstShot.hp[1] < peds.shot.firstShot.hp[0] && !peds.shot.alive, JSON.stringify(peds.shot));
+  check('R alterna entre as 4 armas', peds.weapons.length === 4 && new Set(peds.cycle).size === 4, JSON.stringify({ w: peds.weapons, c: peds.cycle }));
+  check('escada de incêndio desce ao 2º e abre o atalho por fora (autosave)', peds.feTop === 'ok' && peds.feOut[0] > 41.2 && peds.feBottom[1] < 4.5 && peds.feBottom[2] > 21.4 && peds.feReached && peds.feDoor === 'ok' && peds.feOpen && peds.feIn[0] < 40.6, JSON.stringify({ o: peds.feOut, b: peds.feBottom, i: peds.feIn, cp: peds.cpFe }));
+  check('caixinha de música faz barulho e atrai inimigo', peds.music === 'ok' && peds.musicFlag && peds.lure.music >= 2 && peds.lure.lk && Math.hypot(peds.lure.lk[0] - 22.1, peds.lure.lk[1] - 14.7) < 0.5 && peds.lure.d1 < peds.lure.d0 - 3 && peds.lure.trail.at(-1)[1] < 22, JSON.stringify(peds.lure));
+  check('teatrinho só se move após o desenho e revela o cadeado', peds.drawing === 'ok' && peds.readDrawing && peds.q7Hidden && peds.theater === 'ok' && peds.moved && peds.theaterZ > 19, JSON.stringify(peds));
+  check('cadeado resiste ao facão e quebra com bala', peds.lockAfterMelee && peds.lockShot.broken && peds.lockShot.unlocked && peds.lockShot.ammo[1] === peds.lockShot.ammo[0] - 1, JSON.stringify(peds.lockShot));
+  check('Quarto 7 (segredo): amuleto (fôlego +25) e 4 balas', peds.q7Door === 'ok' && peds.q7Pos[0] < 15.8 && peds.found && peds.amulet === 'ok' && peds.maxSt === 125 && peds.amuletAmmo === 4 && peds.diary === 'ok', JSON.stringify(peds));
+  check('tambor vazio: clique seco sem efeito', peds.dry >= 1 && peds.dryAmmo === 0, JSON.stringify({ d: peds.dry, a: peds.dryAmmo }));
+  check('HUD mostra munição do revólver', /\d/.test(peds.hud) && /38|bala|mun/i.test(peds.hud), peds.hud);
+  check('save guarda armas, munição, cadeado, teatrinho, amuleto e atalho', peds.saved.weapons?.length === 4 && peds.saved.ammo > 0 && peds.saved.lock && peds.saved.theater && peds.saved.amulet && peds.saved.fe && peds.saved.feDoor, JSON.stringify(peds.saved));
+  check('mapa do 3º andar mostra a pediatria', peds.mapRooms >= 6, String(peds.mapRooms));
+  await page.screenshot({ path: SHOTS + '09-pediatria.png' });
   // --- Chefe
   const boss = await page.evaluate(() => {
     const g = __ocdc; const b = g.boss;
@@ -457,7 +580,7 @@ try {
     const s = JSON.parse(localStorage.getItem('ocdc_save')); s.flags = { ...s.flags, bossDead: false, gateOpen: false, chapterDone: false }; s.checkpoint = 'pre_boss';
     localStorage.setItem('ocdc_save', JSON.stringify(s));
     document.getElementById('btnContinue').click();
-    const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray(), weapons: [...g.inventory.weapons], wall: !g.level.crackedWall.panel.visible && g.level.expurgoGate.open, sharp: g.player.sharpened, tank: !g.level.tanks.o2_cor.group.visible, hammerHidden: !g.level.pickupMeshes.hammer.visible };
+    const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray(), weapons: [...g.inventory.weapons], wall: !g.level.crackedWall.panel.visible && g.level.expurgoGate.open, sharp: g.player.sharpened, tank: !g.level.tanks.o2_cor.group.visible, hammerHidden: !g.level.pickupMeshes.hammer.visible, lock: !g.level.padlock.chain.visible, theater: g.level.theater.collider.min.z > 19, maxSt: g.player.maxSt, fe: g.level.doors.fireExit.open, ammo: g.inventory.count('municao_38') };
     g.player.takeHit({ dmg: 999, from: { x: 0, y: 0, z: 0 }, blockable: false });
     T.run?.(0);
     return r;
@@ -467,7 +590,8 @@ try {
   const deadScr = await page.$eval('#dead', (e) => !e.classList.contains('hidden'));
   const dinfo = await page.evaluate(() => ({ st: __ocdc.state, hp: __ocdc.player.hp, alive: __ocdc.player.alive, pst: __ocdc.player.state, dy: __ocdc.dyingT }));
   check('continuar carrega checkpoint pré-chefe', death.state === 'playing' && Math.abs(death.pos[1] + 5) < 0.1, JSON.stringify(death));
-  check('carregar save restaura armas, parede derrubada, afiação e cilindro', death.weapons.length === 2 && death.wall && death.sharp && death.tank && death.hammerHidden, JSON.stringify(death));
+  check('carregar save restaura armas, parede derrubada, afiação e cilindro', death.weapons.length === 4 && death.wall && death.sharp && death.tank && death.hammerHidden, JSON.stringify(death));
+  check('carregar save restaura pediatria (cadeado, teatrinho, amuleto, atalho, munição)', death.lock && death.theater && death.maxSt === 125 && death.fe && death.ammo > 0, JSON.stringify(death));
   check('morte mostra tela e permite recarregar', deadScr, JSON.stringify(dinfo));
   await page.click('#btnRetry'); await new Promise((r) => setTimeout(r, 500));
   check('recarregar após morte', await page.evaluate(() => __ocdc.state === 'playing' && __ocdc.player.hp > 0));
