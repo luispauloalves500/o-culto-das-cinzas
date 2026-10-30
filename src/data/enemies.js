@@ -26,4 +26,19 @@ export const ENEMIES = {
     mats: 'enfermeiro',
     groanPitch: 1.6,
   },
+  rastejador: {
+    name: 'Rastejador',
+    // paciente amputado que se arrasta: baixo demais para golpes laterais, ouvido apurado, visão curta
+    crawler: true,
+    hp: 60, poise: 30, radius: 0.42, height: 0.75, scale: 1.0, hunch: 0,
+    walk: 0.7, chase: 2.5, turn: 3.2,
+    sight: 6, fov: 60, hearing: 1.7,
+    attackTokens: 1,
+    attacks: [
+      { id: 'claw', range: 1.5, windup: 0.55, active: 0.16, recover: 1.0, dmg: 12, knock: 1.5, weight: 2 },
+      { id: 'ankle', range: 1.3, windup: 0.55, active: 0.22, recover: 1.2, dmg: 0, grab: true, grabDmg: 5, lunge: 2.5, weight: 1 },
+    ],
+    mats: 'interno',
+    groanPitch: 0.75,
+  },
 };

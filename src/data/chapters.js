@@ -23,3 +23,12 @@ export const OBJECTIVES = [
   { done: 'gateOpen', text: 'Abra o portão de serviço.' },
   { done: 'chapterDone', text: 'Registre seu progresso e saia pelo portão do pátio.' },
 ];
+
+// Objetivos opcionais (exploração): aparecem numa segunda linha do HUD e nas Anotações do inventário.
+// when: flag que revela a pista · done: flag que a conclui. Não bloqueiam o fluxo principal.
+export const SIDE_OBJECTIVES = [
+  { when: 'power', done: 'enteredEast', text: 'A energia liberou a trava da Ala Leste (corredor, porta da quarentena).' },
+  { when: 'enteredEast', done: 'hasMorgueKey', text: 'Procure a chave do necrotério no posto de enfermagem da Ala Leste.' },
+  { when: 'hasMorgueKey', done: 'enteredMorgue', text: 'Use a chave na porta do necrotério (hall do subsolo).' },
+  { when: 'readEastChart', done: 'coldRoomOpen', text: '"A gaveta 13 não tem fundo." — necrotério.' },
+];

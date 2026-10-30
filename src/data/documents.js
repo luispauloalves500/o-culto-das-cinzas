@@ -28,4 +28,26 @@ export const DOCUMENTS = {
     body: `<p>O Cirurgião não sente o bisturi. Só o frasco nas costas — a mistura que o mantém de pé. Quando ele avança cego e bate nas mesas, fica de joelhos, ofegando, e o vidro aparece por inteiro.</p>
 <p>Foi assim que o Morais quase escapou. Quase.</p>`,
   },
+  prontuario_leste: {
+    title: 'Prontuário coletivo — Ala Leste',
+    body: `<p><b>QUARENTENA — SÉRIE CINZA</b> · leitos 1 a 8</p>
+<p>Leito 3: não reconhece a própria mãe; pede "a fumaça" à noite. Leito 6: arrancou as ataduras e as comeu. Leito 8: <b>Paciente 16</b> — pernas amputadas após a 6ª aplicação. Removido ao necrotério por ordem do Dr. V. <i>Ainda respirava.</i></p>
+<p>Aviso ao turno da noite: a chave do necrotério fica no posto de enfermagem. Devolvam-na. E alguém precisa falar com o Morais — o servente jura que a <b>gaveta 13</b> não tem fundo, e é lá que esconde o que some da farmácia.</p>
+<p style="text-align:right">— Irmã Odete, enfermeira-chefe</p>`,
+  },
+  registro_necroterio: {
+    title: 'Livro de entradas do necrotério',
+    body: `<p>Paciente 9 — gaveta 5. Causa: "insuficiência". (Todas são insuficiência.)</p>
+<p>Paciente 12 — gaveta 20. Cinzas recolhidas para o laboratório, conforme o protocolo.</p>
+<p>Paciente 16 — <b>sem gaveta</b>. Deixado sob o lençol, junto às mesas. Ele se arrasta quando as luzes piscam e ouve tudo: o rangido das gavetas o atrai. Não o enfrentem de pé — é baixo demais para um golpe de lado. Batam de cima.</p>
+<p><i>Na margem, outra letra:</i> "o frio conserva. o frio também esconde."</p>`,
+  },
+  carta_helena: {
+    title: 'Carta não enviada — Dra. Helena Arcos',
+    body: `<p>Elias,</p>
+<p>Se você encontrou a câmara do Morais, então ainda pensa como gente: procura o que está escondido em vez de fugir do que está à vista. Deixei aqui o que consegui tirar da farmácia antes de fecharem a Ala Leste.</p>
+<p>Você não é o paciente 17 por acaso. Os outros dezesseis queimaram por dentro; você só esfriou. Vernet chama isso de "resistência à cinza" e quer levá-lo à Torre antes que alguém entenda o que significa.</p>
+<p>As cinzas que eles chamam de remédio vêm do forno atrás do pátio. Não aceite nada que saia de um frasco verde. E não volte por mim.</p>
+<p style="text-align:right">— H.</p>`,
+  },
 };
