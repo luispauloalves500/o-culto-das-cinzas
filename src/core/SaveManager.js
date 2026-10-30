@@ -8,7 +8,7 @@ export function createEmptySave() {
     chapter: 1,
     checkpoint: 'ward_bed',
     player: { hp: 100 },
-    inventory: { items: {}, weapon: null },
+    inventory: { items: {}, weapon: null, weapons: [] },
     flags: {},
     doors: {},
     deadEnemies: [],

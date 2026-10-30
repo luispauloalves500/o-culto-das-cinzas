@@ -2,10 +2,10 @@
 const KEYMAP = {
   forward: ['KeyW', 'ArrowUp'], back: ['KeyS', 'ArrowDown'], left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'],
   run: ['ShiftLeft', 'ShiftRight'], light: ['Mouse0'], heavy: ['Mouse2'], block: ['KeyQ'], dodge: ['Space'],
-  interact: ['KeyE'], inventory: ['Tab'], map: ['KeyM'], heal: ['KeyH'], pause: ['Escape', 'KeyP'], debug: ['F3'],
+  interact: ['KeyE'], inventory: ['Tab'], map: ['KeyM'], heal: ['KeyH'], swap: ['KeyR'], pause: ['Escape', 'KeyP'], debug: ['F3'],
 };
 // Botões padrão (layout "standard" da Gamepad API)
-const PADMAP = { interact: 0, dodge: 1, inventory: 3, light: 5, block: 6, heavy: 7, pause: 9, run: 10, heal: 2, map: 8 };
+const PADMAP = { interact: 0, dodge: 1, inventory: 3, light: 5, block: 6, heavy: 7, pause: 9, run: 10, heal: 2, map: 8, swap: 4 };
 
 export class InputManager {
   constructor(canvas) {

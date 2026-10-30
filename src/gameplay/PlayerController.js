@@ -1,7 +1,7 @@
 // Elias Varga: locomoção relativa à câmera, máquina de estados, machado com hitbox sincronizada à animação.
 import * as THREE from 'three';
 import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from './ProceduralRig.js';
-import { WEAPONS } from '../data/weapons.js';
+import { WEAPONS, weaponDamage } from '../data/weapons.js';
 
 const STATES = ['free', 'attack', 'dodge', 'block', 'hit', 'grabbed', 'heal', 'dead', 'locked'];
 
@@ -42,9 +42,11 @@ export class PlayerController {
     band.position.y = 0.22; this.rig.head.add(band);
     game.scene.add(this.rig.root);
 
-    this.axe = this._buildAxe(M);
-    this.rig.armR.end.add(this.axe.group);
-    this.axe.group.visible = false;
+    // um modelo por arma, presos à mão; só o da arma equipada fica visível
+    this.models = { machado: this._buildAxe(M), martelo: this._buildHammer(M) };
+    for (const k in this.models) { this.rig.armR.end.add(this.models[k].group); this.models[k].group.visible = false; }
+    this.axe = this.models.machado;
+    this.sharpened = false;
 
     this.pos = new THREE.Vector3();
     this.vel = new THREE.Vector3();
@@ -80,9 +82,37 @@ export class PlayerController {
     return { group, tip, mid };
   }
 
+  _buildHammer(M) {
+    const group = new THREE.Group();
+    group.rotation.x = -0.25;
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.86, 0.05), M.woodDark);
+    handle.position.y = -0.3; handle.castShadow = true; group.add(handle);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.06), M.leatherDark);
+    grip.position.y = 0.02; group.add(grip);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.14, 0.3), M.steelDark || M.axeMetal);
+    head.position.set(0, -0.66, 0.04); head.castShadow = true; group.add(head);
+    const face = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.15, 0.03), M.axeEdge);
+    face.position.set(0, -0.66, 0.2); group.add(face);
+    const tip = new THREE.Object3D(); tip.position.set(0, -0.66, 0.12); group.add(tip);
+    const mid = new THREE.Object3D(); mid.position.set(0, -0.36, 0.02); group.add(mid);
+    return { group, tip, mid };
+  }
+
   setWeapon(id) {
-    this.weapon = id ? WEAPONS[id] : null;
-    this.axe.group.visible = !!this.weapon;
+    this.weapon = id && WEAPONS[id] ? WEAPONS[id] : null;
+    for (const k in this.models) this.models[k].group.visible = !!this.weapon && k === this.weapon.id;
+    this.axe = this.models[this.weapon?.id] || this.models.machado;
+  }
+
+  /** troca para a próxima arma que o jogador possui (tecla R) */
+  cycleWeapon() {
+    const g = this.game, owned = g.inventory.weapons || [];
+    if (owned.length < 2) { if (owned.length) g.hud.toast('Você só tem uma arma.', 1.5); return false; }
+    const i = owned.indexOf(this.weapon?.id);
+    this.setWeapon(owned[(i + 1) % owned.length]);
+    g.audio.play('pickup', null);
+    g.hud.toast(this.weapon.name + ' em mãos', 1.5);
+    return true;
   }
 
   spawn(p, yaw = 0) {
@@ -158,7 +188,7 @@ export class PlayerController {
   _softTarget(dir) {
     let best = null, bs = Infinity;
     for (const e of this.game.targets()) {
-      if (!e.alive) continue;
+      if (!e.alive || e.isProp) continue;
       const dx = e.pos.x - this.pos.x, dz = e.pos.z - this.pos.z, dy = e.pos.y - this.pos.y;
       if (Math.abs(dy) > 1.5) continue;
       const d = Math.hypot(dx, dz);
@@ -234,6 +264,7 @@ export class PlayerController {
         else if (input.wasPressed('dodge') && this.st >= 10) this._startDodge(wish);
         else if (this.weapon && input.isDown('block')) this._setState('block');
         else if (input.wasPressed('heal')) this._tryHeal();
+        else if (input.wasPressed('swap')) this.cycleWeapon();
         else if (input.wasPressed('interact')) g.tryInteract();
         break;
       }
@@ -398,7 +429,7 @@ export class PlayerController {
         for (const h of all) {
           this.hitSet.add(h.target);
           a.hit = true;
-          const res = h.target.takeHit({ dmg: d.dmg, poise: d.poise, heavy: a.kind === 'heavy', from: this.pos, point: h.point, volume: h.volume });
+          const res = h.target.takeHit({ dmg: weaponDamage(this.weapon, d, this.sharpened), weapon: this.weapon.id, poise: d.poise, heavy: a.kind === 'heavy', from: this.pos, point: h.point, volume: h.volume });
           if (res !== 'immune') {
             this.hitstop = a.kind === 'heavy' ? 0.09 : 0.055;
             g.cameraCtl.addShake(a.kind === 'heavy' ? 0.35 : 0.18);

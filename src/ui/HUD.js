@@ -27,7 +27,7 @@ export class HUD {
     this._set('hp', this.el.hp.style, 'width', (100 * p.hp / p.maxHp).toFixed(1) + '%');
     this._set('blessed', this.el.hp.parentElement.classList, 'value', p.blessed ? 'track blessed' : 'track');
     this._set('st', this.el.st.style, 'width', (100 * p.st / p.maxSt).toFixed(1) + '%');
-    this._set('weapon', this.el.weapon, 'textContent', p.weapon ? 'Machado de incêndio' : 'Desarmado');
+    this._set('weapon', this.el.weapon, 'textContent', p.weapon ? p.weapon.name + (p.sharpened && p.weapon.sharpenable ? ' (afiado)' : '') : 'Desarmado');
     const items = game.inventory.list().map((i) => `${ITEMS[i.id]?.name || i.id} ×${i.n}`).join(' · ');
     this._set('items', this.el.items, 'textContent', items);
     this._set('obj', this.el.objective, 'textContent', game.quest.current() ? '◆ ' + game.quest.current() : '');
