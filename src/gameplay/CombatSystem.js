@@ -14,6 +14,40 @@ export function testVolume(p, r, v) {
   return v.type === 'sphere' ? sphereVsSphere(p, r, v) : sphereVsCapsule(p, r, v);
 }
 
+/** raio (origem o, direção unitária d) × esfera: distância da entrada ou Infinity */
+export function rayVsSphere(o, d, s) {
+  const ox = o.x - s.x, oy = o.y - s.y, oz = o.z - s.z;
+  const b = ox * d.x + oy * d.y + oz * d.z, c = ox * ox + oy * oy + oz * oz - s.r * s.r;
+  const disc = b * b - c;
+  if (disc < 0) return Infinity;
+  const sq = Math.sqrt(disc), t0 = -b - sq, t1 = -b + sq;
+  if (t1 < 0) return Infinity;
+  return t0 >= 0 ? t0 : 0;
+}
+/** raio × cápsula vertical (cilindro y0..y1 + calotas esféricas) */
+export function rayVsCapsule(o, d, c) {
+  let best = Infinity;
+  const ox = o.x - c.x, oz = o.z - c.z;
+  const A = d.x * d.x + d.z * d.z, B = ox * d.x + oz * d.z, C = ox * ox + oz * oz - c.r * c.r;
+  if (A > 1e-9) {
+    const disc = B * B - A * C;
+    if (disc >= 0) {
+      const sq = Math.sqrt(disc);
+      for (const t of [(-B - sq) / A, (-B + sq) / A]) {
+        if (t < 0) continue;
+        const y = o.y + d.y * t;
+        if (y >= c.y0 && y <= c.y1) { best = Math.min(best, t); break; }
+      }
+    }
+    if (C <= 0 && o.y >= c.y0 && o.y <= c.y1) return 0;
+  }
+  best = Math.min(best, rayVsSphere(o, d, { x: c.x, y: c.y0, z: c.z, r: c.r }), rayVsSphere(o, d, { x: c.x, y: c.y1, z: c.z, r: c.r }));
+  return best;
+}
+export function rayVsVolume(o, d, v) {
+  return v.type === 'sphere' ? rayVsSphere(o, d, v) : rayVsCapsule(o, d, v);
+}
+
 export class CombatSystem {
   constructor(game) {
     this.game = game;
@@ -60,6 +94,24 @@ export class CombatSystem {
       if (found) res.push(found);
     }
     return res;
+  }
+
+  /**
+   * Tiro de mira manual: primeiro volume que o raio cruza (o ponto fraco ganha se estiver quase na mesma distância).
+   * Retorna { target, volume, point, dist } ou null.
+   */
+  rayHit(o, d, range, targets) {
+    let best = null;
+    for (const t of targets) {
+      if (!t.alive || !t.hurtVolumes) continue;
+      for (const v of t.hurtVolumes()) {
+        const tt = rayVsVolume(o, d, v);
+        if (tt > range) continue;
+        const better = !best || tt < best.dist - (v.part === 'weak' ? 0.25 : 0) || (best.target === t && v.part === 'weak' && tt < best.dist + 0.25);
+        if (better) best = { target: t, volume: v, dist: tt, point: { x: o.x + d.x * tt, y: o.y + d.y * tt, z: o.z + d.z * tt } };
+      }
+    }
+    return best;
   }
 
   emit(pos, n, color, speed = 3) {
