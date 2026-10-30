@@ -1,7 +1,7 @@
 // Capítulos e objetivos (o objetivo exibido é o primeiro ainda não concluído).
 export const CHAPTERS = [
   { id: 1, name: 'Despertar', place: 'Hospital São Dimas', playable: true },
-  { id: 2, name: 'Fumaça', place: 'Bairro Operário', playable: true, preview: true },
+  { id: 2, name: 'Fumaça', place: 'Bairro Operário', playable: true },
   { id: 3, name: 'A Confraria', place: 'Sede e arquivos subterrâneos', playable: false },
   { id: 4, name: 'Cidade Morta', place: 'Centro antigo de Véspera', playable: false },
   { id: 5, name: 'Águas Negras', place: 'Fábrica de bombeamento', playable: false },
@@ -67,11 +67,20 @@ export const OBJECTIVES_C2 = [
   { done: 'c2_hasCrank', text: 'A porta de carga do depósito está emperrada. Procure a manivela no escritório do capataz.' },
   { done: 'c2_shutterOpen', text: 'Use a manivela na porta de enrolar (parede leste do depósito).' },
   { done: 'c2_sliceDone', text: 'Atravesse o pátio de carga até o ponto do bonde.' },
-  { done: 'c2_chapterDone', text: 'Fim da prévia do Capítulo 2 (Rua do Carvão em breve).' },
+  { done: 'c2_inCoal', text: 'O bonde não vem. Siga os trilhos pelo portão norte do pátio até a Rua do Carvão.' },
+  { done: 'c2_hasFactoryKey', text: 'O portão da fábrica de fumaça está trancado. Procure a chave na Carvoaria São Brás (lado oeste da rua).' },
+  { done: 'c2_factoryOpen', text: 'Abra o portão da fábrica no fim da Rua do Carvão.' },
+  { done: 'c2_valves', text: 'A comporta da casa das fornalhas está travada pela pressão. Alivie as duas válvulas do salão.' },
+  { done: 'c2_bossDead', text: 'Entre na casa das fornalhas e enfrente o que guarda a Garganta.' },
+  { done: 'c2_chapterDone', text: 'Saia pela porta de serviço da casa das fornalhas.' },
+  { done: 'c2_never', text: 'Capítulo 2 concluído. O Capítulo 3 — A Confraria chega em breve.' },
 ];
 export const SIDE_OBJECTIVES_C2 = [
   { when: 'c2_started', done: 'c2_readPaper', text: 'Um beco estreito entre as casas do lado norte — algo foi largado lá.' },
   { when: 'c2_readNote', done: 'c2_lured', text: '"Eles vão atrás do barulho." Uma porta batida ou um golpe na parede pode atrair um caçador para longe.' },
+  { when: 'c2_inCarv', done: 'c2_readRoster', text: 'A escala do turno da noite estava pregada na carvoaria. Quem era o mestre-fornalheiro?' },
+  { when: 'c2_inFactory', done: 'c2_readDiary', text: 'O mestre-fornalheiro deixou um diário no salão da fábrica.' },
+  { when: 'c2_bossDead', done: 'c2_hasPass', text: 'Algo brilha na grelha da Garganta, agora apagada.' },
 ];
 
 /** objetivos (principal / opcionais) do capítulo */

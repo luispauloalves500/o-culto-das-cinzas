@@ -56,4 +56,18 @@ export const ENEMIES = {
     mats: 'cacador',
     groanPitch: 0.85,
   },
+  // Capítulo 2 — carvoeiro: brutamontes lento da carvoaria, pá de coque nas mãos. Aguenta muito, golpeia pesado.
+  carvoeiro: {
+    name: 'Carvoeiro',
+    hp: 150, poise: 85, radius: 0.46, height: 1.95, scale: 1.16, hunch: 0.38,
+    walk: 0.9, chase: 2.3, turn: 3.6,
+    sight: 7, fov: 70, hearing: 1.8,
+    attackTokens: 1,
+    attacks: [
+      { id: 'shovel', range: 1.95, windup: 0.95, active: 0.2, recover: 1.1, dmg: 26, knock: 4.5, weight: 2 },
+      { id: 'sweep', range: 1.6, windup: 0.7, active: 0.24, recover: 1.3, dmg: 18, knock: 5.5, weight: 1 },
+    ],
+    mats: 'carvoeiro',
+    groanPitch: 0.6,
+  },
 };

@@ -196,4 +196,29 @@ export const DOCUMENTS = {
 <p style="text-align:right">— S.</p>
 <p class="small">Embaixo, outra letra: <i>"o bonde ainda anda. o motorneiro só leva quem tem a fita vermelha."</i></p>`,
   },
+  escala_turno: {
+    ch: 2,
+    title: 'Escala do turno da noite — Carvoaria São Brás',
+    body: `<p><b>CIA. DE GÁS E COQUE DE VÉSPERA</b> — fornecimento à Fábrica (turno das 22h)</p>
+<p>Carregadores: Tonho, Zé Preto, Lourival, Baiano. <s>Tonho</s> (não veio). <s>Lourival</s> (não veio). <s>Baiano</s>.</p>
+<p>Encarregado da carvoaria: <b>Quintino</b>. A chave do portão da fábrica fica com ele, no gancho da balança — <i>não sai daqui</i>.</p>
+<p>Mestre-fornalheiro: <b>Brás Teixeira</b>. Por ordem da Seção de Véspera, só ele entra na casa das fornalhas. As comportas ficam na pressão das válvulas do salão: <b>quem alivia as duas, abre</b>.</p>
+<p class="small">A lápis, embaixo: <i>"o Quintino agora só pega na pá. não fala, não dorme, não para. o rosto dele tá preto de coque por DENTRO."</i></p>`,
+  },
+  diario_fornalheiro: {
+    ch: 2,
+    title: 'Diário do mestre-fornalheiro',
+    body: `<p><b>9 de agosto.</b> Chegaram os vagões lacrados do São Dimas. Os homens de terno disseram que é "material hospitalar para incinerar". Não é material. Tem dente no meio da cinza.</p>
+<p><b>11 de agosto.</b> A Confraria quer a fornalha grande acesa dia e noite. A fumaça tem de cobrir o bairro inteiro — dizem que <b>quem respira a cinza dos batizados não sonha mais</b>, só obedece. O Quintino respirou demais.</p>
+<p><b>13 de agosto.</b> Me deram um nome novo, de santo: guardião da garganta da fumaça. Me amarraram o fole nas costas. Agora eu respiro pela fornalha e ela respira por mim. Se alguém furar o fole, eu apago junto com ela.</p>
+<p><b>14 de agosto.</b> Uma moça veio perguntar pelo irmão, o Elias da Fundição. Mandei ela embora antes que me vissem. Dei a ela o caminho do bonde.</p>
+<p class="small">A última linha é só uma mancha de fuligem em forma de mão.</p>`,
+  },
+  recado_ines: {
+    ch: 2,
+    title: 'Recado riscado num tijolo',
+    body: `<p>Riscado a prego num tijolo solto, perto da porta de serviço:</p>
+<p><i>"E. — se você chegou até aqui, eu também cheguei. O fornalheiro me deixou passar. Vou atrás do bonde da Linha 4: o motorneiro leva gente para a <b>Sede</b>, lá em cima, onde guardam os arquivos de todo mundo que nasceu no São Dimas. Pegue a fita vermelha. Não deixe a fumaça entrar no peito. — I."</i></p>
+<p class="small">Embaixo, a mesma mão, mais tremida: <i>"eles sabem o seu número."</i></p>`,
+  },
 };
