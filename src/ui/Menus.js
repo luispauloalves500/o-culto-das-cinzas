@@ -24,7 +24,7 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
-    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter === 3) return; if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
+    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 4) return; if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
     for (const el of document.querySelectorAll('.map-tab')) el.onclick = () => this.mapFloor(+el.dataset.floor);
@@ -81,16 +81,16 @@ export class Menus {
   drawMap() {
     const g = this.game, mv = this.mapView;
     this.lastMap = mv.draw(g);
-    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3;
+    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4;
     for (const el of document.querySelectorAll('.map-tab')) {
       const fid = FLOORS[+el.dataset.floor].id;
       el.classList.toggle('active', fid === mv.floor);
-      el.classList.toggle('hidden', (ch2 && fid !== 'up') || (ch3 && fid !== 'up' && fid !== 'lo'));
-      el.textContent = ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
+      el.classList.toggle('hidden', ((ch2 || ch4) && fid !== 'up') || (ch3 && fid !== 'up' && fid !== 'lo'));
+      el.textContent = ch4 ? 'Centro antigo' : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
     }
     const r = roomAt(g.player.pos);
     $('mapWhere').textContent = 'Você está em: ' + (r ? r.name : 'lugar nenhum que conste na planta');
-    $('mapPlan').textContent = ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
+    $('mapPlan').textContent = ch4 ? 'Centro antigo de Véspera: sem planta — só aparece o que você já percorreu.' : ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
     const notes = collectNotes(g);
     $('mapNotes').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
   }
@@ -103,15 +103,24 @@ export class Menus {
         : ch === 3 ? `<br>Fita de Inês: ${stats.ribbon ? 'com Elias' : 'ficou no altar da cripta'} · Ordem de transferência: ${stats.order ? 'lida' : 'não lida'}`
           : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
     const next = $('btnEndNext');
+    if (ch >= 4) {
+      $('endTitle').textContent = 'Capítulo 4 — Cidade Morta';
+      $('endText').textContent = 'A porta de ferro da Torre do Relógio está aberta. Lá em cima, o mecanismo range.';
+      $('endNote').textContent = 'Seu progresso foi salvo. A subida da Torre continua na próxima atualização.';
+      $('endRn0').classList.add('hidden');
+      if (next) { next.disabled = true; next.textContent = 'Continua na próxima atualização'; }
+      this.show('chapterEnd');
+      return;
+    }
     if (ch === 3) {
       $('endTitle').textContent = 'Fim do Capítulo 3 — A Confraria';
       $('endText').textContent = 'O Sacristão cai diante do altar e a chama do relicário se apaga. Pela porta de ferro, as catacumbas sobem em degraus de osso até um bueiro do centro antigo. Lá em cima, Véspera está em silêncio: ruas vazias, vitrines cobertas de cinza e, acima de tudo, o mostrador parado do Relógio.';
-      $('endNote').textContent = 'Seu progresso foi salvo. Próximo: Capítulo 4 — Cidade Morta (centro antigo de Véspera). Em produção.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 4 — Cidade Morta: a Rua do Comércio, a Praça do Relógio e o Vigia (primeira parte jogável).';
       $('endRn0').classList.remove('hidden');
       $('endRn0').innerHTML = stats.order
         ? 'A ordem do altar não deixa dúvida: Inês segue para a <b>Torre</b>, pela Cidade Morta, e só o <b>Vigia</b> abre a passagem do Relógio. ' + (stats.ribbon ? 'No bolso de Elias, a fita de cabelo dela, ao lado do passe da Linha 4.' : 'A fita vermelha dela ficou presa no prego do altar.')
         : '<span class="small">Sobre o altar havia papéis com o lacre da Confraria. Quem os escreveu sabe para onde Inês foi levada.</span>';
-      if (next) { next.disabled = true; next.textContent = 'Capítulo 4 — Cidade Morta (em breve)'; }
+      if (next) { next.disabled = false; next.textContent = 'Seguir para o Capítulo 4 — Cidade Morta'; }
       this.show('chapterEnd');
       return;
     }

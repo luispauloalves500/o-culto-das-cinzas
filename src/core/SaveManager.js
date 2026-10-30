@@ -99,6 +99,31 @@ export function makeChapter3Save(prev) {
   };
 }
 
+// itens de chave do Capítulo 3 que ficam na Sede (fita de Inês, dossiê e passe seguem com Elias)
+export const CH3_KEY_ITEMS = ['sinete_chama'];
+
+/** save inicial do Capítulo 4 (Cidade Morta) a partir do estado no fim do Capítulo 3: Elias sobe pelo bueiro */
+export function makeChapter4Save(prev) {
+  const base = createEmptySave();
+  const p = (prev && migrateSave({ version: SAVE_VERSION, ...prev })) || base;
+  const items = { ...(p.inventory?.items || {}) };
+  for (const k of [...CH1_KEY_ITEMS, ...CH2_KEY_ITEMS, ...CH3_KEY_ITEMS]) delete items[k];
+  return {
+    ...base,
+    chapter: 4,
+    checkpoint: 'c4_drain',
+    player: { hp: Math.max(80, Math.min(125, p.player?.hp ?? 100)) },
+    inventory: { ...(p.inventory || base.inventory), items },
+    flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_chapterDone: true, ch2Done: true, c3_chapterDone: true, ch3Done: true, c4_started: true },
+    doors: {},
+    deadEnemies: [],
+    documents: [...(p.documents || [])],
+    elevatorLevel: 'upper',
+    playTime: p.playTime || 0,
+    stats: { ...(p.stats || {}) },
+  };
+}
+
 export class SaveManager {
   constructor(storage = globalThis.localStorage) { this.storage = storage; }
   hasSave() { return !!this.load(); }

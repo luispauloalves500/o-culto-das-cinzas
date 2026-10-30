@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { EventBus } from './EventBus.js';
 import { Settings } from './Settings.js';
 import { InputManager } from './InputManager.js';
-import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save } from './SaveManager.js';
+import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save, makeChapter4Save } from './SaveManager.js';
 import { AudioManager } from './AudioManager.js';
 import { CollisionWorld } from '../world/CollisionWorld.js';
 import { Navigation } from '../world/Navigation.js';
@@ -23,6 +23,8 @@ import { BairroLevel, BAIRRO_CHECKPOINTS, BAIRRO_FOG } from '../scenes/bairro/Ba
 import { BairroScript } from '../scenes/bairro/BairroScript.js';
 import { SedeLevel, SEDE_CHECKPOINTS, SEDE_FOG } from '../scenes/sede/SedeLevel.js';
 import { SedeScript } from '../scenes/sede/SedeScript.js';
+import { CidadeLevel, CIDADE_CHECKPOINTS, CIDADE_FOG } from '../scenes/cidade/CidadeLevel.js';
+import { CidadeScript } from '../scenes/cidade/CidadeScript.js';
 import { setMapChapter } from '../data/map.js';
 
 // mundos por capítulo: geometria, roteiro, checkpoints e névoa padrão
@@ -30,6 +32,7 @@ const WORLDS = {
   1: { Level: HospitalLevel, Script: HospitalScript, checkpoints: CHECKPOINTS, start: 'ward_bed', fog: { fog: 0x050806, density: 0.075 } },
   2: { Level: BairroLevel, Script: BairroScript, checkpoints: BAIRRO_CHECKPOINTS, start: 'c2_gate', fog: BAIRRO_FOG },
   3: { Level: SedeLevel, Script: SedeScript, checkpoints: SEDE_CHECKPOINTS, start: 'c3_tram', fog: SEDE_FOG },
+  4: { Level: CidadeLevel, Script: CidadeScript, checkpoints: CIDADE_CHECKPOINTS, start: 'c4_drain', fog: CIDADE_FOG },
 };
 import { HUD } from '../ui/HUD.js';
 import { Menus } from '../ui/Menus.js';
@@ -90,7 +93,7 @@ export class Game {
   _buildWorld(save) {
     this._disposeWorld();
     this.bus = new EventBus();
-    this.chapter = save.chapter === 2 || save.chapter === 3 ? save.chapter : 1;
+    this.chapter = [2, 3, 4].includes(save.chapter) ? save.chapter : 1;
     const W = WORLDS[this.chapter];
     setMapChapter(this.chapter);
     const scene = (this.scene = new THREE.Scene());
@@ -174,10 +177,22 @@ export class Game {
     if (!s) return this.newGame();
     // save do Capítulo 1 já concluído (inclusive de versões anteriores, quando o Cap. 2 não existia): segue para o Cap. 2
     if ((s.chapter || 1) === 1 && s.flags.chapterDone) return this.startChapter2(s);
+    // save do Capítulo 3 concluído (de versões em que o Cap. 4 ainda não existia): segue para o Cap. 4
+    if (s.chapter === 3 && s.flags.c3_chapterDone) return this.startChapter4(s);
     this._buildWorld(s);
     this._enterPlay();
     if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
-    if (this.chapter === 3) this.hud.toast(s.flags.c3_chapterDone ? 'Capítulo 3 concluído · a galeria das catacumbas leva ao Capítulo 4 (em breve)' : 'Capítulo 3 — A Confraria · Sede do Véu', 3.5);
+    if (this.chapter === 3) this.hud.toast('Capítulo 3 — A Confraria · Sede do Véu', 3.5);
+    if (this.chapter === 4) this.hud.toast(s.flags.c4_sliceDone ? 'Capítulo 4 — Cidade Morta · a subida da Torre chega na próxima atualização' : 'Capítulo 4 — Cidade Morta · centro antigo de Véspera', 3.5);
+  }
+  /** passagem do Capítulo 3 para o 4: a galeria das catacumbas termina num bueiro do centro antigo */
+  startChapter4(prev) {
+    const from = prev || (this.scene && this.chapter === 3 ? this.serialize(this.checkpoint || 'c3_gallery') : this.saves.load());
+    const s = makeChapter4Save(from);
+    this.saves.write(s);
+    this._buildWorld(s);
+    this._enterPlay();
+    this.script.intro?.();
   }
   /** passagem do Capítulo 2 para o 3: o passe da Linha 4 leva Elias até o Largo do Véu */
   startChapter3(prev) {

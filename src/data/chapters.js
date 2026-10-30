@@ -3,7 +3,7 @@ export const CHAPTERS = [
   { id: 1, name: 'Despertar', place: 'Hospital São Dimas', playable: true },
   { id: 2, name: 'Fumaça', place: 'Bairro Operário', playable: true },
   { id: 3, name: 'A Confraria', place: 'Sede e arquivos subterrâneos', playable: true },
-  { id: 4, name: 'Cidade Morta', place: 'Centro antigo de Véspera', playable: false },
+  { id: 4, name: 'Cidade Morta', place: 'Centro antigo de Véspera', playable: true },
   { id: 5, name: 'Águas Negras', place: 'Fábrica de bombeamento', playable: false },
   { id: 6, name: 'O Acervo', place: 'Museu de Ciências Proibidas', playable: false },
   { id: 7, name: 'Sob a Pedra', place: 'Catacumbas e metrô antigo', playable: false },
@@ -106,5 +106,23 @@ export const SIDE_OBJECTIVES_C3 = [
   { when: 'c3_bossDead', done: 'c3_hasRibbon', text: 'Algo vermelho está preso num prego do altar.' },
 ];
 
-export function objectivesFor(ch) { return ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
-export function sideObjectivesFor(ch) { return ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
+// Capítulo 4 — Cidade Morta (primeira fatia: Rua do Comércio → Farmácia → Relojoaria → Praça do Relógio → Torre)
+export const OBJECTIVES_C4 = [
+  { done: 'c4_inStreet', text: 'Saia do beco do bueiro para a Rua do Comércio.' },
+  { done: 'c4_sawBarricade', text: 'Siga pela Rua do Comércio até a Praça do Relógio, no fim da rua (norte).' },
+  { done: 'c4_hasWatchKey', text: 'O bonde tombado fecha a rua. A Relojoaria Ponteiro (leste) tem saída pelos fundos — a chave ficou na Farmácia Central (oeste).' },
+  { done: 'c4_watchOpen', text: 'Abra a Relojoaria Ponteiro com a chave do Dr. Lauro.' },
+  { done: 'c4_inPlaza', text: 'Atravesse a relojoaria e o pátio dos fundos até o arco da Praça do Relógio.' },
+  { done: 'c4_vigiaRetreat', text: 'O Vigia guarda a praça. Faça-o investir contra as pedras e golpeie o lampião nas costas.' },
+  { done: 'c4_hasTowerKey', text: 'O Vigia fugiu para a Torre. Algo caiu nas pedras, ao pé da porta.' },
+  { done: 'c4_sliceDone', text: 'Abra a porta de ferro da Torre do Relógio e entre.' },
+  { done: 'c4_never', text: 'Primeira fatia do Capítulo 4 concluída. A subida da Torre continua na próxima atualização.' },
+];
+export const SIDE_OBJECTIVES_C4 = [
+  { when: 'c4_inStreet', done: 'c4_readEdital', text: 'Há um edital colado no bonde tombado, no fim da rua.' },
+  { when: 'c4_inStreet', done: 'c4_readDiario', text: 'O diário do farmacêutico deve estar no balcão da Farmácia Central.' },
+  { when: 'c4_watchOpen', done: 'c4_readCaderno', text: 'O caderno do relojoeiro está na bancada dos fundos da relojoaria.' },
+];
+
+export function objectivesFor(ch) { return ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
+export function sideObjectivesFor(ch) { return ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
