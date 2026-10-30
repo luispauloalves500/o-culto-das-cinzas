@@ -154,16 +154,15 @@ function admin(L) {
   const b = L.b, M = L.M;
   b.floor(12, 22, 38, 26, UP2, 'wood', 'adminCorridor');
   b.ceiling(12, 22, 38, 26, TOP2);
-  b.wallX(26, 12, 38, UP2, TOP2);
-  b.wallZ(38, 22, 26, UP2, TOP2);
+  b.wallX(26, 12, 38, UP2, TOP2, [26]);                    // ala cirúrgica superior (porta x=26)
+  b.wallZ(38, 22, 26, UP2, TOP2, [23.15]);                 // patamar da escada principal
   b.wallZ(12, 14, 26, UP2, TOP2, [23], 'chapelWall');      // passagem para o coro da capela
   b.wallX(22, 12, 24, UP2, TOP2, [19]);
   b.wallX(22, 28, 38, UP2, TOP2, [33]);
-  // janelas com luar (só visual)
+  // quadros de antigos diretores (as janelas deram lugar à ala cirúrgica)
   for (const x of [15.5, 21, 31, 35.5]) {
-    b.box(x - 0.7, UP2 + 1.0, 25.86, x + 0.7, UP2 + 2.3, 25.9, 'moonGlass', NC);
-    b.box(x - 0.02, UP2 + 1.0, 25.84, x + 0.02, UP2 + 2.3, 25.86, 'woodDark', NC);
-    b.box(x - 0.75, UP2 + 0.95, 25.7, x + 0.75, UP2 + 1.0, 25.9, 'woodDark', NC);
+    b.box(x - 0.45, UP2 + 1.2, 25.86, x + 0.45, UP2 + 2.2, 25.9, 'woodDark', NC);
+    b.box(x - 0.36, UP2 + 1.3, 25.84, x + 0.36, UP2 + 2.1, 25.86, 'leatherDark', NC);
   }
   b.box(29.2, UP2, 25.3, 30.8, UP2 + 0.45, 25.85, 'woodDark', PL);   // banco de espera
   b.box(16.6, UP2, 25.3, 18.2, UP2 + 0.45, 25.85, 'woodDark', PL);

@@ -8,6 +8,7 @@ import { DOCUMENTS } from '../../data/documents.js';
 import { ITEMS } from '../../data/items.js';
 import { UP2, CANDLE_ORDER } from './HospitalAnnex.js';
 import { roomAt } from '../../data/map.js';
+import { setupWing, applyWing, updateWing, useDoorWing, WING_SPAWNS, WING_DOORS } from './HospitalWingScript.js';
 
 const BREAKER_ORDER = [1, 2, 0]; // II → III → I
 
@@ -31,6 +32,8 @@ export const ENEMY_SPAWNS = [
   { id: 'int_sec', type: 'interno', x: 17, y: UP2, z: 18.8, patrol: [{ x: 17, y: UP2, z: 18.8 }, { x: 22, y: UP2, z: 19.6 }] },
   // capela: fiel ajoelhado entre os bancos
   { id: 'int_chapel', type: 'interno', x: 5.8, y: UP, z: 19.4, yaw: 0, dormant: true },
+  // ala cirúrgica superior e telhado
+  ...WING_SPAWNS,
 ];
 
 const SAINTS = { luzia: 'Santa Luzia', roque: 'São Roque', bras: 'São Brás', dimas: 'São Dimas' };
@@ -67,7 +70,7 @@ export class HospitalScript {
 
     // ---------- itens ----------
     this._pickup('axe', { x: 4.1, y: 1.0, z: 9.3 }, 'Pegar machado de incêndio', () => {
-      g.player.setWeapon('machado'); g.inventory.weapon = 'machado';
+      g.inventory.addWeapon('machado'); g.player.setWeapon('machado'); g.inventory.weapon = 'machado';
       this.q.set('hasAxe');
       g.hud.toast('Machado de incêndio');
       this.hint('combat', '<b>Botão esquerdo</b>: golpe rápido (combo) · <b>Botão direito</b>: golpe forte<br><b>Q</b>: defender · <b>Espaço</b>: esquivar. Golpes gastam fôlego.', 9);
@@ -108,7 +111,7 @@ export class HospitalScript {
     this._saveBook('book_yard', { x: 38.6, y: LO + 0.95, z: 25.6 }, 38.6, LO + 0.92, 24.8, 'yard');
 
     // ---------- portas comuns ----------
-    for (const id of ['ward', 'shortcut', 'storage', 'machines', 'archive', 'arena', 'eastWard', 'eastLanding', 'morgue', 'laundry', 'furnace', 'serviceStair', 'secretaria', 'diretoria', 'chapel']) {
+    for (const id of ['ward', 'shortcut', 'storage', 'machines', 'archive', 'arena', 'eastWard', 'eastLanding', 'morgue', 'laundry', 'furnace', 'serviceStair', 'secretaria', 'diretoria', 'chapel', ...WING_DOORS]) {
       const d = L.doors[id];
       g.interact.add({
         id: 'door_' + id, radius: 1.7,
@@ -167,7 +170,9 @@ export class HospitalScript {
       onInteract: () => { this.q.set('chapterDone'); g.saveGame('yard'); g.endChapter(); } });
 
     this._setupAnnex();
+    setupWing(this);
     this._applyState(save);
+    applyWing(this, save);
   }
 
   // ---------- anexos: lavanderia, incinerador, administração, capela ----------
@@ -376,6 +381,7 @@ export class HospitalScript {
         g.perception.noise(d, 7, 'door');
         return;
       }
+      if (useDoorWing(this, d)) return;
       if (d.id === 'chapel' && p.z > 14) {
         d.locked = false; d.setOpen(true); this.q.set('chapelShortcut');
         g.hud.toast('Você puxou a tranca. A capela agora dá para o corredor do térreo.');
@@ -528,6 +534,7 @@ export class HospitalScript {
     { const c = g.enemies.find((e) => e.id === 'ras_morgue');
       if (c && c.dormant && c.alive && p.y < -3 && Math.hypot(p.x - c.pos.x, p.z - c.pos.z) < 2.4) this._wakeCrawler(); }
     this._updateAnnex(dt);
+    updateWing(this, dt);
     // descer pela escada (atalho da Ala Leste) também conta como chegar ao subsolo
     if (!this.q.has('reachedLower') && !E.moving && p.y < -4.5 && p.x < 40) { this.q.set('reachedLower'); g.saveGame('lower_hall'); }
     // elevador

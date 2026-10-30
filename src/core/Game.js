@@ -123,7 +123,7 @@ export class Game {
       ...createEmptySave(),
       checkpoint,
       player: { hp: Math.round(this.player.hp) },
-      inventory: { items: { ...this.inventory.items }, weapon: this.player.weapon ? 'machado' : null },
+      inventory: { items: { ...this.inventory.items }, weapon: this.player.weapon ? this.player.weapon.id : null, weapons: [...this.inventory.weapons] },
       flags: this.quest.serialize(),
       doors,
       deadEnemies: this.enemies.filter((e) => !e.alive).map((e) => e.id),
@@ -204,6 +204,8 @@ export class Game {
   targets() {
     const t = this.enemies.filter((e) => e.alive);
     if (this.boss && this.boss.alive && this.boss.state !== 'dormant') t.push(this.boss);
+    // objetos atingíveis (parede rachada, cilindros de oxigênio)
+    if (this.script?.props) for (const o of this.script.props) if (o.alive) t.push(o);
     return t;
   }
   tryInteract() {
@@ -265,7 +267,7 @@ export class Game {
       if (i.wasPressed('map') || i.wasPressed('inventory') || i.wasPressed('pause')) { this.resume(); return; }
       if (i.wasPressed('left')) this.menus.mapCycle(-1);
       if (i.wasPressed('right')) this.menus.mapCycle(1);
-      for (let k = 0; k < 3; k++) if (i.pressed.has('Digit' + (k + 1))) this.menus.mapFloor(k);
+      for (let k = 0; k < 4; k++) if (i.pressed.has('Digit' + (k + 1))) this.menus.mapFloor(k);
     } else if (this.state === 'paused') {
       if (i.wasPressed('pause') && !this.requireLock) this.resume();
     }

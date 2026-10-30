@@ -4,6 +4,9 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { buildAnnex, updateAnnex, ANNEX_CHECKPOINTS, ANNEX_ZONES } from './HospitalAnnex.js';
+import { buildWing, updateWing, WING_CHECKPOINTS, WING_ZONES } from './HospitalWing.js';
+
+const LIGHT_BUDGET = 16;
 
 export const UP = 0, LO = -5;
 const H_UP = 3.2;           // pé-direito superior
@@ -19,10 +22,12 @@ export const CHECKPOINTS = {
   east_ward: { x: 33.5, y: UP, z: -1.2, yaw: Math.PI },
   morgue: { x: 20, y: LO, z: 8.2, yaw: Math.PI },
   ...ANNEX_CHECKPOINTS,
+  ...WING_CHECKPOINTS,
 };
 
 // zonas de atmosfera (névoa/cor) — o necrotério é frio e esverdeado
 export const ZONES = [
+  ...WING_ZONES,
   ...ANNEX_ZONES,
   { id: 'morgue', minX: 16, maxX: 26, minZ: -3, maxZ: 10, minY: LO - 1, maxY: CEIL_LO, fog: 0x0a1a14, density: 0.11 },
   { id: 'east', minX: 16, maxX: 38, minZ: -3, maxZ: 10, minY: UP - 1, maxY: H_UP, fog: 0x0a0c08, density: 0.085 },
@@ -51,6 +56,7 @@ export class HospitalLevel {
     this._elevator();
     this._nav();
     buildAnnex(this);
+    buildWing(this);
     return this;
   }
 
@@ -77,7 +83,7 @@ export class HospitalLevel {
     b.floor(0, 10, 40, 14, UP, 'tile', 'corridor');
     b.ceiling(0, 10, 40, 14, H_UP);
     b.wallZ(0, 10, 14, UP, H_UP);
-    b.wallX(14, 0, 40, UP, H_UP, [6, 19, 26, 33]);          // capela (x=6) · depósito · escada de serviço (x=26) · máquinas
+    b.wallX(14, 0, 40, UP, H_UP, [6, 19, 26, 33, 39.2]);    // capela (x=6) · depósito · escada de serviço (x=26) · máquinas · escada principal
     b.wallZ(40, 10, 14, UP, H_UP, [12]);
     // DEPÓSITO x14..24 z14..22
     b.floor(14, 14, 24, 22, UP, 'concrete', 'storage');
@@ -358,7 +364,24 @@ export class HospitalLevel {
     L('lh_22', 'sc_15'); L('sc_15', 'sc_19'); L('sc_19', 'arena_in', d.arena); L('arena_in', 'arena_c');
   }
 
+  /** orçamento de luzes: só as LIGHT_BUDGET lâmpadas mais próximas ficam ativas.
+   *  A contagem visível é constante, então o three.js não recompila shaders. */
+  _cullLights(dt) {
+    this._cullT = (this._cullT || 0) - dt;
+    if (this._cullT > 0) return;
+    this._cullT = 0.2;
+    const p = this.game.player?.pos; if (!p) return;
+    const all = this.lights.all, n = Math.min(LIGHT_BUDGET, all.length);
+    for (const L of all) {
+      const q = L.light.position, dy = (q.y - p.y) * 2.5; // andares diferentes pesam mais
+      L._d = Math.hypot(q.x - p.x, dy, q.z - p.z) - L.light.distance * 0.35;
+    }
+    const sorted = all.slice().sort((a, b) => a._d - b._d);
+    for (let i = 0; i < sorted.length; i++) sorted[i].light.visible = i < n;
+  }
+
   update(dt, t) {
+    this._cullLights(dt);
     for (const L of this.lights.flicker) {
       const f = Math.sin(t * 13 + L.base * 7) * Math.sin(t * 7.3) > 0.93 ? 0.15 : 1;
       L.light.intensity = L.base * f * (0.92 + Math.random() * 0.08);
@@ -369,6 +392,7 @@ export class HospitalLevel {
       if (dw.t !== target) { dw.t = target > dw.t ? Math.min(1, dw.t + dt / 0.6) : Math.max(0, dw.t - dt / 0.6); dw.g.position.z = dw.z + dw.t * dw.t * (3 - 2 * dw.t) * 0.62; }
     }
     updateAnnex(this, dt, t);
+    updateWing(this, dt, t);
     this._updateZone(dt);
   }
 
