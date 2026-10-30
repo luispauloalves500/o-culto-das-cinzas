@@ -6,6 +6,8 @@ import { Enemy } from '../../ai/EnemyController.js';
 import { SurgeonBoss } from '../../ai/SurgeonBoss.js';
 import { DOCUMENTS } from '../../data/documents.js';
 import { ITEMS } from '../../data/items.js';
+import { UP2, CANDLE_ORDER } from './HospitalAnnex.js';
+import { roomAt } from '../../data/map.js';
 
 const BREAKER_ORDER = [1, 2, 0]; // II → III → I
 
@@ -21,7 +23,17 @@ export const ENEMY_SPAWNS = [
   // necrotério
   { id: 'int_morgue', type: 'interno', x: 24.7, y: LO, z: 2.4, yaw: Math.PI },
   { id: 'ras_morgue', type: 'rastejador', x: 21, y: LO, z: 5.2, yaw: -Math.PI / 2, dormant: true },
+  // lavanderia e incinerador
+  { id: 'enf_lav', type: 'enfermeiro', x: 6.5, y: LO, z: 6.8, yaw: Math.PI, dormant: true },
+  { id: 'int_forno', type: 'interno', x: 5.5, y: LO, z: 16.5, patrol: [{ x: 5.5, y: LO, z: 16.2 }, { x: 5.8, y: LO, z: 19 }, { x: 8.2, y: LO, z: 17.2 }] },
+  // 2º andar (administração)
+  { id: 'enf_admin', type: 'enfermeiro', x: 34, y: UP2, z: 24, patrol: [{ x: 35.5, y: UP2, z: 24 }, { x: 15, y: UP2, z: 24 }] },
+  { id: 'int_sec', type: 'interno', x: 17, y: UP2, z: 18.8, patrol: [{ x: 17, y: UP2, z: 18.8 }, { x: 22, y: UP2, z: 19.6 }] },
+  // capela: fiel ajoelhado entre os bancos
+  { id: 'int_chapel', type: 'interno', x: 5.8, y: UP, z: 19.4, yaw: 0, dormant: true },
 ];
+
+const SAINTS = { luzia: 'Santa Luzia', roque: 'São Roque', bras: 'São Brás', dimas: 'São Dimas' };
 
 // gavetas do necrotério que abrem de verdade e o que há nelas
 const DRAWER_NOTES = {
@@ -96,7 +108,7 @@ export class HospitalScript {
     this._saveBook('book_yard', { x: 38.6, y: LO + 0.95, z: 25.6 }, 38.6, LO + 0.92, 24.8, 'yard');
 
     // ---------- portas comuns ----------
-    for (const id of ['ward', 'shortcut', 'storage', 'machines', 'archive', 'arena', 'eastWard', 'eastLanding', 'morgue']) {
+    for (const id of ['ward', 'shortcut', 'storage', 'machines', 'archive', 'arena', 'eastWard', 'eastLanding', 'morgue', 'laundry', 'furnace', 'serviceStair', 'secretaria', 'diretoria', 'chapel']) {
       const d = L.doors[id];
       g.interact.add({
         id: 'door_' + id, radius: 1.7,
@@ -154,8 +166,98 @@ export class HospitalScript {
     g.interact.add({ id: 'exit', pos: { x: 45.6, y: LO + 1.2, z: 28 }, radius: 1.8, prompt: 'Sair do hospital', enabled: () => this.q.has('gateOpen'),
       onInteract: () => { this.q.set('chapterDone'); g.saveGame('yard'); g.endChapter(); } });
 
+    this._setupAnnex();
     this._applyState(save);
   }
+
+  // ---------- anexos: lavanderia, incinerador, administração, capela ----------
+  _setupAnnex() {
+    const g = this.game, L = this.level, M = g.materials;
+    this._pickup('band_lav', { x: 3.0, y: LO + 1.2, z: 6.5 }, 'Pegar bandagem', () => this._giveItem('bandagem'), () => this._bandMesh(2.8, LO + 1.2, 6.5));
+    this._doc('ordem_lavanderia', { x: 10.6, y: LO + 0.95, z: 5.6 }, 10.9, LO + 0.89, 5.6);
+    this._doc('diario_forneiro', { x: 9.2, y: LO + 0.9, z: 15.0 }, 9.2, LO + 0.83, 15.0);
+    // registro de gás: apaga/acende o incinerador (barulho alto; acorda a enfermeira entre os lençóis)
+    g.interact.add({ id: 'gas_valve', pos: { x: 2.6, y: LO + 1.3, z: 12.5 }, radius: 1.5,
+      prompt: () => (this.q.has('furnaceOff') ? 'Abrir o registro de gás' : 'Fechar o registro de gás do incinerador'),
+      onInteract: () => this._toggleValve() });
+    g.interact.add({ id: 'furnace_look', pos: { x: 3.4, y: LO + 0.8, z: 17 }, radius: 1.7,
+      enabled: () => L.furnace.lit && !this.q.has('picked_stair_key'), prompt: 'Olhar dentro do incinerador',
+      onInteract: () => {
+        this.q.set('sawFurnaceKey');
+        g.hud.toast('Entre as cinzas, um brilho de metal: uma chave de ferro. O fogo não deixa chegar perto — o gás deve vir de algum registro.', 5);
+      } });
+    this._pickup('stair_key', { x: 3.3, y: LO + 0.6, z: 17 }, 'Pegar chave de ferro nas cinzas', () => {
+      this._giveItem('chave_escada'); this.q.set('hasStairKey');
+      this.hint('stairKey', 'A etiqueta queimada diz <b>"SERV."</b> — a escada de serviço, no corredor do térreo.', 7);
+    }, () => this._keyMesh(2.4, LO + 0.47, 17), () => !L.furnace.lit);
+    // 2º andar
+    this._pickup('band_sec', { x: 14.4, y: UP2 + 1.3, z: 19.4 }, 'Pegar bandagem', () => this._giveItem('bandagem'), () => this._bandMesh(14.4, UP2 + 1.45, 19.4));
+    this._doc('lista_transferencia', { x: 21.3, y: UP2 + 0.85, z: 16.1 }, 21.3, UP2 + 0.77, 16.1);
+    this._doc('memorando_diretoria', { x: 31.9, y: UP2 + 0.85, z: 15.8 }, 31.9, UP2 + 0.79, 15.8);
+    this._pickup('planta_hospital', { x: 33.2, y: UP2 + 0.85, z: 15.9 }, 'Pegar planta do hospital', () => {
+      this._giveItem('planta_hospital'); this.q.set('hasMapPlan');
+      g.hud.toast('Planta do hospital obtida — o mapa (M) agora mostra as alas que você ainda não visitou.', 5);
+    }, () => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.01, 0.34), M.blueprint); m.position.set(33.2, UP2 + 0.79, 15.9); m.rotation.y = 0.2; return m; });
+    this._saveBook('book_admin', { x: 36.6, y: UP2 + 0.95, z: 15.6 }, 36.6, UP2 + 0.9, 15.15, 'diretoria');
+    // capela: hinário, velas e relicário
+    this._doc('hino_capela', { x: 3.0, y: UP + 1.15, z: 21.2 }, 3.0, UP + 1.11, 21.25);
+    this.candleSeq = [];
+    for (const id in L.candles) {
+      const c = L.candles[id];
+      g.interact.add({ id: 'candle_' + id, pos: c.pos, radius: 1.3, enabled: () => !this.q.has('relicOpen') && !c.lit,
+        prompt: 'Acender as velas de ' + SAINTS[id], onInteract: () => this._lightCandle(id) });
+    }
+    this._pickup('relic', { x: 6, y: UP + 1.35, z: 23.0 }, 'Pegar a medalha do relicário', () => {
+      this._giveItem('medalha_sao_dimas'); this.q.set('maxHpUp'); this._applyMaxHp(); g.player.hp = g.player.maxHp;
+      g.hud.toast('Medalha de São Dimas — vida máxima aumentada.', 4);
+    }, () => {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.015, 10), M.gold);
+      m.rotation.x = Math.PI / 2; m.position.set(6, UP + 1.5, 23.1); m.visible = false; return m;
+    }, () => this.q.has('relicOpen'));
+  }
+  _toggleValve() {
+    const g = this.game, off = !this.q.has('furnaceOff');
+    this.q.set('furnaceOff', off);
+    if (off) this.q.set('furnaceWasOff');
+    this._applyFurnace();
+    const at = { x: 2.6, y: LO, z: 12.5 };
+    g.audio.play('switch', at); g.audio.play(off ? 'thud' : 'power', at);
+    g.perception.noise(at, 14, 'valve');
+    const w = g.enemies.find((e) => e.id === 'enf_lav');
+    if (w && w.alive && w.dormant) { w.wake(); g.audio.play('groan', w.pos, { pitch: 1.1 }); }
+    g.hud.toast(off ? 'O registro range. Atrás da parede, o rugido do incinerador morre num chiado.' : 'O gás volta a correr. O incinerador acende com um sopro.');
+  }
+  _applyFurnace() {
+    const L = this.level, off = this.q.has('furnaceOff');
+    L.furnace.lit = !off;
+    L.valveWheel.rotation.z = off ? Math.PI * 1.5 : 0;
+  }
+  _lightCandle(id) {
+    const g = this.game, L = this.level, c = L.candles[id];
+    const expected = CANDLE_ORDER[this.candleSeq.length];
+    if (id !== expected) {
+      this.candleSeq = [];
+      for (const k in L.candles) { L.candles[k].lit = false; for (const f of L.candles[k].flames) f.visible = false; }
+      g.audio.play('whisper', c.pos); g.audio.play('groan', { x: 5.8, y: UP, z: 19.4 }, { pitch: 0.8 });
+      g.perception.noise({ x: c.pos.x, y: UP, z: c.pos.z }, 12, 'candle');
+      this._wakeChapel();
+      g.hud.toast('Um sopro frio apaga todas as velas de uma vez. Entre os bancos, alguém se levanta.', 4);
+      return;
+    }
+    c.lit = true; for (const f of c.flames) f.visible = true;
+    this.candleSeq.push(id);
+    g.audio.play('pickup', c.pos);
+    if (this.candleSeq.length === CANDLE_ORDER.length) {
+      this.q.set('relicOpen'); L.relic.open = true;
+      g.audio.play('clang', { x: 6, y: 1.2, z: 23 });
+      g.hud.toast('As quatro chamas se curvam para o altar. O relicário se abre com um estalo.', 4);
+    } else g.hud.toast('As velas de ' + SAINTS[id] + ' acendem.', 2);
+  }
+  _wakeChapel() {
+    const g = this.game, w = g.enemies.find((e) => e.id === 'int_chapel');
+    if (w && w.alive && w.dormant) { w.wake(); w.lastKnown = { x: g.player.pos.x, y: g.player.pos.y, z: g.player.pos.z }; }
+  }
+  _applyMaxHp() { const up = this.q.has('maxHpUp'), pl = this.game.player; pl.maxHp = up ? 125 : 100; pl.blessed = up; pl.hp = Math.min(pl.hp, pl.maxHp); }
 
   // ---------- helpers de criação ----------
   _axeMesh(x, y, z) {
@@ -203,6 +305,47 @@ export class HospitalScript {
     this.game.hud.hint(html, dur);
   }
 
+  _updateAnnex(dt) {
+    const g = this.game, p = g.player.pos, L = this.level, q = this.q;
+    // cômodos visitados (alimentam o mapa)
+    this.roomT = (this.roomT || 0) - dt;
+    if (this.roomT <= 0) {
+      this.roomT = 0.2;
+      const r = roomAt(p);
+      if (r && !q.has('seen_' + r.id)) q.set('seen_' + r.id);
+      this.room = r ? r.id : null;
+    }
+    const room = this.room;
+    if (!this.tut.shown.map && q.has('leftWard')) this.hint('map', '<b>M</b>: mapa — cômodos visitados e portas trancadas que você anotou.', 6);
+    const autosave = (flag, cp) => { q.set(flag); g.saveGame(cp); g.hud.toast('Progresso salvo automaticamente.'); };
+    if (!q.has('enteredLaundry') && room === 'laundry' && p.x < 11.2) autosave('enteredLaundry', 'laundry');
+    if (!q.has('enteredFurnace') && room === 'furnace' && p.z > 14.6) {
+      q.set('enteredFurnace');
+      if (L.furnace.lit) this.hint('heat', 'O <b>incinerador</b> queima quem chega perto da boca — inimigos também. Atraia-os para o calor.', 8);
+    }
+    if (!q.has('reachedAdmin') && p.y > 3.5 && room === 'adminCorridor') autosave('reachedAdmin', 'admin');
+    if (!q.has('enteredChapel') && (room === 'chapel' || room === 'coro')) autosave('enteredChapel', 'chapel');
+    if (!q.has('readHymn') && g.inventory.documents.includes('hino_capela')) q.set('readHymn');
+    // inimigos adormecidos acordam com a proximidade
+    for (const [id, r, fl] of [['enf_lav', 3.0, -3], ['int_chapel', 2.6, -1]]) {
+      const w = g.enemies.find((e) => e.id === id);
+      if (w && w.alive && w.dormant && Math.abs(p.y - w.pos.y) < 1.5 && Math.hypot(p.x - w.pos.x, p.z - w.pos.z) < r) { w.wake(); g.audio.play('groan', w.pos); }
+    }
+    // relicário aberto: a medalha aparece
+    if (L.relic.open && !q.has('picked_relic')) L.pickupMeshes.relic.visible = true;
+    // calor do incinerador: dano periódico a quem estiver diante da boca
+    if (L.furnace.lit) {
+      this.heatT = (this.heatT || 0) - dt;
+      if (this.heatT <= 0) {
+        this.heatT = 0.5;
+        const hot = (o) => o.y < -3 && o.x < 4.3 && o.z > 15.6 && o.z < 18.4;
+        const from = { x: 2.6, y: LO, z: 17 };
+        if (hot(p) && g.player.hp > 0) { g.player.takeHit({ dmg: 5, from, blockable: false, knock: 2.2, source: 'fire' }); g.hud.toast('O calor queima!', 1); }
+        for (const e of g.enemies) if (e.alive && hot(e.pos)) e.takeHit({ dmg: 6, poise: 3, heavy: false, from, point: { x: e.pos.x, y: e.pos.y + 1.2, z: e.pos.z } });
+      }
+    } else this.heatT = 0;
+  }
+
   // ---------- portas ----------
   _useDoor(d) {
     const g = this.game, p = g.player.pos;
@@ -225,7 +368,20 @@ export class HospitalScript {
         g.perception.noise(d, 7, 'door');
         return;
       }
-      this.q.set('note_' + d.id); // vai para as Anotações do inventário
+      if (d.id === 'serviceStair' && g.inventory.has('chave_escada')) {
+        g.inventory.remove('chave_escada');
+        d.locked = false; d.setOpen(true); this.q.set('stairUnlocked');
+        g.audio.play('switch', d);
+        g.hud.toast('A chave de ferro, ainda morna, gira na fechadura. A escada sobe para a administração.');
+        g.perception.noise(d, 7, 'door');
+        return;
+      }
+      if (d.id === 'chapel' && p.z > 14) {
+        d.locked = false; d.setOpen(true); this.q.set('chapelShortcut');
+        g.hud.toast('Você puxou a tranca. A capela agora dá para o corredor do térreo.');
+        return;
+      }
+      this.q.set('note_' + d.id); // vai para as Anotações do inventário e para o mapa
       g.audio.play('locked', d); g.hud.toast(d.lockMsg); return;
     }
     d.setOpen(!d.open);
@@ -337,6 +493,12 @@ export class HospitalScript {
     for (const n of L.openableDrawers) if (f['drawer_' + n]) { const dw = L.drawers[n]; dw.open = true; dw.t = 1; dw.g.position.z = dw.z + 0.62; }
     if (f.hasMorgueKey) { const w = g.enemies.find((e) => e.id === 'int_east'); if (w && w.alive) w.dormant = false; }
     if (f.gateOpen) { L.doors.gate.locked = false; L.doors.gate.setOpen(true, true); }
+    // anexos
+    this._applyFurnace();
+    if (f.relicOpen) { L.relic.open = true; L.relic.t = 1; L.relic.lid.rotation.x = -1.9; for (const k in L.candles) { L.candles[k].lit = true; for (const fl of L.candles[k].flames) fl.visible = true; } }
+    if (f.relicOpen && !f.picked_relic) L.pickupMeshes.relic.visible = true;
+    this._applyMaxHp();
+    for (const id of ['enf_lav']) if (f.furnaceWasOff) { const w = g.enemies.find((e) => e.id === id); if (w && w.alive) w.dormant = false; }
     // elevador
     const lvl = save.elevatorLevel || 'upper';
     const E = L.elevator; E.level = lvl; E.y = E.target = lvl === 'upper' ? UP : LO; E.car.position.y = E.y;
@@ -365,6 +527,7 @@ export class HospitalScript {
     }
     { const c = g.enemies.find((e) => e.id === 'ras_morgue');
       if (c && c.dormant && c.alive && p.y < -3 && Math.hypot(p.x - c.pos.x, p.z - c.pos.z) < 2.4) this._wakeCrawler(); }
+    this._updateAnnex(dt);
     // descer pela escada (atalho da Ala Leste) também conta como chegar ao subsolo
     if (!this.q.has('reachedLower') && !E.moving && p.y < -4.5 && p.x < 40) { this.q.set('reachedLower'); g.saveGame('lower_hall'); }
     // elevador

@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
+import { buildAnnex, updateAnnex, ANNEX_CHECKPOINTS, ANNEX_ZONES } from './HospitalAnnex.js';
 
 export const UP = 0, LO = -5;
 const H_UP = 3.2;           // pé-direito superior
@@ -17,10 +18,12 @@ export const CHECKPOINTS = {
   yard: { x: 40, y: LO, z: 28, yaw: Math.PI / 2 },
   east_ward: { x: 33.5, y: UP, z: -1.2, yaw: Math.PI },
   morgue: { x: 20, y: LO, z: 8.2, yaw: Math.PI },
+  ...ANNEX_CHECKPOINTS,
 };
 
 // zonas de atmosfera (névoa/cor) — o necrotério é frio e esverdeado
 export const ZONES = [
+  ...ANNEX_ZONES,
   { id: 'morgue', minX: 16, maxX: 26, minZ: -3, maxZ: 10, minY: LO - 1, maxY: CEIL_LO, fog: 0x0a1a14, density: 0.11 },
   { id: 'east', minX: 16, maxX: 38, minZ: -3, maxZ: 10, minY: UP - 1, maxY: H_UP, fog: 0x0a0c08, density: 0.085 },
 ];
@@ -47,6 +50,7 @@ export class HospitalLevel {
     this._lights();
     this._elevator();
     this._nav();
+    buildAnnex(this);
     return this;
   }
 
@@ -73,7 +77,7 @@ export class HospitalLevel {
     b.floor(0, 10, 40, 14, UP, 'tile', 'corridor');
     b.ceiling(0, 10, 40, 14, H_UP);
     b.wallZ(0, 10, 14, UP, H_UP);
-    b.wallX(14, 0, 40, UP, H_UP, [19, 33]);
+    b.wallX(14, 0, 40, UP, H_UP, [6, 19, 26, 33]);          // capela (x=6) · depósito · escada de serviço (x=26) · máquinas
     b.wallZ(40, 10, 14, UP, H_UP, [12]);
     // DEPÓSITO x14..24 z14..22
     b.floor(14, 14, 24, 22, UP, 'concrete', 'storage');
@@ -94,7 +98,7 @@ export class HospitalLevel {
     // SUBSOLO — HALL x12..40 z10..14
     b.floor(12, 10, 40, 14, LO, 'tile', 'lowerHall');
     b.ceiling(12, 10, 40, 14, CEIL_LO, 'wallLower');
-    b.wallZ(12, 10, 14, LO, CEIL_LO, [], 'wallLower');
+    b.wallZ(12, 10, 14, LO, CEIL_LO, [12], 'wallLower');    // lavanderia (porta z=12)
     b.wallX(10, 16, 40, LO, CEIL_LO, [20, 31], 'wallLower'); // necrotério (x=20) · arquivo (x=31)
     b.wallX(14, 12, 40, LO, CEIL_LO, [22], 'wallLower');
     // ARQUIVO x26..36 z2..10
@@ -364,6 +368,7 @@ export class HospitalLevel {
       const dw = this.drawers[n], target = dw.open ? 1 : 0;
       if (dw.t !== target) { dw.t = target > dw.t ? Math.min(1, dw.t + dt / 0.6) : Math.max(0, dw.t - dt / 0.6); dw.g.position.z = dw.z + dw.t * dw.t * (3 - 2 * dw.t) * 0.62; }
     }
+    updateAnnex(this, dt, t);
     this._updateZone(dt);
   }
 

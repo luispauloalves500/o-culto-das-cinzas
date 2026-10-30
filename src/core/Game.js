@@ -101,7 +101,7 @@ export class Game {
     this.player.spawn(cp, cp.yaw);
     this.cameraCtl.yaw = cp.yaw;
     this.player.setWeapon(save.inventory.weapon || null);
-    this.player.hp = Math.max(30, save.player.hp ?? 100);
+    this.player.hp = Math.min(this.player.maxHp, Math.max(30, save.player.hp ?? 100));
     this.player.stats = { kills: save.stats?.kills || 0, damageTaken: save.stats?.damageTaken || 0 };
     this.playTime = save.playTime || 0;
     this.checkpoint = save.checkpoint;
@@ -182,6 +182,10 @@ export class Game {
     this.state = 'inventory'; this.input.clear(); this.input.exitLock();
     this.menus.showInventory();
   }
+  openMap() {
+    this.state = 'map'; this.input.clear(); this.input.exitLock();
+    this.menus.showMap();
+  }
   closeOverlay() {
     if (this.state === 'reading' && this.readerBack === 'inventory') { this.openInventory(); return; }
     this.resume();
@@ -251,11 +255,17 @@ export class Game {
     if (this.state === 'playing') {
       if (i.wasPressed('pause')) { this.pause(); return; }
       if (i.wasPressed('inventory')) { this.openInventory(); return; }
+      if (i.wasPressed('map')) { this.openMap(); return; }
       if (i.wasPressed('debug')) { this.combat.debug = !this.combat.debug; this.hud.toast(this.combat.debug ? 'Depuração de hitboxes: ligada' : 'Depuração de hitboxes: desligada', 1.5); }
     } else if (this.state === 'reading') {
       if (i.wasPressed('interact') || i.wasPressed('pause')) this.closeOverlay();
     } else if (this.state === 'inventory') {
       if (i.wasPressed('inventory') || i.wasPressed('pause')) this.resume();
+    } else if (this.state === 'map') {
+      if (i.wasPressed('map') || i.wasPressed('inventory') || i.wasPressed('pause')) { this.resume(); return; }
+      if (i.wasPressed('left')) this.menus.mapCycle(-1);
+      if (i.wasPressed('right')) this.menus.mapCycle(1);
+      for (let k = 0; k < 3; k++) if (i.pressed.has('Digit' + (k + 1))) this.menus.mapFloor(k);
     } else if (this.state === 'paused') {
       if (i.wasPressed('pause') && !this.requireLock) this.resume();
     }
