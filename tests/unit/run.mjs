@@ -2,15 +2,15 @@
 import assert from 'node:assert/strict';
 import { CollisionWorld } from '../../src/world/CollisionWorld.js';
 import { Navigation } from '../../src/world/Navigation.js';
-import { migrateSave, createEmptySave, SaveManager, SAVE_KEY, SAVE_VERSION } from '../../src/core/SaveManager.js';
+import { migrateSave, createEmptySave, SaveManager, SAVE_KEY, SAVE_VERSION, makeChapter2Save, CH1_KEY_ITEMS } from '../../src/core/SaveManager.js';
 import { CombatSystem, testVolume, rayVsVolume } from '../../src/gameplay/CombatSystem.js';
 import { WEAPONS, weaponDamage, wearMult, wearCost, conditionLabel } from '../../src/data/weapons.js';
 import { Inventory } from '../../src/gameplay/Inventory.js';
 import { DOCUMENTS } from '../../src/data/documents.js';
 import { ENEMIES } from '../../src/data/enemies.js';
 import { ITEMS } from '../../src/data/items.js';
-import { SIDE_OBJECTIVES } from '../../src/data/chapters.js';
-import { roomAt, knownRooms, floorOf, ROOMS } from '../../src/data/map.js';
+import { SIDE_OBJECTIVES, OBJECTIVES_C2, SIDE_OBJECTIVES_C2, CHAPTERS } from '../../src/data/chapters.js';
+import { roomAt, knownRooms, floorOf, ROOMS, setMapChapter, chapterFloors } from '../../src/data/map.js';
 import { QuestSystem } from '../../src/gameplay/QuestSystem.js';
 import * as THREE from 'three';
 import { attackClipTime, ATTACK_CLIPS, CONFIG_MACHADO, CLIP } from '../../src/gameplay/rev6/configMachado.js';
@@ -377,6 +377,46 @@ test('REV6: coleta exige o machado do cenário a ≤ 1,5 m, esconde-o e mostra o
   assert.equal(mundo.visible, false); assert.equal(arma.visible, true);
   assert.deepEqual(S.serializar(), { possuiMachado: true, machadoEquipado: true });
   S.tocar('Walking'); assert.equal(S.atual.getClip().name, CONFIG_MACHADO.clipMap.Walking, 'clipe _Machado com o machado');
+});
+
+test('Cap. 2: save inicial mantém armas/melhorias e remove itens-chave do hospital', () => {
+  const prev = { ...createEmptySave(), checkpoint: 'yard', player: { hp: 40 },
+    inventory: { items: { bandagem: 2, fusivel: 1, chave_escada: 1, manivela: 1, municao_38: 5, kit_reparo: 1, amuleto_menino: 1 }, weapon: 'machado', weapons: ['machado', 'revolver'], wear: { machado: 30 }, loaded: { revolver: 3 }, possuiMachado: true, machadoEquipado: true },
+    flags: { chapterDone: true, bossDead: true, maxHpUp: true, hasAmulet: true, sharpened: true, picked_axe: true },
+    doors: { ward: { open: true, locked: false } }, deadEnemies: ['int_cor'], documents: ['ficha_elias'], playTime: 1234, stats: { kills: 9 } };
+  const s = makeChapter2Save(prev);
+  assert.equal(s.chapter, 2); assert.equal(s.checkpoint, 'c2_gate'); assert.equal(s.version, SAVE_VERSION);
+  assert.equal(s.player.hp, 80, 'vida mínima 80 ao começar');
+  for (const k of CH1_KEY_ITEMS) assert.ok(!(k in s.inventory.items), 'sem ' + k);
+  assert.deepEqual([s.inventory.items.bandagem, s.inventory.items.municao_38, s.inventory.items.kit_reparo], [2, 5, 1]);
+  assert.deepEqual(s.inventory.weapons, ['machado', 'revolver']); assert.equal(s.inventory.weapon, 'machado');
+  assert.equal(s.inventory.wear.machado, 30); assert.equal(s.inventory.loaded.revolver, 3); assert.equal(s.inventory.possuiMachado, true);
+  assert.ok(s.flags.maxHpUp && s.flags.hasAmulet && s.flags.sharpened && s.flags.ch1Done && s.flags.c2_started);
+  assert.deepEqual(s.doors, {}); assert.deepEqual(s.deadEnemies, []);
+  assert.deepEqual(s.documents, ['ficha_elias']); assert.equal(s.playTime, 1234); assert.equal(s.stats.kills, 9);
+  assert.equal(prev.inventory.items.fusivel, 1, 'não altera o save original');
+  assert.equal(migrateSave(JSON.parse(JSON.stringify(s))).chapter, 2, 'migração preserva o capítulo');
+  assert.equal(makeChapter2Save(null).chapter, 2, 'sem save anterior também funciona');
+});
+
+test('Cap. 2: objetivos, mapa do Bairro Operário e caçador', () => {
+  assert.equal(CHAPTERS.find((c) => c.id === 2).playable, true);
+  const q = new QuestSystem(null, 2); q.restore({ c2_started: true });
+  assert.equal(q.current(), OBJECTIVES_C2[0].text);
+  q.set('c2_inDepot'); assert.equal(q.current(), OBJECTIVES_C2[1].text);
+  assert.ok(q.side().includes(SIDE_OBJECTIVES_C2[0].text), 'beco como objetivo opcional');
+  const q1 = new QuestSystem(null); assert.notEqual(q1.current(), OBJECTIVES_C2[0].text, 'Cap. 1 inalterado');
+  assert.equal(roomAt({ x: 24, y: 0, z: 14 })?.ch || 1, 1, 'Cap. 1 não vê salas do Cap. 2');
+  setMapChapter(2);
+  try {
+    assert.deepEqual(chapterFloors().map((f) => f.id), ['up']);
+    assert.equal(roomAt({ x: 24, y: 0, z: 14 }).id, 'c2_deposito');
+    assert.equal(roomAt({ x: 37, y: 0, z: 21 }).id, 'c2_escritorio');
+    assert.equal(roomAt({ x: 11, y: 0, z: 12 }).id, 'c2_beco');
+    assert.equal(knownRooms({ c2_started: true }, 'up').length >= 0, true);
+  } finally { setMapChapter(1); }
+  const c = ENEMIES.cacador; assert.ok(c && c.hearing > 2 && c.attacks.length === 2 && c.attacks.every((a) => ['swipe', 'lunge'].includes(a.id)));
+  assert.ok(ITEMS.manivela_carga && DOCUMENTS.jornal_vespera && DOCUMENTS.bilhete_capataz);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

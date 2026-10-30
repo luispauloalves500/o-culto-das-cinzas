@@ -819,6 +819,78 @@ try {
   check('orçamento de luzes limita luzes ativas', fps.lights <= fps.allLights - 16, 'visíveis: ' + fps.lights + ' de ' + fps.allLights);
   check('renderização contínua', fps.fps > 2, fps.fps.toFixed(1) + ' fps (software, sem GPU) ' + JSON.stringify(fps));
   await page.screenshot({ path: SHOTS + '06-continuar.png' });
+  // --- Capítulo 2 — Fumaça (prévia jogável): passagem real pelo fim do Capítulo 1
+  await page.evaluate(() => { const g = __ocdc; g.quest.set('chapterDone'); g.endChapter(); });
+  await new Promise((r) => setTimeout(r, 300));
+  const endBtn = await page.$eval('#btnEndNext', (e) => ({ text: e.textContent, visible: !!e.offsetParent }));
+  await page.click('#btnEndNext'); await new Promise((r) => setTimeout(r, 400));
+  await inject();
+  const c2a = await page.evaluate(() => {
+    const g = __ocdc, out = {}, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    const s0 = S(); out.start = { st: g.state, ch: g.chapter, sch: s0.chapter, cp: s0.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), obj: g.quest.current(), fuse: g.inventory.has('fusivel'), axe: g.inventory.weapons.includes('machado'), docs: g.inventory.documents.length, enemies: g.enemies.map((e) => e.type), boss: !!g.boss };
+    T.run(0.3);
+    // colisão no muro do hospital (oeste)
+    T.tp(1.6, 0, 4, -Math.PI / 2); T.hold('KeyW', 1.0); out.wallX = +g.player.pos.x.toFixed(2);
+    // caçador da rua investiga um barulho
+    const c = g.enemies.find((e) => e.id === 'cac_rua'); T.tp(3, 0, 4, Math.PI / 2);
+    g.perception.noise({ x: c.pos.x - 3, y: 0, z: c.pos.z }, 5, 'test'); T.run(0.4); out.cacState = c.state;
+    // beco: jornal (objetivo opcional) e bandagem
+    out.sideBefore = g.quest.side().length;
+    T.tp(11.4, 0, 13.6, 0); out.paper = T.interactAt('doc_jornal_vespera'); T.run(0.1);
+    out.readPaper = g.quest.has('c2_readPaper');
+    // porta do depósito
+    T.tp(24, 0, 6, 0); out.door = T.interact('door_c2_depot'); T.run(0.8); out.doorOpen = g.level.doors.c2_depot.open;
+    T.tp(24, 0, 10.5, 0); T.run(0.3); out.inDepot = g.quest.has('c2_inDepot'); out.depSave = S().checkpoint; out.obj2 = g.quest.current();
+    // porta de carga emperrada
+    T.tp(38.4, 0, 14, Math.PI / 2); out.shut1 = T.interact('door_c2_shutter'); out.shutLocked = g.level.doors.c2_shutter.locked && g.quest.has('note_c2_shutter');
+    // escritório: porta, manivela (acorda o caçador do depósito), bilhete e livro de registros
+    T.tp(37, 0, 16.6, 0); out.office = T.interact('door_c2_office'); T.run(0.8); out.officeOpen = g.level.doors.c2_office.open;
+    const d = g.enemies.find((e) => e.id === 'cac_dep'); out.depDormant0 = d.dormant;
+    T.tp(38.7, 0, 19.4, 0); out.crank = T.interactAt('pick_c2_crank'); out.hasCrank = g.inventory.has('manivela_carga'); out.depDormant1 = d.dormant;
+    d.setDeadInstant();
+    T.tp(35.5, 0, 22.0, 0); out.note = T.interactAt('doc_bilhete_capataz'); T.run(0.1); out.readNote = g.quest.has('c2_readNote');
+    T.tp(38.6, 0, 22.2, 0); out.book = T.interactAt('c2_book'); const s1 = S(); out.bookSave = { cp: s1.checkpoint, ch: s1.chapter, dead: s1.deadEnemies };
+    // porta de carga com a manivela + passagem para o pátio
+    T.tp(38.4, 0, 14, Math.PI / 2); out.shut2 = T.interact('door_c2_shutter'); T.run(1.5);
+    out.shutOpen = g.level.doors.c2_shutter.open && g.quest.has('c2_shutterOpen') && !g.inventory.has('manivela_carga');
+    T.tp(38.8, 0, 14, Math.PI / 2); T.hold('KeyW', 1.2); out.yardX = +g.player.pos.x.toFixed(2);
+    // munição e ponto do bonde (fim da prévia)
+    T.tp(43, 0, 25.6, 0); out.tram = T.interactAt('c2_tram'); const s2 = S(); out.tramSave = { cp: s2.checkpoint, slice: s2.flags.c2_sliceDone };
+    out.objEnd = g.quest.current();
+    T.key('KeyM'); out.mapState = g.state; out.map = g.menus.lastMap;
+    out.tabs = [...document.querySelectorAll('.map-tab')].filter((e) => !e.classList.contains('hidden')).map((e) => e.textContent);
+    out.where = document.getElementById('mapWhere').textContent;
+    g.closeOverlay();
+    out.lights = (() => { let k = 0, v = 0; g.scene.traverse((o) => { if (o.isLight) { k++; if (o.visible) v++; } }); return { k, v }; })();
+    return out;
+  });
+  check('Cap. 2: botão do fim do Cap. 1 leva ao Capítulo 2', /Capítulo 2/.test(endBtn.text) && endBtn.visible, JSON.stringify(endBtn));
+  check('Cap. 2: Bairro Operário carregado com save do Cap. 2 (sem itens-chave, com machado)', c2a.start.st === 'playing' && c2a.start.ch === 2 && c2a.start.sch === 2 && c2a.start.cp === 'c2_gate' && Math.abs(c2a.start.pos[0] - 3) < 0.3 && !c2a.start.fuse && c2a.start.axe && !c2a.start.boss && c2a.start.enemies.filter((t) => t === 'cacador').length === 2 && /depósito/.test(c2a.start.obj), JSON.stringify(c2a.start));
+  check('Cap. 2: colisão no muro do hospital', c2a.wallX > 1.1 && c2a.wallX < 1.8, 'x=' + c2a.wallX);
+  check('Cap. 2: caçador vai atrás do barulho', c2a.cacState === 'investigate', c2a.cacState);
+  check('Cap. 2: jornal do beco conclui objetivo opcional', c2a.paper === 'ok' && c2a.readPaper && c2a.sideBefore >= 1, JSON.stringify({ p: c2a.paper, r: c2a.readPaper }));
+  check('Cap. 2: porta do depósito abre e entrada faz autosave', c2a.door === 'ok' && c2a.doorOpen && c2a.inDepot && c2a.depSave === 'c2_depot' && /manivela/.test(c2a.obj2), JSON.stringify({ d: c2a.door, s: c2a.depSave, o: c2a.obj2 }));
+  check('Cap. 2: porta de carga emperrada sem manivela', c2a.shut1 === 'ok' && c2a.shutLocked, c2a.shut1);
+  check('Cap. 2: manivela no escritório desperta o caçador do depósito', c2a.office === 'ok' && c2a.officeOpen && c2a.crank === 'ok' && c2a.hasCrank && c2a.depDormant0 && !c2a.depDormant1, JSON.stringify({ o: c2a.office, c: c2a.crank, d0: c2a.depDormant0, d1: c2a.depDormant1 }));
+  check('Cap. 2: bilhete do capataz e livro de registros (save)', c2a.note === 'ok' && c2a.readNote && c2a.book === 'ok' && c2a.bookSave.cp === 'c2_office' && c2a.bookSave.ch === 2 && c2a.bookSave.dead.includes('cac_dep'), JSON.stringify({ n: c2a.note, b: c2a.book, s: c2a.bookSave }));
+  check('Cap. 2: manivela abre a porta de carga e o pátio é alcançável', c2a.shut2 === 'ok' && c2a.shutOpen && c2a.yardX > 40.6, JSON.stringify({ s: c2a.shut2, o: c2a.shutOpen, x: c2a.yardX }));
+  check('Cap. 2: ponto do bonde encerra a prévia e salva', c2a.tram === 'ok' && c2a.tramSave.cp === 'c2_yard' && c2a.tramSave.slice && /prévia/.test(c2a.objEnd), JSON.stringify({ t: c2a.tram, s: c2a.tramSave, o: c2a.objEnd }));
+  check('Cap. 2: mapa mostra só o Bairro Operário', c2a.mapState === 'map' && c2a.tabs.length === 1 && c2a.tabs[0] === 'Bairro Operário' && c2a.map?.rooms >= 3 && /pátio|Pátio/i.test(c2a.where), JSON.stringify({ t: c2a.tabs, m: c2a.map, w: c2a.where }));
+  check('Cap. 2: orçamento de luzes', c2a.lights.v <= 16, JSON.stringify(c2a.lights));
+  await page.screenshot({ path: SHOTS + '12-bairro-patio.png' });
+  // recarregar a página e "Continuar" volta ao Capítulo 2 com o estado salvo
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c2b = await page.evaluate(() => {
+    document.getElementById('btnContinue').click();
+    const g = __ocdc; T.run(0.3);
+    const r = { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), shut: g.level.doors.c2_shutter.open, dep: g.level.doors.c2_depot.open, crankHidden: !g.level.pickupMeshes.c2_crank.visible, dead: !g.enemies.find((e) => e.id === 'cac_dep').alive, sharp: g.player.sharpened, maxSt: g.player.maxSt, heal: g.player.healAmount, maxHp: g.player.maxHp };
+    // vista da rua para o screenshot
+    T.tp(8, 0, 4, Math.PI / 2); T.run(0.5);
+    return r;
+  });
+  check('Cap. 2: continuar restaura o Bairro Operário (portas, coleta, inimigo morto, melhorias)', c2b.st === 'playing' && c2b.ch === 2 && Math.abs(c2b.pos[0] - 43) < 0.5 && c2b.shut && c2b.dep && c2b.crankHidden && c2b.dead && c2b.maxSt === 125 && c2b.heal === 65 && c2b.sharp, JSON.stringify(c2b));
+  await page.screenshot({ path: SHOTS + '12-bairro-rua.png' });
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));
