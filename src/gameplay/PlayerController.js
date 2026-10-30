@@ -1,9 +1,9 @@
 // Elias Varga: locomoção relativa à câmera, máquina de estados, machado com hitbox sincronizada à animação.
 import * as THREE from 'three';
 import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from './ProceduralRig.js';
-import { WEAPONS, weaponDamage } from '../data/weapons.js';
+import { WEAPONS, weaponDamage, wearCost, conditionLabel } from '../data/weapons.js';
 
-const STATES = ['free', 'attack', 'dodge', 'block', 'hit', 'grabbed', 'heal', 'dead', 'locked'];
+const STATES = ['free', 'attack', 'dodge', 'block', 'aim', 'reload', 'repair', 'hit', 'grabbed', 'heal', 'dead', 'locked'];
 
 // Curvas de animação por golpe (t normalizado). active = janela em que a hitbox causa dano.
 const ATTACK_ANIM = {
@@ -196,7 +196,10 @@ export class PlayerController {
 
   spawn(p, yaw = 0) {
     this.pos.set(p.x, p.y, p.z); this.vel.set(0, 0, 0); this.vy = 0;
-    this.yaw = yaw; this.state = 'free'; this.attack = null; this.queued = null; this.grabbedBy = null;
+    this.yaw = yaw; this.state = 'free'; this.attack = null; this.queued = null; this.grabbedBy = null; this.repairing = null;
+    // teleporte / respawn: nada de tela de "agarrado" ou mira sobrando de um estado anterior
+    this.game.hud?.setStruggle(false);
+    if (this.game.cameraCtl) this.game.cameraCtl.aiming = false;
     this.rig.root.position.copy(this.pos); this.rig.root.rotation.y = yaw;
   }
 
@@ -225,6 +228,7 @@ export class PlayerController {
       if (this.st <= 0) { this._setState('hit'); this.stateT = -0.4; g.hud.toast('Guarda quebrada!'); }
       const chip = dmg * 0.12;
       this.hp -= chip;
+      this._wear(0.5); // aparar com a arma também a desgasta
       return 'blocked';
     }
     this.hp -= dmg;
@@ -324,16 +328,24 @@ export class PlayerController {
     return best;
   }
 
-  _startShot(a) {
-    const g = this.game, w = this.weapon;
-    if (!g.inventory.has(w.ammo)) {
+  _startShot(a, manual = false) {
+    const g = this.game, w = this.weapon, inv = g.inventory;
+    if (inv.rounds(w.id) <= 0) {
       g.audio.play('dryfire', this.pos);
-      g.hud.toast('Clique seco. Sem munição .38.', 1.6);
+      g.hud.toast(inv.has(w.ammo) ? 'Clique seco. Tambor vazio — [T] recarrega.' : 'Clique seco. Sem munição .38.', 1.8);
       this.dryFires = (this.dryFires || 0) + 1;
       return false;
     }
-    g.inventory.remove(w.ammo);
+    inv.loaded[w.id] = inv.rounds(w.id) - 1;
     this.useStamina(a.stamina);
+    if (manual) {
+      // mira manual: a bala vai para onde a retícula aponta, sem ajuda
+      this.yaw = g.cameraCtl.yaw;
+      this.attack = { kind: 'heavy', def: a, t: 0, anim: ATTACK_ANIM[a.anim], hit: false, recoiled: false, shot: true, fired: false, aim: null, manual: true };
+      this.hitSet.clear();
+      this._setState('attack');
+      return true;
+    }
     const cf = g.cameraCtl.forward();
     const mv = this._wishDir();
     const dir = mv.len > 0.2 ? { x: mv.x / mv.len, z: mv.z / mv.len } : cf;
@@ -358,6 +370,7 @@ export class PlayerController {
     g.cameraCtl.addShake(0.3);
     g.perception.noise(this.pos, S.noise, 'gunshot');
     g.combat.sparks(from, 6);
+    if (a.manual) { this._fireManual(S, w); return; }
     // o alvo pode ter se movido: reconfirma a mira na direção travada
     const aim = this.aimTarget({ x: fx, z: fz }, { ...S, cone: 0.12 });
     if (aim) {
@@ -371,6 +384,73 @@ export class PlayerController {
     const t = g.col.raycast(eye, d, S.range, (b) => b.tag !== 'prop-low');
     this.lastShot = { hit: null };
     if (t < S.range) { const at = eye.addScaledVector(d, t - 0.05); g.combat.sparks(at, 10); g.audio.play('clang', at, { pitch: 1.6 }); }
+  }
+
+  /** tiro da mira manual: raio do ombro pela retícula, parede bloqueia, cabeça vale mais */
+  _fireManual(S, w) {
+    const g = this.game, a = this.attack;
+    const { o, d } = g.cameraCtl.aimRay(this.pos);
+    const wallT = g.col.raycast(o, d, S.range, (b) => b.tag !== 'prop-low');
+    const hit = g.combat.rayHit(o, d, Math.min(S.range, wallT), g.targets().filter((e) => e !== this));
+    if (hit) {
+      const v = hit.volume;
+      const head = v.part === 'head' || (v.type === 'capsule' && hit.point.y >= v.y1 - 0.3 && v.part !== 'weak');
+      const dmg = Math.round(S.dmg * (head ? 1.4 : 1));
+      a.hit = true; this.lastShot = { hit: hit.target.id || 'alvo', at: hit.point, manual: true, head };
+      const res = hit.target.takeHit({ dmg, weapon: w.id, poise: S.poise * (head ? 1.3 : 1), heavy: true, bullet: true, from: this.pos, point: hit.point, volume: v });
+      if (res !== 'immune') { this.hitstop = 0.05; if (head) g.hud.toast('Na cabeça.', 0.9); }
+      return;
+    }
+    this.lastShot = { hit: null, manual: true };
+    if (wallT < S.range) {
+      const at = o.clone().addScaledVector(d, wallT - 0.05);
+      g.combat.sparks(at, 10); g.audio.play('clang', at, { pitch: 1.6 });
+    }
+  }
+
+  /** desgaste da arma em mãos (com avisos quando muda de faixa) */
+  _wear(amount) {
+    const g = this.game, w = this.weapon;
+    if (!w?.durability || !(amount > 0)) return;
+    const r = g.inventory.addWear(w.id, amount);
+    if (!r) return;
+    const crossed = [0.5, 0.25, 0].find((th) => r.before > th && r.after <= th);
+    if (crossed === undefined) return;
+    if (crossed === 0) { g.hud.toast(`${w.name} quebrou — ainda bate, mas fraco. [G] repara com um kit.`, 3); g.audio.play('clang', this.pos, { pitch: 0.6 }); }
+    else g.hud.toast(`${w.name} ${conditionLabel(r.after)} (${Math.round(r.after * 100)}%) — [G] para reparar.`, 2.4);
+  }
+
+  /** G: reparar a arma em mãos (kit de reparo = 100%; pedra de afiar = lâminas até 60%) */
+  _tryRepair() {
+    const g = this.game, w = this.weapon, inv = g.inventory;
+    if (!w) return false;
+    if (!w.durability) { g.hud.toast(w.ranged ? 'O revólver não precisa de reparo — [T] recarrega.' : 'Nada a reparar.', 1.6); return false; }
+    const cond = inv.condition(w.id);
+    if (cond >= 0.999) { g.hud.toast(`${w.name} está em bom estado.`, 1.5); return false; }
+    if (inv.has('kit_reparo')) {
+      this.repairing = { kit: true, to: 1, dur: 1.6 };
+    } else if (w.sharpenable && inv.has('pedra_afiar') && cond < 0.6) {
+      this.repairing = { kit: false, to: 0.6, dur: 1.2 };
+    } else {
+      g.hud.toast(w.sharpenable && inv.has('pedra_afiar') ? 'A pedra não faz mais que isso. Precisa de um kit de reparo.' : 'Sem kit de reparo.', 2);
+      return false;
+    }
+    this._setState('repair');
+    g.audio.play(this.repairing.kit ? 'switch' : 'swing', this.pos);
+    g.perception.noise(this.pos, 3, 'repair');
+    return true;
+  }
+
+  /** T: recarregar o tambor */
+  _tryReload() {
+    const g = this.game, w = this.weapon, inv = g.inventory;
+    if (!w?.cylinder) return false;
+    if (inv.rounds(w.id) >= w.cylinder) { g.hud.toast('Tambor cheio.', 1.2); return false; }
+    if (!inv.has(w.ammo)) { g.hud.toast('Sem munição .38 de reserva.', 1.6); return false; }
+    this.reloadMoved = 0;
+    this._setState('reload');
+    g.audio.play('locked', this.pos);
+    return true;
   }
 
   _sampleWeapon() {
@@ -415,9 +495,11 @@ export class PlayerController {
         if (this.weapon && input.wasPressed('light')) this._startAttack('light1');
         else if (this.weapon && input.wasPressed('heavy')) this._startAttack('heavy');
         else if (input.wasPressed('dodge') && this.st >= 10) this._startDodge(wish);
-        else if (this.weapon && input.isDown('block')) this._setState('block');
+        else if (this.weapon && input.isDown('block')) this._setState(this.weapon.ranged ? 'aim' : 'block');
         else if (input.wasPressed('heal')) this._tryHeal();
         else if (input.wasPressed('swap')) this.cycleWeapon();
+        else if (input.wasPressed('reload')) this._tryReload();
+        else if (input.wasPressed('repair')) this._tryRepair();
         else if (input.wasPressed('interact')) g.tryInteract();
         break;
       }
@@ -429,6 +511,55 @@ export class PlayerController {
         if (!input.isDown('block')) this._setState('free');
         else if (input.wasPressed('dodge') && this.st >= 10) this._startDodge(wish);
         else if (input.wasPressed('light')) this._startAttack('light1');
+        break;
+      }
+      case 'aim': {
+        // mira manual: anda devagar, o corpo acompanha a câmera; botão esq./dir. dispara pela retícula
+        speed = 1.1;
+        moveX = wish.x * speed; moveZ = wish.z * speed;
+        this.yaw = g.cameraCtl.yaw;
+        if (!input.isDown('block') || !this.weapon?.ranged) this._setState('free');
+        else if (input.wasPressed('dodge') && this.st >= 10) this._startDodge(wish);
+        else if (input.wasPressed('light') || input.wasPressed('heavy')) this._startShot(this.weapon.attacks.heavy, true);
+        else if (input.wasPressed('reload')) this._tryReload();
+        break;
+      }
+      case 'reload': {
+        const w = this.weapon, inv = g.inventory;
+        speed = 1.0;
+        moveX = wish.x * speed; moveZ = wish.z * speed;
+        if (wish.len > 0.1) this._turnTo(Math.atan2(wish.x, wish.z), 8 * dt);
+        if (!w?.cylinder) { this._setState('free'); break; }
+        if (input.wasPressed('dodge') && this.st >= 10) { this._startDodge(wish); break; }
+        // um cartucho por vez: dá para parar no meio (esquiva) e ficar com o que já entrou
+        const due = Math.floor(Math.max(0, this.stateT - w.reloadBase) / w.reloadPer + 1e-6);
+        while (this.reloadMoved < due && inv.rounds(w.id) < w.cylinder && inv.has(w.ammo)) {
+          inv.remove(w.ammo); inv.loaded[w.id] = inv.rounds(w.id) + 1; this.reloadMoved++;
+          g.audio.play('switch', this.pos);
+          g.perception.noise(this.pos, 2.5, 'reload');
+        }
+        if (inv.rounds(w.id) >= w.cylinder || !inv.has(w.ammo)) {
+          if (this.stateT >= w.reloadBase + this.reloadMoved * w.reloadPer + 0.15) {
+            g.hud.toast(`Tambor: ${inv.rounds(w.id)}/${w.cylinder}`, 1.2);
+            this._setState(input.isDown('block') ? 'aim' : 'free');
+          }
+        }
+        break;
+      }
+      case 'repair': {
+        const rp = this.repairing;
+        if (!rp || !this.weapon) { this._setState('free'); break; }
+        if (input.wasPressed('dodge') && this.st >= 10) { this.repairing = null; g.hud.toast('Reparo interrompido.', 1.2); this._startDodge(wish); break; }
+        if (this.stateT > rp.dur) {
+          const inv = g.inventory, w = this.weapon;
+          if (rp.kit) inv.remove('kit_reparo');
+          inv.repair(w.id, rp.to);
+          this.repairs = (this.repairs || 0) + 1;
+          g.audio.play('pickup', this.pos);
+          g.hud.toast(rp.kit ? `${w.name} reparado — fita, arame e lixa (100%).` : `Fio refeito na pedra (${Math.round(inv.condition(w.id) * 100)}%).`, 2);
+          this.repairing = null;
+          this._setState('free');
+        }
         break;
       }
       case 'attack': this._updateAttack(adt, dt, input); break;
@@ -445,7 +576,7 @@ export class PlayerController {
         if (this.stateT > 1.1) {
           this.hp = Math.min(this.maxHp, this.hp + (this.healAmount || 45));
           g.audio.play('pickup', this.pos);
-          g.hud.toast('Ferimentos enfaixados (+45)');
+          g.hud.toast(`Ferimentos enfaixados (+${this.healAmount || 45})`);
           this._setState('free');
         }
         break;
@@ -514,6 +645,9 @@ export class PlayerController {
       }
     }
 
+    // câmera de mira só enquanto mira (ou no tiro manual com Q ainda segurado)
+    if (g.cameraCtl) g.cameraCtl.aiming = this.state === 'aim' || (this.state === 'reload' && input.isDown('block')) || (this.state === 'attack' && !!this.attack?.manual);
+
     this._animate(dt, adt, hs);
     this.rig.root.position.copy(this.pos);
     this.rig.root.rotation.y = this.yaw;
@@ -575,6 +709,7 @@ export class PlayerController {
       const wall = !all.length && g.col.pointInside(tip, (b) => b.tag === 'wall' || b.tag === 'door' || b.tag === 'obstacle');
       if (wall && !a.hit) {
         a.recoiled = true;
+        this._wear(wearCost(this.weapon, a.kind, this.sharpened, true));
         g.audio.play('clang', tip);
         g.combat.sparks(tip, 14);
         g.cameraCtl.addShake(0.25);
@@ -584,12 +719,14 @@ export class PlayerController {
         for (const h of all) {
           this.hitSet.add(h.target);
           a.hit = true;
-          const res = h.target.takeHit({ dmg: weaponDamage(this.weapon, d, this.sharpened), weapon: this.weapon.id, poise: d.poise, heavy: a.kind === 'heavy', from: this.pos, point: h.point, volume: h.volume });
+          const res = h.target.takeHit({ dmg: weaponDamage(this.weapon, d, this.sharpened, this.game.inventory.condition(this.weapon.id)), weapon: this.weapon.id, poise: d.poise, heavy: a.kind === 'heavy', from: this.pos, point: h.point, volume: h.volume });
           if (res !== 'immune') {
             this.hitstop = a.kind === 'heavy' ? 0.09 : 0.055;
             g.cameraCtl.addShake(a.kind === 'heavy' ? 0.35 : 0.18);
           }
         }
+        // um golpe que acerta desgasta uma vez (não importa quantos alvos)
+        if (all.length && !a.worn) { a.worn = true; this._wear(wearCost(this.weapon, a.kind, this.sharpened)); }
       }
     } else if (this.game.combat.debug) {
       this.game.combat.debugSphere(tip, this.weapon.tipRadius, 0x666666);
@@ -598,8 +735,9 @@ export class PlayerController {
 
     if (a.t >= d.dur || (this.queued && t > d.comboAt)) {
       const q = this.queued; this.queued = null;
+      const manual = a.manual;
       this.attack = null;
-      this._setState('free');
+      this._setState(manual && input.isDown('block') && this.weapon?.ranged ? 'aim' : 'free');
       if (q && this.st > 4) this._startAttack(q);
     }
   }
@@ -656,6 +794,32 @@ export class PlayerController {
         const k = Math.sin(Math.min(1, t / 0.42) * Math.PI);
         r.torso.rotation.x = -0.45 * k; r.head.rotation.x = -0.4 * k;
         r.armR.upper.rotation.z = -0.6 * k; r.armL.upper.rotation.z = 0.6 * k;
+        break;
+      }
+      case 'aim': {
+        const amt = Math.min(1, hs / 2.5);
+        this.walkPhase += hs * dt * 2.6;
+        if (amt > 0.05) poseWalk(r, this.walkPhase, amt * 0.6, 0); else poseIdle(r, this.animT);
+        // braço estendido na linha da câmera (a inclinação levanta/abaixa o braço)
+        const pitch = this.game.cameraCtl?.pitch || 0;
+        r.armR.upper.rotation.x = -1.5 + pitch * 0.9; r.armR.upper.rotation.z = 0.05; r.armR.lower.rotation.x = -0.05;
+        r.armL.upper.rotation.x = -1.3 + pitch * 0.9; r.armL.upper.rotation.z = -0.5; r.armL.lower.rotation.x = -0.4;
+        r.torso.rotation.y = 0.15;
+        break;
+      }
+      case 'reload': {
+        r.torso.rotation.x = 0.2;
+        r.armR.upper.rotation.x = -0.7; r.armR.lower.rotation.x = -1.1; r.armR.upper.rotation.z = 0.2;
+        r.armL.upper.rotation.x = -0.8; r.armL.lower.rotation.x = -1.2 + Math.sin(t * 18) * 0.15; r.armL.upper.rotation.z = -0.3;
+        r.head.rotation.x = 0.35;
+        break;
+      }
+      case 'repair': {
+        r.hips.position.y = r.baseHipY - 0.25;
+        r.legR.upper.rotation.x = -0.9; r.legR.lower.rotation.x = 1.3; r.legL.upper.rotation.x = -0.4; r.legL.lower.rotation.x = 0.9;
+        r.torso.rotation.x = 0.45; r.head.rotation.x = 0.3;
+        r.armR.upper.rotation.x = -0.8; r.armR.lower.rotation.x = -1.0 + Math.sin(t * 16) * 0.25;
+        r.armL.upper.rotation.x = -0.7; r.armL.lower.rotation.x = -1.2;
         break;
       }
       case 'heal': {

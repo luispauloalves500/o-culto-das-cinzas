@@ -89,7 +89,7 @@ export class Game {
     this.director = new EnemyDirector(2);
     this.inventory = new Inventory(this.bus);
     this.quest = new QuestSystem(this.bus);
-    this.enemies = []; this.boss = null;
+    this.enemies = []; this.boss = null; this.cutscene = null;
     this.cameraCtl = new CameraController(this.camera, this.col, this.settings);
     this.player = new PlayerController(this);
     this.level = new HospitalLevel(this).build();
@@ -123,7 +123,7 @@ export class Game {
       ...createEmptySave(),
       checkpoint,
       player: { hp: Math.round(this.player.hp) },
-      inventory: { items: { ...this.inventory.items }, weapon: this.player.weapon ? this.player.weapon.id : null, weapons: [...this.inventory.weapons] },
+      inventory: { items: { ...this.inventory.items }, weapon: this.player.weapon ? this.player.weapon.id : null, weapons: [...this.inventory.weapons], wear: { ...this.inventory.wear }, loaded: { ...this.inventory.loaded } },
       flags: this.quest.serialize(),
       doors,
       deadEnemies: this.enemies.filter((e) => !e.alive).map((e) => e.id),
@@ -197,7 +197,7 @@ export class Game {
   onPlayerFellOut() { this.continueGame(); }
   endChapter() {
     this.state = 'end'; this.input.exitLock(); this.hud.show(false); this.audio.setIntensity(0);
-    this.menus.showChapterEnd({ time: this.playTime, kills: this.player.stats.kills, damageTaken: this.player.stats.damageTaken, docs: this.inventory.documents.length });
+    this.menus.showChapterEnd({ time: this.playTime, kills: this.player.stats.kills, damageTaken: this.player.stats.damageTaken, docs: this.inventory.documents.length, rn0: this.quest.has('rn0Revealed') });
   }
 
   // ---------- interação ----------
@@ -223,7 +223,7 @@ export class Game {
     try {
       this.input.pollGamepad();
       this._handleMenuKeys();
-      if (this.state === 'playing') {
+      if (this.state === 'playing' || this.state === 'cutscene') {
         this.acc += dt;
         let n = 0;
         while (this.acc >= STEP && n < 5) { this.step(STEP); this.acc -= STEP; n++; if (n === 1) this.input.endFrame(); }
@@ -273,9 +273,23 @@ export class Game {
     }
   }
 
+  /** inicia uma cena curta (câmera roteirizada, mundo congelado exceto o cenário) */
+  playCutscene(cs) {
+    this.cutscene = cs; this.state = 'cutscene'; this.input.clear();
+    this.currentInteractable = null;
+    this.hud.show(false);
+    cs.start();
+  }
+
   step(dt) {
     const p = this.player;
     this.time += dt;
+    if (this.state === 'cutscene') {
+      // durante a cena só o cenário e a própria cena andam (inimigos e jogador congelados)
+      this.level.update(dt, this.time);
+      this.cutscene?.update(dt);
+      return;
+    }
     if (this.state === 'playing') this.playTime += dt;
     p.update(dt);
     for (const e of this.enemies) e.update(dt);
@@ -299,6 +313,7 @@ export class Game {
   }
 
   _updateCamera(dt) {
+    if (this.state === 'cutscene') return;
     const p = this.player;
     const inCombat = this.combatT > 0 || this.script.bossActive;
     this.cameraCtl.update(dt, this.input, p.pos, inCombat);
