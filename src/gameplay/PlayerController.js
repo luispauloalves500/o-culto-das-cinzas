@@ -27,6 +27,22 @@ const ATTACK_ANIM = {
     loX: [[0, -0.2], [0.4, -0.9], [0.58, -0.05], [1, -0.2]],
     twoHands: true,
   },
+  // lança: estocada reta — recolhe o cotovelo e estende tudo de uma vez (a haste fica quase na horizontal)
+  thrust: {
+    torsoY: [[0, 0.35], [0.3, 0.5], [0.46, -0.15], [1, 0.15]],
+    upX: [[0, -0.45], [0.3, -0.3], [0.46, -0.8], [0.62, -0.8], [1, -0.45]],
+    upZ: [[0, 0], [1, 0]],
+    loX: [[0, -0.6], [0.3, -0.55], [0.46, -0.05], [0.62, -0.05], [1, -0.5]],
+    twoHands: true,
+  },
+  thrustHeavy: {
+    torsoY: [[0, 0.5], [0.4, 0.65], [0.55, -0.2], [1, 0.1]],
+    torsoX: [[0, 0], [0.4, -0.15], [0.55, 0.3], [0.75, 0.25], [1, 0]],
+    upX: [[0, -0.4], [0.4, -0.25], [0.55, -0.72], [0.72, -0.72], [1, -0.4]],
+    upZ: [[0, 0], [1, 0]],
+    loX: [[0, -0.6], [0.4, -0.75], [0.55, 0], [0.72, 0], [1, -0.5]],
+    twoHands: true,
+  },
   // revólver: braço estendido à frente, coice no disparo
   shoot: {
     torsoY: [[0, 0.15], [0.16, 0.2], [1, 0.1]],
@@ -50,7 +66,7 @@ export class PlayerController {
     game.scene.add(this.rig.root);
 
     // um modelo por arma, presos à mão; só o da arma equipada fica visível
-    this.models = { machado: this._buildAxe(M), martelo: this._buildHammer(M), facao: this._buildMachete(M), revolver: this._buildRevolver(M) };
+    this.models = { machado: this._buildAxe(M), martelo: this._buildHammer(M), facao: this._buildMachete(M), revolver: this._buildRevolver(M), lanca: this._buildSpear(M) };
     for (const k in this.models) { this.rig.armR.end.add(this.models[k].group); this.models[k].group.visible = false; }
     this.axe = this.models.machado;
     this.sharpened = false;
@@ -121,6 +137,25 @@ export class PlayerController {
     edge.position.set(0, -0.42, 0.055); group.add(edge);
     const tip = new THREE.Object3D(); tip.position.set(0, -0.66, 0.03); group.add(tip);
     const mid = new THREE.Object3D(); mid.position.set(0, -0.36, 0.03); group.add(mid);
+    return { group, tip, mid };
+  }
+
+  // haste de suporte de soro (metal) + esparadrapo + bisturi de parto na ponta; empunhada pelo terço de trás
+  _buildSpear(M) {
+    const group = new THREE.Group();
+    group.rotation.x = -0.75;
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 1.62, 6), M.metal);
+    shaft.position.y = -0.2; shaft.castShadow = true; group.add(shaft);
+    const tape = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.14, 6), M.bandage);
+    tape.position.y = -0.98; group.add(tape);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.2, 6), M.bandage);
+    grip.position.y = 0.02; group.add(grip);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.2, 0.034), M.axeEdge);
+    blade.position.y = -1.11; blade.castShadow = true; group.add(blade);
+    const point = new THREE.Mesh(new THREE.ConeGeometry(0.017, 0.06, 4), M.axeEdge);
+    point.position.y = -1.24; point.rotation.x = Math.PI; group.add(point);
+    const tip = new THREE.Object3D(); tip.position.set(0, -1.22, 0); group.add(tip);
+    const mid = new THREE.Object3D(); mid.position.set(0, -0.62, 0); group.add(mid);
     return { group, tip, mid };
   }
 
@@ -408,7 +443,7 @@ export class PlayerController {
       case 'hit': if (this.stateT > 0.42) this._setState('free'); break;
       case 'heal':
         if (this.stateT > 1.1) {
-          this.hp = Math.min(this.maxHp, this.hp + 45);
+          this.hp = Math.min(this.maxHp, this.hp + (this.healAmount || 45));
           g.audio.play('pickup', this.pos);
           g.hud.toast('Ferimentos enfaixados (+45)');
           this._setState('free');

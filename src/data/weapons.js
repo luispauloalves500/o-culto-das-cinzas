@@ -41,6 +41,21 @@ export const WEAPONS = {
       heavy: { anim: 'heavy', dur: 0.86, active: [0.46, 0.62], dmg: 40, poise: 45, stamina: 20, lunge: 2.6, lungeAt: [0.4, 0.6], next: null, comboAt: 2, cancel: 0.75 },
     },
   },
+  // Lança improvisada: haste de suporte de soro com um bisturi de parto amarrado na ponta. Estocada longa e reta:
+  // alcança antes de ser alcançado, mas quase não corta para os lados e pesa pouco na guarda.
+  lanca: {
+    id: 'lanca',
+    name: 'Lança improvisada',
+    short: 'estocada longa (alcance) · golpe forte atravessa · fraca dos lados',
+    sharpenable: true,
+    reach: 1.22, // comprimento até a ponta (o machado alcança ~0.6)
+    tipRadius: 0.17,
+    midRadius: 0.09,
+    attacks: {
+      light1: { anim: 'thrust', dur: 0.68, active: [0.34, 0.56], dmg: 21, poise: 22, stamina: 11, lunge: 1.1, lungeAt: [0.28, 0.5], next: 'light1', comboAt: 0.72, cancel: 0.62 },
+      heavy: { anim: 'thrustHeavy', dur: 1.0, active: [0.44, 0.62], dmg: 46, poise: 55, stamina: 24, lunge: 2.2, lungeAt: [0.4, 0.6], next: null, comboAt: 2, cancel: 0.8 },
+    },
+  },
   // Revólver .38: botão direito dispara (mira automática no alvo à frente), munição escassa e barulho enorme.
   // O botão esquerdo dá uma coronhada fraca, que não gasta bala.
   revolver: {
