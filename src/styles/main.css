@@ -101,3 +101,5 @@ select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
 .track.blessed { border-color: rgba(224,176,96,.75); box-shadow: 0 0 6px rgba(224,176,96,.35); }
 
 .cond-worn { color: #d0a050; } .cond-broken { color: #d05a40; }
+
+.panel button:disabled, button:disabled { opacity: 0.45; cursor: default; filter: grayscale(0.6); }

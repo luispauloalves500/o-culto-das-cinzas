@@ -94,9 +94,28 @@ export class Menus {
     $('mapNotes').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
   }
   showChapterEnd(stats) {
-    const t = Math.floor(stats.time);
-    $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${stats.docs}/${Object.values(DOCUMENTS).filter((d) => (d.ch || 1) === 1).length}`
-      + `<br>Revelação RN 0: ${stats.rn0 ? 'vista' : 'não encontrada'}`;
+    const t = Math.floor(stats.time), ch = stats.chapter || 1;
+    const docsCh = Object.values(DOCUMENTS).filter((d) => (d.ch || 1) === ch).length;
+    const docsHave = stats.docsList ? stats.docsList.filter((id) => (DOCUMENTS[id]?.ch || 1) === ch).length : stats.docs;
+    $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${Math.min(docsHave, docsCh)}/${docsCh}`
+      + (ch === 1 ? `<br>Revelação RN 0: ${stats.rn0 ? 'vista' : 'não encontrada'}` : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
+    const next = $('btnEndNext');
+    if (ch === 2) {
+      $('endTitle').textContent = 'Fim do Capítulo 2 — Fumaça';
+      $('endText').textContent = 'Brás tomba sobre a grelha e a Garganta engasga. Pela porta de serviço, Elias sai para a Rua da Fundição: os trilhos da Linha 4 seguem para o centro, onde fica a Sede da Confraria.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 3 — A Confraria: em breve.';
+      $('endRn0').classList.remove('hidden');
+      $('endRn0').innerHTML = stats.pass
+        ? 'No bolso, o passe de latão do motorneiro, amarrado na mesma fita vermelha do dente de leite. Inês foi por ali. Eles sabem o número de Elias — e agora ele sabe o caminho.'
+        : '<span class="small">Algo brilhou na grelha da fornalha quando Brás caiu. Inês deixou um sinal para quem viesse atrás.</span>';
+      if (next) { next.disabled = true; next.textContent = 'Capítulo 3 — A Confraria (em breve)'; }
+      this.show('chapterEnd');
+      return;
+    }
+    if (next) { next.disabled = false; next.textContent = 'Seguir para o Capítulo 2 — Fumaça'; }
+    $('endTitle').textContent = 'Fim do Capítulo 1 — Hospital São Dimas';
+    $('endText').textContent = 'Elias atravessa o portão de serviço. Lá fora, a fuligem do Bairro Operário cai como neve suja.';
+    $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 2 — Fumaça: Bairro Operário, Rua do Carvão e a fábrica de fumaça.';
     // desfecho: muda se Elias já entendeu quem ele é (rito da pia de batismo, no arquivo morto)
     const p = $('endRn0');
     if (p) {
