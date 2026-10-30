@@ -5,4 +5,5 @@ export const ITEMS = {
   chave_escada: { name: 'Chave de ferro', desc: 'Ainda morna. Etiqueta queimada: "SERV." — a escada de serviço do térreo.' },
   planta_hospital: { name: 'Planta do hospital', desc: 'Cópia heliográfica de todos os andares. O mapa (M) passa a mostrar as alas não visitadas.' },
   medalha_sao_dimas: { name: 'Medalha de São Dimas', desc: 'O bom ladrão. Pesa mais do que deveria. Vida máxima +25.' },
+  pedra_afiar: { name: 'Pedra de afiar do Brandão', desc: 'Gasta no meio, de tanto uso. O machado de incêndio passou a cortar 30% mais fundo.' },
 };
