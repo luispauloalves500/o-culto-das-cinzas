@@ -25,9 +25,12 @@ npm run smoke      # teste de fumaça E2E no Chromium headless (precisa de Chrom
 | Mover / correr | WASD / Shift | analógico esq. / L3 |
 | Câmera | mouse (clique na tela para capturar) | analógico dir. |
 | Ataque leve / forte | botão esquerdo / botão direito | RB / RT |
-| Revólver: atirar / coronhada | botão direito / botão esquerdo | RT / RB |
-| Bloquear / esquivar | Q / Espaço | LT / B |
-| Interagir | E | A |
+| Revólver: atirar (mira automática) / coronhada | botão direito / botão esquerdo | RT / RB |
+| Revólver: **mira manual** (segurar) e atirar | segurar Q + botão esq. ou dir. | segurar LT + RB/RT |
+| Revólver: **recarregar** o tambor | T | direcional ↑ |
+| **Reparar** a arma em mãos (kit / pedra de afiar) | G | direcional ↓ |
+| Bloquear / esquivar | Q (com arma corpo a corpo) / Espaço | LT / B |
+| Interagir / pular cena | E | A |
 | Curar (bandagem) | H | X |
 | Trocar arma (machado → martelo → facão → revólver → lança) | R | LB |
 | Inventário e documentos | Tab | Y |
@@ -85,6 +88,12 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
 - **Visual PS2**: render em baixa resolução com pixels nítidos, texturas procedurais em canvas, materiais Lambert, névoa, luzes piscando, energia de emergência.
 - **GitHub Pages** via GitHub Actions (`.github/workflows/deploy.yml`: testes → build → branch `gh-pages`).
 
+- **Desgaste de armas**: machado (90), martelo (120), facão (70) e lança (55) têm durabilidade. Golpe leve gasta 1, forte 2, bater em parede 3, bloquear 0,5; lâmina afiada gasta 25% menos. Abaixo de 50% a arma fica *gasta* (−15% de dano), abaixo de 25% *lascada* (−30%) e em 0% *quebrada* (metade do dano, mas nunca some). Condição em % e rótulo no HUD (barra fina sob a arma) e no inventário; avisos ao cruzar cada faixa. **G repara**: o **Kit de reparo** (fita, arame e lixa — 4 no capítulo: depósito, lavanderia, recuperação e alojamento da maternidade) leva a 100% em 1,6 s; sem kit, a **pedra de afiar** recupera lâminas (machado, facão, lança) até 60%. Esquiva interrompe o reparo. Desgaste vai no save. *(unit + smoke: golpes gastam, HUD mostra %, pedra → 60%, kit → 100%, save/continuar)*
+- **Revólver com tambor e recarga própria**: 6 balas no tambor + reserva (munição .38 no inventário). Atirar só gasta o tambor; vazio = clique seco com aviso. **T recarrega** uma bala por vez (0,45 s + 0,32 s por bala, faz barulho; esquiva cancela; dá para recarregar mirando). HUD: `Revólver · 3/6 · reserva 4`. Saves antigos migram (as balas da reserva enchem o tambor, nada se perde). *(unit + smoke)*
+- **Mira manual**: com o revólver, **segurar Q** aproxima a câmera sobre o ombro (FOV menor), mostra a **retícula** e o tiro sai pelo raio do centro da tela — sem auto-mira, a parede bloqueia, e **tiro na cabeça** dá ×1,4. Botão direito sem Q continua com a mira automática. *(unit: raio × cápsula/esfera; smoke: mirando ao lado erra, apontado acerta)*
+- **Trama RN 0 — a revelação na Sala de batismo**: com o **amuleto do menino** (dente do Davi, Quarto 7) e a **pulseira "R N 0"** (altar), Elias põe os dois na cinza da pia. **Cena curta (~19 s, pulável com E)** com câmera própria e tarjas: a cinza sobe em espiral, o menino de cinza (Davi) fala com Elias, e a visão de **Marta Varga na maca** e do residente **Vernet com a colher de prata** aparece na cinza. No fim: documento final **"A contagem da Confraria"** (0 = Varga, retorno em trinta anos; 1–6 = lote C; 7 = Davi, a reserva — "O zero voltou."), vida cheia e autosave; a cinza fica escura e a lâmpada fraca. Sem os dois itens, a pia só dá a pista *"O ZERO E O SETE"* e diz o que falta. Objetivo opcional novo, e a **tela de fim de capítulo** mostra se a revelação foi vista (com o trecho final) ou só a dica. *(smoke: pista, cena, HUD oculto, pular, documento, save, fim de capítulo — captura `11-revelacao.png`)*
+- **HUD**: o aviso "AGARRADO!" agora acompanha o estado real do jogador (some ao soltar, ao morrer, ao renascer e em cenas). *(smoke)*
+
 ### Sobre modelos e texturas
 
 Não foram usados GLB/texturas de terceiros: **todo o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
@@ -94,11 +103,11 @@ Não foram usados GLB/texturas de terceiros: **todo o visual é procedural** (ge
 - Modelos/animações artesanais (GLB rigados) e texturas pintadas — hoje tudo é procedural/placeholder estilizado.
 - Maternidade e arquivo morto já entraram; faltam mais segredos e variações de rota (hoje há quatro: câmara fria, expurgo, Quarto 7 e sala de batismo).
 - A medalha e a planta não têm uso narrativo além do bônus/mapa; o documento da diretoria aponta para o Cap. 2 sem conteúdo jogável dele.
-- **Durabilidade/desgaste de armas**; recarga do revólver como ação própria (hoje as balas saem direto do inventário); mira manual (hoje é automática no cone à frente); mais objetos ambientais além dos cilindros, do forno e da caixinha de música.
-- O amuleto do menino, o Quarto 7 e a revelação do "RN 0" ainda não se ligam a uma cena/desfecho próprios (só documentos).
+- Mais objetos ambientais além dos cilindros, do forno e da caixinha de música; mira manual sem assistência no gamepad (sem *aim assist*); o desgaste ainda não muda o visual da arma.
+- A revelação RN 0 é uma cena curta com bonecos de cinza procedurais (sem animação facial nem voz); outras cenas do capítulo continuam só em texto.
 - Mapa: sem zoom, e sem marcação manual pelo jogador.
 - Dano localizado/desmembramento estilizado, finalizações, opção de reduzir sangue.
-- Mais tipos de inimigo; cutscenes; remapeamento de teclas; ajuste fino de dificuldade.
+- Mais tipos de inimigo; mais cutscenes; remapeamento de teclas; ajuste fino de dificuldade.
 - Streaming por setores (hoje o capítulo é carregado inteiro — é pequeno).
 - Capítulo 2 (a tela final é apenas um gancho/placeholder).
 - Gamepad implementado mas **não testado** com controle físico; desempenho só medido em render por software no CI local.
@@ -109,17 +118,18 @@ Não foram usados GLB/texturas de terceiros: **todo o visual é procedural** (ge
 src/
   core/      Game (loop fixo 60 Hz, estados), Input, Settings, Save, Audio, EventBus
   world/     CollisionWorld, LevelBuilder, Doors, Interactables, Navigation (A*), Textures, Materials
-  gameplay/  PlayerController, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem
+  gameplay/  PlayerController, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem, Cutscene
   ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss
   scenes/hospital/  HospitalLevel (geometria, luzes, elevador, grafo), HospitalScript (puzzles, gatilhos, chefe),
                     HospitalWing/WingScript (2º andar + telhado), HospitalPeds/PedsScript (3º andar · pediatria),
                     HospitalMaternity/MaternityScript (2º andar · maternidade),
-                    HospitalDeadArchive/DeadArchiveScript (subsolo · arquivo morto + sala de batismo)
+                    HospitalDeadArchive/DeadArchiveScript (subsolo · arquivo morto + sala de batismo),
+                    HospitalRn0 (revelação RN 0: rito da pia e cena)
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
-  unit/run.mjs     testes de colisão, navegação, save, hitbox e dados
-  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (96 verificações)
+  unit/run.mjs     26 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
+  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (106 verificações)
 ```
 
 ## Licença

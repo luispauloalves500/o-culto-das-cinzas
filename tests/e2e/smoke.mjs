@@ -54,6 +54,8 @@ try {
       hold(code, sec) { g.input.down.add(code); g.input.pressed.add(code); T.run(sec); g.input.down.delete(code); },
       press(code) { g.input.pressed.add(code); g.step(1 / 60); g.input.endFrame(); },
       // tecla de menu (tratada fora do passo de simulação)
+      ammo() { return g.inventory.ammoTotal('revolver'); },
+      reload() { if (g.inventory.rounds('revolver') < 6 && g.inventory.has('municao_38')) { T.press('KeyT'); T.run(2.6); } },
       key(code) { g.input.pressed.add(code); g._handleMenuKeys(); g.input.endFrame(); },
       interact(id) { const it = g.interact.list.find((i) => i.id === id); if (!it) throw new Error('sem ' + id); T.tp(it.pos.x - Math.sin(g.player.yaw) * 0.6, g.player.pos.y, it.pos.z - Math.cos(g.player.yaw) * 0.6); g.step(1 / 60); const cur = g.currentInteractable; if (!cur || cur.id !== id) return 'interagível não focado: ' + (cur && cur.id); g.tryInteract(); return 'ok'; },
       // mira o jogador para um ponto e interage com o objeto mais próximo
@@ -426,18 +428,50 @@ try {
       const hb = e.hp; T.press('Mouse0'); swings++; T.run(0.55); if (!firstDmg && e.hp < hb) firstDmg = hb - e.hp;
     }
     out.fight = { alive: e.alive, hp0, swings, firstDmg };
+    // desgaste: os golpes gastaram o facão; HUD mostra %; G com kit volta a 100% e gasta o kit
+    {
+      T.run(0.8); const inv = g.inventory, c0 = inv.condition('facao');
+      g.hud.update(1 / 60, g); const hud = document.getElementById('weapon').textContent, bar = !document.getElementById('condTrack').classList.contains('hidden');
+      inv.addWear('facao', 40); const worn = inv.condition('facao');
+      const dmgWorn = g.player.weapon && inv.condition('facao') < 0.5;
+      // sem kit, a pedra de afiar recupera lâminas até 60%
+      const noKit = !inv.has('kit_reparo'), stone = inv.has('pedra_afiar'); T.press('KeyG'); const stNo = g.player.state; T.run(1.5); const cStone = inv.condition('facao');
+      inv.add('kit_reparo'); T.press('KeyG'); const st = g.player.state; T.run(1.9);
+      out.wear = { c0, hud, bar, worn, dmgWorn, noKit, stone, stNo, cStone, st, c1: inv.condition('facao'), kit: inv.count('kit_reparo'), repairs: g.player.repairs || 0, after: g.player.state };
+    }
     // posto de enfermagem: chave, munição, livro de registros
     g.player.setWeapon('facao'); g.player.hp = 100;
     T.tp(33.5, ROOF, 23.2, PI); out.postoDoor = T.interactAt('door_postoPed'); T.run(0.8);
     T.tp(34.0, ROOF, 21.0, PI); out.key = T.interactAt('pick_key_seg');
-    T.tp(32.7, ROOF, 15.6, -PI / 2); out.ammo1 = T.interactAt('pick_ammo_posto'); out.ammoA = g.inventory.count('municao_38');
+    T.tp(32.7, ROOF, 15.6, -PI / 2); out.ammo1 = T.interactAt('pick_ammo_posto'); out.ammoA = T.ammo();
     T.tp(34.8, ROOF, 15.8, PI); out.book = T.interactAt('book_peds'); out.cpPosto = g.checkpoint;
     // segurança: chave → revólver (+3) e mais munição
     out.segLocked = D.seguranca.locked;
     T.tp(38.5, ROOF, 23.2, PI); out.segDoor = T.interactAt('door_seguranca'); T.run(0.8); out.segOpen = D.seguranca.open && g.quest.has('securityOpen');
     const s = E('int_seg'); out.segDormant = s.dormant;
     T.tp(38.0, ROOF, 19.3, PI); out.rev = T.interactAt('pick_revolver'); out.wRev = g.player.weapon?.id; out.segWoke = !s.dormant;
-    T.tp(38.9, ROOF, 20.4, PI); out.ammo2 = T.interactAt('pick_ammo_seg'); out.ammoB = g.inventory.count('municao_38');
+    T.tp(38.9, ROOF, 20.4, PI); out.ammo2 = T.interactAt('pick_ammo_seg'); out.ammoB = T.ammo();
+    // mira manual (segura Q): retícula sem auto-mira; fora do alvo erra, apontando acerta
+    {
+      s.dormant = true; s._set('idle'); s.pos.set(38.6, ROOF, 15.6); s.yaw = 0; const sHpKeep = s.hp; s.hp = 999;
+      T.tp(38.6, ROOF, 19.6, PI); g.player.hp = 100;
+      g.input.down.add('KeyQ'); T.run(0.5);
+      const aimSt = g.player.state, aimK = +g.cameraCtl.aimK.toFixed(2);
+      g.hud.update(1 / 60, g); const reticle = document.getElementById('crosshair').classList.contains('aiming');
+      const tgt = { x: s.pos.x, y: s.pos.y + 1.1, z: s.pos.z };
+      g.cameraCtl.aimAt(tgt, g.player.pos); g.cameraCtl.yaw += 0.45;
+      const h0 = s.hp, a0 = T.ammo(); g.player.lastShot = null; T.press('Mouse0'); T.run(0.9);
+      const miss = { shot: g.player.lastShot, hp: s.hp === h0, ammo: a0 - T.ammo() };
+      g.cameraCtl.aimAt(tgt, g.player.pos); T.run(0.05); g.cameraCtl.aimAt(tgt, g.player.pos);
+      const h1 = s.hp; g.player.lastShot = null; T.press('Mouse0'); T.run(0.9);
+      const hit = { shot: g.player.lastShot, dmg: h1 - s.hp, state: g.player.state };
+      g.input.down.delete('KeyQ'); T.run(0.3);
+      out.manual = { aimSt, aimK, reticle, miss, hit, back: g.player.state };
+      s.dormant = false; s.alerted = true; s.hp = sHpKeep;
+      // recarga (T): reserva → tambor, uma bala por vez
+      const r0 = g.inventory.rounds('revolver'), t0 = T.ammo(); g.player.hp = 100; T.press('KeyT'); const st = g.player.state; T.run(2.8);
+      out.reload = { st, r0, r1: g.inventory.rounds('revolver'), t0, t1: T.ammo(), after: g.player.state };
+    }
     // tiro: botão direito acerta o Interno e gasta 1 bala
     let shots = 0; const sHp0 = s.hp; let firstShot = null;
     for (let i = 0; i < 5 && s.alive; i++) {
@@ -445,10 +479,12 @@ try {
       if (g.player.state === 'grabbed') for (let k = 0; k < 20; k++) T.press('Mouse0');
       const px = s.pos.x - 2.6, pz = s.pos.z + 0.4; T.tp(Math.max(36.6, Math.min(40.4, px)), ROOF, Math.max(14.6, Math.min(21.4, pz + 1.5)), 0);
       const y = Math.atan2(s.pos.x - g.player.pos.x, s.pos.z - g.player.pos.z); g.player.yaw = y; g.cameraCtl.yaw = y;
-      const a0 = g.inventory.count('municao_38'), h0 = s.hp; T.press('Mouse2'); T.run(0.9); shots++;
-      if (!firstShot) firstShot = { ammo: [a0, g.inventory.count('municao_38')], hp: [h0, s.hp] };
+      if (!g.inventory.rounds('revolver')) T.reload();
+      const a0 = T.ammo(), h0 = s.hp; T.press('Mouse2'); T.run(0.9); shots++;
+      if (!firstShot) firstShot = { ammo: [a0, T.ammo()], hp: [h0, s.hp] };
     }
-    out.shot = { alive: s.alive, sHp0, shots, firstShot, ammo: g.inventory.count('municao_38') };
+    out.shot = { alive: s.alive, sHp0, shots, firstShot, ammo: T.ammo() };
+    out.cyl = { loaded: g.inventory.rounds('revolver'), reserve: g.inventory.count('municao_38') };
     // R troca de arma em ciclo
     out.weapons = [...g.inventory.weapons];
     const cyc = []; for (let i = 0; i < 4; i++) { T.press('KeyR'); cyc.push(g.player.weapon?.id); T.run(0.1); } out.cycle = cyc;
@@ -481,23 +517,23 @@ try {
     out.moved = g.quest.has('theaterMoved'); out.theaterZ = +g.level.theater.collider.min.z.toFixed(2);
     g.player.setWeapon('facao'); T.tp(17.0, ROOF, 18.25, -PI / 2); g.cameraCtl.yaw = -PI / 2; T.press('Mouse0'); T.run(0.7);
     out.lockAfterMelee = !g.quest.has('lockBroken');
-    g.player.setWeapon('revolver'); g.inventory.add('municao_38', 1); const la = g.inventory.count('municao_38');
+    g.player.setWeapon('revolver'); g.inventory.add('municao_38', 1); T.reload(); const la = T.ammo();
     T.tp(18.6, ROOF, 18.25, -PI / 2); g.cameraCtl.yaw = -PI / 2; g.player.yaw = -PI / 2; T.press('Mouse2'); T.run(0.9);
-    out.lockShot = { broken: g.quest.has('lockBroken'), ammo: [la, g.inventory.count('municao_38')], unlocked: !D.quarto7.locked };
+    out.lockShot = { broken: g.quest.has('lockBroken'), ammo: [la, T.ammo()], unlocked: !D.quarto7.locked };
     T.tp(17.0, ROOF, 18.0, -PI / 2); out.q7Door = T.interactAt('door_quarto7'); T.run(0.8);
     T.tp(17.2, ROOF, 18.4, -PI / 2); g.cameraCtl.yaw = -PI / 2; T.hold('KeyW', 1.2); T.run(0.1);
     out.q7Pos = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.found = g.quest.has('foundQuarto7');
-    const am0 = g.inventory.count('municao_38');
-    T.tp(13.0, ROOF, 20.0, 0); out.amulet = T.interactAt('pick_amulet'); out.maxSt = g.player.maxSt; out.amuletAmmo = g.inventory.count('municao_38') - am0;
+    const am0 = T.ammo();
+    T.tp(13.0, ROOF, 20.0, 0); out.amulet = T.interactAt('pick_amulet'); out.maxSt = g.player.maxSt; out.amuletAmmo = T.ammo() - am0;
     T.tp(13.6, ROOF, 15.7, -PI / 2); out.diary = T.interactAt('doc_diario_menino');
     // tambor vazio: clique seco, nada muda
-    const keep = g.inventory.count('municao_38'); g.inventory.items.municao_38 = 0;
-    const dry0 = g.player.dryFires || 0; T.press('Mouse2'); T.run(0.8); out.dry = (g.player.dryFires || 0) - dry0; out.dryAmmo = g.inventory.count('municao_38');
-    g.inventory.items.municao_38 = keep;
+    const keep = g.inventory.count('municao_38'), keepL = g.inventory.rounds('revolver'); g.inventory.items.municao_38 = 0; g.inventory.loaded.revolver = 0;
+    const dry0 = g.player.dryFires || 0; T.press('Mouse2'); T.run(0.8); out.dry = (g.player.dryFires || 0) - dry0; out.dryAmmo = T.ammo();
+    g.inventory.items.municao_38 = keep; g.inventory.loaded.revolver = keepL;
     g.hud.update(1 / 60, g); out.hud = document.getElementById('weapon')?.textContent || '';
     g.saveGame('postoPed');
     const sv = JSON.parse(localStorage.getItem('ocdc_save'));
-    out.saved = { weapons: sv.inventory.weapons, ammo: sv.inventory.items.municao_38, lock: sv.flags.lockBroken, theater: sv.flags.theaterMoved, amulet: sv.flags.hasAmulet, fe: sv.flags.fireExitShortcut, feDoor: sv.doors.fireExit?.open };
+    out.saved = { weapons: sv.inventory.weapons, ammo: (sv.inventory.items.municao_38 || 0) + (sv.inventory.loaded?.revolver || 0), loaded: sv.inventory.loaded?.revolver, wear: sv.inventory.wear, lock: sv.flags.lockBroken, theater: sv.flags.theaterMoved, amulet: sv.flags.hasAmulet, fe: sv.flags.fireExitShortcut, feDoor: sv.doors.fireExit?.open };
     T.key('KeyM'); T.key('Digit4'); out.mapRooms = g.menus.lastMap?.rooms; T.key('KeyM');
     g.player.setWeapon('machado');
     return out;
@@ -506,8 +542,11 @@ try {
   check('ala pediátrica: porta pelo telhado e autosave', peds.pedDoor === 'ok' && peds.entered && peds.cp === 'peds' && peds.inPeds[2] < 25.6, JSON.stringify(peds.inPeds));
   check('facão: coleta no berço, equipa e acorda o Rastejador', peds.facao === 'ok' && peds.wFacao === 'facao' && peds.crawlerDormant && peds.crawlerWoke && peds.ficha === 'ok', JSON.stringify(peds));
   check('facão mata o Enfermeiro da pediatria', !peds.fight.alive && peds.fight.firstDmg >= 15, JSON.stringify(peds.fight));
+  check('desgaste: golpes gastam o facão, HUD mostra %, pedra (G) leva a 60%, kit a 100%', peds.wear.c0 < 1 && /%/.test(peds.wear.hud) && peds.wear.bar && peds.wear.worn < 0.5 && peds.wear.noKit && peds.wear.stone && peds.wear.stNo === 'repair' && Math.abs(peds.wear.cStone - 0.6) < 1e-6 && peds.wear.st === 'repair' && peds.wear.c1 === 1 && peds.wear.kit === 0 && peds.wear.repairs >= 2 && peds.wear.after === 'free', JSON.stringify(peds.wear));
   check('posto: chave da segurança, munição ×2 e livro de registros', peds.key === 'ok' && peds.ammo1 === 'ok' && peds.ammoA === 2 && peds.cpPosto === 'postoPed', JSON.stringify(peds));
   check('chave abre a segurança; revólver (+3) e munição (+3)', peds.segLocked && peds.segDoor === 'ok' && peds.segOpen && peds.rev === 'ok' && peds.wRev === 'revolver' && peds.segWoke && peds.ammoB === peds.ammoA + 6, JSON.stringify(peds));
+  check('mira manual (Q): retícula, fora do alvo erra, apontada acerta (sem auto-mira)', peds.manual.aimSt === 'aim' && peds.manual.aimK > 0.8 && peds.manual.reticle && peds.manual.miss.shot?.manual && !peds.manual.miss.shot.hit && peds.manual.miss.hp && peds.manual.miss.ammo === 1 && peds.manual.hit.shot?.manual && peds.manual.hit.shot.hit === 'int_seg' && peds.manual.hit.dmg > 0 && peds.manual.hit.state === 'aim' && peds.manual.back === 'free', JSON.stringify(peds.manual));
+  check('recarga (T): reserva vai para o tambor sem perder balas', peds.reload.st === 'reload' && peds.reload.r1 === Math.min(6, peds.reload.r0 + (peds.reload.t0 - peds.reload.r0)) && peds.reload.r1 > peds.reload.r0 && peds.reload.t1 === peds.reload.t0 && peds.reload.after === 'free', JSON.stringify({ r: peds.reload, c: peds.cyl }));
   check('tiro do revólver fere o Interno e gasta 1 bala', peds.shot.firstShot && peds.shot.firstShot.ammo[1] === peds.shot.firstShot.ammo[0] - 1 && peds.shot.firstShot.hp[1] < peds.shot.firstShot.hp[0] && !peds.shot.alive, JSON.stringify(peds.shot));
   check('R alterna entre as 4 armas', peds.weapons.length === 4 && new Set(peds.cycle).size === 4, JSON.stringify({ w: peds.weapons, c: peds.cycle }));
   check('escada de incêndio desce ao 2º e abre o atalho por fora (autosave)', peds.feTop === 'ok' && peds.feOut[0] > 41.2 && peds.feBottom[1] < 4.5 && peds.feBottom[2] > 21.4 && peds.feReached && peds.feDoor === 'ok' && peds.feOpen && peds.feIn[0] < 40.6, JSON.stringify({ o: peds.feOut, b: peds.feBottom, i: peds.feIn, cp: peds.cpFe }));
@@ -516,7 +555,7 @@ try {
   check('cadeado resiste ao facão e quebra com bala', peds.lockAfterMelee && peds.lockShot.broken && peds.lockShot.unlocked && peds.lockShot.ammo[1] === peds.lockShot.ammo[0] - 1, JSON.stringify(peds.lockShot));
   check('Quarto 7 (segredo): amuleto (fôlego +25) e 4 balas', peds.q7Door === 'ok' && peds.q7Pos[0] < 15.8 && peds.found && peds.amulet === 'ok' && peds.maxSt === 125 && peds.amuletAmmo === 4 && peds.diary === 'ok', JSON.stringify(peds));
   check('tambor vazio: clique seco sem efeito', peds.dry >= 1 && peds.dryAmmo === 0, JSON.stringify({ d: peds.dry, a: peds.dryAmmo }));
-  check('HUD mostra munição do revólver', /\d/.test(peds.hud) && /38|bala|mun/i.test(peds.hud), peds.hud);
+  check('HUD mostra tambor e reserva do revólver', /\d\/6/.test(peds.hud) && /reserva/i.test(peds.hud), peds.hud);
   check('save guarda armas, munição, cadeado, teatrinho, amuleto e atalho', peds.saved.weapons?.length === 4 && peds.saved.ammo > 0 && peds.saved.lock && peds.saved.theater && peds.saved.amulet && peds.saved.fe && peds.saved.feDoor, JSON.stringify(peds.saved));
   check('mapa do 3º andar mostra a pediatria', peds.mapRooms >= 6, String(peds.mapRooms));
   await page.screenshot({ path: SHOTS + '09-pediatria.png' });
@@ -567,6 +606,8 @@ try {
     T.tp(26.5, UP2, 4.9, PI); out.carta = T.interactAt('doc_carta_mae');
     const b0 = g.inventory.count('bandagem');
     T.tp(29.4, UP2, 4.9, PI); out.band = T.interactAt('pick_band_mat'); out.bandDiff = g.inventory.count('bandagem') - b0;
+    const k0 = g.inventory.count('kit_reparo');
+    T.tp(29.9, UP2, 4.9, PI); out.kit = T.interactAt('pick_kit_mat'); out.kitDiff = g.inventory.count('kit_reparo') - k0;
     // posto obstétrico: chave do arquivo morto, livro de partos, munição, livro de registros
     T.tp(34.5, UP2, 12.3, PI); out.postoDoor = T.interactAt('door_postoObst'); T.run(0.8);
     T.tp(36.9, UP2, 6.0, PI / 2); out.keyArq = T.interactAt('pick_key_arqm');
@@ -595,16 +636,41 @@ try {
     g.player.hp = 100;
     T.tp(41, LO, -1.6, PI); g.cameraCtl.yaw = PI; T.hold('KeyW', 1.3); T.run(0.1);
     out.inBt = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.found = g.quest.has('foundBatismo');
+    // pia sem a pulseira: só examina (pista "o zero e o sete"), sem cena
+    T.tp(42.7, LO, -4.6, PI); out.fontNo = T.interactAt('font_rite'); out.fontNoState = g.state; out.fontNote = g.quest.has('note_font');
     const am0 = g.inventory.count('municao_38'), bb0 = g.inventory.count('bandagem');
     T.tp(38.8, LO, -4.5, PI); out.bracelet = T.interactAt('pick_pulseira');
     out.reward = { ammo: g.inventory.count('municao_38') - am0, band: g.inventory.count('bandagem') - bb0, heal: g.player.healAmount, item: g.inventory.has('pulseira_recem_nascido') };
     T.tp(41.4, LO, -3.7, PI); out.ata = T.interactAt('doc_ata_batismo');
+    // revelação RN 0: dente (Quarto 7) + pulseira (altar) na cinza da pia → cena curta
+    g.player.hp = 40;
+    out.riteItems = g.inventory.has('amuleto_menino') && g.inventory.has('pulseira_recem_nascido');
+    T.tp(42.7, LO, -4.6, PI); out.ritePrompt = g.interact.list.find((i) => i.id === 'font_rite').prompt();
+    out.rite = T.interactAt('font_rite'); out.csState = g.state; out.cap1 = g.cutscene?.caption;
+    T.run(4.6);
+    out.cap2 = g.cutscene?.caption; out.csHudHidden = document.getElementById('hud').classList.contains('hidden');
+    out.csOverlay = !document.getElementById('cutscene').classList.contains('hidden');
+    out.camAway = +g.camera.position.distanceTo(g.player.pos).toFixed(2);
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '11-revelacao.png' });
+  Object.assign(mat, await page.evaluate(() => {
+    const g = __ocdc, LO = -5, out = {};
+    out.csStill = g.state === 'cutscene';
+    T.press('KeyE'); out.afterSkip = g.state; out.readingDoc = document.getElementById('reader') && !document.getElementById('reader').classList.contains('hidden');
+    out.skipped = g.script.rn0Skipped;
+    if (g.state === 'reading') g.closeOverlay();
+    T.run(0.2);
+    out.rn0r = { flag: g.quest.has('rn0Revealed'), doc: g.inventory.documents.includes('contagem_confraria'), hp: g.player.hp === g.player.maxHp, cp: g.checkpoint, state: g.state,
+      ash: g.level.fontAsh.userData.settled === true, overlay: document.getElementById('cutscene').classList.contains('hidden'), hud: !document.getElementById('hud').classList.contains('hidden'),
+      gone: !g.interact.list.find((i) => i.id === 'font_rite').enabled(), cs: g.cutscene };
+    const PI = Math.PI;
     g.saveGame('deadArchive');
     const sv = JSON.parse(localStorage.getItem('ocdc_save'));
     out.saved = { weapons: sv.inventory.weapons, shelf: sv.flags.shelfMoved, br: sv.flags.hasBracelet, mat: sv.doors.maternity?.open, da: sv.doors.deadArchive?.open };
     g.player.setWeapon('machado');
     return out;
-  });
+  }));
   check('maternidade: porta trancada sem chave; chave no quadro da segurança', mat.spawns.every(Boolean) && mat.lockedTry === 'ok' && mat.lockedStill && mat.keyMat === 'ok' && mat.hasKey, JSON.stringify(mat));
   check('chave abre a maternidade pela secretaria (autosave)', mat.matDoor === 'ok' && mat.matOpen && mat.entered && mat.cp === 'maternity' && mat.inMat[2] < 13.9, JSON.stringify(mat.inMat));
   check('lança improvisada: coleta, equipa e acorda o Interno', mat.partoDoor === 'ok' && mat.lanca === 'ok' && mat.wLanca === 'lanca' && mat.partoDormant && mat.partoWoke && mat.lanceHidden, JSON.stringify(mat));
@@ -616,7 +682,13 @@ try {
   check('arquivo deslizante: sem manivela só examina e bloqueia o vão', mat.crankNo === 'ok' && mat.noteRolling && mat.blockedZ > -2.3, JSON.stringify(mat));
   check('manivela desliza o arquivo e acorda o Rastejador', mat.crankYes === 'ok' && mat.shelf.moved && Math.abs(mat.shelf.minX - 36.8) < 0.05 && Math.abs(mat.shelf.gx + 2.8) < 0.05 && mat.shelf.crankGone && mat.rmDormant && mat.shelf.rmWoke, JSON.stringify(mat.shelf));
   check('Sala de batismo (segredo): pulseira (bandagem +65), 3 balas e bandagem', mat.inBt[2] < -3.1 && mat.found && mat.bracelet === 'ok' && mat.reward.ammo === 3 && mat.reward.band === 1 && mat.reward.heal === 65 && mat.reward.item && mat.ata === 'ok', JSON.stringify({ p: mat.inBt, r: mat.reward, b: mat.bracelet, a: mat.ata }));
+  check('kit de reparo na maternidade', mat.kit === 'ok' && mat.kitDiff === 1, JSON.stringify({ k: mat.kit, d: mat.kitDiff }));
+  check('pia de batismo sem a pulseira: só a pista "o zero e o sete"', mat.fontNo === 'ok' && mat.fontNoState === 'playing' && mat.fontNote, JSON.stringify({ f: mat.fontNo, s: mat.fontNoState, n: mat.fontNote }));
+  check('revelação RN 0: dente + pulseira na cinza abrem a cena (HUD oculto, câmera própria, falas)', mat.riteItems && /dente/.test(mat.ritePrompt) && mat.rite === 'ok' && mat.csState === 'cutscene' && /cinza/.test(mat.cap1 || '') && /zero/.test(mat.cap2 || '') && mat.csHudHidden && mat.csOverlay && mat.camAway > 0.5 && mat.csStill, JSON.stringify({ p: mat.ritePrompt, r: mat.rite, s: mat.csState, c1: mat.cap1, c2: mat.cap2, h: mat.csHudHidden, o: mat.csOverlay, cam: mat.camAway }));
+  check('fim da revelação: pula com E, documento final, vida cheia, cinza assentada e autosave', mat.skipped && mat.afterSkip === 'reading' && mat.readingDoc && mat.rn0r.flag && mat.rn0r.doc && mat.rn0r.hp && mat.rn0r.cp === 'deadArchive' && mat.rn0r.state === 'playing' && mat.rn0r.ash && mat.rn0r.overlay && mat.rn0r.hud && mat.rn0r.gone && !mat.rn0r.cs, JSON.stringify({ a: mat.afterSkip, r: mat.readingDoc, s: mat.skipped, rn0: mat.rn0r }));
   check('save guarda lança, portas, arquivo deslizante e pulseira', mat.saved.weapons?.length === 5 && mat.saved.shelf && mat.saved.br && mat.saved.mat && mat.saved.da, JSON.stringify(mat.saved));
+  const grabHud = await page.evaluate(() => { const g = __ocdc; g.hud.update(1 / 60, g); const el = document.getElementById('struggle'); return { st: g.player.state, hidden: !el || el.classList.contains('hidden') || getComputedStyle(el).display === 'none' }; });
+  check('HUD sem "AGARRADO!" fora do agarrão', grabHud.st !== 'grabbed' && grabHud.hidden, JSON.stringify(grabHud));
   await page.screenshot({ path: SHOTS + '10-maternidade.png' });
   // --- Chefe
   const boss = await page.evaluate(() => {
@@ -663,10 +735,13 @@ try {
     T.tp(38.6, -5, 26.4, Math.PI); out.book = T.interactAt('book_yard');
     T.tp(44.6, -5, 28, Math.PI / 2); out.exit = T.interactAt('exit');
     out.state = g.state;
+    const e = document.getElementById('endRn0'); out.endRn0 = e && !e.classList.contains('hidden') ? e.textContent : '';
+    out.endStats = document.getElementById('chapterEnd')?.textContent || '';
     return out;
   });
   check('portão de serviço abre e permite passagem', end.x > 37, JSON.stringify(end));
   check('fim do capítulo exibido', end.state === 'end', JSON.stringify(end));
+  check('fim do capítulo reconhece a revelação RN 0', /Davi|zero|sete/.test(end.endRn0) && /RN 0: vista/.test(end.endStats), JSON.stringify({ r: end.endRn0, s: end.endStats.slice(0, 300) }));
   await page.screenshot({ path: SHOTS + '05-fim.png' });
   // --- Save persistente e "Continuar"
   await page.reload({ waitUntil: 'networkidle0' });
@@ -678,7 +753,7 @@ try {
     const s = JSON.parse(localStorage.getItem('ocdc_save')); s.flags = { ...s.flags, bossDead: false, gateOpen: false, chapterDone: false }; s.checkpoint = 'pre_boss';
     localStorage.setItem('ocdc_save', JSON.stringify(s));
     document.getElementById('btnContinue').click();
-    const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray(), weapons: [...g.inventory.weapons], wall: !g.level.crackedWall.panel.visible && g.level.expurgoGate.open, sharp: g.player.sharpened, tank: !g.level.tanks.o2_cor.group.visible, hammerHidden: !g.level.pickupMeshes.hammer.visible, lock: !g.level.padlock.chain.visible, theater: g.level.theater.collider.min.z > 19, maxSt: g.player.maxSt, fe: g.level.doors.fireExit.open, ammo: g.inventory.count('municao_38'), lance: !g.level.pickupMeshes.lanca.visible, shelf: Math.abs(g.level.rolling.group.position.x - g.level.rolling.x + 2.8) < 0.05 && g.level.rolling.collider.min.x < 37, heal: g.player.healAmount, matDoor: g.level.doors.maternity.open };
+    const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray(), weapons: [...g.inventory.weapons], wall: !g.level.crackedWall.panel.visible && g.level.expurgoGate.open, sharp: g.player.sharpened, tank: !g.level.tanks.o2_cor.group.visible, hammerHidden: !g.level.pickupMeshes.hammer.visible, lock: !g.level.padlock.chain.visible, theater: g.level.theater.collider.min.z > 19, maxSt: g.player.maxSt, fe: g.level.doors.fireExit.open, ammo: g.inventory.count('municao_38'), lance: !g.level.pickupMeshes.lanca.visible, shelf: Math.abs(g.level.rolling.group.position.x - g.level.rolling.x + 2.8) < 0.05 && g.level.rolling.collider.min.x < 37, heal: g.player.healAmount, matDoor: g.level.doors.maternity.open, rn0: g.quest.has('rn0Revealed') && g.level.fontAsh.userData.settled === true && !g.interact.list.find((i) => i.id === 'font_rite').enabled(), wear: { ...g.inventory.wear }, loaded: g.inventory.rounds('revolver'), kitGone: !g.level.pickupMeshes.kit_mat.visible };
     g.player.takeHit({ dmg: 999, from: { x: 0, y: 0, z: 0 }, blockable: false });
     T.run?.(0);
     return r;
@@ -691,6 +766,7 @@ try {
   check('carregar save restaura armas, parede derrubada, afiação e cilindro', death.weapons.length === 5 && death.wall && death.sharp && death.tank && death.hammerHidden, JSON.stringify(death));
   check('carregar save restaura pediatria (cadeado, teatrinho, amuleto, atalho, munição)', death.lock && death.theater && death.maxSt === 125 && death.fe && death.ammo > 0, JSON.stringify(death));
   check('carregar save restaura maternidade e arquivo morto (lança, porta, arquivo deslizante, pulseira)', death.lance && death.shelf && death.heal === 65 && death.matDoor, JSON.stringify(death));
+  check('carregar save restaura revelação RN 0, desgaste, tambor e kit coletado', death.rn0 && Object.keys(death.wear).length > 0 && death.loaded > 0 && death.kitGone, JSON.stringify({ r: death.rn0, w: death.wear, l: death.loaded, k: death.kitGone }));
   check('morte mostra tela e permite recarregar', deadScr, JSON.stringify(dinfo));
   await page.click('#btnRetry'); await new Promise((r) => setTimeout(r, 500));
   check('recarregar após morte', await page.evaluate(() => __ocdc.state === 'playing' && __ocdc.player.hp > 0));
