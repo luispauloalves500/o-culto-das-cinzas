@@ -66,6 +66,12 @@ export function createMaterials() {
     flame: new THREE.MeshBasicMaterial({ color: 0xffc060 }),
     moonGlass: new THREE.MeshBasicMaterial({ color: 0x24324a }),
     breakerOn: new THREE.MeshBasicMaterial({ color: 0x40ff60 }),
+    // Capítulo 3 — Sede da Confraria: túnicas cor de sangue seco, véus negros, latão polido, veludo
+    robe: L({ map: T.sheet, color: 0x5a1a1c }),
+    veil: L({ map: T.sheet, color: 0x1c1a1a }),
+    brass: L({ map: T.metal, color: 0xc8a050, emissive: 0x1a1004 }),
+    velvet: L({ map: T.sheet, color: 0x4a1012 }),
+    marble: L({ map: T.stone, color: 0xd8d2c4 }),
   };
   M.textures = T;
   return M;

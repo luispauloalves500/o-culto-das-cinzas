@@ -70,4 +70,19 @@ export const ENEMIES = {
     mats: 'carvoeiro',
     groanPitch: 0.6,
   },
+  // Capítulo 3 — Sede da Confraria: acólito de túnica e véu. Turíbulo de latão numa corrente (golpe largo)
+  // e um punhal de cerimônia (estocada curta). Vê melhor que os caçadores nos salões iluminados a vela.
+  acolito: {
+    name: 'Acólito do Véu',
+    hp: 95, poise: 50, radius: 0.38, height: 1.85, scale: 1.04, hunch: 0.12,
+    walk: 1.0, chase: 2.9, turn: 5.2,
+    sight: 11, fov: 80, hearing: 1.4,
+    attackTokens: 1,
+    attacks: [
+      { id: 'swipe', range: 2.0, windup: 0.7, active: 0.2, recover: 0.9, dmg: 17, knock: 3.2, weight: 2 },
+      { id: 'stab', range: 1.5, windup: 0.4, active: 0.12, recover: 0.6, dmg: 12, knock: 1.5, weight: 1 },
+    ],
+    mats: 'acolito',
+    groanPitch: 1.1,
+  },
 };
