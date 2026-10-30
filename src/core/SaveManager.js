@@ -72,6 +72,33 @@ export function makeChapter2Save(prev) {
   };
 }
 
+// itens de chave do Capítulo 2 que ficam no Bairro Operário (o passe da Linha 4 segue com Elias)
+export const CH2_KEY_ITEMS = ['manivela_carga', 'chave_fabrica'];
+
+/** save inicial do Capítulo 3 (Sede da Confraria) a partir do estado no fim do Capítulo 2 */
+export function makeChapter3Save(prev) {
+  const base = createEmptySave();
+  const p = (prev && migrateSave({ version: SAVE_VERSION, ...prev })) || base;
+  const items = { ...(p.inventory?.items || {}) };
+  for (const k of [...CH1_KEY_ITEMS, ...CH2_KEY_ITEMS]) delete items[k];
+  // o passe é a passagem: sem ele o motorneiro não teria trazido Elias até o Largo do Véu
+  items.passe_bonde = Math.max(1, items.passe_bonde || 0);
+  return {
+    ...base,
+    chapter: 3,
+    checkpoint: 'c3_tram',
+    player: { hp: Math.max(80, Math.min(125, p.player?.hp ?? 100)) },
+    inventory: { ...(p.inventory || base.inventory), items },
+    flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_started: true, c2_chapterDone: true, c2_hasPass: true, ch2Done: true, c3_started: true },
+    doors: {},
+    deadEnemies: [],
+    documents: [...(p.documents || [])],
+    elevatorLevel: 'upper',
+    playTime: p.playTime || 0,
+    stats: { ...(p.stats || {}) },
+  };
+}
+
 export class SaveManager {
   constructor(storage = globalThis.localStorage) { this.storage = storage; }
   hasSave() { return !!this.load(); }

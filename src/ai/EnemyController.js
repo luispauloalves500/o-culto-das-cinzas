@@ -44,6 +44,9 @@ export class Enemy {
       : d.mats === 'carvoeiro'
       // carvoeiro: pele enegrecida de coque, avental de couro, calça de brim
       ? { skin: M.coal, shirt: M.leatherDark, arms: M.coal, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.coal }
+      : d.mats === 'acolito'
+      // Capítulo 3: túnica vermelho-sangue até os pés, mãos cinzentas, cabeça coberta pelo véu negro
+      ? { skin: M.deadSkin, shirt: M.robe || M.altarCloth, arms: M.robe || M.altarCloth, pants: M.robe || M.altarCloth, legs: M.robe || M.altarCloth, feet: M.leatherDark, head: M.veil || M.coal }
       : { skin: M.deadSkin, shirt: M.nurseCoat, arms: M.nurseCoat, pants: M.nurseCoat, legs: M.pantsGray, feet: M.leatherDark, head: M.deadSkin };
     this.rig = createHumanoid({ scale: d.scale, mats, hunch: d.hunch, armLen: d.mats === 'interno' || d.mats === 'carvoeiro' ? 0.34 : 0.32, torsoW: d.mats === 'interno' ? 0.4 : d.mats === 'carvoeiro' ? 0.52 : 0.42 , legLen: d.crawler ? 0.2 : undefined });
     if (d.crawler) {
@@ -68,6 +71,17 @@ export class Enemy {
       const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.85), M.woodDark); shaft.position.set(0, -0.03, 0.3);
       const blade = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 0.32), M.rust); blade.position.set(0, -0.03, 0.86); blade.rotation.x = 0.25;
       this.rig.armR.end.add(shaft); this.rig.armR.end.add(blade);
+    } else if (d.mats === 'acolito') {
+      // véu longo caindo sobre os ombros, saia da túnica e o turíbulo de latão pendurado na corrente
+      const veil = new THREE.Mesh(new THREE.BoxGeometry(0.29 * s, 0.4 * s, 0.31 * s), M.veil || M.coal);
+      veil.position.y = 0.1 * s; h.add(veil);
+      const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.46 * s, 0.62 * s, 0.34 * s), M.robe || M.altarCloth);
+      skirt.position.y = -0.35 * s; this.rig.root.add(skirt); skirt.position.set(0, 0.42 * s, 0);
+      const chain = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.36), M.brass || M.gold); chain.position.set(0, -0.03, 0.18);
+      const censer = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), M.brass || M.gold); censer.position.set(0, -0.03, 0.4);
+      this.rig.armR.end.add(chain); this.rig.armR.end.add(censer);
+      const dagger = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.24), M.axeEdge); dagger.position.set(0, -0.03, 0.12);
+      this.rig.armL.end.add(dagger);
     } else if (d.mats === 'interno') {
       const band = new THREE.Mesh(new THREE.BoxGeometry(0.25 * s, 0.07 * s, 0.27 * s), M.bandageDirty);
       band.position.y = 0.17 * s; h.add(band);
@@ -80,12 +94,12 @@ export class Enemy {
       blade.position.set(0, -0.03, 0.2); this.rig.armR.end.add(blade);
     }
     // olhos fracos: ajudam a ler o inimigo no escuro (caçadores: furos do capuz com brilho de brasa)
-    const eyeMat = d.mats === 'cacador' || d.mats === 'carvoeiro' ? (M.ember || M.eyeGlow) : M.eyeGlow;
+    const eyeMat = d.mats === 'cacador' || d.mats === 'carvoeiro' || d.mats === 'acolito' ? (M.ember || M.eyeGlow) : M.eyeGlow;
     for (const x of [-0.05, 0.05]) {
       const e = new THREE.Mesh(new THREE.BoxGeometry(0.03 * s, 0.02 * s, 0.01), eyeMat);
-      e.position.set(x * s, 0.19 * s, (d.mats === 'cacador' ? 0.15 : 0.125) * s); h.add(e);
+      e.position.set(x * s, 0.19 * s, (d.mats === 'cacador' || d.mats === 'acolito' ? 0.16 : 0.125) * s); h.add(e);
     }
-    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : 0.38);
+    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : 0.38);
     this.rig.armR.end.add(this.hand);
     this.rig.root.position.copy(this.pos);
     this.rig.root.rotation.y = this.yaw;

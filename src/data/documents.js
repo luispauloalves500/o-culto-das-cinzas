@@ -221,4 +221,39 @@ export const DOCUMENTS = {
 <p><i>"E. — se você chegou até aqui, eu também cheguei. O fornalheiro me deixou passar. Vou atrás do bonde da Linha 4: o motorneiro leva gente para a <b>Sede</b>, lá em cima, onde guardam os arquivos de todo mundo que nasceu no São Dimas. Pegue a fita vermelha. Não deixe a fumaça entrar no peito. — I."</i></p>
 <p class="small">Embaixo, a mesma mão, mais tremida: <i>"eles sabem o seu número."</i></p>`,
   },
+  // ---------- Capítulo 3 — A Confraria (Sede e arquivos) ----------
+  livro_portaria: {
+    ch: 3,
+    title: 'Livro da Portaria — entradas de agosto',
+    body: `<p>Livro grosso de capa preta, aberto no balcão do porteiro. Colunas: <i>data · fita · nome · destino</i>.</p>
+<p><b>12/8</b> — fita vermelha — 3 irmãos do Bairro Operário (turno da Garganta) — salão nobre.<br>
+<b>14/8</b> — <s>sem fita</s> — <b>Inês Varga</b>, irmã do recipiente RN 0. Veio sozinha pela Linha 4, perguntando por ele. — <i>conduzida ao Arquivo por ordem do Dr. Vernet</i>.<br>
+<b>15/8</b> — fita vermelha — o Sacristão desce à cripta. Não incomodar.</p>
+<p class="small">Na margem, a lápis: "As portas de bronze ficam trancadas por dentro desde a noite do São Dimas. Só o postigo — e só para quem mostrar a fita."</p>`,
+  },
+  regimento_arquivo: {
+    ch: 3,
+    title: 'Regimento do Arquivo — art. 7º',
+    body: `<p>Folha datilografada, emoldurada na parede da secretaria. O carimbo é da Confraria do Véu.</p>
+<p><b>Art. 7º</b> — O arquivista abre o portão girando os discos <b>da esquerda para a direita</b>: primeiro a <b>CINZA</b> de onde viemos, depois o <b>OLHO</b> que tudo registra e, por fim, o <b>VÉU</b> que nos cobre. Só então puxa a alavanca.</p>
+<p><b>Art. 8º</b> — A <b>CHAMA</b> não se gira: a chama é do Sacristão.</p>
+<p><b>Art. 9º</b> — Quem erra a ordem desperta o sino; quem desperta o sino, desperta os irmãos.</p>`,
+  },
+  ficha_ines: {
+    ch: 3,
+    title: 'Ficha de entrada — Inês Varga',
+    body: `<p>Ficha amarelada em cima da mesa de leitura, ainda sem arquivar. A letra é miúda e muito reta.</p>
+<p><b>Nome:</b> Inês Varga · <b>Idade:</b> 24 · <b>Relação:</b> irmã de RN 0 (Elias Varga, Fundição).<br>
+<b>Entrada:</b> 14/8, pela Linha 4. <b>Fita:</b> nenhuma.<br>
+<b>Destino:</b> <i>cripta — aos cuidados do Sacristão</i>.</p>
+<p class="small">Observação do arquivista: "Compatibilidade sanguínea com o recipiente. O Dr. Vernet quer as duas amostras antes da Torre."</p>`,
+  },
+  dossie_elias: {
+    ch: 3,
+    title: 'Dossiê RN 0 — Elias Varga',
+    body: `<p>Pasta de couro da gaveta V. Fotografias de um homem jovem, de macacão da Fundição — você.</p>
+<p><b>RN 0 · Elias Varga.</b> Admitido no São Dimas em 3/7, "acidente de forno". Doze procedimentos. Onze pacientes do mesmo lote não resistiram; RN 0 resistiu a todos.</p>
+<p>Carimbo vermelho, repetido em cada página: <b>RECIPIENTE — NÃO DESPERTAR</b>.</p>
+<p class="small">Última folha, outra caligrafia (Dra. H. Arcos?): "Se você está lendo isto, acordou cedo demais. Eles não querem te matar, Elias — querem te usar. A Inês está lá embaixo. Não confie no sino."</p>`,
+  },
 };

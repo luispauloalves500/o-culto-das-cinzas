@@ -2,7 +2,7 @@
 export const CHAPTERS = [
   { id: 1, name: 'Despertar', place: 'Hospital São Dimas', playable: true },
   { id: 2, name: 'Fumaça', place: 'Bairro Operário', playable: true },
-  { id: 3, name: 'A Confraria', place: 'Sede e arquivos subterrâneos', playable: false },
+  { id: 3, name: 'A Confraria', place: 'Sede e arquivos subterrâneos', playable: true },
   { id: 4, name: 'Cidade Morta', place: 'Centro antigo de Véspera', playable: false },
   { id: 5, name: 'Águas Negras', place: 'Fábrica de bombeamento', playable: false },
   { id: 6, name: 'O Acervo', place: 'Museu de Ciências Proibidas', playable: false },
@@ -73,7 +73,7 @@ export const OBJECTIVES_C2 = [
   { done: 'c2_valves', text: 'A comporta da casa das fornalhas está travada pela pressão. Alivie as duas válvulas do salão.' },
   { done: 'c2_bossDead', text: 'Entre na casa das fornalhas e enfrente o que guarda a Garganta.' },
   { done: 'c2_chapterDone', text: 'Saia pela porta de serviço da casa das fornalhas.' },
-  { done: 'c2_never', text: 'Capítulo 2 concluído. O Capítulo 3 — A Confraria chega em breve.' },
+  { done: 'c2_never', text: 'Capítulo 2 concluído. A Linha 4 espera na porta de serviço: siga com o passe para a Sede da Confraria (Capítulo 3).' },
 ];
 export const SIDE_OBJECTIVES_C2 = [
   { when: 'c2_started', done: 'c2_readPaper', text: 'Um beco estreito entre as casas do lado norte — algo foi largado lá.' },
@@ -84,5 +84,21 @@ export const SIDE_OBJECTIVES_C2 = [
 ];
 
 /** objetivos (principal / opcionais) do capítulo */
-export function objectivesFor(ch) { return ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
-export function sideObjectivesFor(ch) { return ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
+// Capítulo 3 — A Confraria (primeira fatia): Largo do Véu → portaria (passe) → salão nobre → secretaria →
+// portão de segredo → arquivos subterrâneos → dossiê de Elias. A cripta do Sacristão fica para a próxima fatia.
+export const OBJECTIVES_C3 = [
+  { done: 'c3_wicketOpen', text: 'Largo do Véu, fim da Linha 4. As portas de bronze estão trancadas — mostre o passe da fita vermelha no postigo da portaria (leste do largo).' },
+  { done: 'c3_inHall', text: 'A portaria está aberta. Entre no salão nobre da Sede.' },
+  { done: 'c3_readRegimento', text: 'O portão do arquivo tem três discos de segredo. Procure o regimento do arquivo na secretaria (oeste do salão).' },
+  { done: 'c3_vaultOpen', text: 'Gire os três discos na ordem do Regimento e puxe a alavanca do portão do arquivo.' },
+  { done: 'c3_inArchive', text: 'Desça a escada para os arquivos subterrâneos.' },
+  { done: 'c3_hasDossier', text: 'Procure o dossiê de Elias no fichário do fundo do arquivo (gaveta V).' },
+  { done: 'c3_never', text: 'Dossiê em mãos. A grade da cripta do Sacristão não cede — o Capítulo 3 continua em breve.' },
+];
+export const SIDE_OBJECTIVES_C3 = [
+  { when: 'c3_inHall', done: 'c3_mainOpen', text: 'As portas de bronze do largo só abrem por dentro: erga a tranca no salão nobre (atalho).' },
+  { when: 'c3_inArchive', done: 'c3_readFicha', text: 'Há uma ficha de entrada recente na mesa de leitura do arquivo.' },
+];
+
+export function objectivesFor(ch) { return ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
+export function sideObjectivesFor(ch) { return ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
