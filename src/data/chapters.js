@@ -39,4 +39,10 @@ export const SIDE_OBJECTIVES = [
   { when: 'readHymn', done: 'relicOpen', text: 'Velas da capela: Brás, Luzia, Roque e, por último, Dimas.' },
   { when: 'relicOpen', done: 'picked_relic', text: 'O relicário do altar está aberto.' },
   { when: 'enteredChapel', done: 'chapelShortcut', text: 'Destranque a porta da capela por dentro (atalho para o corredor).' },
+  { when: 'reachedAdmin', done: 'enteredWing', text: 'Uma porta no corredor da administração leva à ala cirúrgica superior.' },
+  { when: 'enteredWing', done: 'mainStairShortcut', text: 'A escada principal desce ao térreo — o ferrolho fica do lado de dentro, no pé da escada (térreo).' },
+  { when: 'enteredWing', done: 'reachedRoof', text: 'No fim da ala, uma escada estreita sobe ao telhado.' },
+  { when: 'reachedRoof', done: 'hasHammer', text: 'O barracão do zelador, no telhado, ainda está aberto.' },
+  { when: 'readSurgLog', done: 'wallBroken', text: '"Emparedem o expurgo." Uma parede de tijolos novos na sala de cirurgia 2 — algo pesado a derrubaria.' },
+  { when: 'wallBroken', done: 'picked_whetstone', text: 'O expurgo emparedado guarda o que o zelador Brandão deixou.' },
 ];

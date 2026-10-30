@@ -1,9 +1,10 @@
 // Planta do Hospital São Dimas para o mapa (tecla M). Dados puros (sem three/DOM) — testáveis em Node.
-// rect = [minX, minZ, maxX, maxZ] em metros; floor: 'lo' (subsolo, y −5), 'up' (térreo, y 0), 'up2' (2º andar, y 4).
+// rect = [minX, minZ, maxX, maxZ] em metros; floor: 'lo' (subsolo, y −5), 'up' (térreo, y 0), 'up2' (2º andar, y 4), 'roof' (telhado, y 7.3).
 export const FLOORS = [
   { id: 'lo', name: 'Subsolo' },
   { id: 'up', name: 'Térreo' },
   { id: 'up2', name: '2º andar' },
+  { id: 'roof', name: 'Telhado' },
 ];
 
 export const ROOMS = [
@@ -36,6 +37,20 @@ export const ROOMS = [
   { id: 'diretoria', floor: 'up2', name: 'Diretoria', rect: [28, 14, 38, 22] },
   { id: 'serviceStairTop', floor: 'up2', name: 'Escada de serviço', rect: [24, 14, 28, 22.4] },
   { id: 'coro', floor: 'up2', name: 'Coro da capela', rect: [8.6, 21.6, 12, 24] },
+  // escada principal (térreo ↔ 2º andar)
+  { id: 'mainStair', floor: 'up', name: 'Escada principal', rect: [38, 14, 41, 23.9] },
+  { id: 'mainStairTop', floor: 'up2', name: 'Escada principal', rect: [38, 14, 41, 23.9] },
+  // ala cirúrgica superior
+  { id: 'wingCorridor', floor: 'up2', name: 'Corredor da ala cirúrgica', rect: [16.4, 26, 36, 29] },
+  { id: 'sterilization', floor: 'up2', name: 'Esterilização', rect: [16.4, 29, 24, 38.4] },
+  { id: 'surgery2', floor: 'up2', name: 'Sala de cirurgia 2', rect: [24, 29, 31, 36] },
+  { id: 'recovery', floor: 'up2', name: 'Recuperação', rect: [31, 29, 36, 38.4] },
+  { id: 'expurgo', floor: 'up2', name: 'Expurgo emparedado', rect: [24, 36, 31, 38.4], secret: true },
+  { id: 'roofStair', floor: 'up2', name: 'Escada do telhado', rect: [13, 26, 16.4, 38.4] },
+  // telhado
+  { id: 'roofStairTop', floor: 'roof', name: 'Casa da escada', rect: [13, 26, 16.4, 38.4] },
+  { id: 'roof', floor: 'roof', name: 'Telhado', rect: [16.4, 26, 36, 38.4] },
+  { id: 'shed', floor: 'roof', name: 'Barracão do zelador', rect: [31, 34, 35.8, 38.2] },
 ];
 
 // pontos de interesse desenhados no mapa quando o cômodo é conhecido
@@ -50,10 +65,15 @@ export const MAP_MARKS = [
   { kind: 'stairs', floor: 'up2', x: 26, z: 18.5, room: 'serviceStairTop' },
   { kind: 'stairs', floor: 'up', x: 11, z: 18.5, room: 'chapel' },
   { kind: 'fire', floor: 'lo', x: 1.6, z: 17, room: 'furnace' },
+  { kind: 'save', floor: 'up2', x: 35.3, z: 37.6, room: 'recovery' },
+  { kind: 'stairs', floor: 'up', x: 39.5, z: 18.5, room: 'mainStair' },
+  { kind: 'stairs', floor: 'up2', x: 39.5, z: 18.5, room: 'mainStairTop' },
+  { kind: 'stairs', floor: 'up2', x: 14.7, z: 32, room: 'roofStair' },
+  { kind: 'stairs', floor: 'roof', x: 14.7, z: 32, room: 'roofStairTop' },
 ];
 
 /** andar a partir da altura dos pés */
-export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : 'up2'; }
+export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }
 
 /** cômodo em que um ponto está (o primeiro que contém, com prioridade para cômodos menores) */
 export function roomAt(p) {

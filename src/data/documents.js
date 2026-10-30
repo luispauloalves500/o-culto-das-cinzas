@@ -82,4 +82,26 @@ export const DOCUMENTS = {
 <p>Primeiro <b>Brás</b>, que guarda a garganta da fumaça;<br/>depois <b>Luzia</b>, que guarda os olhos da cinza;<br/>então <b>Roque</b>, que guarda a carne da peste;<br/>e por último <b>Dimas</b>, o bom ladrão, que guarda a casa.</p>
 <p>Quem acende fora da ordem acorda os que dormem nos bancos.</p>`,
   },
+  registro_cirurgico: {
+    title: 'Registro da ala cirúrgica',
+    body: `<p><b>ALA CIRÚRGICA SUPERIOR — LIVRO DE OCORRÊNCIAS</b></p>
+<p>Dia 3. Sala 2 desativada após o "incidente da maca". O expurgo atrás dela (lixo biológico, roupa contaminada) continua cheirando a queimado, mesmo sem ninguém usar.</p>
+<p>Dia 5. Por ordem do Dr. Vernet: <b>emparedem o expurgo</b>. O zelador Brandão se recusou a sair de lá. Disseram que ele saiu pela escada dos fundos. Não saiu.</p>
+<p>Dia 6. O pedreiro fez o serviço com tijolo de sobra da torre. Ficou mal feito — dá para ver o reboco novo. Brandão guardava as ferramentas no barracão do telhado; o martelão dele continua lá.</p>
+<p class="small">Cilindros de O₂ fora de uso: <b>não bater</b>. Estão com as válvulas soltas.</p>`,
+  },
+  bilhete_zelador: {
+    title: 'Bilhete preso no barracão',
+    body: `<p>Seu Brandão,</p>
+<p>o martelo grande fica aqui em cima, que lá embaixo some tudo. Pesa que é uma desgraça, mas parede velha cai no primeiro golpe bem dado — <i>com força</i>, não com pressa.</p>
+<p>A pedra de afiar o senhor levou para o expurgo de novo. Se for afiar o machado de incêndio da enfermaria, avisa, que eu também quero o meu.</p>
+<p style="text-align:right">— Tião (manutenção)</p>`,
+  },
+  ultimo_bilhete: {
+    title: 'Últimas palavras do zelador',
+    body: `<p>Eles fecharam a porta com tijolo. Ouço a colher de pedreiro do outro lado. O ar vai acabar antes da água.</p>
+<p>Não deixo nada para o Vernet. A minha pedra de afiar fica aqui, para quem vier. Um machado bem afiado corta até aquilo que eles viraram.</p>
+<p>Na Torre eles acendem a luz vermelha quando chega paciente novo. Ontem acendeu três vezes.</p>
+<p style="text-align:right">— J. Brandão, zelador</p>`,
+  },
 };
