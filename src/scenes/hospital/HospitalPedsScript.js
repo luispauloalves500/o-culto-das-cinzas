@@ -49,9 +49,9 @@ export function setupPeds(S) {
   S._saveBook('book_peds', { x: 34.8, y: ROOF + 0.95, z: 14.65 }, 34.8, ROOF + 0.93, 14.65, 'postoPed');
   // REVÓLVER na mesa do vigia + munição do armário
   S._pickup('revolver', { x: 38.0, y: ROOF + 0.95, z: 18.1 }, 'Pegar o revólver .38 do vigia', () => {
-    g.inventory.addWeapon('revolver'); g.inventory.add('municao_38', 3); g.player.setWeapon('revolver'); S.q.set('hasRevolver');
-    g.hud.toast('Revólver .38 — 3 balas no tambor', 3.5);
-    S.hint('revolver', '<b>Revólver .38</b>: <b>botão direito</b> atira (mira automática no alvo à frente; acerta pontos fracos). Botão esquerdo dá coronhada.<br>Munição escassa — e cada tiro acorda o andar inteiro. <b>R</b>: trocar de arma.', 11);
+    g.inventory.addWeapon('revolver'); g.inventory.loaded.revolver = (g.inventory.loaded.revolver || 0) + 3; g.player.setWeapon('revolver'); S.q.set('hasRevolver');
+    g.hud.toast('Revólver .38 — 3 balas no tambor (cabem 6)', 3.5);
+    S.hint('revolver', '<b>Revólver .38</b>: <b>botão direito</b> atira rápido (mira automática no alvo à frente). <b>Segure Q</b> (LT) para a <b>mira manual</b>: retícula, sem ajuda, tiro na cabeça dói mais.<br>Tambor de 6: <b>T</b> (direcional ↑) recarrega da reserva. Botão esquerdo dá coronhada. Cada tiro acorda o andar inteiro. <b>R</b>: trocar de arma.', 13);
     wakeEnemy(S, 'int_seg');
   }, () => revolverMesh(M));
   S._pickup('ammo_seg', { x: 39.6, y: ROOF + 1.0, z: 20.6 }, 'Pegar munição .38 (×3)', () => giveAmmo(S, 3), () => ammoMesh(M, 39.62, ROOF + 0.9, 20.6, 3));

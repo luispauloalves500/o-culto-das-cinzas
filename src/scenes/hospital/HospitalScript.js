@@ -11,6 +11,7 @@ import { roomAt } from '../../data/map.js';
 import { setupWing, applyWing, updateWing, useDoorWing, WING_SPAWNS, WING_DOORS } from './HospitalWingScript.js';
 import { setupPeds, applyPeds, updatePedsScript, useDoorPeds, PEDS_SPAWNS, PEDS_DOORS } from './HospitalPedsScript.js';
 import { setupMaternity, applyMaternity, updateMaternityScript, useDoorMaternity, MATERNITY_SPAWNS, MATERNITY_DOORS } from './HospitalMaternityScript.js';
+import { setupRn0, applyRn0 } from './HospitalRn0.js';
 import { setupDeadArchive, applyDeadArchive, updateDeadArchiveScript, useDoorDeadArchive, DEAD_ARCHIVE_SPAWNS, DEAD_ARCHIVE_DOORS } from './HospitalDeadArchiveScript.js';
 
 const BREAKER_ORDER = [1, 2, 0]; // II → III → I
@@ -180,11 +181,14 @@ export class HospitalScript {
     setupPeds(this);
     setupMaternity(this);
     setupDeadArchive(this);
+    setupRn0(this);
+    this._setupRepairKits();
     this._applyState(save);
     applyWing(this, save);
     applyPeds(this, save);
     applyMaternity(this, save);
     applyDeadArchive(this, save);
+    applyRn0(this, save);
   }
 
   // ---------- anexos: lavanderia, incinerador, administração, capela ----------
@@ -290,6 +294,26 @@ export class HospitalScript {
     const tag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.01, 0.05), M.paper); tag.position.set(0.07, 0, -0.03); gr.add(tag);
     gr.position.set(x, y, z); gr.rotation.y = 0.6; return gr;
   }
+  /** kits de reparo (fita, arame, lixa) ao lado de algumas bandagens: G conserta a arma corpo a corpo em mãos */
+  _setupRepairKits() {
+    const UP2 = 4;
+    const kits = [
+      ['kit_dep', { x: 15.2, y: 1.1, z: 18.55 }, [14.55, 1.235, 18.4]],          // depósito (térreo)
+      ['kit_lav', { x: 3.0, y: -5 + 1.2, z: 7.05 }, [2.8, -5 + 1.185, 6.9]],        // lavanderia (subsolo)
+      ['kit_rec', { x: 35.0, y: UP2 + 0.8, z: 31.2 }, [34.95, UP2 + 0.625, 31.2]],  // recuperação (2º)
+      ['kit_mat', { x: 29.85, y: UP2 + 0.7, z: 4.0 }, [29.75, UP2 + 0.635, 3.7]],   // maternidade (2º)
+    ];
+    for (const [id, pos, m] of kits) {
+      this._pickup(id, pos, 'Pegar kit de reparo', () => { this._giveItem('kit_reparo'); this.hint('repair', '<b>Kit de reparo.</b> Armas corpo a corpo gastam com o uso (mais no golpe forte e batendo em parede). <b>G</b> (direcional ↓) conserta a arma em mãos.', 6); }, () => this._kitMesh(...m));
+    }
+  }
+  _kitMesh(x, y, z) {
+    const M = this.game.materials, gr = new THREE.Group();
+    const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.07, 0.11), M.leather || M.woodDark); gr.add(pouch);
+    const tape = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.04, 8), M.bandage); tape.position.set(0.05, 0.055, 0); gr.add(tape);
+    const wire = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.005, 4, 10), M.metal); wire.rotation.x = Math.PI / 2; wire.position.set(-0.04, 0.04, 0); gr.add(wire);
+    gr.position.set(x, y, z); return gr;
+  }
   _bandMesh(x, y, z) {
     const m = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.1, 8), this.game.materials.bandage);
     m.position.set(x, y, z); return m;
@@ -300,7 +324,7 @@ export class HospitalScript {
     g.interact.add({ id: 'pick_' + id, pos, radius: 1.4, prompt, enabled: () => !this.q.has('picked_' + id) && (!cond || cond()),
       onInteract: () => { this.q.set('picked_' + id); mesh.visible = false; g.audio.play('pickup', null); give(); } });
   }
-  _giveItem(id) { this.game.inventory.add(id); this.game.hud.toast((ITEMS[id]?.name || id) + ' obtido'); if (id === 'bandagem') this.hint('heal', '<b>H</b>: usar bandagem (+45 de vida). <b>Tab</b>: inventário e documentos.', 7); }
+  _giveItem(id) { this.game.inventory.add(id); this.game.hud.toast((ITEMS[id]?.name || id) + ' obtido'); if (id === 'bandagem') this.hint('heal', `<b>H</b>: usar bandagem (+${this.game.player.healAmount || 45} de vida). <b>Tab</b>: inventário e documentos.`, 7); }
   _doc(id, pos, x, y, z, wall = false) {
     const g = this.game;
     const m = new THREE.Mesh(new THREE.BoxGeometry(wall ? 0.02 : 0.22, wall ? 0.3 : 0.01, wall ? 0.22 : 0.3), g.materials.paper);

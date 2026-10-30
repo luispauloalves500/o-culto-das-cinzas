@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { CollisionWorld } from '../../src/world/CollisionWorld.js';
 import { Navigation } from '../../src/world/Navigation.js';
 import { migrateSave, createEmptySave, SaveManager, SAVE_KEY, SAVE_VERSION } from '../../src/core/SaveManager.js';
-import { CombatSystem, testVolume } from '../../src/gameplay/CombatSystem.js';
-import { WEAPONS, weaponDamage } from '../../src/data/weapons.js';
+import { CombatSystem, testVolume, rayVsVolume } from '../../src/gameplay/CombatSystem.js';
+import { WEAPONS, weaponDamage, wearMult, wearCost, conditionLabel } from '../../src/data/weapons.js';
 import { Inventory } from '../../src/gameplay/Inventory.js';
 import { DOCUMENTS } from '../../src/data/documents.js';
 import { ENEMIES } from '../../src/data/enemies.js';
@@ -269,6 +269,69 @@ test('maternidade, arquivo morto, lança improvisada e sala de batismo secreta',
   for (const id of ['prontuario_parto', 'carta_mae', 'livro_partos', 'prontuario_rn0', 'ata_batismo']) assert.ok(DOCUMENTS[id]?.body, id);
   for (const id of ['chave_maternidade', 'chave_arquivo_morto', 'manivela', 'pulseira_recem_nascido']) assert.ok(ITEMS[id]?.name, id);
   for (const d of ['maternityOpen', 'picked_lanca', 'deadArchiveOpen', 'shelfMoved', 'picked_pulseira']) assert.ok(SIDE_OBJECTIVES.some((o) => o.done === d), d);
+});
+
+test('desgaste: condição reduz o dano, afiada gasta menos, kit e pedra reparam, save migra', () => {
+  const a = WEAPONS.machado, r = WEAPONS.revolver;
+  for (const id of ['machado', 'martelo', 'facao', 'lanca']) assert.ok(WEAPONS[id].durability > 0, id);
+  assert.ok(!r.durability && r.cylinder === 6);
+  const h = a.attacks.heavy;
+  assert.equal(weaponDamage(a, h, false, 1), h.dmg);
+  assert.equal(weaponDamage(a, h, false, 0.3), Math.round(h.dmg * 0.85));
+  assert.equal(weaponDamage(a, h, false, 0.1), Math.round(h.dmg * 0.7));
+  assert.equal(weaponDamage(a, h, false, 0), Math.round(h.dmg * 0.5));
+  assert.equal(weaponDamage(r, r.attacks.light1, false, 0), r.attacks.light1.dmg, 'revólver não desgasta');
+  assert.equal(wearMult(0.6), 1); assert.equal(conditionLabel(0), 'quebrada'); assert.equal(conditionLabel(1), 'boa');
+  assert.ok(wearCost(a, 'heavy', false) === 2 && wearCost(a, 'light1', true) === 0.75 && wearCost(a, 'light1', false, true) === 3 && wearCost(r, 'heavy') === 0);
+  const inv = new Inventory({ emit() {} });
+  inv.addWeapon('machado');
+  assert.equal(inv.condition('machado'), 1);
+  const res = inv.addWear('machado', a.durability * 0.6);
+  assert.ok(res.before === 1 && Math.abs(res.after - 0.4) < 1e-9);
+  assert.equal(inv.repair('machado', 0.6), true);
+  assert.ok(Math.abs(inv.condition('machado') - 0.6) < 1e-9);
+  assert.equal(inv.repair('machado', 0.6), false, 'a pedra não passa de 60%');
+  inv.addWear('machado', 999); assert.equal(inv.condition('machado'), 0);
+  inv.repair('machado', 1); assert.equal(inv.condition('machado'), 1);
+  inv.addWear('machado', 10);
+  const s = inv.serialize();
+  const inv2 = new Inventory({ emit() {} }); inv2.restore(s);
+  assert.equal(inv2.wear.machado, 10);
+  // save antigo sem desgaste/tambor: armas novas; balas da reserva vão para o tambor (sem criar nem perder)
+  const old = new Inventory({ emit() {} }); old.restore({ items: { municao_38: 9 }, weapons: ['machado', 'revolver'] });
+  assert.deepEqual(old.wear, {});
+  assert.equal(old.rounds('revolver'), 6); assert.equal(old.count('municao_38'), 3); assert.equal(old.ammoTotal('revolver'), 9);
+  const few = new Inventory({ emit() {} }); few.restore({ items: { municao_38: 2 }, weapons: ['revolver'] });
+  assert.equal(few.rounds('revolver'), 2); assert.equal(few.count('municao_38'), 0);
+  const none = new Inventory({ emit() {} }); none.restore({ items: { municao_38: 4 }, weapons: ['machado'] });
+  assert.equal(none.count('municao_38'), 4, 'sem revólver, nada muda');
+  const saved = new Inventory({ emit() {} }); saved.restore({ items: { municao_38: 4 }, weapons: ['revolver'], loaded: { revolver: 1 } });
+  assert.equal(saved.rounds('revolver'), 1); assert.equal(saved.count('municao_38'), 4);
+});
+
+test('mira manual: raio × esfera/cápsula, erra quando passa ao lado', () => {
+  const cap = { type: 'capsule', x: 0, z: 5, y0: 0.3, y1: 1.6, r: 0.3 };
+  const t = rayVsVolume({ x: 0, y: 1.2, z: 0 }, { x: 0, y: 0, z: 1 }, cap);
+  assert.ok(Math.abs(t - 4.7) < 1e-6, String(t));
+  assert.equal(rayVsVolume({ x: 0.5, y: 1.2, z: 0 }, { x: 0, y: 0, z: 1 }, cap), Infinity);
+  assert.equal(rayVsVolume({ x: 0, y: 1.2, z: 0 }, { x: 0, y: 0, z: -1 }, cap), Infinity, 'atrás não conta');
+  const d = Math.hypot(5, 1.4); // de cima, na calota
+  const tt = rayVsVolume({ x: 0, y: 3, z: 0 }, { x: 0, y: -1.4 / d, z: 5 / d }, cap);
+  assert.ok(tt < Infinity && tt > 4);
+  const sph = { type: 'sphere', x: 2, y: 1, z: 2, r: 0.5 };
+  const dd = Math.hypot(2, 2);
+  assert.ok(Math.abs(rayVsVolume({ x: 0, y: 1, z: 0 }, { x: 2 / dd, y: 0, z: 2 / dd }, sph) - (dd - 0.5)) < 1e-6);
+  const c = new CombatSystem({ scene: { add() {} } });
+  const near = { alive: true, hurtVolumes: () => [{ ...cap, z: 3 }] }, far = { alive: true, hurtVolumes: () => [cap] };
+  assert.equal(c.rayHit({ x: 0, y: 1.2, z: 0 }, { x: 0, y: 0, z: 1 }, 20, [far, near]).target, near);
+  assert.equal(c.rayHit({ x: 0, y: 1.2, z: 0 }, { x: 0, y: 0, z: 1 }, 2, [far, near]), null, 'alcance');
+});
+
+test('trama RN 0: documento final, objetivo, itens de reparo e anos do livro de partos', () => {
+  assert.ok(DOCUMENTS.contagem_confraria?.body.includes('Davi') && DOCUMENTS.contagem_confraria.body.includes('Tomé'));
+  assert.ok(SIDE_OBJECTIVES.some((o) => o.when === 'foundBatismo' && o.done === 'rn0Revealed'));
+  assert.ok(ITEMS.kit_reparo?.name);
+  assert.ok(!DOCUMENTS.livro_partos.title.includes('1950'), 'o jogo se passa em 1934');
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
