@@ -45,4 +45,10 @@ export const SIDE_OBJECTIVES = [
   { when: 'reachedRoof', done: 'hasHammer', text: 'O barracão do zelador, no telhado, ainda está aberto.' },
   { when: 'readSurgLog', done: 'wallBroken', text: '"Emparedem o expurgo." Uma parede de tijolos novos na sala de cirurgia 2 — algo pesado a derrubaria.' },
   { when: 'wallBroken', done: 'picked_whetstone', text: 'O expurgo emparedado guarda o que o zelador Brandão deixou.' },
+  { when: 'reachedRoof', done: 'enteredPeds', text: 'Ao norte do telhado, a porta da pediatria (3º andar) está aberta.' },
+  { when: 'enteredPeds', done: 'picked_facao', text: 'No berçário, algo de metal brilha cravado num berço.' },
+  { when: 'enteredPeds', done: 'securityOpen', text: 'A segurança do 3º andar está trancada — procure a chave no posto de enfermagem.' },
+  { when: 'securityOpen', done: 'picked_revolver', text: 'O armário de armas da segurança foi arrombado. Sobrou alguma coisa na mesa do vigia?' },
+  { when: 'readChildDrawing', done: 'lockBroken', text: '"O meu quarto é o 7" — atrás do teatrinho da brinquedoteca. Nenhuma lâmina corta a corrente.' },
+  { when: 'picked_revolver', done: 'fireExitShortcut', text: 'A saída de incêndio da segurança desce até a escada principal — destrave a porta corta-fogo pelo lado de fora.' },
 ];

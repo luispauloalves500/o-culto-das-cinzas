@@ -4,7 +4,7 @@ export const FLOORS = [
   { id: 'lo', name: 'Subsolo' },
   { id: 'up', name: 'Térreo' },
   { id: 'up2', name: '2º andar' },
-  { id: 'roof', name: 'Telhado' },
+  { id: 'roof', name: '3º andar · Telhado' },
 ];
 
 export const ROOMS = [
@@ -51,6 +51,16 @@ export const ROOMS = [
   { id: 'roofStairTop', floor: 'roof', name: 'Casa da escada', rect: [13, 26, 16.4, 38.4] },
   { id: 'roof', floor: 'roof', name: 'Telhado', rect: [16.4, 26, 36, 38.4] },
   { id: 'shed', floor: 'roof', name: 'Barracão do zelador', rect: [31, 34, 35.8, 38.2] },
+  // 3º andar — ala pediátrica / maternidade (y 7.3, sobre a administração)
+  { id: 'pedCorridor', floor: 'roof', name: 'Corredor da pediatria', rect: [12, 22, 41, 26] },
+  { id: 'brinquedoteca', floor: 'roof', name: 'Brinquedoteca', rect: [16, 14, 23, 22] },
+  { id: 'bercario', floor: 'roof', name: 'Berçário', rect: [23, 14, 31, 22] },
+  { id: 'postoPed', floor: 'roof', name: 'Posto de enfermagem', rect: [31, 14, 36, 22] },
+  { id: 'seguranca', floor: 'roof', name: 'Posto de segurança', rect: [36, 14, 41, 22] },
+  { id: 'quarto7', floor: 'roof', name: 'Quarto 7', rect: [12, 14, 16, 22], secret: true },
+  // escada de incêndio externa (3º andar ↔ patamar da escada principal no 2º)
+  { id: 'fireEscape', floor: 'up2', name: 'Escada de incêndio', rect: [41, 14, 43.4, 23.9] },
+  { id: 'fireEscapeTop', floor: 'roof', name: 'Escada de incêndio', rect: [41, 14, 43.4, 16.2] },
 ];
 
 // pontos de interesse desenhados no mapa quando o cômodo é conhecido
@@ -70,6 +80,9 @@ export const MAP_MARKS = [
   { kind: 'stairs', floor: 'up2', x: 39.5, z: 18.5, room: 'mainStairTop' },
   { kind: 'stairs', floor: 'up2', x: 14.7, z: 32, room: 'roofStair' },
   { kind: 'stairs', floor: 'roof', x: 14.7, z: 32, room: 'roofStairTop' },
+  { kind: 'save', floor: 'roof', x: 34.8, z: 15.0, room: 'postoPed' },
+  { kind: 'stairs', floor: 'up2', x: 42.2, z: 19, room: 'fireEscape' },
+  { kind: 'stairs', floor: 'roof', x: 42.2, z: 15.2, room: 'fireEscapeTop' },
 ];
 
 /** andar a partir da altura dos pés */

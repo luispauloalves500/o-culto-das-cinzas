@@ -104,4 +104,32 @@ export const DOCUMENTS = {
 <p>Na Torre eles acendem a luz vermelha quando chega paciente novo. Ontem acendeu três vezes.</p>
 <p style="text-align:right">— J. Brandão, zelador</p>`,
   },
+  desenho_crianca: {
+    title: 'Desenho de criança (giz de cera)',
+    body: `<p><i>Um prédio com muitas janelas. Num andar alto, um teatrinho vermelho com bonecos. Atrás dele, uma porta com um <b>7</b> enorme e uma corrente desenhada com força, furando o papel.</i></p>
+<p>Embaixo, em letra torta: "O MEU QUARTO É O 7. A TIA FECHOU COM A CORRENTE E O CADEADO DE FERRO PRA ELES NÃO ENTRAR. A FACA DA COZINHA NÃO CORTA. SÓ O BARULHÃO DO MOÇO DA SEGURANÇA ABRE."</p>
+<p>Num canto, um boneco de uniforme com uma arma — e muitas bolinhas pretas saindo dela.</p>`,
+  },
+  ficha_bercario: {
+    title: 'Ficha do berçário',
+    body: `<p><b>BERÇÁRIO — 3º ANDAR</b> · Série Cinza (pediátrica), lote 2</p>
+<p>Recém-nascidos de mães internadas na Ala Leste. Aplicação por inalação, em doses de 1/10. Choro cessa na 3ª dose. Os olhos não.</p>
+<p>Berço 4: sem resposta. Berço 5: <i>removido à Torre</i>. Berço 6: a enfermeira Cida se recusou a continuar e trancou-se no posto com o vigia.</p>
+<p class="small">O facão da cozinha que estava aqui foi usado para cortar as amarras dos berços. Ninguém o levou de volta.</p>`,
+  },
+  ordem_seguranca: {
+    title: 'Ordem de serviço — vigilância',
+    body: `<p>Ao vigia do 3º andar, Sr. Nogueira:</p>
+<p>Fica autorizado o porte do revólver da portaria enquanto durar a quarentena. <b>Munição contada:</b> o que faltar sai do seu salário. Não atire nos pacientes — <i>eles ainda são propriedade da Confraria</i>.</p>
+<p>A saída de incêndio deve permanecer acorrentada por fora. Quem desce por ela vai parar no patamar da escada principal, e o Dr. Vernet não quer ninguém circulando entre os andares.</p>
+<p style="text-align:right">— Administração</p>
+<p class="small">No verso, a lápis: "ACABOU A MUNIÇÃO DO ARMÁRIO. ESCONDI AS ÚLTIMAS COM O MENINO DO 7."</p>`,
+  },
+  diario_menino: {
+    title: 'Caderno do Quarto 7',
+    body: `<p>Hoje a tia Cida trouxe balas de verdade, das que fazem barulhão, e disse para eu guardar debaixo do travesseiro "para o seu Nogueira, se ele voltar". Ele não voltou.</p>
+<p>A tia passou a corrente por fora e disse que lá fora tem fumaça que anda. Eu escuto ela andando no corredor de noite, de sapato. Às vezes é a tia. Às vezes não é.</p>
+<p>Deixo o meu dente de leite para quem abrir a porta. A mamãe dizia que dente de leite dá fôlego para correr.</p>
+<p style="text-align:right">— Davi, 7 anos, Quarto 7</p>`,
+  },
 };
