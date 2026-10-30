@@ -94,6 +94,9 @@ export const ROOMS_C3 = [
   { id: 'c3_escada', floor: 'up', ch: 3, name: 'Escada do arquivo', rect: [22.6, 30, 25.4, 40] },
   { id: 'c3_escada_b', floor: 'lo', ch: 3, name: 'Escada do arquivo', rect: [22.6, 33, 25.4, 40] },
   { id: 'c3_arquivo', floor: 'lo', ch: 3, name: 'Arquivos subterrâneos', rect: [14, 40, 36, 58] },
+  { id: 'c3_cripta_escada', floor: 'lo', ch: 3, name: 'Escada da cripta', rect: [24, 58, 26, 68] },
+  { id: 'c3_cripta', floor: 'lo', ch: 3, name: 'Cripta do Sacristão', rect: [14, 68, 36, 90] },
+  { id: 'c3_galeria', floor: 'lo', ch: 3, name: 'Galeria das catacumbas', rect: [36, 85, 40, 87] },
 ];
 for (const r of ROOMS_C3) ROOMS.push(r);
 
@@ -129,6 +132,8 @@ export const MAP_MARKS = [
   { kind: 'stairs', ch: 3, floor: 'up', x: 24, z: 34, room: 'c3_escada' },
   { kind: 'stairs', ch: 3, floor: 'lo', x: 24, z: 38, room: 'c3_escada_b' },
   { kind: 'save', ch: 3, floor: 'lo', x: 15.8, z: 41.7, room: 'c3_arquivo' },
+  { kind: 'stairs', ch: 3, floor: 'lo', x: 25, z: 61, room: 'c3_cripta_escada' },
+  { kind: 'save', ch: 3, floor: 'lo', x: 25.55, z: 66.0, room: 'c3_cripta_escada' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1

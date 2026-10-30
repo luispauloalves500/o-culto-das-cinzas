@@ -254,6 +254,15 @@ export const DOCUMENTS = {
     body: `<p>Pasta de couro da gaveta V. Fotografias de um homem jovem, de macacão da Fundição — você.</p>
 <p><b>RN 0 · Elias Varga.</b> Admitido no São Dimas em 3/7, "acidente de forno". Doze procedimentos. Onze pacientes do mesmo lote não resistiram; RN 0 resistiu a todos.</p>
 <p>Carimbo vermelho, repetido em cada página: <b>RECIPIENTE — NÃO DESPERTAR</b>.</p>
-<p class="small">Última folha, outra caligrafia (Dra. H. Arcos?): "Se você está lendo isto, acordou cedo demais. Eles não querem te matar, Elias — querem te usar. A Inês está lá embaixo. Não confie no sino."</p>`,
+<p class="small">Última folha, outra caligrafia (Dra. H. Arcos?): "Se você está lendo isto, acordou cedo demais. Eles não querem te matar, Elias — querem te usar. A Inês está lá embaixo. Não confie no sino."</p>
+<p class="small">Grampeado à contracapa, um recibo do almoxarifado: "Sinete da CHAMA — entregue ao irmão arquivista, que o leva no dedo. A grade da cripta só sobe pelo sarilho, com o sinete no selo."</p>`,
+  },
+  ordem_transferencia: {
+    ch: 3,
+    title: 'Ordem de transferência — Cripta → Torre',
+    body: `<p>Papel timbrado da Confraria, lacre de cera preta, deixado sobre o altar.</p>
+<p><b>Ao Irmão Sacristão.</b> A amostra I. (Inês) segue esta noite para a <b>Torre</b>, pelas catacumbas e pelo <b>centro antigo</b> — a Cidade Morta. O Vigia abrirá a passagem do Relógio a quem trouxer a ordem.</p>
+<p>O recipiente RN 0 não deve chegar à Torre antes da hora. Se descer à cripta, retenha-o aqui. Se não puder retê-lo, apague a chama: ele não pode ter o que é dela.</p>
+<p class="small">Assinado: <b>V.</b> — e, a lápis, na margem, a letra apressada de Inês: "Elias, o relógio. Sempre o relógio."</p>`,
   },
 };

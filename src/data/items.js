@@ -17,5 +17,7 @@ export const ITEMS = {
   chave_fabrica: { name: 'Chave do portão da fábrica', desc: 'Chave comprida de latão, etiqueta de couro queimada: "PORTÃO — CIA. DE GÁS E COQUE". Abre o portão da fábrica no fim da Rua do Carvão.' },
   passe_bonde: { name: 'Passe do motorneiro — Linha 4', desc: 'Ficha de latão da Linha 4 amarrada numa fita vermelha chamuscada. Estava na grelha da Garganta. "O motorneiro só leva quem tem a fita vermelha." A Linha 4 termina no Largo do Véu, diante da Sede da Confraria.' },
   dossie_elias: { name: 'Dossiê RN 0 — Elias', desc: 'Pasta de couro do fichário da Confraria, gaveta V. Fotografias, uma ficha de admissão e um carimbo vermelho: "RECIPIENTE — NÃO DESPERTAR".' },
+  sinete_chama: { name: 'Sinete da CHAMA', desc: 'Anel de latão do arquivista, com uma chama em baixo-relevo. Encaixa no selo do sarilho que ergue a grade da cripta.' },
+  fita_ines: { name: 'Fita de cabelo de Inês', desc: 'Fita vermelha presa num prego do altar da cripta. Inês esteve aqui — e foi levada para a Torre.' },
   amuleto_menino: { name: 'Amuleto do menino', desc: 'Um dente de leite numa fita vermelha. Quem o carrega respira mais fundo: fôlego máximo +25.' },
 };
