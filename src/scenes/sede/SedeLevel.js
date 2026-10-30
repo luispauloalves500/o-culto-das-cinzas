@@ -1,7 +1,8 @@
 // Capítulo 3 — A Confraria · Sede do Véu (primeira fatia): o Largo do Véu (fim da Linha 4, chuva fina de cinza),
 // a portaria com o postigo (só abre para quem mostra a fita vermelha), o salão nobre com colunas e a estátua
 // velada, a secretaria, o portão de segredo de três discos e a escada para os arquivos subterrâneos (y −4.5),
-// com estantes altas, o fichário e a grade da cripta do Sacristão (próxima fatia). Mesma base modular
+// com estantes altas, o fichário e a grade da cripta do Sacristão; abaixo dela, a cripta-ossuário (y −8.5) onde
+// o Sacristão guarda o altar, com pilares de pedra, ossuários laterais e a galeria das catacumbas. Mesma base modular
 // dos capítulos anteriores (LevelBuilder/Door/Navigation), tudo procedural.
 import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
@@ -12,6 +13,15 @@ import { HospitalLevel } from '../hospital/HospitalLevel.js';
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
 export const ARCH = -4.5;               // piso dos arquivos subterrâneos
+export const CRYPT = -8.5;              // piso da cripta do Sacristão
+// cripta: arena x14..36 z68..90; pilares (atordoam a investida); ossuários laterais de onde vêm os noviços
+export const CRYPT_PILLARS = [[19, 75], [31, 75], [19, 84], [31, 84]];
+export const CRYPT_NICHES = [
+  { x: 15.6, y: CRYPT, z: 79.5, yaw: Math.PI / 2 }, { x: 34.4, y: CRYPT, z: 79.5, yaw: -Math.PI / 2 },
+  { x: 15.6, y: CRYPT, z: 72.5, yaw: Math.PI / 2 }, { x: 34.4, y: CRYPT, z: 72.5, yaw: -Math.PI / 2 },
+];
+export const SACRISTAN_POS = { x: 25, y: CRYPT, z: 86.2, yaw: 0 };
+const H_CRYPT = 6;
 const H_LODGE = 3.6, H_HALL = 7, H_SEC = 3.6, H_ARCH = 4;
 
 export const SEDE_CHECKPOINTS = {
@@ -19,6 +29,8 @@ export const SEDE_CHECKPOINTS = {
   c3_lodge: { x: 27, y: GROUND, z: 7, yaw: 0 },
   c3_hall: { x: 27, y: GROUND, z: 14, yaw: 0 },
   c3_archive: { x: 24, y: ARCH, z: 41.8, yaw: 0 },
+  c3_preboss: { x: 24.6, y: CRYPT, z: 66.2, yaw: 0 },
+  c3_end: { x: 33.6, y: CRYPT, z: 86, yaw: Math.PI / 2 },
 };
 
 // névoa padrão: noite úmida de cinza sobre o largo, azulada
@@ -29,8 +41,10 @@ export const SEDE_ZONES = [
   { id: 'c3_hall', minX: 6, maxX: 30, minZ: 12, maxZ: 30, minY: -1, maxY: 8, fog: 0x120a0a, density: 0.05 },
   { id: 'c3_stairs', minX: 22.5, maxX: 25.5, minZ: 30, maxZ: 40, minY: -5, maxY: 4, fog: 0x08080a, density: 0.08 },
   { id: 'c3_archive', minX: 14, maxX: 36, minZ: 40, maxZ: 58, minY: -6, maxY: 0, fog: 0x0a0b0c, density: 0.07 },
+  { id: 'c3_cryptStair', minX: 23.5, maxX: 26.5, minZ: 58, maxZ: 68, minY: -10, maxY: -3, fog: 0x0c0706, density: 0.08 },
+  { id: 'c3_crypt', minX: 14, maxX: 40, minZ: 68, maxZ: 90, minY: -10, maxY: -2, fog: 0x100807, density: 0.055 },
 ];
-const INDOOR = new Set(['c3_lodge', 'c3_secretaria', 'c3_hall', 'c3_stairs', 'c3_archive']);
+const INDOOR = new Set(['c3_lodge', 'c3_secretaria', 'c3_hall', 'c3_stairs', 'c3_archive', 'c3_cryptStair', 'c3_crypt']);
 // símbolos dos discos do portão do arquivo (a ordem certa está no Regimento, art. 7º)
 export const DIAL_SYMBOLS = ['CINZA', 'OLHO', 'VÉU', 'CHAMA'];
 
@@ -55,6 +69,7 @@ export class SedeLevel {
     this._secretaria();
     this._stairs();
     this._archive();
+    this._crypt();
     this._doors();
     this._lights();
     this._rain();
@@ -235,12 +250,77 @@ export class SedeLevel {
     this.sign('E — V', 34.55, Y + 1.8, 56, -Math.PI / 2, 0.8, 0.16, { bg: '#2a2622', fg: '#c8b080' });
     b.box(15.0, Y, 41.0, 16.6, Y + 0.8, 42.4, 'woodDark', { tag: 'prop-low', sight: false });
     b.box(26.4, Y, 44.0, 27.4, Y + 0.8, 45.2, 'woodDark', { tag: 'prop-low', sight: false }); // mesa de leitura do corredor
-    // grade da cripta: barras e o selo da chama
-    for (let x = 24.1; x <= 25.95; x += 0.25) b.box(x, Y, 58.25, x + 0.05, Y + 2.6, 58.3, 'rust', { collide: false });
+    // grade da cripta: barras (sobem com o sarilho) e o selo da chama
+    this.grate = new THREE.Group(); this.grate.name = 'grade_cripta';
+    for (let x = 24.1; x <= 25.95; x += 0.25) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.6, 0.05), this.M.rust); m.position.set(x + 0.025, Y + 1.3, 58.0); this.grate.add(m); }
+    for (const y of [0.25, 1.3, 2.4]) { const m = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.06, 0.07), this.M.rust); m.position.set(25, Y + y, 58.0); this.grate.add(m); }
+    b.group.add(this.grate); this.grateT = 0; this.grateRaise = 0;
     this.sign('CRIPTA — O SACRISTÃO', 25, Y + 3.0, 57.88, Math.PI, 1.8, 0.24, { bg: '#2a1010', fg: '#d0a060' });
-    b.box(24.0, Y - 0.3, 58.4, 26.0, Y + 0.0, 60, 'stone', { collide: false });
+    // sarilho da grade, à esquerda: tambor de corrente, manivela e o selo de latão com a CHAMA
+    b.box(22.3, Y, 57.4, 23.5, Y + 0.9, 57.95, 'stone', { tag: 'prop-low', sight: false });
+    this.winch = new THREE.Group(); this.winch.position.set(22.9, Y + 1.15, 57.6);
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.9, 10), this.M.rust); drum.rotation.z = Math.PI / 2; this.winch.add(drum);
+    this.crank = new THREE.Group(); this.crank.position.set(-0.5, 0, 0); this.winch.add(this.crank);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.4, 0.06), this.M.metal); arm.position.y = 0.2; this.crank.add(arm);
+    const knob = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.06), this.M.woodDark); knob.position.set(-0.08, 0.4, 0); this.crank.add(knob);
+    b.group.add(this.winch);
+    for (let k = 0; k < 6; k++) b.box(23.45 + k * 0.1, Y + 1.2 + k * 0.22, 57.85, 23.5 + k * 0.1, Y + 1.32 + k * 0.22, 57.9, 'metal', { collide: false }); // corrente até a grade
+    b.box(22.6, Y + 1.5, 57.93, 23.2, Y + 2.1, 57.97, 'brass', { collide: false });
+    this.sealEmpty = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.02), this.M.coal); this.sealEmpty.position.set(22.9, Y + 1.8, 57.92); b.group.add(this.sealEmpty);
+    this.sealLit = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.03), this.M.ember); this.sealLit.position.set(22.9, Y + 1.8, 57.91); this.sealLit.visible = false; b.group.add(this.sealLit);
+    this.sign('SELO DA CHAMA', 22.9, Y + 2.3, 57.9, Math.PI, 0.8, 0.14, { bg: '#2a1010', fg: '#d0a060' });
     this.sign('ARQUIVO GERAL', 24, Y + 3.3, 40.12, 0, 1.6, 0.24, { bg: '#2a2622', fg: '#c8b080' });
   }
+
+  // ---------- ESCADA DA CRIPTA x24..26 z58..68 (y −4.5 → −8.5) e a CRIPTA x14..36 z68..90 ----------
+  _crypt() {
+    const b = this.b, Y = CRYPT;
+    b.floor(24, 57.9, 26, 58.4, ARCH, 'stone', 'c3_crypt_top');
+    b.stairsZ(24.1, 25.9, 58.4, 65, ARCH, CRYPT, 16, 'stone');
+    b.floor(24, 65, 26, 68, Y, 'stone', 'c3_crypt_landing');
+    b.wallZ(24, 58, 68, Y, ARCH + 2.8, [], 'stone');
+    b.wallZ(26, 58, 68, Y, ARCH + 2.8, [], 'stone');
+    b.ceiling(23.9, 58, 26.1, 68, ARCH + 2.8, 'stone');
+    b.box(25.85, ARCH - 1.0, 58.4, 25.95, ARCH - 0.9, 65, 'brass', { collide: false }); // corrimão
+    // arena
+    b.floor(14, 68, 36, 90, Y, 'stone', 'c3_crypt');
+    b.ceiling(14, 68, 36, 90, Y + H_CRYPT, 'stone');
+    b.wallX(68, 14, 36, Y, Y + H_CRYPT, [25], 'stone', 2.0, 2.8);
+    b.wallX(90, 14, 36, Y, Y + H_CRYPT, [], 'stone');
+    b.wallZ(14, 68, 90, Y, Y + H_CRYPT, [], 'stone');
+    b.wallZ(36, 68, 90, Y, Y + H_CRYPT, [86], 'stone', 1.6, 2.4);         // galeria das catacumbas (leste)
+    // pilares de pedra: a investida do Sacristão se quebra neles
+    for (const [x, z] of CRYPT_PILLARS) {
+      b.box(x - 0.7, Y, z - 0.7, x + 0.7, Y + H_CRYPT, z + 0.7, 'stone', { tag: 'obstacle' });
+      b.box(x - 0.85, Y, z - 0.85, x + 0.85, Y + 0.4, z + 0.85, 'stone', { collide: false });
+    }
+    // ossuários laterais: nichos com crânios empilhados (de onde se levantam os noviços)
+    for (const [x, sx] of [[14, 1], [36, -1]]) {
+      for (const z of [72.5, 79.5]) {
+        b.box(Math.min(x, x + sx * 0.5), Y, z - 1.2, Math.max(x, x + sx * 0.5), Y + 2.6, z + 1.2, 'coal', { collide: false });
+        for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) {
+          const cx = x + sx * 0.3, cz = z - 0.75 + k * 0.5, cy = Y + 0.5 + r * 0.6;
+          b.box(cx - 0.12, cy, cz - 0.12, cx + 0.12, cy + 0.22, cz + 0.12, 'paper', { collide: false });
+        }
+      }
+    }
+    // altar ao norte, com a toalha vermelha e velas
+    b.box(22.4, Y, 87.6, 27.6, Y + 1.1, 89.4, 'stone', { tag: 'prop-low', sight: false });
+    b.box(22.3, Y + 1.1, 87.5, 27.7, Y + 1.14, 89.5, 'altarCloth', { collide: false });
+    for (const x of [22.8, 23.4, 26.6, 27.2]) b.box(x - 0.04, Y + 1.14, 89.0, x + 0.04, Y + 1.44, 89.08, 'candle', { collide: false });
+    b.box(24.2, Y + 1.14, 89.1, 25.8, Y + 3.2, 89.3, 'woodDark', { collide: false });             // cruz/retábulo
+    b.box(23.6, Y + 2.5, 89.1, 26.4, Y + 2.7, 89.3, 'woodDark', { collide: false });
+    this.sign('IN CINERE VITA', 25, Y + 3.6, 89.85, Math.PI, 1.8, 0.24, { bg: '#2a1010', fg: '#d0a060' });
+    // galeria das catacumbas (a saída rumo ao centro antigo)
+    b.floor(36, 85, 40, 87, Y, 'stone', 'c3_gallery');
+    b.wallX(85, 36, 40, Y, Y + 2.6, [], 'stone'); b.wallX(87, 36, 40, Y, Y + 2.6, [], 'stone');
+    b.wallZ(40, 85, 87, Y, Y + 2.6, [], 'stone');
+    b.ceiling(36, 85, 40, 87, Y + 2.6, 'stone');
+    this.sign('CATACUMBAS → CENTRO ANTIGO', 39.9, Y + 2.0, 86, -Math.PI / 2, 1.8, 0.2, { bg: '#2a2622', fg: '#c8b080' });
+  }
+
+  /** sobe a grade da cripta (anima as barras por ~2,8 s; instant = estado salvo) */
+  raiseGrate(instant = false) { if (instant) { this.grateT = 1; this.grateRaise = 0; } else this.grateRaise = 1; if (this.sealLit) { this.sealLit.visible = true; this.sealEmpty.visible = false; } }
 
   _doors() {
     const ctx = { materials: this.M, group: this.b.group, col: this.game.col, audio: this.game.audio, bus: this.game.bus };
@@ -254,7 +334,12 @@ export class SedeLevel {
     D({ id: 'c3_vault', axis: 'x', x: 24, y: GROUND, z: 30, width: 2.6, height: 3.0, kind: 'sliding', mat: this.M.doorMetal, locked: true,
       lockMsg: 'O portão do arquivo não tem fechadura: três discos de segredo e uma alavanca, à esquerda e à direita.', label: 'portão do arquivo' });
     D({ id: 'c3_crypt', axis: 'x', x: 25, y: ARCH, z: 58, width: 2.0, height: 2.6, kind: 'sliding', mat: this.M.rust, locked: true,
-      lockMsg: 'Atrás da grade, degraus descem para a cripta. Um cântico grave sobe — e, no meio dele, a voz de Inês. A grade não cede.', label: 'grade da cripta' });
+      lockMsg: 'Atrás da grade, degraus descem para a cripta. Um cântico grave sobe — e, no meio dele, a voz de Inês. A grade não cede: quem a ergue é o sarilho ao lado, travado por um selo de latão.', label: 'grade da cripta' });
+    // a grade é desenhada pelas barras (que sobem); o painel da porta só fica como colisor
+    this.doors.c3_crypt.panel.material = new THREE.MeshBasicMaterial({ visible: false });
+    D({ id: 'c3_arena', axis: 'x', x: 25, y: CRYPT, z: 68, width: 2.0, height: 2.8, swing: 1, mat: this.M.woodDark, label: 'porta da cripta' });
+    D({ id: 'c3_gallery', axis: 'z', x: 36, y: CRYPT, z: 86, width: 1.6, height: 2.4, kind: 'sliding', mat: this.M.rust, locked: true,
+      lockMsg: 'Uma porta de ferro, trancada por dentro do altar. Do outro lado, ar frio — as catacumbas.', label: 'porta da galeria' });
   }
 
   _lights() {
@@ -272,6 +357,12 @@ export class SedeLevel {
     this.lamp(24, ARCH + H_ARCH - 0.1, 52, 0xd0b080, 0.9, 10, { flicker: true });
     this.lamp(33, ARCH + H_ARCH - 0.1, 55, 0xc09060, 0.8, 7, { flicker: true });
     this.lamp(25, ARCH + 2.4, 57.4, 0xff6030, 0.8, 6, { flicker: true, mat: this.M.ember }); // brilho da cripta
+    this.lamp(25, CRYPT + 2.6, 66.4, 0xff7a40, 0.8, 7, { flicker: true });                     // patamar da cripta
+    this.lamp(17, CRYPT + 2.0, 69.4, 0xff7030, 1.1, 10, { flicker: true });                    // braseiros
+    this.lamp(33, CRYPT + 2.0, 69.4, 0xff7030, 1.1, 10, { flicker: true });
+    this.lamp(25, CRYPT + 2.2, 88.4, 0xffa860, 1.3, 11, { flicker: true });                    // velas do altar
+    this.lamp(25, CRYPT + H_CRYPT - 0.3, 79, 0x9a6a50, 0.8, 16);                              // lustre de ossos
+    this.lamp(38.4, CRYPT + 2.2, 86, 0x8090a0, 0.5, 5);                                       // galeria
   }
 
   // ---------- garoa de cinza no largo (pontos que acompanham o jogador) ----------
@@ -314,6 +405,10 @@ export class SedeLevel {
     N('e0', 24, GROUND, 31); N('e1', 24, -2.2, 35.3); N('e2', 24, ARCH, 40.6);
     N('a0', 24, ARCH, 42); N('a1', 24.5, ARCH, 49.2); N('a2', 24.5, ARCH, 56.4); N('a3', 19.1, ARCH, 49.2); N('a4', 29.9, ARCH, 49.2);
     N('a5', 33, ARCH, 56.4); N('a6', 16, ARCH, 44); N('a7', 33, ARCH, 42.2); N('a8', 16, ARCH, 56.4);
+    // escada da cripta e a cripta
+    N('k0', 25, ARCH, 58.9); N('k1', 25, -6.5, 61.7); N('k2', 25, CRYPT, 66.6); N('k3', 25, CRYPT, 69.6);
+    N('k4', 25, CRYPT, 79.5); N('k5', 16.6, CRYPT, 79.5); N('k6', 33.4, CRYPT, 79.5); N('k7', 25, CRYPT, 86.4);
+    N('k8', 16.6, CRYPT, 70.4); N('k9', 33.4, CRYPT, 70.4); N('k10', 16.6, CRYPT, 87); N('k11', 33.4, CRYPT, 87); N('k12', 38, CRYPT, 86);
     const L = (a, b, door) => n.link(a, b, door);
     L('l0', 'l1'); L('l1', 'l2'); L('l2', 'l3'); L('l1', 'l4');
     L('l3', 'p0', d.c3_wicket); L('p0', 'p1'); L('p1', 'p2');
@@ -322,6 +417,9 @@ export class SedeLevel {
     L('h9', 's0', d.c3_secret); L('s0', 's1');
     L('h6', 'e0', d.c3_vault); L('e0', 'e1'); L('e1', 'e2'); L('e2', 'a0');
     L('a0', 'a1'); L('a1', 'a2'); L('a1', 'a3'); L('a1', 'a4'); L('a4', 'a5'); L('a2', 'a5'); L('a0', 'a6'); L('a0', 'a7'); L('a2', 'a8'); L('a3', 'a6');
+    L('a2', 'k0', d.c3_crypt); L('k0', 'k1'); L('k1', 'k2'); L('k2', 'k3', d.c3_arena);
+    L('k3', 'k4'); L('k3', 'k8'); L('k3', 'k9'); L('k4', 'k5'); L('k4', 'k6'); L('k4', 'k7'); L('k8', 'k5'); L('k9', 'k6');
+    L('k5', 'k10'); L('k6', 'k11'); L('k10', 'k7'); L('k11', 'k7'); L('k11', 'k12', d.c3_gallery);
   }
 
   _cullLights(dt) {
@@ -341,6 +439,13 @@ export class SedeLevel {
       L.light.intensity = L.base * f * (0.9 + Math.random() * 0.1);
     }
     for (const id in this.doors) this.doors[id].update(dt);
+    // grade da cripta: sobe devagar com o sarilho (a porta-colisor libera quando as barras passam da cabeça)
+    if (this.grateRaise > 0 && this.grateT < 1) {
+      this.grateT = Math.min(1, this.grateT + dt / 2.8);
+      if (this.crank) this.crank.rotation.x -= dt * 9;
+      if (this.grateT >= 1) { this.grateRaise = 0; this.onGrateUp?.(); }
+    }
+    if (this.grate) this.grate.position.y = 2.5 * (this.grateT * this.grateT * (3 - 2 * this.grateT));
     if (this.leverT > 0) { this.leverT = Math.max(0, this.leverT - dt); this.lever.rotation.x = -0.5 + Math.sin((1 - this.leverT) * Math.PI) * 1.0; }
     this._updateZone(dt);
     this._updateRain(dt, t);

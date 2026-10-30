@@ -448,7 +448,7 @@ try {
     // a porta da escada de incêndio não abre pelo patamar (atalho só por fora)
     T.tp(40.2, UP2, 23.15, PI / 2); out.feInside = T.interactAt('door_fireExit'); T.run(0.3); out.feLockedInside = D.fireExit.locked && !D.fireExit.open;
     // telhado → corredor da pediatria (autosave)
-    T.tp(27, ROOF, 27.4, PI); out.pedDoor = T.interactAt('door_pedRoof'); T.run(0.8);
+    T.tp(27, ROOF, 27.4, PI); out.pedDoor = T.interactAt('door_pedRoof'); T.run(0.8); out.pedOpen = D.pedRoof.open; out.nearE = g.enemies.filter((e) => e.alive && e.pos.distanceTo(g.player.pos) < 4).map((e) => e.id + ':' + e.state);
     g.cameraCtl.yaw = PI; T.hold('KeyW', 1.2); T.run(0.1);
     out.inPeds = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.entered = g.quest.has('enteredPeds'); out.cp = g.checkpoint;
     // berçário: facão cravado no berço
@@ -578,7 +578,7 @@ try {
     return out;
   });
   check('escada de incêndio trancada pelo patamar do 2º', peds.feInside === 'ok' && peds.feLockedInside, JSON.stringify(peds));
-  check('ala pediátrica: porta pelo telhado e autosave', peds.pedDoor === 'ok' && peds.entered && peds.cp === 'peds' && peds.inPeds[2] < 25.6, JSON.stringify(peds.inPeds));
+  check('ala pediátrica: porta pelo telhado e autosave', peds.pedDoor === 'ok' && peds.entered && peds.cp === 'peds' && peds.inPeds[2] < 25.6, JSON.stringify({ p: peds.inPeds, d: peds.pedDoor, o: peds.pedOpen, e: peds.nearE, c: peds.cp }));
   check('facão: coleta no berço, equipa e acorda o Rastejador', peds.facao === 'ok' && peds.wFacao === 'facao' && peds.crawlerDormant && peds.crawlerWoke && peds.ficha === 'ok', JSON.stringify(peds));
   check('facão mata o Enfermeiro da pediatria', !peds.fight.alive && peds.fight.firstDmg >= 15, JSON.stringify(peds.fight));
   check('desgaste: golpes gastam o facão, HUD mostra %, pedra (G) leva a 60%, kit a 100%', peds.wear.c0 < 1 && /%/.test(peds.wear.hud) && peds.wear.bar && peds.wear.worn < 0.5 && peds.wear.noKit && peds.wear.stone && peds.wear.stNo === 'repair' && Math.abs(peds.wear.cStone - 0.6) < 1e-6 && peds.wear.st === 'repair' && peds.wear.c1 === 1 && peds.wear.kit === 0 && peds.wear.repairs >= 2 && peds.wear.after === 'free', JSON.stringify(peds.wear));
@@ -1127,6 +1127,9 @@ try {
     out.rasAwake = !E('ras_arq').dormant;
     E('ras_arq').setDeadInstant(); g.player.hp = g.player.maxHp;
     T.tp(25, -4.5, 56.6, 0); out.crypt = T.interactAt('door_c3_crypt'); out.cryptLocked = g.level.doors.c3_crypt.locked;
+    // o sarilho da grade recusa sem o sinete da CHAMA
+    T.tp(23.4, -4.5, 56.4, 0); out.winch = T.interactAt('c3_winch'); out.winchNote = g.quest.has('note_c3_winch');
+    out.cryptLocked2 = g.level.doors.c3_crypt.locked && !g.quest.has('c3_cryptOpen') && g.level.grate.position.y < 0.01;
     out.obj = g.quest.current();
     out.lights = lights();
     T.key('KeyM'); out.mapState = g.state; out.map = g.menus.lastMap;
@@ -1140,7 +1143,7 @@ try {
   await page.screenshot({ path: SHOTS + '19-arquivos.png' });
   check('Cap. 3: escada desce aos arquivos e autosave', c3c.stairY < -3.5 && c3c.arch && c3c.archCp === 'c3_archive', JSON.stringify({ y: c3c.stairY, z: c3c.stairZ, a: c3c.arch, c: c3c.archCp }));
   check('Cap. 3: ficha de Inês e dossiê de Elias (rastejador desperta)', c3c.ficha === 'ok' && c3c.fichaFlag && c3c.rasDormant && c3c.dos === 'ok' && c3c.dossier && c3c.rasAwake, JSON.stringify(c3c));
-  check('Cap. 3: cripta do Sacristão trancada (fim da fatia)', c3c.crypt === 'ok' && c3c.cryptLocked && /cripta/.test(c3c.obj), c3c.obj);
+  check('Cap. 3: grade da cripta trancada; o sarilho recusa sem o sinete da CHAMA', c3c.crypt === 'ok' && c3c.cryptLocked && c3c.winch === 'ok' && c3c.winchNote && c3c.cryptLocked2 && /sinete/.test(c3c.obj), JSON.stringify({ w: c3c.winch, o: c3c.obj }));
   check('Cap. 3: mapa com térreo e arquivos', c3c.mapState === 'map' && c3c.tabs.length === 2 && c3c.tabs.includes('Arquivos') && c3c.map?.rooms >= 2, JSON.stringify({ t: c3c.tabs, m: c3c.map }));
   check('Cap. 3: orçamento de luzes nos arquivos (≤ 16)', c3c.lights <= 16, 'v=' + c3c.lights);
   check('Cap. 3: livro do arquivo salva com o dossiê', c3c.book === 'ok' && c3c.save.cp === 'c3_archive' && c3c.save.ch === 3 && c3c.save.dos && c3c.save.vault && c3c.save.dead >= 6, JSON.stringify(c3c.save));
@@ -1153,6 +1156,138 @@ try {
       dos: g.inventory.has('dossie_elias'), hidden: !g.level.pickupMeshes.c3_dossier.visible, dead: g.enemies.filter((e) => !e.alive).length, crypt: g.level.doors.c3_crypt.locked, obj: g.quest.current(), dials: g.level.dials.map((d) => d.value).join() };
   });
   check('Cap. 3: continuar restaura a Sede (portas, discos, dossiê, inimigos)', c3r.st === 'playing' && c3r.ch === 3 && Math.abs(c3r.pos[1] + 4.5) < 0.3 && Math.abs(c3r.pos[2] - 41.8) < 0.6 && c3r.vault && c3r.wicket && c3r.main && !c3r.bar && c3r.dos && c3r.hidden && c3r.dead >= 6 && c3r.crypt && c3r.dials === '0,1,2', JSON.stringify(c3r));
+  // --- Cap. 3: sinete do arquivista → sarilho → cripta → O Sacristão → altar → galeria → fim do capítulo
+  const c3d = await page.evaluate(() => {
+    const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const out = {};
+    const a = E('aco_arq');
+    out.signetVis = !!g.level.pickupMeshes.c3_signet?.visible;
+    T.tp(a.pos.x, -4.5, a.pos.z - 1.0, 0); T.run(0.05);
+    out.sig = T.interactAt('pick_c3_signet'); out.hasSig = g.inventory.has('sinete_chama') && g.quest.has('c3_hasSignet');
+    out.obj1 = g.quest.current();
+    T.tp(23.4, -4.5, 56.4, 0); out.winch = T.interactAt('c3_winch');
+    out.used = !g.inventory.has('sinete_chama'); out.lockedMid = g.level.doors.c3_crypt.locked;
+    T.run(1.4); out.gyMid = +g.level.grate.position.y.toFixed(2);
+    T.run(1.8); out.gy = +g.level.grate.position.y.toFixed(2); out.cryptOpen = !g.level.doors.c3_crypt.locked && g.level.doors.c3_crypt.open;
+    // desce a escada da cripta andando
+    T.tp(25, -4.5, 57.4, 0); T.hold('KeyW', 5.5); T.run(0.2);
+    out.stair = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    if (g.player.pos.y > -8) T.tp(25, -8.5, 66.6, 0);
+    out.inCrypt = g.quest.has('c3_inCrypt'); out.cp = S().checkpoint; out.saveOpen = S().flags.c3_cryptOpen;
+    out.bookId = !!g.interact.list.find((i) => i.id === 'c3_crypt_book');
+    out.lights = lights();
+    return out;
+  });
+  check('Cap. 3: sinete da CHAMA no corpo do arquivista', c3d.signetVis && c3d.sig === 'ok' && c3d.hasSig && /sarilho/.test(c3d.obj1), JSON.stringify({ v: c3d.signetVis, s: c3d.sig, o: c3d.obj1 }));
+  check('Cap. 3: sinete no selo → sarilho ergue a grade (animada) e libera a cripta', c3d.winch === 'ok' && c3d.used && c3d.lockedMid && c3d.gyMid > 0.2 && c3d.gyMid < 2.4 && c3d.gy >= 2.49 && c3d.cryptOpen, JSON.stringify(c3d));
+  check('Cap. 3: escada da cripta e autosave antes do chefe', c3d.stair[1] < -8 && c3d.inCrypt && c3d.cp === 'c3_preboss' && c3d.saveOpen && c3d.bookId, JSON.stringify({ s: c3d.stair, c: c3d.cp }));
+  check('Cap. 3: orçamento de luzes na cripta (≤ 16)', c3d.lights <= 16, 'v=' + c3d.lights);
+  await page.screenshot({ path: SHOTS + '20-cripta-escada.png' });
+  // recarrega no patamar: a grade continua erguida e o chefe dormente
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c3p = await page.evaluate(() => {
+    document.getElementById('btnContinue').click();
+    const g = __ocdc; T.run(0.3);
+    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), gy: g.level.grate.position.y, crypt: !g.level.doors.c3_crypt.locked && g.level.doors.c3_crypt.open,
+      winch: !!g.interact.list.find((i) => i.id === 'c3_winch')?.enabled?.(), sig: g.inventory.has('sinete_chama'), boss: g.boss?.id, dormant: g.boss?.state === 'dormant', gallery: g.level.doors.c3_gallery.locked, arena: g.level.doors.c3_arena.open };
+  });
+  check('Cap. 3: continuar no patamar restaura a grade erguida (save migrado pelas flags)', c3p.st === 'playing' && c3p.ch === 3 && c3p.pos[1] < -8 && c3p.gy >= 2.49 && c3p.crypt && !c3p.winch && !c3p.sig && c3p.boss === 'sacristao' && c3p.dormant && c3p.gallery && c3p.arena, JSON.stringify(c3p));
+  const c3e = await page.evaluate(() => {
+    const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    const out = {}, B = g.boss;
+    out.exitOff = !g.interact.list.find((i) => i.id === 'c3_exit').enabled();
+    out.ribbonOff = !g.interact.list.find((i) => i.id === 'pick_c3_ribbon').enabled();
+    T.tp(25, -8.5, 66.6, 0); T.hold('KeyW', 2.5); T.run(0.1);
+    out.active = g.script.bossActive; out.arena = { open: g.level.doors.c3_arena.open, locked: g.level.doors.c3_arena.locked };
+    out.hud = !g.hud.el.boss.classList.contains('hidden');
+    out.inTargets = g.targets().includes(B);
+    // save durante a luta não deixa a porta da arena trancada
+    out.serArena = g.serialize('c3_preboss').doors.c3_arena?.locked;
+    const log = { maxAlive: 0, stuns: 0, phases: [] };
+    const pillars = [[19, 75], [31, 75], [19, 84], [31, 84]];
+    // de perto, o chão acende e o turíbulo varre em área (não bloqueável)
+    for (let k = 0; k < 120 && !B.sweepN; k++) {
+      if (g.player.state === 'grabbed') for (let j = 0; j < 25; j++) T.press('Mouse0');
+      g.player.hp = g.player.maxHp;
+      if (B.state !== 'sweep') { const ax = Math.sin(B.yaw), az = Math.cos(B.yaw); T.tp(B.pos.x + ax * 2.0, -8.5, B.pos.z + az * 2.0, B.yaw + Math.PI); }
+      T.run(0.1);
+    }
+    T.run(1.4); log.sweepDmg = g.player.maxHp - g.player.hp;
+    let t = 0, wasStunned = false, cloudTest = false;
+    g.player.hp = g.player.maxHp;
+    while (B.alive && t < 300) {
+      g.player.hp = Math.max(g.player.hp, g.player.maxHp * 0.8);
+      if (g.player.state === 'grabbed') for (let k = 0; k < 25; k++) T.press('Mouse0');
+      log.maxAlive = Math.max(log.maxAlive, B.aliveSummons());
+      if (!log.phases.includes(B.phase)) log.phases.push(B.phase);
+      // noviços que chegam perto morrem a machadadas
+      for (const e of g.enemies) if (e.summoned && e.alive && e.pos.distanceTo(g.player.pos) < 2.6) e.takeHit({ dmg: 999, poise: 99, heavy: true, from: g.player.pos, point: e.pos.clone() });
+      // fica dentro de uma nuvem de incenso por 1,2 s
+      if (!cloudTest && B.clouds.length && B.clouds[0].t > 1.0) { cloudTest = true; const c = B.clouds[0]; const hp0 = g.player.hp; T.tp(c.x, -8.5, c.z, 0); T.run(1.2); t += 1.2; log.cloudDmg = hp0 - g.player.hp; continue; }
+      if (B.state === 'stunned') {
+        // golpe forte (botão direito) nas costas: o relicário
+        if (!wasStunned) log.stuns++; wasStunned = true;
+        const bx = Math.sin(B.yaw), bz = Math.cos(B.yaw);
+        T.tp(B.pos.x - bx * 1.0, -8.5, B.pos.z - bz * 1.0, Math.atan2(bx, bz));
+        T.press('Mouse2'); T.run(1.1); t += 1.1;
+      } else {
+        wasStunned = false;
+        if (B.state !== 'chargeWind' && B.state !== 'charge' && B.state !== 'incense') {
+          // atrás do pilar oposto ao chefe, com distância suficiente para a investida
+          let best = null, bd = -1;
+          for (const [x, z] of pillars) {
+            const dx = x - B.pos.x, dz = z - B.pos.z, d = Math.hypot(dx, dz) || 1;
+            const sx = x + dx / d * 1.25, sz = z + dz / d * 1.25;
+            if (sx < 14.6 || sx > 35.4 || sz < 69.6 || sz > 87) continue;
+            if (d > bd) { bd = d; best = [sx, sz]; }
+          }
+          if (best) T.tp(best[0], -8.5, best[1], Math.atan2(B.pos.x - best[0], B.pos.z - best[1]));
+        }
+        T.run(0.5); t += 0.5;
+      }
+    }
+    out.t = t; out.alive = B.alive; out.phase = B.phase; out.log = log;
+    out.c = { sweepN: B.sweepN, sweepHits: B.sweepHits, cloudN: B.cloudN, cloudHits: B.cloudHits, summonN: B.summonN, calls: B.summonCalls, weak: B.weakHits };
+    T.run(0.6);
+    out.dead = g.quest.has('c3_bossDead'); out.gallery = { open: g.level.doors.c3_gallery.open, locked: g.level.doors.c3_gallery.locked };
+    out.arenaAfter = g.level.doors.c3_arena.locked; out.cloudsLeft = B.clouds.length;
+    out.summonsAlive = g.enemies.filter((e) => e.summoned && e.alive).length;
+    out.hudOff = g.hud.el.boss.classList.contains('hidden');
+    out.obj = g.quest.current();
+    g.player.hp = g.player.maxHp;
+    // altar: ordem de transferência (gancho do Cap. 4) e a fita de Inês
+    T.tp(24.0, -8.5, 87.15, 0); out.doc = T.interactAt('doc_ordem_transferencia'); T.run(0.1);
+    out.docHave = g.inventory.documents.includes('ordem_transferencia') && g.quest.has('c3_readOrdem');
+    T.tp(26.2, -8.5, 87.15, 0); out.ribbon = T.interactAt('pick_c3_ribbon'); out.ribbonHave = g.inventory.has('fita_ines');
+    // pela galeria até a saída
+    T.tp(34.8, -8.5, 86, Math.PI / 2); T.hold('KeyW', 2.0); T.run(0.1);
+    out.galPos = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    out.exit = T.interactAt('c3_exit');
+    out.st = g.state; out.title = document.getElementById('endTitle').textContent; out.note = document.getElementById('endNote').textContent;
+    out.rn0 = document.getElementById('endRn0').textContent; out.stats = document.getElementById('stats').textContent;
+    out.next = { dis: document.getElementById('btnEndNext').disabled, txt: document.getElementById('btnEndNext').textContent };
+    const s = S(); out.save = { cp: s.checkpoint, ch: s.chapter, done: s.flags.c3_chapterDone, boss: s.flags.c3_bossDead, ribbon: (s.inventory?.items || s.items || {}).fita_ines };
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '21-fim-cap3.png' });
+  check('Cap. 3: O Sacristão desperta ao entrar na cripta e tranca a porta', c3e.exitOff && c3e.ribbonOff && c3e.active && !c3e.arena.open && c3e.arena.locked && c3e.inTargets && c3e.serArena === false, JSON.stringify({ a: c3e.active, d: c3e.arena, t: c3e.inTargets, s: c3e.serArena, h: c3e.hud }));
+  check('Cap. 3: combate do Sacristão (pilares, relicário, varredura em área, incenso, 3 fases)', !c3e.alive && c3e.phase === 3 && c3e.c.weak >= 5 && c3e.log.stuns >= 2 && c3e.c.sweepN >= 1 && c3e.c.sweepHits >= 1 && c3e.c.cloudN >= 1 && c3e.log.cloudDmg > 0 && c3e.c.cloudHits >= 1, JSON.stringify({ t: c3e.t, c: c3e.c, l: c3e.log }));
+  check('Cap. 3: invocação limitada (≤ 2 vivos, ≤ 4 no total)', c3e.c.summonN >= 2 && c3e.c.summonN <= 4 && c3e.log.maxAlive <= 2 && c3e.summonsAlive === 0, JSON.stringify({ n: c3e.c.summonN, calls: c3e.c.calls, max: c3e.log.maxAlive, alive: c3e.summonsAlive }));
+  check('Cap. 3: morte do Sacristão libera arena e galeria', c3e.dead && !c3e.gallery.locked && c3e.gallery.open && !c3e.arenaAfter && c3e.cloudsLeft === 0 && c3e.hudOff && /catacumbas/.test(c3e.obj), JSON.stringify({ g: c3e.gallery, a: c3e.arenaAfter, o: c3e.obj }));
+  check('Cap. 3: ordem de transferência e fita de Inês no altar', c3e.doc === 'ok' && c3e.docHave && c3e.ribbon === 'ok' && c3e.ribbonHave, JSON.stringify({ d: c3e.doc, r: c3e.ribbon }));
+  check('Cap. 3: galeria → tela de fim do Cap. 3 com gancho do Cap. 4', c3e.exit === 'ok' && c3e.st === 'end' && /Capítulo 3/.test(c3e.title) && /Capítulo 4/.test(c3e.note) && /Vigia/.test(c3e.rn0) && /Fita de Inês: com Elias/.test(c3e.stats) && c3e.next.dis && /Capítulo 4/.test(c3e.next.txt), JSON.stringify({ e: c3e.exit, g: c3e.galPos, t: c3e.title, n: c3e.next }));
+  check('Cap. 3: save final do capítulo (c3_end)', c3e.save.cp === 'c3_end' && c3e.save.ch === 3 && c3e.save.done && c3e.save.boss, JSON.stringify(c3e.save));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c3z = await page.evaluate(() => {
+    document.getElementById('btnContinue').click();
+    const g = __ocdc; T.run(0.3);
+    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), bossDead: !g.boss.alive, gallery: !g.level.doors.c3_gallery.locked, grate: g.level.grate.position.y,
+      ribbon: g.inventory.has('fita_ines'), ribbonHidden: !g.level.pickupMeshes.c3_ribbon.visible, exit: g.interact.list.find((i) => i.id === 'c3_exit').enabled() };
+  });
+  check('Cap. 3: continuar após o fim restaura cripta vencida e saída', c3z.st === 'playing' && c3z.ch === 3 && c3z.pos[0] > 33 && c3z.bossDead && c3z.gallery && c3z.grate >= 2.49 && c3z.ribbon && c3z.ribbonHidden && c3z.exit, JSON.stringify(c3z));
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));
