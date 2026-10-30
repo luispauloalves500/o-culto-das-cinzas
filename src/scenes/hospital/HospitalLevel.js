@@ -5,6 +5,7 @@ import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { buildAnnex, updateAnnex, ANNEX_CHECKPOINTS, ANNEX_ZONES } from './HospitalAnnex.js';
 import { buildWing, updateWing, WING_CHECKPOINTS, WING_ZONES } from './HospitalWing.js';
+import { buildPeds, updatePeds, PEDS_CHECKPOINTS, PEDS_ZONES } from './HospitalPeds.js';
 
 const LIGHT_BUDGET = 16;
 
@@ -23,10 +24,12 @@ export const CHECKPOINTS = {
   morgue: { x: 20, y: LO, z: 8.2, yaw: Math.PI },
   ...ANNEX_CHECKPOINTS,
   ...WING_CHECKPOINTS,
+  ...PEDS_CHECKPOINTS,
 };
 
 // zonas de atmosfera (névoa/cor) — o necrotério é frio e esverdeado
 export const ZONES = [
+  ...PEDS_ZONES,
   ...WING_ZONES,
   ...ANNEX_ZONES,
   { id: 'morgue', minX: 16, maxX: 26, minZ: -3, maxZ: 10, minY: LO - 1, maxY: CEIL_LO, fog: 0x0a1a14, density: 0.11 },
@@ -57,6 +60,7 @@ export class HospitalLevel {
     this._nav();
     buildAnnex(this);
     buildWing(this);
+    buildPeds(this);
     return this;
   }
 
@@ -393,6 +397,7 @@ export class HospitalLevel {
     }
     updateAnnex(this, dt, t);
     updateWing(this, dt, t);
+    updatePeds(this, dt, t);
     this._updateZone(dt);
   }
 

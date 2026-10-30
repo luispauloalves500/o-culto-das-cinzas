@@ -48,7 +48,8 @@ function mainStair(L) {
   b.stairsZ(38.1, 40.9, 22.4, 15.0, UP2, UP, 18, 'concrete');
   b.floor(38, 22.4, 41, 23.9, UP2, 'wood', 'mainStairLanding');
   b.ceiling(38, 14, 41, 23.9, TOP2);
-  b.wallZ(41, 14, 23.9, UP, TOP2, [], 'wallLower');
+  b.wallZ(41, 14, 23.9, UP, UP2, [], 'wallLower');
+  b.wallZ(41, 14, 23.9, UP2, TOP2, [23.15], 'wallLower');     // vão da porta corta-fogo (escada de incêndio)
   b.wallX(23.9, 38, 41, UP, TOP2, [], 'wallLower');
   b.wallX(14, 38, 41, H_UP, TOP2, [], 'wallLower');
   b.wallZ(38, 22, 24, H_UP, UP2, [], 'wallLower');
@@ -179,8 +180,7 @@ function roof(L) {
   const b = L.b, M = L.M;
   b.floor(16.4, 26, 36, 38.4, ROOF, 'concrete', 'roof');
   b.box(16.4, TOP2 + 0.25, 26, 36, ROOF, 38.4, 'concrete', NC);
-  // platibanda
-  b.box(16.4, ROOF, 25.8, 36.2, ROOF + 1.1, 26.1, 'concrete');
+  // platibanda (o lado norte agora é a fachada da pediatria — HospitalPeds.js)
   b.box(35.9, ROOF, 26, 36.2, ROOF + 1.1, 38.6, 'concrete');
   b.box(16.4, ROOF, 38.3, 36.2, ROOF + 1.1, 38.6, 'concrete');
   // caixas d'água e respiros

@@ -25,10 +25,11 @@ npm run smoke      # teste de fumaça E2E no Chromium headless (precisa de Chrom
 | Mover / correr | WASD / Shift | analógico esq. / L3 |
 | Câmera | mouse (clique na tela para capturar) | analógico dir. |
 | Ataque leve / forte | botão esquerdo / botão direito | RB / RT |
+| Revólver: atirar / coronhada | botão direito / botão esquerdo | RT / RB |
 | Bloquear / esquivar | Q / Espaço | LT / B |
 | Interagir | E | A |
 | Curar (bandagem) | H | X |
-| Trocar arma (machado ↔ martelo) | R | LB |
+| Trocar arma (machado → martelo → facão → revólver) | R | LB |
 | Inventário e documentos | Tab | Y |
 | Mapa (←/→ ou 1–4 troca de andar) | M | Back/Select |
 | Pausa | Esc / P | Start |
@@ -60,16 +61,21 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
 - **O forno — incinerador hospitalar**: sala de tijolos com a boca do forno acesa (luz tremulante, brasas). **Zona de calor real**: com o fogo aceso, dá dano periódico (inbloqueável, com empurrão) ao jogador **e aos inimigos** — dá para atrair um *Interno* para lá. A **chave da escada de serviço** está à vista dentro do forno: só dá para pegá-la depois de fechar o **registro de gás** na lavanderia (volante gira, fogo apaga, barulho alto acorda o enfermeiro). Estado do fogo persiste no save. Documento *Diário do forneiro*. *(smoke: dano do calor, registro, chave)*
 - **Andares superiores — escada de serviço → 2º andar (administração)**: porta trancada no corredor do térreo aberta com a chave do forno (consome a chave, persiste); escada real (rampa com colisão) até o **corredor da administração**, **Secretaria** (bandagem, *Lista de transferência*, *Interno* em patrulha) e **Diretoria** (**planta do hospital**, *Memorando da diretoria*, livro de registro); *Enfermeiro* patrulhando o corredor; autosaves na chegada e na diretoria. *(smoke)*
 - **Capela (térreo, com coro no 2º andar)**: bancos, altar, púlpito com hinário, vitrais com santos (só a luz da lua passa), quatro suportes de velas com placas dos santos e órgão no coro. Entra-se pelo **coro** (escada do 2º andar) e o ferrolho da porta para o corredor do térreo abre por dentro (**atalho**). **Puzzle das velas**: acender na ordem do *Hino de São Dimas* (Brás → Luzia → Roque → Dimas); errar apaga todas, faz barulho e acorda o *Interno* escondido entre os bancos. Acertar abre o relicário: **Medalha de São Dimas** (+25 de vida máxima, cura total, barra de vida dourada). Tudo persiste no save. *(smoke: ordem errada e certa, relíquia, atalho)*
-- **Mapa (tecla M)**: sistema real por andar (Subsolo / Térreo / 2º andar / Telhado). Mostra só os **cômodos visitados** (preenchidos) — com a **planta do hospital** os demais aparecem tracejados, mas segredos (câmara fria) nunca, até você entrar. Marca portas trancadas **que você já tentou** (×) com a mesma anotação das *Anotações* do inventário, livros de registro, escadas/elevador, o forno (aceso/apagado) e sua posição/direção. Painel lateral com o cômodo atual e as anotações. *(unit + smoke + screenshot)*
+- **Mapa (tecla M)**: sistema real por andar (Subsolo / Térreo / 2º andar / 3º andar · Telhado). Mostra só os **cômodos visitados** (preenchidos) — com a **planta do hospital** os demais aparecem tracejados, mas segredos (câmara fria) nunca, até você entrar. Marca portas trancadas **que você já tentou** (×) com a mesma anotação das *Anotações* do inventário, livros de registro, escadas/elevador, o forno (aceso/apagado) e sua posição/direção. Painel lateral com o cômodo atual e as anotações. *(unit + smoke + screenshot)*
 - **Ala cirúrgica superior (2º andar)**: porta no fim do corredor da administração → corredor da ala (autosave), **Esterilização** (autoclaves, *Registro cirúrgico*, *Rastejador* adormecido sob as macas), **Centro cirúrgico 2** (mesa, foco, *Interno* adormecido que desperta pela proximidade) e **Recuperação** (leitos, livro de registro, bandagem). **Ligação real ao laço**: a **escada principal** desce da ala até o corredor do térreo; o ferrolho fica no pé da escada e, puxado, vira atalho permanente (porta, navegação e save). *(smoke: atalho, autosave, livro e estado salvo)*
 - **Telhado (jogável)**: escada dos fundos da ala sobe ao terraço (autosave), com caixas-d'água, respiros, platibanda com colisão, luar, a torre de transmissão piscando no horizonte e o **barracão do zelador** (*Bilhete do zelador*). *(smoke)*
 - **Nova arma — Martelo industrial**: pego no barracão do telhado; entra no inventário de armas (lista real, persistida e migrada de saves v1 que só tinham o machado). Mais lento e pesado: golpes leves com mais poise, golpe forte esmagador. **R / LB troca de arma** (modelo, dados de ataque, HUD e inventário mudam juntos). *(unit + smoke: coleta, troca, dano)*
 - **Objeto ambiental — cilindros de oxigênio**: qualquer golpe explode o cilindro (raio de 3,2 m, dano e stagger em inimigos, 35 de dano no jogador se estiver perto, reação em cadeia com outros cilindros, clarão, tremor e ruído). Explosões persistem no save. *(smoke: explosão fere um Rastejador próximo)*
 - **Segredo 2 — o Expurgo**: uma **parede rachada** na ala resiste ao machado (só o **golpe forte do martelo** a derruba). Atrás: **Pedra de afiar** (machado +30% de dano permanente, indicado como "afiado" no HUD e no inventário), 2 bandagens e o *Último bilhete do zelador*. Parede, afiação e itens persistem. *(smoke: machado imune, martelo derruba, recompensa)*
-- **Orçamento de luzes**: só as 16 lâmpadas mais próximas do jogador ficam ativas (contagem constante, sem recompilar shaders) — o hospital cresceu para 52 luzes. *(smoke)*
+- **3º andar — Ala pediátrica (bloco jogável grande)**: porta no telhado → corredor da pediatria (autosave), **Brinquedoteca** (brinquedos, desenhos nas paredes, teatrinho de fantoches, caixinha de música, *Desenho de criança*), **Berçário** (berços, *Ficha do berçário*, *Rastejador* adormecido), **Posto de enfermagem** (chave da segurança, munição, bandagem, livro de registro) e **Segurança** (trancada; mesa do vigia, *Ordem de serviço — vigilância*, *Interno* adormecido). Enfermeiro patrulha o corredor. **Ligação ao laço**: porta externa → **escada de incêndio** (metálica, com corrimão e colisão) que desce até o 2º andar; a porta para o patamar da escada principal só destranca **por fora** e vira atalho permanente (autosave na escada). Navegação dos inimigos cobre todo o bloco. *(smoke: autosaves, portas, escada, atalho)*
+- **Nova arma — Facão**: cravado num berço; rápido e barato em fôlego (combo leve-leve), golpe forte curto; aceita a pedra de afiar. Pegá-lo acorda o Rastejador do berçário. *(unit + smoke: coleta, equipa, mata o Enfermeiro)*
+- **Nova arma — Revólver .38 (munição escassa)**: na mesa do vigia (com 3 balas). **Botão direito atira** (mira automática no alvo à frente dentro de um cone, alcance 20 m, 70 de dano, clarão e tiro altíssimo que atrai inimigos); **botão esquerdo dá coronhada**. Sem balas: clique seco. Munição contada no HUD e no inventário. Há **12 balas no capítulo** (3 no revólver, 2 no posto, 3 na segurança, 4 no Quarto 7). *(unit + smoke: tiro fere e gasta 1 bala, clique seco, R alterna as 4 armas)*
+- **Segredo 3 — o Quarto 7**: o *Desenho de criança* mostra o teatrinho; depois de lê-lo dá para **empurrar o teatrinho**, que revela uma porta acorrentada. O **cadeado não cede a golpes — só a uma bala**. Lá dentro: **Amuleto do menino** (fôlego máximo +25, permanente), 4 balas e o *Caderno do Quarto 7*. Não aparece no mapa até você entrar. Tudo persiste no save. *(smoke: facão não quebra, tiro quebra, recompensa, save/continuar)*
+- **Objeto ambiental — caixinha de música**: dar corda toca por 12 s e faz barulho repetido que **atrai os inimigos do andar** até a brinquedoteca (passar despercebido ou emboscar). Inimigos não abrem portas: deixe a da brinquedoteca aberta. *(smoke: Interno investiga e caminha até ela)*
+- **Orçamento de luzes**: só as 16 lâmpadas mais próximas do jogador ficam ativas (contagem constante, sem recompilar shaders) — o hospital cresceu para 62 luzes. *(smoke)*
 - **Chefe — O Cirurgião**: fases, golpes de bisturi em combo, agarrão (escapa martelando botões), investida que o atordoa ao bater em mesas/pilares; o avental absorve dano e o **frasco nas costas** é o ponto fraco (golpe forte de cima para baixo). Porta da sala tranca durante a luta; barra de vida própria. *(smoke: luta completa até a morte do chefe)*
 - **Portão de serviço** liberado após o chefe → pátio → tela de fim de capítulo com estatísticas e gancho para o Capítulo 2 (placeholder).
-- **Save versionado** (`localStorage`, chave `ocdc_save`, versão 1, com migração de v0): checkpoints automáticos (início, sala de máquinas, chegada ao subsolo, necrotério, lavanderia, administração, capela, ala cirúrgica, telhado, recuperação, antes do chefe, pátio) e livros de registro manuais. Morte → tela de morte → recarregar último registro. *(unit + smoke)*
+- **Save versionado** (`localStorage`, chave `ocdc_save`, versão 1, com migração de v0): checkpoints automáticos (início, sala de máquinas, chegada ao subsolo, necrotério, lavanderia, administração, capela, ala cirúrgica, telhado, recuperação, pediatria, escada de incêndio, antes do chefe, pátio) e livros de registro manuais. Morte → tela de morte → recarregar último registro. *(unit + smoke)*
 - **Áudio** 100% sintetizado com Web Audio (passos, golpes, gemidos, portas, faíscas, elevador, ambiente e intensidade dinâmica de trilha), iniciado só após gesto do usuário.
 - **HUD**: vida, fôlego, arma, objetivo atual, aviso de interação, dicas, vinheta de dano, barra do chefe.
 - **Visual PS2**: render em baixa resolução com pixels nítidos, texturas procedurais em canvas, materiais Lambert, névoa, luzes piscando, energia de emergência.
@@ -82,9 +88,10 @@ Não foram usados GLB/texturas de terceiros: **todo o visual é procedural** (ge
 ## FALTA (para o Capítulo 1 completo, conforme o GDD)
 
 - Modelos/animações artesanais (GLB rigados) e texturas pintadas — hoje tudo é procedural/placeholder estilizado.
-- Áreas do hospital ainda ausentes: 3º andar (o telhado é só o terraço + barracão); ala pediátrica/maternidade e arquivo morto do GDD; mais segredos (hoje há dois: câmara fria e expurgo).
+- Áreas do hospital ainda ausentes: **maternidade** e **arquivo morto** do GDD (o 3º andar hoje tem só a ala pediátrica + terraço); mais segredos (hoje há três: câmara fria, expurgo e Quarto 7).
 - A medalha e a planta não têm uso narrativo além do bônus/mapa; o documento da diretoria aponta para o Cap. 2 sem conteúdo jogável dele.
-- Armas além de machado e martelo (facão, lança improvisada, arma de fogo antiga com munição escassa); durabilidade de armas; mais objetos ambientais além dos cilindros de oxigênio e do forno.
+- Lança improvisada; **durabilidade/desgaste de armas**; recarga do revólver como ação própria (hoje as balas saem direto do inventário); mira manual (hoje é automática no cone à frente); mais objetos ambientais além dos cilindros, do forno e da caixinha de música.
+- O amuleto do menino e o Quarto 7 ainda não se ligam a uma trama maior.
 - Mapa: sem zoom, e sem marcação manual pelo jogador.
 - Dano localizado/desmembramento estilizado, finalizações, opção de reduzir sangue.
 - Mais tipos de inimigo; cutscenes; remapeamento de teclas; ajuste fino de dificuldade.
@@ -100,12 +107,13 @@ src/
   world/     CollisionWorld, LevelBuilder, Doors, Interactables, Navigation (A*), Textures, Materials
   gameplay/  PlayerController, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem
   ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss
-  scenes/hospital/  HospitalLevel (geometria, luzes, elevador, grafo), HospitalScript (puzzles, gatilhos, chefe)
+  scenes/hospital/  HospitalLevel (geometria, luzes, elevador, grafo), HospitalScript (puzzles, gatilhos, chefe),
+                    HospitalWing/WingScript (2º andar + telhado), HospitalPeds/PedsScript (3º andar · pediatria)
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
   unit/run.mjs     testes de colisão, navegação, save, hitbox e dados
-  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (27 verificações)
+  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (83 verificações)
 ```
 
 ## Licença
