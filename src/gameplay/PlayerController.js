@@ -27,6 +27,13 @@ const ATTACK_ANIM = {
     loX: [[0, -0.2], [0.4, -0.9], [0.58, -0.05], [1, -0.2]],
     twoHands: true,
   },
+  // revólver: braço estendido à frente, coice no disparo
+  shoot: {
+    torsoY: [[0, 0.15], [0.16, 0.2], [1, 0.1]],
+    upX: [[0, -0.9], [0.12, -1.5], [0.2, -1.85], [0.4, -1.5], [1, -1.2]],
+    upZ: [[0, 0], [1, 0]],
+    loX: [[0, -0.4], [0.12, -0.05], [0.2, -0.3], [0.4, -0.05], [1, -0.3]],
+  },
 };
 
 export class PlayerController {
@@ -43,10 +50,13 @@ export class PlayerController {
     game.scene.add(this.rig.root);
 
     // um modelo por arma, presos à mão; só o da arma equipada fica visível
-    this.models = { machado: this._buildAxe(M), martelo: this._buildHammer(M) };
+    this.models = { machado: this._buildAxe(M), martelo: this._buildHammer(M), facao: this._buildMachete(M), revolver: this._buildRevolver(M) };
     for (const k in this.models) { this.rig.armR.end.add(this.models[k].group); this.models[k].group.visible = false; }
     this.axe = this.models.machado;
     this.sharpened = false;
+    // clarão do cano (luz única reaproveitada; intensidade 0 quando apagada)
+    this.muzzle = new THREE.PointLight(0xffc070, 0, 7, 1.8);
+    game.scene.add(this.muzzle);
 
     this.pos = new THREE.Vector3();
     this.vel = new THREE.Vector3();
@@ -96,6 +106,40 @@ export class PlayerController {
     const tip = new THREE.Object3D(); tip.position.set(0, -0.66, 0.12); group.add(tip);
     const mid = new THREE.Object3D(); mid.position.set(0, -0.36, 0.02); group.add(mid);
     return { group, tip, mid };
+  }
+
+  _buildMachete(M) {
+    const group = new THREE.Group();
+    group.rotation.x = -0.25;
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.16, 0.04), M.leatherDark);
+    grip.position.y = -0.04; group.add(grip);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.09), M.axeMetal);
+    guard.position.y = -0.13; group.add(guard);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.56, 0.07), M.axeMetal);
+    blade.position.set(0, -0.42, 0.015); blade.castShadow = true; group.add(blade);
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.52, 0.015), M.axeEdge);
+    edge.position.set(0, -0.42, 0.055); group.add(edge);
+    const tip = new THREE.Object3D(); tip.position.set(0, -0.66, 0.03); group.add(tip);
+    const mid = new THREE.Object3D(); mid.position.set(0, -0.36, 0.03); group.add(mid);
+    return { group, tip, mid };
+  }
+
+  _buildRevolver(M) {
+    const group = new THREE.Group();
+    group.rotation.x = -0.25;
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.05), M.woodDark);
+    grip.position.set(0, -0.05, -0.01); grip.rotation.x = 0.25; group.add(grip);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.05, 0.1), M.steelDark || M.axeMetal);
+    frame.position.set(0, -0.12, 0.04); group.add(frame);
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.05, 8), M.axeMetal);
+    cyl.rotation.x = Math.PI / 2; cyl.position.set(0, -0.12, 0.05); group.add(cyl);
+    const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.16), M.steelDark || M.axeMetal);
+    barrel.position.set(0, -0.135, 0.17); barrel.castShadow = true; group.add(barrel);
+    // a coronhada acerta com o cabo/armação
+    const tip = new THREE.Object3D(); tip.position.set(0, -0.13, 0.2); group.add(tip);
+    const mid = new THREE.Object3D(); mid.position.set(0, -0.1, 0.02); group.add(mid);
+    const muzzle = new THREE.Object3D(); muzzle.position.set(0, -0.135, 0.26); group.add(muzzle);
+    return { group, tip, mid, muzzle };
   }
 
   setWeapon(id) {
@@ -204,6 +248,8 @@ export class PlayerController {
   _startAttack(kind) {
     const w = this.weapon;
     const a = w.attacks[kind];
+    if (!a) return false;
+    if (a.shoot) return this._startShot(a);
     if (this.st < 4) { this.game.hud.toast('Sem fôlego'); return false; }
     this.useStamina(a.stamina);
     this.attack = { kind, def: a, t: 0, anim: ATTACK_ANIM[a.anim], hit: false, recoiled: false };
@@ -219,6 +265,77 @@ export class PlayerController {
     this.game.perception.noise(this.pos, kind === 'heavy' ? 9 : 7, 'attack');
     this._sampleWeapon();
     return true;
+  }
+
+  /** alvo da mira automática: o mais alinhado dentro do cone, com linha de tiro livre */
+  aimTarget(dir, shot) {
+    const g = this.game, eye = { x: this.pos.x, y: this.pos.y + 1.4, z: this.pos.z };
+    let best = null, bs = Infinity;
+    for (const e of g.targets()) {
+      if (!e.alive || !e.hurtVolumes) continue;
+      for (const v of e.hurtVolumes()) {
+        const c = { x: v.x, y: v.type === 'capsule' ? (v.y0 + v.y1) / 2 : v.y, z: v.z };
+        if (v.type === 'capsule') c.y = Math.min(v.y1, Math.max(v.y0, eye.y - 0.1));
+        const dx = c.x - eye.x, dz = c.z - eye.z, dy = c.y - eye.y, d = Math.hypot(dx, dz);
+        if (d > shot.range || d < 0.2 || Math.abs(dy) > 2.6) continue;
+        const ang = Math.acos(Math.max(-1, Math.min(1, (dx * dir.x + dz * dir.z) / d)));
+        const tol = shot.cone + Math.atan2(v.r || 0.3, d);
+        if (ang > tol) continue;
+        if (!g.col.segmentClear(eye, c, (b) => (b.tag === 'wall' || b.tag === 'door' || b.tag === 'obstacle') && b.blocksSight !== false)) continue;
+        const sc = ang * 6 + d * 0.04 - (v.part === 'weak' ? 0.2 : 0);
+        if (sc < bs) { bs = sc; best = { target: e, volume: v, point: c, dist: d }; }
+      }
+    }
+    return best;
+  }
+
+  _startShot(a) {
+    const g = this.game, w = this.weapon;
+    if (!g.inventory.has(w.ammo)) {
+      g.audio.play('dryfire', this.pos);
+      g.hud.toast('Clique seco. Sem munição .38.', 1.6);
+      this.dryFires = (this.dryFires || 0) + 1;
+      return false;
+    }
+    g.inventory.remove(w.ammo);
+    this.useStamina(a.stamina);
+    const cf = g.cameraCtl.forward();
+    const mv = this._wishDir();
+    const dir = mv.len > 0.2 ? { x: mv.x / mv.len, z: mv.z / mv.len } : cf;
+    const aim = this.aimTarget(dir, w.shot) || (dir !== cf ? this.aimTarget(cf, w.shot) : null);
+    this.yaw = aim ? Math.atan2(aim.point.x - this.pos.x, aim.point.z - this.pos.z) : Math.atan2(dir.x, dir.z);
+    this.attack = { kind: 'heavy', def: a, t: 0, anim: ATTACK_ANIM[a.anim], hit: false, recoiled: false, shot: true, fired: false, aim };
+    this.hitSet.clear();
+    this._setState('attack');
+    return true;
+  }
+
+  _fire() {
+    const g = this.game, w = this.weapon, S = w.shot, a = this.attack;
+    a.fired = true;
+    this.stats.shots = (this.stats.shots || 0) + 1;
+    const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
+    const m = this.axe.muzzle ? new THREE.Vector3() : null;
+    if (m) this.axe.muzzle.getWorldPosition(m);
+    const from = m || new THREE.Vector3(this.pos.x + fx * 0.6, this.pos.y + 1.4, this.pos.z + fz * 0.6);
+    this.muzzle.position.copy(from); this.muzzle.intensity = 6;
+    g.audio.play('shot', this.pos);
+    g.cameraCtl.addShake(0.3);
+    g.perception.noise(this.pos, S.noise, 'gunshot');
+    g.combat.sparks(from, 6);
+    // o alvo pode ter se movido: reconfirma a mira na direção travada
+    const aim = this.aimTarget({ x: fx, z: fz }, { ...S, cone: 0.12 });
+    if (aim) {
+      a.hit = true; this.lastShot = { hit: aim.target.id || 'alvo', at: aim.point };
+      const res = aim.target.takeHit({ dmg: S.dmg, weapon: w.id, poise: S.poise, heavy: true, bullet: true, from: this.pos, point: aim.point, volume: aim.volume });
+      if (res !== 'immune') this.hitstop = 0.05;
+      return;
+    }
+    // errou: a bala acerta a parede mais próxima
+    const eye = new THREE.Vector3(this.pos.x, this.pos.y + 1.4, this.pos.z), d = new THREE.Vector3(fx, 0, fz);
+    const t = g.col.raycast(eye, d, S.range, (b) => b.tag !== 'prop-low');
+    this.lastShot = { hit: null };
+    if (t < S.range) { const at = eye.addScaledVector(d, t - 0.05); g.combat.sparks(at, 10); g.audio.play('clang', at, { pitch: 1.6 }); }
   }
 
   _sampleWeapon() {
@@ -242,6 +359,7 @@ export class PlayerController {
     this.stateT += adt;
     this.iframes = Math.max(0, this.iframes - dt);
     this.animT += dt;
+    if (this.muzzle.intensity > 0) this.muzzle.intensity = Math.max(0, this.muzzle.intensity - dt * 60);
 
     // fôlego
     this.stDelay -= dt;
@@ -411,7 +529,9 @@ export class PlayerController {
     this.rig.root.updateMatrixWorld(true);
     const tip = new THREE.Vector3(), mid = new THREE.Vector3();
     this.axe.tip.getWorldPosition(tip); this.axe.mid.getWorldPosition(mid);
-    if (t >= d.active[0] && t <= d.active[1] && !a.recoiled) {
+    if (a.shot) {
+      if (!a.fired && t >= d.active[0]) this._fire();
+    } else if (t >= d.active[0] && t <= d.active[1] && !a.recoiled) {
       const g = this.game;
       // primeiro o corpo atingido; só ricocheteia na parede se a lâmina não acertou ninguém antes
       const hits = g.combat.sweep(this.prevTip, tip, this.weapon.tipRadius, g.targets(), this.hitSet);

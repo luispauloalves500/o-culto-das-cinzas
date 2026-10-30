@@ -103,6 +103,9 @@ export class AudioManager {
       case 'thud': if ((d = o(30, 1.0))) { this._tone(d, t, 0.5, { f0: 80, f1: 30, vol: 1 }); this._noise(d, t, 0.3, { type: 'lowpass', f0: 600, f1: 80, vol: 0.8 }); } break;
       case 'whisper': if ((d = o(40, 0.4))) this._noise(d, t, 1.5, { f0: 3000, f1: 2000, q: 6, vol: 0.4, attack: 0.5 }); break;
       case 'save': if ((d = o(10, 0.5))) [392, 494, 587].forEach((f, i) => this._tone(d, t + i * 0.15, 0.9, { type: 'sine', f0: f, vol: 0.2 })); break;
+      case 'shot': if ((d = o(60, 1.0))) { this._noise(d, t, 0.35, { type: 'lowpass', f0: 4000, f1: 300, vol: 1.0 }); this._tone(d, t, 0.3, { f0: 120, f1: 40, vol: 0.9 }); this._noise(d, t + 0.04, 0.8, { type: 'bandpass', f0: 700, f1: 250, q: 1, vol: 0.25, attack: 0.05 }); } break;
+      case 'dryfire': if ((d = o(8, 0.6))) { this._noise(d, t, 0.03, { type: 'highpass', f0: 3000, vol: 0.8 }); this._tone(d, t, 0.05, { type: 'square', f0: 1400, vol: 0.08 }); } break;
+      case 'chime': if ((d = o(24, 0.5))) { const f = opts.f || 880; this._tone(d, t, 0.9, { type: 'sine', f0: f, vol: 0.22 }); this._tone(d, t, 0.6, { type: 'triangle', f0: f * 2.01, vol: 0.06 }); } break;
       default: break;
     }
   }
