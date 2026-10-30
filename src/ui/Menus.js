@@ -24,7 +24,7 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
-    $('btnEndNext').onclick = () => { g.audio.init(); g.startChapter2(); };
+    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
     for (const el of document.querySelectorAll('.map-tab')) el.onclick = () => this.mapFloor(+el.dataset.floor);
@@ -81,15 +81,16 @@ export class Menus {
   drawMap() {
     const g = this.game, mv = this.mapView;
     this.lastMap = mv.draw(g);
-    const ch2 = mapChapter() === 2;
+    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3;
     for (const el of document.querySelectorAll('.map-tab')) {
-      el.classList.toggle('active', FLOORS[+el.dataset.floor].id === mv.floor);
-      el.classList.toggle('hidden', ch2 && FLOORS[+el.dataset.floor].id !== 'up');
-      el.textContent = ch2 ? 'Bairro Operário' : FLOORS[+el.dataset.floor].name;
+      const fid = FLOORS[+el.dataset.floor].id;
+      el.classList.toggle('active', fid === mv.floor);
+      el.classList.toggle('hidden', (ch2 && fid !== 'up') || (ch3 && fid !== 'up' && fid !== 'lo'));
+      el.textContent = ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
     }
     const r = roomAt(g.player.pos);
     $('mapWhere').textContent = 'Você está em: ' + (r ? r.name : 'lugar nenhum que conste na planta');
-    $('mapPlan').textContent = ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
+    $('mapPlan').textContent = ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
     const notes = collectNotes(g);
     $('mapNotes').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
   }
@@ -102,13 +103,13 @@ export class Menus {
     const next = $('btnEndNext');
     if (ch === 2) {
       $('endTitle').textContent = 'Fim do Capítulo 2 — Fumaça';
-      $('endText').textContent = 'Brás tomba sobre a grelha e a Garganta engasga. Pela porta de serviço, Elias sai para a Rua da Fundição: os trilhos da Linha 4 seguem para o centro, onde fica a Sede da Confraria.';
-      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 3 — A Confraria: em breve.';
+      $('endText').textContent = 'Brás tomba sobre a grelha e a Garganta engasga. Pela porta de serviço, Elias sai para a Rua da Fundição. O bonde da Linha 4 espera com o motor ligado; o motorneiro olha a fita vermelha, acena e fecha a porta. Os trilhos sobem para o centro, até a Sede da Confraria.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 3 — A Confraria: o Largo do Véu, a Sede e os arquivos subterrâneos.';
       $('endRn0').classList.remove('hidden');
       $('endRn0').innerHTML = stats.pass
         ? 'No bolso, o passe de latão do motorneiro, amarrado na mesma fita vermelha do dente de leite. Inês foi por ali. Eles sabem o número de Elias — e agora ele sabe o caminho.'
         : '<span class="small">Algo brilhou na grelha da fornalha quando Brás caiu. Inês deixou um sinal para quem viesse atrás.</span>';
-      if (next) { next.disabled = true; next.textContent = 'Capítulo 3 — A Confraria (em breve)'; }
+      if (next) { next.disabled = false; next.textContent = 'Seguir para o Capítulo 3 — A Confraria'; }
       this.show('chapterEnd');
       return;
     }

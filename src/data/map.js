@@ -85,6 +85,18 @@ export const ROOMS_C2 = [
 ];
 for (const r of ROOMS_C2) ROOMS.push(r);
 
+// Capítulo 3 — Sede da Confraria: largo, portaria, salão e secretaria no térreo (y 0); arquivos no subsolo (y −4.5)
+export const ROOMS_C3 = [
+  { id: 'c3_largo', floor: 'up', ch: 3, name: 'Largo do Véu', rect: [0, 0, 24, 12] },
+  { id: 'c3_portaria', floor: 'up', ch: 3, name: 'Portaria', rect: [24, 4, 30, 12] },
+  { id: 'c3_salao', floor: 'up', ch: 3, name: 'Salão nobre', rect: [6, 12, 30, 30] },
+  { id: 'c3_secretaria', floor: 'up', ch: 3, name: 'Secretaria', rect: [6, 30, 14, 38] },
+  { id: 'c3_escada', floor: 'up', ch: 3, name: 'Escada do arquivo', rect: [22.6, 30, 25.4, 40] },
+  { id: 'c3_escada_b', floor: 'lo', ch: 3, name: 'Escada do arquivo', rect: [22.6, 33, 25.4, 40] },
+  { id: 'c3_arquivo', floor: 'lo', ch: 3, name: 'Arquivos subterrâneos', rect: [14, 40, 36, 58] },
+];
+for (const r of ROOMS_C3) ROOMS.push(r);
+
 // pontos de interesse desenhados no mapa quando o cômodo é conhecido
 export const MAP_MARKS = [
   { kind: 'save', floor: 'up', x: 7.1, z: -2.3, room: 'ward' },
@@ -113,15 +125,19 @@ export const MAP_MARKS = [
   { kind: 'fire', ch: 2, floor: 'up', x: 48.2, z: 53, room: 'c2_carvao' },
   { kind: 'save', ch: 2, floor: 'up', x: 47.7, z: 77.3, room: 'c2_fabrica' },
   { kind: 'fire', ch: 2, floor: 'up', x: 45, z: 93, room: 'c2_fornalhas' },
+  { kind: 'save', ch: 3, floor: 'up', x: 29.2, z: 10.6, room: 'c3_portaria' },
+  { kind: 'stairs', ch: 3, floor: 'up', x: 24, z: 34, room: 'c3_escada' },
+  { kind: 'stairs', ch: 3, floor: 'lo', x: 24, z: 38, room: 'c3_escada_b' },
+  { kind: 'save', ch: 3, floor: 'lo', x: 15.8, z: 41.7, room: 'c3_arquivo' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
 let MAP_CHAPTER = 1;
-export function setMapChapter(ch) { MAP_CHAPTER = ch === 2 ? 2 : 1; }
+export function setMapChapter(ch) { MAP_CHAPTER = ch === 2 || ch === 3 ? ch : 1; }
 export function mapChapter() { return MAP_CHAPTER; }
 const inChapter = (r) => (r.ch || 1) === MAP_CHAPTER;
 /** andares com abas no mapa para o capítulo ativo */
-export function chapterFloors() { return MAP_CHAPTER === 2 ? FLOORS.filter((f) => f.id === 'up') : FLOORS; }
+export function chapterFloors() { return MAP_CHAPTER === 2 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
 
 /** andar a partir da altura dos pés */
 export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }

@@ -15,6 +15,7 @@ export const ITEMS = {
   pulseira_recem_nascido: { name: 'Pulseira de recém-nascido', desc: 'Contas de louça soletrando "R N 0". Quem a carrega se cuida melhor: bandagens curam 65 em vez de 45.' },
   manivela_carga: { name: 'Manivela da porta de carga', desc: 'Ferro fundido, cabo gasto de mão de operário. Encaixa no eixo da porta de enrolar do depósito da tecelagem.' },
   chave_fabrica: { name: 'Chave do portão da fábrica', desc: 'Chave comprida de latão, etiqueta de couro queimada: "PORTÃO — CIA. DE GÁS E COQUE". Abre o portão da fábrica no fim da Rua do Carvão.' },
-  passe_bonde: { name: 'Passe do motorneiro — Linha 4', desc: 'Ficha de latão da Linha 4 amarrada numa fita vermelha chamuscada. Estava na grelha da Garganta. "O motorneiro só leva quem tem a fita vermelha."' },
+  passe_bonde: { name: 'Passe do motorneiro — Linha 4', desc: 'Ficha de latão da Linha 4 amarrada numa fita vermelha chamuscada. Estava na grelha da Garganta. "O motorneiro só leva quem tem a fita vermelha." A Linha 4 termina no Largo do Véu, diante da Sede da Confraria.' },
+  dossie_elias: { name: 'Dossiê RN 0 — Elias', desc: 'Pasta de couro do fichário da Confraria, gaveta V. Fotografias, uma ficha de admissão e um carimbo vermelho: "RECIPIENTE — NÃO DESPERTAR".' },
   amuleto_menino: { name: 'Amuleto do menino', desc: 'Um dente de leite numa fita vermelha. Quem o carrega respira mais fundo: fôlego máximo +25.' },
 };
