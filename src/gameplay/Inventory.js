@@ -41,11 +41,13 @@ export class Inventory {
   /** munição total da arma (tambor + reserva) */
   ammoTotal(id) { const w = WEAPONS[id]; return this.rounds(id) + (w?.ammo ? this.count(w.ammo) : 0); }
 
-  serialize() { return { items: { ...this.items }, weapons: [...this.weapons], wear: { ...this.wear }, loaded: { ...this.loaded } }; }
+  serialize() { return { items: { ...this.items }, weapons: [...this.weapons], wear: { ...this.wear }, loaded: { ...this.loaded }, possuiMachado: this.weapons.includes('machado') }; }
   restore(s, docs = []) {
     this.items = { ...(s?.items || {}) }; this.documents = [...docs];
     // saves v1 antigos só tinham a arma equipada: ela passa a ser a primeira da lista
     this.weapons = [...new Set([...(s?.weapon ? [s.weapon] : []), ...(Array.isArray(s?.weapons) ? s.weapons : [])])];
+    // REV6: possuiMachado (sistema do pacote) e a lista de armas ficam sempre alinhados
+    if (s?.possuiMachado === true && !this.weapons.includes('machado')) this.weapons.push('machado');
     // desgaste: saves antigos não tinham → armas novas em folha
     this.wear = {};
     for (const [id, v] of Object.entries(s?.wear || {})) if (WEAPONS[id]?.durability && v > 0) this.wear[id] = Math.min(WEAPONS[id].durability, +v);

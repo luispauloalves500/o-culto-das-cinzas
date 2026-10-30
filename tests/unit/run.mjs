@@ -12,6 +12,10 @@ import { ITEMS } from '../../src/data/items.js';
 import { SIDE_OBJECTIVES } from '../../src/data/chapters.js';
 import { roomAt, knownRooms, floorOf, ROOMS } from '../../src/data/map.js';
 import { QuestSystem } from '../../src/gameplay/QuestSystem.js';
+import * as THREE from 'three';
+import { attackClipTime, ATTACK_CLIPS, CONFIG_MACHADO, CLIP } from '../../src/gameplay/rev6/configMachado.js';
+import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
+import { prepareClips } from '../../src/gameplay/EliasModel.js';
 
 let ok = 0, fail = 0;
 function test(name, fn) {
@@ -78,8 +82,9 @@ test('A* contorna porta fechada e usa a aberta', () => {
 
 test('save: migra v0, rejeita versão futura e lixo', () => {
   const m = migrateSave({ version: 0, inventory: ['bandagem', 'bandagem', 'fusivel'], weapon: 'machado' });
-  assert.equal(m.version, 1);
+  assert.equal(m.version, SAVE_VERSION);
   assert.equal(m.inventory.items.bandagem, 2);
+  assert.equal(m.inventory.possuiMachado, true); assert.equal(m.inventory.machadoEquipado, true);
   assert.equal(m.inventory.weapon, 'machado');
   assert.equal(migrateSave({ version: SAVE_VERSION + 1 }), null);
   assert.equal(migrateSave('x'), null);
@@ -332,6 +337,46 @@ test('trama RN 0: documento final, objetivo, itens de reparo e anos do livro de 
   assert.ok(SIDE_OBJECTIVES.some((o) => o.when === 'foundBatismo' && o.done === 'rn0Revealed'));
   assert.ok(ITEMS.kit_reparo?.name);
   assert.ok(!DOCUMENTS.livro_partos.title.includes('1950'), 'o jogo se passa em 1934');
+});
+
+test('save v1 → v2: possuiMachado/machadoEquipado derivados de hasAxe e da lista de armas', () => {
+  const a = migrateSave({ version: 1, flags: { hasAxe: true }, inventory: { items: {}, weapon: 'martelo', weapons: ['martelo'] } });
+  assert.equal(a.version, 2); assert.equal(a.inventory.possuiMachado, true); assert.equal(a.inventory.machadoEquipado, false);
+  assert.ok(a.inventory.weapons.includes('machado') && a.inventory.weapons.includes('martelo'));
+  const b = migrateSave({ version: 1, flags: {}, inventory: { items: {}, weapon: null, weapons: [] } });
+  assert.equal(b.inventory.possuiMachado, false); assert.deepEqual(b.inventory.weapons, []);
+  const c = migrateSave({ version: 1, inventory: { weapon: 'machado' } });
+  assert.equal(c.inventory.machadoEquipado, true); assert.deepEqual(c.inventory.weapons, ['machado']);
+  const inv = new Inventory(); inv.restore({ items: {}, weapons: ['facao'], possuiMachado: true });
+  assert.ok(inv.weapons.includes('machado')); assert.equal(inv.serialize().possuiMachado, true);
+});
+
+test('REV6: tempo do clipe casa a janela active com o golpe do clipe; quadril sem deriva XZ', () => {
+  const m = ATTACK_CLIPS.heavy, act = [0.4, 0.6];
+  assert.equal(attackClipTime(m, act, 0), m.seg[0]); assert.equal(attackClipTime(m, act, 1), m.seg[1]);
+  assert.ok(Math.abs(attackClipTime(m, act, 0.4) - m.strike[0]) < 1e-9 && Math.abs(attackClipTime(m, act, 0.6) - m.strike[1]) < 1e-9);
+  for (let t = 0; t < 1; t += 0.05) assert.ok(attackClipTime(m, act, t + 0.05) >= attackClipTime(m, act, t), 'monotônico');
+  for (const k of ['Walking', 'Running', 'Attack', 'Double_Combo_Attack', CLIP.idle]) assert.ok(CONFIG_MACHADO.clipMap[k], 'variante _Machado de ' + k);
+  const pos = new THREE.VectorKeyframeTrack('mixamorigHips.position', [0, 1], [0.1, 1, 0.2, 0.5, 1.1, 1.3]);
+  const sc = new THREE.VectorKeyframeTrack('mixamorigSpine.scale', [0, 1], [1, 1, 1, 1, 1, 1]);
+  const [clip] = prepareClips([new THREE.AnimationClip('Double_Combo_Attack', 1, [pos, sc])]);
+  assert.equal(clip.tracks.length, 1, 'escala constante removida');
+  const v = clip.tracks[0].values; [0.1, 1.1, 0.2].forEach((e, i) => assert.ok(Math.abs(v[3 + i] - e) < 1e-6, 'quadril ' + i));
+});
+
+test('REV6: coleta exige o machado do cenário a ≤ 1,5 m, esconde-o e mostra o equipado', () => {
+  const pers = new THREE.Group(); const arma = new THREE.Object3D(); arma.name = 'Machado_Equipado'; arma.scale.setScalar(0); pers.add(arma);
+  const clipes = [...new Set([...Object.keys(CONFIG_MACHADO.clipMap), ...Object.values(CONFIG_MACHADO.clipMap)])].map((n) => new THREE.AnimationClip(n, 1, []));
+  const S = criarSistemaMachado({ THREE, personagem: pers, mixer: new THREE.AnimationMixer(pers), clipes, config: CONFIG_MACHADO });
+  assert.equal(arma.visible, false, 'começa sem machado visível');
+  const mundo = new THREE.Group(); mundo.userData.itemId = CONFIG_MACHADO.itemId;
+  const mk = new THREE.Object3D(); mk.name = 'Machado_Coletavel'; mk.position.set(4.1, 0, 9.3); mundo.add(mk); mundo.updateMatrixWorld(true);
+  assert.equal(S.tentarColetar(mundo, 1.5, new THREE.Vector3(4.1, 0, 7.5)), false, 'longe demais');
+  assert.equal(S.tentarColetar(new THREE.Group(), 1.5, new THREE.Vector3(4.1, 0, 9.3)), false, 'objeto errado');
+  assert.equal(S.tentarColetar(mundo, 1.5, new THREE.Vector3(4.1, 0, 8.7)), true);
+  assert.equal(mundo.visible, false); assert.equal(arma.visible, true);
+  assert.deepEqual(S.serializar(), { possuiMachado: true, machadoEquipado: true });
+  S.tocar('Walking'); assert.equal(S.atual.getClip().name, CONFIG_MACHADO.clipMap.Walking, 'clipe _Machado com o machado');
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

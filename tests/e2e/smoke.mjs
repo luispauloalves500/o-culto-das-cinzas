@@ -86,9 +86,41 @@ try {
   });
   check('porta fechada bloqueia', door.blocked < 9.85, 'z=' + door.blocked.toFixed(2));
   check('porta aberta permite passagem', door.open && door.after > 10.3, JSON.stringify(door));
+  // --- Elias REV6 (GLB) antes da coleta: carregado, sem machado visível, machado do cenário é a malha real
+  await page.waitForFunction(() => __ocdc.player.model.ready || __ocdc.player.model.failed, { timeout: 30000 }).catch(() => {});
+  const rev0 = await page.evaluate(() => {
+    const g = __ocdc, M = g.player.model, w = g.level.pickupMeshes.axe;
+    return { ready: M.ready, failed: M.failed, inScene: !!M.root?.parent && M.root.parent === g.player.rig.body,
+      axeVisible: !!M.axe?.visible, possui: M.sistema?.possuiMachado, procHidden: g.player._procMeshes.every((m) => !m.visible),
+      worldReal: !!w.getObjectByName('MachadoCenarioREV6'), marker: !!w.getObjectByName('Machado_Coletavel'), itemId: w.userData.itemId,
+      bones: !!M.root?.getObjectByName('SocketMachado_Direita') };
+  });
+  check('Elias REV6 (GLB) carregado no lugar do boneco procedural', rev0.ready && rev0.inScene && rev0.procHidden && rev0.bones, JSON.stringify(rev0));
+  check('REV6: começa sem machado visível; machado do cenário é a malha real com marcador', !rev0.axeVisible && rev0.possui === false && rev0.worldReal && rev0.marker && rev0.itemId === 'machado_enferrujado', JSON.stringify(rev0));
+  const far = await page.evaluate(() => { const g = __ocdc; T.tp(4.1, 0, 7.3, 0); return { ok: g.player.coletarMachado(g.level.pickupMeshes.axe), vis: g.level.pickupMeshes.axe.visible }; });
+  check('REV6: coleta recusada a mais de 1,5 m', far.ok === false && far.vis, JSON.stringify(far));
   // --- Machado
   const axe = await page.evaluate(() => { const g = __ocdc; T.tp(4.1, 0, 8.7, 0); const r = T.interactAt('pick_axe'); return { r, w: !!g.player.weapon, flag: g.quest.has('hasAxe') }; });
   check('machado coletado e equipado', axe.w && axe.flag, JSON.stringify(axe));
+  const rev1 = await page.evaluate(() => {
+    const g = __ocdc, M = g.player.model; T.run(0.3);
+    const idle = M.sistema.atual?.getClip().name;
+    g.player.vel?.set?.(0, 0, 0); T.hold('KeyW', 0.6); const walk = M.sistema.atual?.getClip().name;
+    const p = g.player.pos.clone(); return { axeVisible: M.axe.visible, world: g.level.pickupMeshes.axe.visible, idle, walk, ser: M.sistema.serializar(),
+      tipOnAxe: g.player.models.machado.tip.parent === M.axe, tipWorld: g.player.models.machado.tip.getWorldPosition(p).toArray().map((v) => +v.toFixed(2)) };
+  });
+  check('REV6: após coletar, Machado_Equipado visível na mão e o do cenário oculto', rev1.axeVisible && !rev1.world && rev1.ser.possuiMachado && rev1.ser.machadoEquipado && rev1.tipOnAxe, JSON.stringify(rev1));
+  check('REV6: clipes _Machado com o machado (idle e Walking)', /_Machado$/.test(rev1.idle || '') && rev1.walk === 'Walking_Machado', JSON.stringify({ idle: rev1.idle, walk: rev1.walk }));
+  await page.screenshot({ path: SHOTS + '02b-elias-machado.png' });
+  // golpe: clipe do REV6 posicionado pela janela do golpe; a ponta da lâmina (hitbox) se move com o clipe
+  const swing = await page.evaluate(() => {
+    const g = __ocdc, P = g.player, M = P.model; T.run(0.5);
+    T.press('Mouse0'); let clip = null; const tips = [];
+    for (let i = 0; i < 24; i++) { T.run(1 / 60); if (!clip) clip = M.sistema.atual?.getClip().name; tips.push(P.models.machado.tip.getWorldPosition(P.pos.clone()).y); }
+    T.run(1);
+    return { clip, state: P.state, dy: Math.max(...tips) - Math.min(...tips) };
+  });
+  check('REV6: golpe usa clipe de ataque _Machado e move a lâmina (hitbox real)', /Attack_Machado$/.test(swing.clip || '') && swing.dy > 0.3, JSON.stringify(swing));
   // --- Combate: matar o Interno do corredor com golpes reais (hitbox varrida)
   const fight = await page.evaluate(() => {
     const g = __ocdc; const e = g.enemies.find((x) => x.id === 'int_cor');
@@ -104,6 +136,13 @@ try {
     return { alive: e.alive, hp0, hp: e.hp, swings, kills: g.player.stats.kills };
   });
   check('Interno morto por golpes do machado', !fight.alive && fight.kills >= 1, JSON.stringify(fight));
+  // outra arma: malha procedural no socket da mão do GLB, machado oculto, dedos fechados (_Machado)
+  const swap = await page.evaluate(() => {
+    const g = __ocdc, P = g.player, M = P.model; P.setWeapon('martelo'); T.run(0.2);
+    const r = { parent: P.models.martelo.group.parent?.name, vis: P.models.martelo.group.visible, axe: M.axe.visible, clip: M.sistema.atual?.getClip().name };
+    P.setWeapon('machado'); T.run(0.2); r.back = M.axe.visible; return r;
+  });
+  check('REV6: martelo/facão/lança/revólver presos ao socket da mão do GLB', swap.parent === 'SocketArmasProcedurais' && swap.vis && !swap.axe && swap.back, JSON.stringify(swap));
   await page.screenshot({ path: SHOTS + '03-corredor.png' });
   // --- Enfermeiro: percepção (vê o jogador) e morte
   const nurse = await page.evaluate(() => {
@@ -747,7 +786,7 @@ try {
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
   const cont = await page.evaluate(() => ({ visible: !document.getElementById('btnContinue').classList.contains('hidden'), save: JSON.parse(localStorage.getItem('ocdc_save')) }));
-  check('save versionado com progresso persistido', cont.visible && cont.save.version === 1 && cont.save.flags.bossDead && cont.save.deadEnemies.length >= 2, JSON.stringify({ v: cont.save.version, cp: cont.save.checkpoint, dead: cont.save.deadEnemies }));
+  check('save versionado com progresso persistido', cont.visible && cont.save.version === 2 && cont.save.inventory.possuiMachado === true && cont.save.flags.bossDead && cont.save.deadEnemies.length >= 2, JSON.stringify({ v: cont.save.version, cp: cont.save.checkpoint, dead: cont.save.deadEnemies }));
   // --- Continuar de um save pré-chefe e morte → recarregar
   const death = await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('ocdc_save')); s.flags = { ...s.flags, bossDead: false, gateOpen: false, chapterDone: false }; s.checkpoint = 'pre_boss';
@@ -770,6 +809,11 @@ try {
   check('morte mostra tela e permite recarregar', deadScr, JSON.stringify(dinfo));
   await page.click('#btnRetry'); await new Promise((r) => setTimeout(r, 500));
   check('recarregar após morte', await page.evaluate(() => __ocdc.state === 'playing' && __ocdc.player.hp > 0));
+  await page.waitForFunction(() => __ocdc.player.model.ready, { timeout: 15000 }).catch(() => {});
+  const revLoad = await page.evaluate(() => { const g = __ocdc, M = g.player.model; return { ready: M.ready, possui: M.sistema?.possuiMachado, axe: M.axe?.visible, weapon: g.player.weapon?.id, world: g.level.pickupMeshes.axe.visible }; });
+  check('REV6: save carregado restaura posse/arma do machado', revLoad.ready && revLoad.possui && revLoad.axe === (revLoad.weapon === 'machado') && !revLoad.world, JSON.stringify(revLoad));
+  const glb = await page.evaluate(async () => { const r = await fetch('./models/elias_rev6.glb'); const b = await r.arrayBuffer(); return { status: r.status, size: b.byteLength, magic: new TextDecoder().decode(new Uint8Array(b, 0, 4)) }; });
+  check('GLB do Elias servido pelo build (./models/elias_rev6.glb)', glb.status === 200 && glb.magic === 'glTF' && glb.size > 5e6, JSON.stringify(glb));
   // --- desempenho aproximado (render real, swiftshader)
   const fps = await page.evaluate(() => new Promise((res) => { const g = __ocdc; let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 3000) requestAnimationFrame(f); else res({ fps: n / 3, calls: g.renderer.info.render.calls, tris: g.renderer.info.render.triangles, lights: (() => { let k = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) k++; }); return k; })(), allLights: (() => { let k = 0; g.scene.traverse((o) => { if (o.isLight) k++; }); return k; })(), meshes: (() => { let k = 0; g.scene.traverse((o) => { if (o.isMesh) k++; }); return k; })() }); }; requestAnimationFrame(f); }));
   check('orçamento de luzes limita luzes ativas', fps.lights <= fps.allLights - 16, 'visíveis: ' + fps.lights + ' de ' + fps.allLights);

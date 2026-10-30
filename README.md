@@ -82,7 +82,7 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
 - **Orçamento de luzes**: só as 16 lâmpadas mais próximas do jogador ficam ativas (contagem constante, sem recompilar shaders) — o hospital cresceu para 62 luzes. *(smoke)*
 - **Chefe — O Cirurgião**: fases, golpes de bisturi em combo, agarrão (escapa martelando botões), investida que o atordoa ao bater em mesas/pilares; o avental absorve dano e o **frasco nas costas** é o ponto fraco (golpe forte de cima para baixo). Porta da sala tranca durante a luta; barra de vida própria. *(smoke: luta completa até a morte do chefe)*
 - **Portão de serviço** liberado após o chefe → pátio → tela de fim de capítulo com estatísticas e gancho para o Capítulo 2 (placeholder).
-- **Save versionado** (`localStorage`, chave `ocdc_save`, versão 1, com migração de v0): checkpoints automáticos (início, sala de máquinas, chegada ao subsolo, necrotério, lavanderia, administração, capela, ala cirúrgica, telhado, recuperação, pediatria, escada de incêndio, maternidade, arquivo morto, antes do chefe, pátio) e livros de registro manuais. Morte → tela de morte → recarregar último registro. *(unit + smoke)*
+- **Save versionado** (`localStorage`, chave `ocdc_save`, versão 2, com migração de v0 e v1 — a v2 grava `possuiMachado`/`machadoEquipado`): checkpoints automáticos (início, sala de máquinas, chegada ao subsolo, necrotério, lavanderia, administração, capela, ala cirúrgica, telhado, recuperação, pediatria, escada de incêndio, maternidade, arquivo morto, antes do chefe, pátio) e livros de registro manuais. Morte → tela de morte → recarregar último registro. *(unit + smoke)*
 - **Áudio** 100% sintetizado com Web Audio (passos, golpes, gemidos, portas, faíscas, elevador, ambiente e intensidade dinâmica de trilha), iniciado só após gesto do usuário.
 - **HUD**: vida, fôlego, arma, objetivo atual, aviso de interação, dicas, vinheta de dano, barra do chefe.
 - **Visual PS2**: render em baixa resolução com pixels nítidos, texturas procedurais em canvas, materiais Lambert, névoa, luzes piscando, energia de emergência.
@@ -92,15 +92,16 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
 - **Revólver com tambor e recarga própria**: 6 balas no tambor + reserva (munição .38 no inventário). Atirar só gasta o tambor; vazio = clique seco com aviso. **T recarrega** uma bala por vez (0,45 s + 0,32 s por bala, faz barulho; esquiva cancela; dá para recarregar mirando). HUD: `Revólver · 3/6 · reserva 4`. Saves antigos migram (as balas da reserva enchem o tambor, nada se perde). *(unit + smoke)*
 - **Mira manual**: com o revólver, **segurar Q** aproxima a câmera sobre o ombro (FOV menor), mostra a **retícula** e o tiro sai pelo raio do centro da tela — sem auto-mira, a parede bloqueia, e **tiro na cabeça** dá ×1,4. Botão direito sem Q continua com a mira automática. *(unit: raio × cápsula/esfera; smoke: mirando ao lado erra, apontado acerta)*
 - **Trama RN 0 — a revelação na Sala de batismo**: com o **amuleto do menino** (dente do Davi, Quarto 7) e a **pulseira "R N 0"** (altar), Elias põe os dois na cinza da pia. **Cena curta (~19 s, pulável com E)** com câmera própria e tarjas: a cinza sobe em espiral, o menino de cinza (Davi) fala com Elias, e a visão de **Marta Varga na maca** e do residente **Vernet com a colher de prata** aparece na cinza. No fim: documento final **"A contagem da Confraria"** (0 = Varga, retorno em trinta anos; 1–6 = lote C; 7 = Davi, a reserva — "O zero voltou."), vida cheia e autosave; a cinza fica escura e a lâmpada fraca. Sem os dois itens, a pia só dá a pista *"O ZERO E O SETE"* e diz o que falta. Objetivo opcional novo, e a **tela de fim de capítulo** mostra se a revelação foi vista (com o trecho final) ou só a dica. *(smoke: pista, cena, HUD oculto, pular, documento, save, fim de capítulo — captura `11-revelacao.png`)*
+- **Modelo REV6 Elias+machado GLB** (`public/models/elias_rev6.glb`, 7,5 MB — o pacote `personagem_REV6_coleta_machado.glb` de 26 MB com texturas reduzidas a 1024 px JPEG): Elias com esqueleto Mixamo, carregado por `GLTFLoader` + `AnimationMixer` (`src/gameplay/EliasModel.js`, sistema do pacote adaptado em `src/gameplay/rev6/`). Começa **sem machado visível**; o machado do cenário é a mesma malha `Machado_Equipado` clonada (o `machado_coletavel_80cm.glb` não veio no pacote). Pegar com **E** a até 1,5 m oculta o do cenário, mostra o `Machado_Equipado` no `SocketMachado_Direita` e troca para os clipes `_Machado`. Clipes: idle `_01a17993…`, inquietação `_01a18db3…` (parado ~14 s), `Walking`/`Running` (velocidade casada com a passada), golpe leve 1/2 = `Double_Combo_Attack` (1º e 2º corte), forte = `Attack`. **Hitbox real**: a esfera de dano segue a ponta e o cabo da lâmina do GLB, com o clipe encaixado na janela de dano do golpe; o corpo gira no golpe para o corte diagonal cruzar a frente e, com alvo à frente, o avanço cobre até 0,5 m (o braço do GLB alcança menos que o boneco procedural). Martelo, facão, lança e revólver vão presos à mão do GLB; estocada da lança, tiro, esquiva, defesa, dano, cura e recarga continuam com as poses procedurais reaplicadas nos ossos do GLB. `?elias=0` na URL força o visual procedural antigo. O GLB vai no repositório em partes base64 (`assets-src/`) e `scripts/assets.mjs` o remonta e confere o sha256 antes de dev/build/test. *(unit: migração v1→v2, mapa de clipes, coleta por distância; smoke: GLB carregado, sem machado antes, recusa a >1,5 m, machado na mão após coletar, clipes `_Machado`, golpe move a lâmina, troca para martelo, save restaura, GLB servido — captura `02b-elias-machado.png`)*
 - **HUD**: o aviso "AGARRADO!" agora acompanha o estado real do jogador (some ao soltar, ao morrer, ao renascer e em cenas). *(smoke)*
 
 ### Sobre modelos e texturas
 
-Não foram usados GLB/texturas de terceiros: **todo o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
+Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, não foram usados GLB/texturas de terceiros: **o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
 
 ## FALTA (para o Capítulo 1 completo, conforme o GDD)
 
-- Modelos/animações artesanais (GLB rigados) e texturas pintadas — hoje tudo é procedural/placeholder estilizado.
+- Modelos/animações artesanais para inimigos, chefe e cenário (só o Elias usa GLB); clipes próprios para lança, tiro, esquiva, defesa e dano (hoje poses procedurais no esqueleto do GLB); o modelo dedicado `machado_coletavel_80cm.glb`.
 - Maternidade e arquivo morto já entraram; faltam mais segredos e variações de rota (hoje há quatro: câmara fria, expurgo, Quarto 7 e sala de batismo).
 - A medalha e a planta não têm uso narrativo além do bônus/mapa; o documento da diretoria aponta para o Cap. 2 sem conteúdo jogável dele.
 - Mais objetos ambientais além dos cilindros, do forno e da caixinha de música; mira manual sem assistência no gamepad (sem *aim assist*); o desgaste ainda não muda o visual da arma.
@@ -118,7 +119,7 @@ Não foram usados GLB/texturas de terceiros: **todo o visual é procedural** (ge
 src/
   core/      Game (loop fixo 60 Hz, estados), Input, Settings, Save, Audio, EventBus
   world/     CollisionWorld, LevelBuilder, Doors, Interactables, Navigation (A*), Textures, Materials
-  gameplay/  PlayerController, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem, Cutscene
+  gameplay/  PlayerController, EliasModel (GLB REV6) + rev6/, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem, Cutscene
   ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss
   scenes/hospital/  HospitalLevel (geometria, luzes, elevador, grafo), HospitalScript (puzzles, gatilhos, chefe),
                     HospitalWing/WingScript (2º andar + telhado), HospitalPeds/PedsScript (3º andar · pediatria),
@@ -128,8 +129,8 @@ src/
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
-  unit/run.mjs     26 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
-  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (106 verificações)
+  unit/run.mjs     29 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
+  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (115 verificações)
 ```
 
 ## Licença
