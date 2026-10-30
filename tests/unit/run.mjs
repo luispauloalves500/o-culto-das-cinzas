@@ -419,5 +419,32 @@ test('Cap. 2: objetivos, mapa do Bairro Operário e caçador', () => {
   assert.ok(ITEMS.manivela_carga && DOCUMENTS.jornal_vespera && DOCUMENTS.bilhete_capataz);
 });
 
+test('Cap. 2: Rua do Carvão, fábrica, chefe e fim do capítulo (dados)', () => {
+  const order = OBJECTIVES_C2.map((o) => o.done);
+  assert.deepEqual(order.slice(3), ['c2_sliceDone', 'c2_inCoal', 'c2_hasFactoryKey', 'c2_factoryOpen', 'c2_valves', 'c2_bossDead', 'c2_chapterDone', 'c2_never']);
+  assert.ok(!OBJECTIVES_C2.some((o) => /prévia/.test(o.text)), 'sem texto de prévia');
+  const q = new QuestSystem(null, 2);
+  q.restore({ c2_started: true, c2_inDepot: true, c2_hasCrank: true, c2_shutterOpen: true, c2_sliceDone: true });
+  assert.match(q.current(), /Rua do Carvão/, 'save antigo (fim da prévia) segue para a Rua do Carvão');
+  q.set('c2_inCoal'); q.set('c2_hasFactoryKey'); q.set('c2_factoryOpen'); q.set('c2_valves'); q.set('c2_bossDead');
+  assert.ok(q.side().some((t) => /grelha/.test(t)), 'passe do bonde como objetivo opcional');
+  setMapChapter(2);
+  try {
+    assert.equal(roomAt({ x: 44, y: 0, z: 45 }).id, 'c2_carvao');
+    assert.equal(roomAt({ x: 34, y: 0, z: 43 }).id, 'c2_carvoaria');
+    assert.equal(roomAt({ x: 45, y: 0, z: 70 }).id, 'c2_fabrica');
+    assert.equal(roomAt({ x: 45, y: 0, z: 86 }).id, 'c2_fornalhas');
+  } finally { setMapChapter(1); }
+  const cv = ENEMIES.carvoeiro;
+  assert.ok(cv && cv.hp > ENEMIES.cacador.hp && cv.attacks.length >= 1, 'carvoeiro mais robusto que o caçador');
+  for (const id of ['escala_turno', 'diario_fornalheiro', 'recado_ines']) assert.equal(DOCUMENTS[id]?.ch, 2, id);
+  assert.ok(ITEMS.chave_fabrica && ITEMS.passe_bonde);
+});
+
+const { FURNACE_PHASES } = await import('../../src/ai/FurnaceBoss.js');
+test('Cap. 2: Brás tem 3 fases (limiares de vida)', () => {
+  assert.ok(FURNACE_PHASES.p2 > FURNACE_PHASES.p3 && FURNACE_PHASES.p3 > 0);
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);

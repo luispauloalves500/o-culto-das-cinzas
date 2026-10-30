@@ -1,7 +1,7 @@
 # O Culto das Cinzas
 
 Survival horror em terceira pessoa feito com **Three.js + Vite**, com visual low‑poly inspirado no PS2 (verde doentio + âmbar).
-Este repositório contém a **fatia vertical jogável do Capítulo 1 — Hospital São Dimas** (véspera, 1934).
+Este repositório contém o **Capítulo 1 — Hospital São Dimas** (véspera, 1934) e o **Capítulo 2 — Fumaça** (Bairro Operário → Rua do Carvão → fábrica de fumaça → chefe Brás → tela de fim do capítulo), ambos jogáveis do início ao fim.
 
 ▶ **Jogar no navegador:** https://luispauloalves500.github.io/o-culto-das-cinzas/
 
@@ -98,6 +98,17 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
 - **Elias parado e pegada do machado (pt31u)**: sem machado, o idle usa o clipe `Elias_Idle` com o braço direito copiado do `Walking` (t=0,47), sem o braço "aberto" do clipe original; pés no chão (dedos y≈0,03–0,04, quadril 0,96). Com machado, nos clipes `Elias_Idle_Machado`/`Walking_Machado`/`Running_Machado` o punho recebe uma correção de 111° (63° da torção vão para o antebraço) e o machado (`AXE_GRIP` rot. Y −90°) fica com o gume para fora e o cabo ~30° abaixo da horizontal, empunhado pela mão — não mais "espetado" para cima. *(smoke: machado na mão, clipes `_Machado`)*
 - **Capítulo 2 — Fumaça · Bairro Operário (prévia jogável)**: o botão do fim do Capítulo 1 (ou *Continuar* num save com o capítulo concluído) leva ao bairro. **Migração de save** (`src/core/SaveManager.js` → `makeChapter2Save`): o save vira capítulo 2 (checkpoint `c2_gate`), as chaves/itens do hospital são removidos, armas, desgaste, tambor, documentos, melhorias (amuleto, medalha, pedra de afiar), tempo e estatísticas continuam; vida 80–125. Setor procedural PS2 (`src/scenes/bairro/`): Rua dos Tecelões com o muro e a placa do hospital, casas de tijolo, bonde em chamas como barricada, lampiões a gás e fuligem caindo; Beco; Depósito da tecelagem (estantes, tear, fardos); Escritório do capataz; Pátio de carga com trilhos e o ponto do bonde — tudo com colisão e grafo de navegação. **Caçador** (inimigo novo: audição 2,2×, patrulha, investiga barulho — corrida, porta batida, golpe na parede, manivela — e ataca com garra/bote). Item-chave **Manivela de carga** (escritório; pegar faz barulho e acorda o caçador do depósito) abre a **porta de carga emperrada**. Documentos **"Jornal da véspera"** e **"Bilhete do capataz"**; objetivos principais e opcionais próprios; autosave na entrada do depósito, **livro de registros** no escritório e save no ponto do bonde (fim da prévia). Mapa do capítulo 2 só mostra o que já foi percorrido. *(unit: migração, objetivos, mapa, caçador; smoke: botão, carregamento, colisão, caçador investiga, documentos, portas, manivela, save no livro com inimigo morto, pátio, mapa, luzes ≤ 16, recarregar e continuar no Capítulo 2 — capturas `12-bairro-*.png`)*
 
+- **Capítulo 2 completo (pt32u) — Rua do Carvão, fábrica de fumaça e o chefe Brás**:
+  - **Progressão**: o ponto do bonde deixou de ser o fim da prévia — o bonde não vem, Elias solta a trava do poste e o **portão norte do pátio** se abre para a **Rua do Carvão** (autosave `c2_coal`). Saves antigos que pararam no ponto do bonde seguem direto para a rua (o portão abre ao carregar). Objetivos em ordem: rua → **chave da fábrica** na Carvoaria São Brás → **portão da fábrica** → **duas válvulas de alívio** → **casa das fornalhas** (chefe) → **porta de serviço** → tela de fim.
+  - **Rua do Carvão** (procedural PS2): trilhos da Linha 4 com vagonete de carvão, carroça de carvão em chamas, montes de carvão e entulho, casas operárias escuras, 3 lampiões a gás, fuligem. **Carvoaria São Brás** (porta de abrir): balança com a **chave no gancho** (pegar faz barulho e acorda **Quintino**, o carvoeiro que dorme sobre o carvão), escala do turno, sacos com o **livro de registros** (`c2_carv`), bandagem.
+  - **Fábrica de fumaça** (setor explorável, pé-direito 7 m): portão de correr com cadeado (a chave é consumida), 3 fornos acesos, esteira, tanques, chaminés internas, mesa do mestre-fornalheiro (diário), munição e bandagem; autosave na entrada (`c2_factory`). A comporta da casa das fornalhas está travada pela pressão: **girar as válvulas A (fornos) e B (parede leste)** — o silvo do vapor faz barulho e acorda o carvoeiro dos tanques; com as duas, a comporta destrava. **Livro pré-chefe** (`c2_preboss`).
+  - **Inimigo novo — Carvoeiro**: operário coberto de fuligem com boné, lenço e **pá** na mão, olhos em brasa; mais lento, mais vida (150) e golpe pesado. No capítulo: 4 caçadores e 3 carvoeiros (rua, carvoaria, fábrica), coerentes com os documentos.
+  - **Chefe — Brás, o Guardião da Garganta** (`src/ai/FurnaceBoss.js`, deriva do Cirurgião sem alterá-lo no Cap. 1): mestre-fornalheiro de 1,55× com máscara de soldador, avental e pá gigante, 520 de vida. A arena tranca ao entrar (4 pilares de ferro, a fornalha "Garganta" acesa ao fundo). **Combate real**: o couro absorve golpes no corpo (×0,25); a **investida** contra um pilar o deixa **atordoado** e o **fole nas costas** é o ponto fraco (×1,6, golpe forte de cima). **3 fases**: fase 2 (60%) — mais rápido e **arremessa carvão em brasa** em arco (14, bloqueável) e a fumaça da sala engrossa; fase 3 (25%) — três brasas por arremesso e o **anel de fogo** (aviso de 1,3 s com o chão brilhando, 24 de dano não bloqueável num raio de 3,4 m). Barra do chefe com o nome dele. Morrer reinicia no livro pré-chefe; a arena nunca fica trancada ao carregar.
+  - **Fim do capítulo**: após o chefe, o **passe de latão da Linha 4** brilha na grelha (objetivo opcional) e a porta de serviço destrava → save `c2_end` → **tela "Fim do Capítulo 2 — Fumaça"** com texto próprio, estatísticas, documentos do capítulo (x/5) e se o passe foi pego; o botão "Capítulo 3 — A Confraria (em breve)" fica desativado. *Continuar* nesse save volta à porta de serviço com tudo restaurado.
+  - **Documentos novos**: *Escala do turno da noite*, *Diário do mestre-fornalheiro*, *Recado de Inês*; mapa do Cap. 2 com 4 áreas novas (Rua do Carvão, Carvoaria, Fábrica — salão, Casa das fornalhas) e limites ampliados.
+  - **Desempenho**: orçamento de luzes do bairro reduzido para 13 pontos dinâmicos (+ luzes fixas = ≤ 16 visíveis), os brilhos dos livros entram no corte por distância.
+  - *(unit: ordem dos objetivos/sem "prévia", save antigo segue para a rua, salas do mapa, carvoeiro, documentos, fases do chefe; smoke: portão do bonde, rua + autosave, carvoeiro sofre dano, carvoaria/chave/Quintino/escala/livro, portão da fábrica, autosave, válvulas, diário, livro pré-chefe, mapa, luzes ≤ 16 na rua/fábrica/arena, arena tranca, luta completa com 2+ atordoamentos, fases 1→2→3, carvão em brasa, anel de fogo com dano, derrota destrava, passe, saída, tela de fim do Cap. 2, recarregar e continuar — capturas `13-rua-do-carvao.png`, `14-fabrica.png`, `15-bras-chefe.png`, `16-fim-cap2.png`)*
+
 ### Sobre modelos e texturas
 
 Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, não foram usados GLB/texturas de terceiros: **o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
@@ -113,7 +124,7 @@ Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, nã
 - Dano localizado/desmembramento estilizado, finalizações, opção de reduzir sangue.
 - Mais tipos de inimigo; mais cutscenes; remapeamento de teclas; ajuste fino de dificuldade.
 - Streaming por setores (hoje o capítulo é carregado inteiro — é pequeno).
-- Capítulo 2: só a prévia do Bairro Operário está jogável. Faltam a Rua do Carvão, a fábrica de fumaça, o chefe do capítulo, mais caçadores/variações, cenas e a tela de fim do Capítulo 2; o caçador usa o boneco procedural (sem modelo próprio).
+- Capítulo 2: jogável do início ao fim, mas sem cenas (só texto/toasts), sem modelos próprios (caçador, carvoeiro e Brás são bonecos procedurais) e sem a Rua da Fundição; o passe da Linha 4 ainda não tem uso. **Capítulo 3 — A Confraria** não existe (o botão da tela de fim fica desativado).
 - Gamepad implementado mas **não testado** com controle físico; desempenho só medido em render por software no CI local.
 
 ## Estrutura
@@ -123,8 +134,9 @@ src/
   core/      Game (loop fixo 60 Hz, estados), Input, Settings, Save, Audio, EventBus
   world/     CollisionWorld, LevelBuilder, Doors, Interactables, Navigation (A*), Textures, Materials
   gameplay/  PlayerController, EliasModel (GLB REV6) + rev6/, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem, Cutscene
-  ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss
-  scenes/bairro/    BairroLevel (Bairro Operário, Cap. 2), BairroScript (manivela, porta de carga, caçadores)
+  ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss, FurnaceBoss (Brás, Cap. 2)
+  scenes/bairro/    BairroLevel (Bairro Operário, Rua do Carvão, carvoaria, fábrica, casa das fornalhas — Cap. 2),
+                    BairroScript (manivela, bonde, chave, válvulas, chefe Brás, fim do capítulo)
   scenes/hospital/  HospitalLevel (geometria, luzes, elevador, grafo), HospitalScript (puzzles, gatilhos, chefe),
                     HospitalWing/WingScript (2º andar + telhado), HospitalPeds/PedsScript (3º andar · pediatria),
                     HospitalMaternity/MaternityScript (2º andar · maternidade),
@@ -133,8 +145,8 @@ src/
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
-  unit/run.mjs     29 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
-  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (115 verificações)
+  unit/run.mjs     33 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
+  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless e o Capítulo 2 (144 verificações)
 ```
 
 ## Licença

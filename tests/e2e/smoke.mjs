@@ -854,9 +854,10 @@ try {
     T.tp(38.4, 0, 14, Math.PI / 2); out.shut2 = T.interact('door_c2_shutter'); T.run(1.5);
     out.shutOpen = g.level.doors.c2_shutter.open && g.quest.has('c2_shutterOpen') && !g.inventory.has('manivela_carga');
     T.tp(38.8, 0, 14, Math.PI / 2); T.hold('KeyW', 1.2); out.yardX = +g.player.pos.x.toFixed(2);
-    // munição e ponto do bonde (fim da prévia)
+    // ponto do bonde: o bonde não vem e o portão dos trilhos se abre
+    out.gate0 = g.level.doors.c2_yardgate.locked;
     T.tp(43, 0, 25.6, 0); out.tram = T.interactAt('c2_tram'); const s2 = S(); out.tramSave = { cp: s2.checkpoint, slice: s2.flags.c2_sliceDone };
-    out.objEnd = g.quest.current();
+    out.objEnd = g.quest.current(); T.run(1.2); out.gateOpen = g.level.doors.c2_yardgate.open && !g.level.doors.c2_yardgate.locked;
     T.key('KeyM'); out.mapState = g.state; out.map = g.menus.lastMap;
     out.tabs = [...document.querySelectorAll('.map-tab')].filter((e) => !e.classList.contains('hidden')).map((e) => e.textContent);
     out.where = document.getElementById('mapWhere').textContent;
@@ -865,7 +866,7 @@ try {
     return out;
   });
   check('Cap. 2: botão do fim do Cap. 1 leva ao Capítulo 2', /Capítulo 2/.test(endBtn.text) && endBtn.visible, JSON.stringify(endBtn));
-  check('Cap. 2: Bairro Operário carregado com save do Cap. 2 (sem itens-chave, com machado)', c2a.start.st === 'playing' && c2a.start.ch === 2 && c2a.start.sch === 2 && c2a.start.cp === 'c2_gate' && Math.abs(c2a.start.pos[0] - 3) < 0.3 && !c2a.start.fuse && c2a.start.axe && !c2a.start.boss && c2a.start.enemies.filter((t) => t === 'cacador').length === 2 && /depósito/.test(c2a.start.obj), JSON.stringify(c2a.start));
+  check('Cap. 2: Bairro Operário carregado com save do Cap. 2 (sem itens-chave, com machado)', c2a.start.st === 'playing' && c2a.start.ch === 2 && c2a.start.sch === 2 && c2a.start.cp === 'c2_gate' && Math.abs(c2a.start.pos[0] - 3) < 0.3 && !c2a.start.fuse && c2a.start.axe && c2a.start.boss && c2a.start.enemies.filter((t) => t === 'cacador').length === 4 && c2a.start.enemies.filter((t) => t === 'carvoeiro').length === 3 && /depósito/.test(c2a.start.obj), JSON.stringify(c2a.start));
   check('Cap. 2: colisão no muro do hospital', c2a.wallX > 1.1 && c2a.wallX < 1.8, 'x=' + c2a.wallX);
   check('Cap. 2: caçador vai atrás do barulho', c2a.cacState === 'investigate', c2a.cacState);
   check('Cap. 2: jornal do beco conclui objetivo opcional', c2a.paper === 'ok' && c2a.readPaper && c2a.sideBefore >= 1, JSON.stringify({ p: c2a.paper, r: c2a.readPaper }));
@@ -874,22 +875,160 @@ try {
   check('Cap. 2: manivela no escritório desperta o caçador do depósito', c2a.office === 'ok' && c2a.officeOpen && c2a.crank === 'ok' && c2a.hasCrank && c2a.depDormant0 && !c2a.depDormant1, JSON.stringify({ o: c2a.office, c: c2a.crank, d0: c2a.depDormant0, d1: c2a.depDormant1 }));
   check('Cap. 2: bilhete do capataz e livro de registros (save)', c2a.note === 'ok' && c2a.readNote && c2a.book === 'ok' && c2a.bookSave.cp === 'c2_office' && c2a.bookSave.ch === 2 && c2a.bookSave.dead.includes('cac_dep'), JSON.stringify({ n: c2a.note, b: c2a.book, s: c2a.bookSave }));
   check('Cap. 2: manivela abre a porta de carga e o pátio é alcançável', c2a.shut2 === 'ok' && c2a.shutOpen && c2a.yardX > 40.6, JSON.stringify({ s: c2a.shut2, o: c2a.shutOpen, x: c2a.yardX }));
-  check('Cap. 2: ponto do bonde encerra a prévia e salva', c2a.tram === 'ok' && c2a.tramSave.cp === 'c2_yard' && c2a.tramSave.slice && /prévia/.test(c2a.objEnd), JSON.stringify({ t: c2a.tram, s: c2a.tramSave, o: c2a.objEnd }));
+  check('Cap. 2: ponto do bonde salva e abre o portão para a Rua do Carvão', c2a.gate0 && c2a.tram === 'ok' && c2a.tramSave.cp === 'c2_yard' && c2a.tramSave.slice && c2a.gateOpen && /Rua do Carvão/.test(c2a.objEnd), JSON.stringify({ g: c2a.gate0, t: c2a.tram, s: c2a.tramSave, o: c2a.objEnd, open: c2a.gateOpen }));
   check('Cap. 2: mapa mostra só o Bairro Operário', c2a.mapState === 'map' && c2a.tabs.length === 1 && c2a.tabs[0] === 'Bairro Operário' && c2a.map?.rooms >= 3 && /pátio|Pátio/i.test(c2a.where), JSON.stringify({ t: c2a.tabs, m: c2a.map, w: c2a.where }));
   check('Cap. 2: orçamento de luzes', c2a.lights.v <= 16, JSON.stringify(c2a.lights));
   await page.screenshot({ path: SHOTS + '12-bairro-patio.png' });
+
+  // --- Rua do Carvão → carvoaria → fábrica de fumaça
+  const c2c = await page.evaluate(() => {
+    const g = __ocdc, out = {}, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    const E = (id) => g.enemies.find((e) => e.id === id);
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    let maxL = 0; const L = () => { maxL = Math.max(maxL, lights()); };
+    T.tp(43, 0, 28.6, 0); T.hold('KeyW', 1.4); out.coalZ = +g.player.pos.z.toFixed(2); T.run(0.1);
+    out.inCoal = g.quest.has('c2_inCoal'); out.coalSave = S().checkpoint; out.obj = g.quest.current(); L();
+    // carvoeiro: lento, resistente e sofre dano do machado
+    const cv = E('carv_rua'); out.carv = { hp: cv.hp, speed: cv.def.runSpeed ?? cv.def.speed, type: cv.type };
+    cv.wake(); T.tp(cv.pos.x, 0, cv.pos.z - 1.3, 0); T.run(0.05); T.press('Mouse0'); T.run(0.7); out.carvHurt = cv.hp < out.carv.hp;
+    cv.setDeadInstant(); E('cac_coal').setDeadInstant();
+    T.tp(43, 0, 40, 0); T.run(0.3); L();
+    // carvoaria: porta, chave (acorda o Quintino), escala e livro
+    T.tp(39.0, 0, 43, -Math.PI / 2); out.carvDoor = T.interact('door_c2_carv'); T.run(0.9); out.carvOpen = g.level.doors.c2_carv.open;
+    T.tp(35.5, 0, 43, 0); T.run(0.2); out.inCarv = g.quest.has('c2_inCarv'); L();
+    const q = E('carv_quintino'); out.qDormant0 = q.dormant;
+    T.tp(36.6, 0, 45.9, 0); out.key = T.interactAt('pick_c2_factory_key'); out.hasKey = g.inventory.has('chave_fabrica'); out.qDormant1 = q.dormant;
+    q.setDeadInstant();
+    T.tp(35.6, 0, 45.9, 0); out.roster = T.interactAt('doc_escala_turno'); T.run(0.1); out.readRoster = g.quest.has('c2_readRoster');
+    T.tp(35.7, 0, 41.0, Math.PI); out.cbook = T.interactAt('c2_carv_book'); out.cbookSave = S().checkpoint;
+    // portão da fábrica com a chave
+    T.tp(43, 0, 58.2, 0); out.fdoor = T.interact('door_c2_factory'); T.run(1.6);
+    out.fOpen = g.level.doors.c2_factory.open && g.quest.has('c2_factoryOpen') && !g.inventory.has('chave_fabrica');
+    T.tp(43, 0, 58.8, 0); T.hold('KeyW', 1.4); out.fZ = +g.player.pos.z.toFixed(2); T.run(0.1);
+    out.inFactory = g.quest.has('c2_inFactory'); out.fSave = S().checkpoint; L();
+    E('cac_fab').setDeadInstant();
+    // casa das fornalhas travada até as duas válvulas
+    T.tp(45, 0, 76.6, 0); out.arena0 = T.interact('door_c2_arena'); out.arenaLocked0 = g.level.doors.c2_arena.locked;
+    const w = E('carv_fab'); out.wDormant0 = w.dormant;
+    T.tp(37.6, 0, 75.0, -Math.PI / 2); out.vA = T.interactAt('c2_valveA'); out.wDormant1 = w.dormant; out.valves1 = g.quest.has('c2_valves');
+    w.setDeadInstant();
+    T.tp(54.9, 0, 63.6, Math.PI / 2); out.vB = T.interactAt('c2_valveB'); T.run(0.5);
+    out.valves = g.quest.has('c2_valves') && !g.level.doors.c2_arena.locked; out.wheelSpun = g.level.valveB.wheel.rotation.z !== 0;
+    T.tp(52.6, 0, 62.4, Math.PI); out.diary = T.interactAt('doc_diario_fornalheiro'); T.run(0.1); out.readDiary = g.quest.has('c2_readDiary');
+    T.tp(47.7, 0, 76.0, 0); out.pbook = T.interactAt('c2_preboss_book'); out.pbookSave = S().checkpoint;
+    T.tp(45, 0, 64, 0); T.run(0.4); L();
+    out.maxLights = maxL; out.obj2 = g.quest.current();
+    T.key('KeyM'); out.map = g.menus.lastMap; out.where = document.getElementById('mapWhere').textContent; g.closeOverlay();
+    T.tp(43, 0, 40, 0); T.run(0.4);
+    return out;
+  });
+  check('Cap. 2: portão do pátio leva à Rua do Carvão (autosave)', c2c.coalZ > 30.6 && c2c.inCoal && c2c.coalSave === 'c2_coal' && /carvoaria|Carvoaria/i.test(c2c.obj), JSON.stringify({ z: c2c.coalZ, s: c2c.coalSave, o: c2c.obj }));
+  check('Cap. 2: carvoeiro é robusto e sofre dano do machado', c2c.carv.type === 'carvoeiro' && c2c.carv.hp >= 120 && c2c.carvHurt, JSON.stringify(c2c.carv));
+  check('Cap. 2: carvoaria — porta, chave da fábrica acorda Quintino, escala e livro', c2c.carvDoor === 'ok' && c2c.carvOpen && c2c.inCarv && c2c.key === 'ok' && c2c.hasKey && c2c.qDormant0 && !c2c.qDormant1 && c2c.roster === 'ok' && c2c.readRoster && c2c.cbook === 'ok' && c2c.cbookSave === 'c2_carv', JSON.stringify(c2c));
+  check('Cap. 2: chave abre o portão da fábrica e o salão faz autosave', c2c.fdoor === 'ok' && c2c.fOpen && c2c.fZ > 60.5 && c2c.inFactory && c2c.fSave === 'c2_factory', JSON.stringify({ d: c2c.fdoor, o: c2c.fOpen, z: c2c.fZ, s: c2c.fSave }));
+  check('Cap. 2: duas válvulas destravam a casa das fornalhas (a 1ª acorda o carvoeiro)', c2c.arena0 === 'ok' && c2c.arenaLocked0 && c2c.vA === 'ok' && c2c.wDormant0 && !c2c.wDormant1 && !c2c.valves1 && c2c.vB === 'ok' && c2c.valves && c2c.wheelSpun, JSON.stringify({ a: c2c.arena0, vA: c2c.vA, vB: c2c.vB, v: c2c.valves }));
+  check('Cap. 2: diário do fornalheiro e livro pré-chefe', c2c.diary === 'ok' && c2c.readDiary && c2c.pbook === 'ok' && c2c.pbookSave === 'c2_preboss' && /fornalhas|Garganta/.test(c2c.obj2), JSON.stringify({ d: c2c.diary, b: c2c.pbook, s: c2c.pbookSave, o: c2c.obj2 }));
+  check('Cap. 2: mapa cobre Rua do Carvão e fábrica', c2c.map?.rooms >= 7, JSON.stringify({ m: c2c.map, w: c2c.where }));
+  check('Cap. 2: orçamento de luzes na rua/fábrica (≤ 16 visíveis)', c2c.maxLights <= 16, 'max=' + c2c.maxLights);
+  await page.screenshot({ path: SHOTS + '13-rua-do-carvao.png' });
+  await page.evaluate(() => { T.tp(45, 0, 61.5, 0); T.run(0.4); });
+  await page.screenshot({ path: SHOTS + '14-fabrica.png' });
+
+  // --- Chefe do Cap. 2: Brás, o Guardião da Garganta (3 fases)
+  const c2boss = await page.evaluate(() => {
+    const g = __ocdc, b = g.boss, out = {};
+    g.level.doors.c2_arena.setOpen(true, true);
+    T.tp(45, 0, 79.5, 0); T.run(0.2); out.idle = !g.script.bossActive;
+    T.tp(45, 0, 81.2, 0); T.run(0.2);
+    out.active = g.script.bossActive; out.locked = g.level.doors.c2_arena.locked && !g.level.doors.c2_arena.open;
+    out.name = document.getElementById('bossName')?.textContent; out.bossId = b.id; out.hpStart = b.hp;
+    T.run(2.5);
+    let lv = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) lv++; }); out.lights = lv;
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '15-bras-chefe.png' });
+  const c2fight = await page.evaluate(() => {
+    const g = __ocdc, b = g.boss, out = {};
+    const pillars = [[38.5, 82.5], [51.5, 82.5], [38.5, 89.5], [51.5, 89.5]];
+    let guard = 0, stunned = 0, phases = new Set([b.phase]), wasStunned = false, minHp = 100, hits = 0;
+    while (b.alive && guard++ < 700) {
+      minHp = Math.min(minHp, g.player.hp); g.player.hp = 100;
+      if (g.player.state === 'grabbed') for (let k = 0; k < 25; k++) T.press('Mouse0');
+      if (b.phase >= 3 && !out.ventTried && b.state === 'stalk') {
+        // fase 3: perto demais, o chão brilha e o anel de fogo explode (dano não bloqueável)
+        out.ventTried = true; 
+        let hp0 = 100;
+        for (let k = 0; k < 90 && !b.ventN; k++) {
+          if (g.player.state === 'grabbed') for (let j = 0; j < 25; j++) T.press('Mouse0');
+          g.player.hp = 100; hp0 = 100;
+          if (b.state !== 'vent') { const ax = Math.sin(b.yaw), az = Math.cos(b.yaw); T.tp(b.pos.x + ax * 2.4, 0, b.pos.z + az * 2.4, b.yaw + Math.PI); }
+          T.run(0.1);
+        }
+        out.ventDmg = hp0 - g.player.hp;
+        T.run(1.0); out.ventHit = b.ventHits || 0; out.ventDbg = { st: g.player.state, d: +Math.hypot(g.player.pos.x - b.pos.x, g.player.pos.z - b.pos.z).toFixed(2), bs: b.state, r: b.ventLast }; minHp = Math.min(minHp, g.player.hp); continue;
+      }
+      if (b.phase >= 3 && !out.ventTried && b.state !== 'stalk') {
+        const cs = [[35.4, 79.4], [54.6, 79.4], [35.4, 91], [54.6, 91]].sort((u, v) => Math.hypot(v[0] - b.pos.x, v[1] - b.pos.z) - Math.hypot(u[0] - b.pos.x, u[1] - b.pos.z))[0];
+        T.tp(cs[0], 0, cs[1], 0); T.run(0.25); continue;
+      }
+      if (b.state === 'stunned') {
+        if (!wasStunned) stunned++; wasStunned = true;
+        const bx = Math.sin(b.yaw), bz = Math.cos(b.yaw);
+        T.tp(b.pos.x - bx * 1.0, 0, b.pos.z - bz * 1.0, Math.atan2(bx, bz));
+        T.press('Mouse2'); T.run(1.1);
+      } else {
+        wasStunned = false;
+        if (b.state !== 'chargeWind' && b.state !== 'charge') {
+          // atrás do pilar oposto ao chefe, com distância suficiente para a investida
+          let best = null, bd = -1;
+          for (const [x, z] of pillars) {
+            const dx = x - b.pos.x, dz = z - b.pos.z, d = Math.hypot(dx, dz) || 1;
+            const sx = x + dx / d * 1.25, sz = z + dz / d * 1.25;
+            if (sx < 34.6 || sx > 55.4 || sz < 78.6 || sz > 91.4) continue;
+            if (d > bd) { bd = d; best = [sx, sz]; }
+          }
+          if (best) T.tp(best[0], 0, best[1], Math.atan2(b.pos.x - best[0], b.pos.z - best[1]));
+        }
+        T.run(0.5);
+      }
+      phases.add(b.phase);
+    }
+    out.guard = guard; out.alive = b.alive; out.hp = b.hp; out.stunned = stunned; out.phases = [...phases];
+    out.thrown = b.thrownN || 0; out.vent = b.ventN || 0; out.weakHits = b.weakHits || 0; out.minHp = minHp;
+    T.run(1.5);
+    out.dead = g.quest.has('c2_bossDead'); out.unlocked = !g.level.doors.c2_arena.locked; out.bossBar = !document.getElementById('boss').classList.contains('hidden');
+    out.obj = g.quest.current();
+    // passe do bonde na grelha e a saída
+    T.tp(45, 0, 90.4, 0); out.pass = T.interactAt('pick_c2_pass'); out.hasPass = g.quest.has('c2_hasPass');
+    T.tp(54.4, 0, 87, Math.PI / 2); out.exit = T.interactAt('c2_exit');
+    const s = JSON.parse(localStorage.getItem('ocdc_save'));
+    out.save = { cp: s.checkpoint, ch: s.chapter, done: s.flags.c2_chapterDone, bossDead: s.flags.c2_bossDead };
+    out.state = g.state;
+    return out;
+  });
+  await new Promise((r) => setTimeout(r, 300));
+  const end2 = await page.evaluate(() => ({ title: document.getElementById('endTitle')?.textContent, note: document.getElementById('endNote')?.textContent, btn: document.getElementById('btnEndNext').textContent, dis: document.getElementById('btnEndNext').disabled, vis: !!document.getElementById('chapterEnd')?.offsetParent || !document.getElementById('chapterEnd')?.classList.contains('hidden') }));
+  check('Cap. 2: casa das fornalhas tranca e desperta Brás', c2boss.idle && c2boss.active && c2boss.locked && /BRÁS/.test(c2boss.name || '') && c2boss.bossId === 'bras' && c2boss.hpStart >= 500, JSON.stringify(c2boss));
+  check('Cap. 2: orçamento de luzes na arena (≤ 16)', c2boss.lights <= 16, 'v=' + c2boss.lights);
+  check('Cap. 2: combate real — pilares atordoam, fole nas costas, 3 fases', !c2fight.alive && c2fight.stunned >= 2 && c2fight.phases.includes(2) && c2fight.phases.includes(3) && c2fight.weakHits >= 2, JSON.stringify(c2fight));
+  check('Cap. 2: Brás usa carvão em brasa (fase 2+) e o anel de fogo (fase 3)', c2fight.thrown >= 1 && c2fight.vent >= 1 && c2fight.ventHit >= 1 && c2fight.ventDmg >= 20 && c2fight.minHp < 100, JSON.stringify({ t: c2fight.thrown, v: c2fight.vent, h: c2fight.ventHit, dmg: c2fight.ventDmg, m: c2fight.minHp, dbg: c2fight.ventDbg }));
+  check('Cap. 2: derrota destrava a arena e esconde a barra', c2fight.dead && c2fight.unlocked && !c2fight.bossBar && /porta de serviço/.test(c2fight.obj), JSON.stringify({ d: c2fight.dead, u: c2fight.unlocked, b: c2fight.bossBar, o: c2fight.obj }));
+  check('Cap. 2: passe do bonde e saída encerram o capítulo com save', c2fight.pass === 'ok' && c2fight.hasPass && c2fight.exit === 'ok' && c2fight.state === 'end' && c2fight.save.cp === 'c2_end' && c2fight.save.ch === 2 && c2fight.save.done && c2fight.save.bossDead, JSON.stringify(c2fight.save) + ' ' + c2fight.state + ' ' + c2fight.pass + ' ' + c2fight.exit);
+  check('Cap. 2: tela de fim do Capítulo 2 (Cap. 3 em breve)', /Fim do Capítulo 2/.test(end2.title || '') && /Capítulo 3/.test(end2.btn) && end2.dis && end2.vis, JSON.stringify(end2));
+  await page.screenshot({ path: SHOTS + '16-fim-cap2.png' });
   // recarregar a página e "Continuar" volta ao Capítulo 2 com o estado salvo
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
   const c2b = await page.evaluate(() => {
     document.getElementById('btnContinue').click();
     const g = __ocdc; T.run(0.3);
-    const r = { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), shut: g.level.doors.c2_shutter.open, dep: g.level.doors.c2_depot.open, crankHidden: !g.level.pickupMeshes.c2_crank.visible, dead: !g.enemies.find((e) => e.id === 'cac_dep').alive, sharp: g.player.sharpened, maxSt: g.player.maxSt, heal: g.player.healAmount, maxHp: g.player.maxHp };
+    const r = { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), shut: g.level.doors.c2_shutter.open, dep: g.level.doors.c2_depot.open, crankHidden: !g.level.pickupMeshes.c2_crank.visible, dead: !g.enemies.find((e) => e.id === 'cac_dep').alive, sharp: g.player.sharpened, maxSt: g.player.maxSt, heal: g.player.healAmount, maxHp: g.player.maxHp,
+      bossDead: !g.boss.alive, fac: g.level.doors.c2_factory.open, gate: g.level.doors.c2_yardgate.open, arenaFree: !g.level.doors.c2_arena.locked, pass: g.inventory.has('passe_bonde'), active: g.script.bossActive };
     // vista da rua para o screenshot
     T.tp(8, 0, 4, Math.PI / 2); T.run(0.5);
     return r;
   });
-  check('Cap. 2: continuar restaura o Bairro Operário (portas, coleta, inimigo morto, melhorias)', c2b.st === 'playing' && c2b.ch === 2 && Math.abs(c2b.pos[0] - 43) < 0.5 && c2b.shut && c2b.dep && c2b.crankHidden && c2b.dead && c2b.maxSt === 125 && c2b.heal === 65 && c2b.sharp, JSON.stringify(c2b));
+  check('Cap. 2: continuar restaura o Bairro Operário (portas, coleta, inimigo morto, melhorias)', c2b.st === 'playing' && c2b.ch === 2 && Math.abs(c2b.pos[0] - 53) < 0.6 && Math.abs(c2b.pos[2] - 87) < 0.6 && c2b.bossDead && c2b.fac && c2b.gate && c2b.arenaFree && c2b.pass && !c2b.active && c2b.shut && c2b.dep && c2b.crankHidden && c2b.dead && c2b.maxSt === 125 && c2b.heal === 65 && c2b.sharp, JSON.stringify(c2b));
   await page.screenshot({ path: SHOTS + '12-bairro-rua.png' });
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
