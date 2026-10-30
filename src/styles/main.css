@@ -1,0 +1,65 @@
+/* O Culto das Cinzas — interface (HTML/CSS sobre o canvas) */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #d8d2c0;
+  font-family: Georgia, 'Times New Roman', serif; user-select: none; }
+#app { position: fixed; inset: 0; }
+#game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.hidden { display: none !important; }
+
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(20,26,18,.82), rgba(0,0,0,.96)); z-index: 20; text-align: center; padding: 20px; }
+.screen h1 { font-size: clamp(40px, 7vw, 86px); letter-spacing: .12em; margin: 0 0 10px; color: #c9b98a;
+  text-shadow: 0 0 18px rgba(255,140,40,.35), 0 3px 0 #000; line-height: 1.0; }
+.screen h1.red { color: #9c1d14; text-shadow: 0 0 22px rgba(200,0,0,.5); }
+.screen h2 { font-weight: normal; letter-spacing: .08em; color: #a8b39a; margin: 6px 0 22px; }
+.screen p { max-width: 640px; line-height: 1.5; }
+.small { font-size: 13px; opacity: .65; }
+.buttons { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; min-width: 260px; }
+button { background: rgba(30,36,28,.9); color: #e3d9bd; border: 1px solid #5d6650; padding: 11px 20px; font: inherit;
+  font-size: 18px; letter-spacing: .06em; cursor: pointer; }
+button:hover, button:focus { background: #4a3b1d; border-color: #c49a45; outline: none; }
+#options label { display: flex; gap: 12px; align-items: center; justify-content: space-between; width: 380px; margin: 6px 0; }
+#options input[type=range] { flex: 1; }
+select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
+
+#hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+#bars { position: absolute; left: 22px; bottom: 22px; width: 260px; text-shadow: 0 1px 2px #000; }
+.bar { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 11px; letter-spacing: .15em; }
+.bar span { width: 62px; opacity: .8; }
+.track { flex: 1; height: 9px; background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.18); }
+.fill { height: 100%; width: 100%; transition: width .12s linear; }
+.fill.hp { background: linear-gradient(#a3281c, #5e120c); }
+.fill.st { background: linear-gradient(#b9a35a, #6f5f2c); }
+.fill.boss { background: linear-gradient(#8a1a10, #3c0804); }
+#weapon { margin-top: 6px; font-size: 14px; letter-spacing: .08em; color: #c8b98c; }
+#items { font-size: 12px; opacity: .75; }
+#objective { position: absolute; top: 18px; left: 22px; font-size: 14px; color: #b9c2a8; opacity: .85; max-width: 420px;
+  text-shadow: 0 1px 2px #000; font-style: italic; }
+#prompt { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); background: rgba(0,0,0,.6);
+  padding: 6px 14px; border: 1px solid rgba(200,170,90,.5); font-size: 16px; }
+#hint { position: absolute; right: 22px; top: 18px; max-width: 330px; background: rgba(10,14,10,.75);
+  border-left: 3px solid #b38a3a; padding: 10px 14px; font-size: 14px; line-height: 1.5; }
+#toast { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); font-size: 18px; text-align: center;
+  text-shadow: 0 0 6px #000, 0 2px 2px #000; color: #e0d6b8; max-width: 70%; }
+#boss { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); width: 46%; text-align: center; }
+#bossName { letter-spacing: .3em; font-size: 14px; margin-bottom: 4px; color: #c9a77a; }
+#boss .track { height: 11px; }
+#struggle { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); color: #ff6b4a; font-size: 20px;
+  text-shadow: 0 0 8px #000; animation: pulse .4s infinite alternate; }
+@keyframes pulse { from { opacity: .6 } to { opacity: 1 } }
+#vignette { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(140,0,0,.75) 100%); transition: opacity .15s; }
+#fps { position: absolute; right: 8px; bottom: 6px; font: 12px monospace; color: #8f8; }
+#crosshair { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; background: rgba(255,255,255,.25); border-radius: 50%; }
+
+#inventory { justify-content: flex-start; padding-top: 8vh; }
+#invList, #docList { min-width: 360px; text-align: left; }
+.inv-item { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.doc-item { padding: 6px 10px; cursor: pointer; pointer-events: auto; color: #d9c690; }
+.doc-item:hover { background: rgba(255,255,255,.06); }
+.paper { background: #d8ccae; color: #2a2116; max-width: 620px; padding: 26px 34px; text-align: left; line-height: 1.6;
+  box-shadow: 0 0 40px #000; font-size: 16px; max-height: 70vh; overflow: auto; }
+.paper h3 { margin-top: 0; }
+#controls { margin-top: 20px; font-size: 13px; opacity: .7; line-height: 1.7; }
+#stats { font-size: 14px; opacity: .8; margin: 10px; }
+#fatal pre { white-space: pre-wrap; max-width: 80%; color: #f99; }
