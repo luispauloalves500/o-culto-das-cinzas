@@ -85,4 +85,20 @@ export const ENEMIES = {
     mats: 'acolito',
     groanPitch: 1.1,
   },
+  // Capítulo 4 — Cidade Morta: morador coberto de cinza que ficou "parado" às 3h07, como os relógios.
+  // Lento e meio surdo enquanto anda; quando vê Elias, corre aos trancos e bate com uma barra de ferro.
+  // Com o toque do sino do Relógio, todos os da praça acordam ao mesmo tempo.
+  cinzento: {
+    name: 'Cinzento',
+    hp: 80, poise: 40, radius: 0.37, height: 1.75, scale: 1.0, hunch: 0.35,
+    walk: 0.8, chase: 2.8, turn: 4.4,
+    sight: 9, fov: 70, hearing: 1.3,
+    attackTokens: 1,
+    attacks: [
+      { id: 'bar', range: 1.85, windup: 0.65, active: 0.18, recover: 0.85, dmg: 16, knock: 3, weight: 2 },
+      { id: 'grab', range: 1.25, windup: 0.6, active: 0.2, recover: 1.1, dmg: 0, grab: true, grabDmg: 6, weight: 1 },
+    ],
+    mats: 'cinzento',
+    groanPitch: 0.9,
+  },
 };

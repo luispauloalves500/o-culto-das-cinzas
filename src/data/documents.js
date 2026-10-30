@@ -265,4 +265,30 @@ export const DOCUMENTS = {
 <p>O recipiente RN 0 não deve chegar à Torre antes da hora. Se descer à cripta, retenha-o aqui. Se não puder retê-lo, apague a chama: ele não pode ter o que é dela.</p>
 <p class="small">Assinado: <b>V.</b> — e, a lápis, na margem, a letra apressada de Inês: "Elias, o relógio. Sempre o relógio."</p>`,
   },
+  edital_toque: {
+    ch: 4,
+    title: 'Edital — Toque de recolher',
+    body: `<p>Cartaz impresso colado na lataria do bonde tombado. A cinza grudou na cola e cobre metade das letras.</p>
+<p><b>CÂMARA DE VÉSPERA · EDITAL Nº 31</b><br>Por ordem do <b>Vigia da Praça do Relógio</b> e com a bênção da Confraria do Véu:</p>
+<p>1. Ao <b>terceiro toque do sino</b>, ninguém nas ruas do centro antigo.<br>2. Lampiões apagados; janelas fechadas.<br>3. Quem estiver fora às <b>3h07</b> será recolhido.<br>4. A Praça do Relógio é guardada. Não atravessem a praça.</p>
+<p class="small">Embaixo, a lápis, outra mão: "Recolhido para onde? Meu pai saiu às 3h e voltou cinza. Anda pela rua até hoje, de chapéu, como se fosse para o trabalho."</p>`,
+  },
+  diario_farmaceutico: {
+    ch: 4,
+    title: 'Diário do Dr. Lauro, farmacêutico',
+    body: `<p>Caderno de capa preta sobre o balcão, ao lado da balança. As últimas páginas têm a letra cada vez mais torta.</p>
+<p><b>12/8.</b> A cinza começou a cair sem vento. Os irmãos do Véu distribuíram "pó de sossego" na praça — fiz análise: carvão, sal e algo que não reconheço. Recusei vender. Disseram que voltariam.</p>
+<p><b>13/8.</b> Às 3h07 todos os relógios da rua pararam juntos. O sino tocou três vezes. De manhã, o Ernesto (meu ajudante) estava de pé atrás do balcão, cinzento, olhando a parede. Não fala. Quando me mexo depressa, ele se vira.</p>
+<p><b>14/8.</b> O Ponteiro, da relojoaria em frente, me deixou a chave dele: <i>"Se eu não voltar, dê a quem precisar passar pela praça. Pelos fundos da loja se chega ao arco — o bonde não vai sair do meio da rua tão cedo."</i> Guardei na gaveta do caixa.</p>
+<p class="small">Última linha: "Não abro mais a gaveta. Ela faz barulho, e o Ernesto escuta."</p>`,
+  },
+  caderno_relojoeiro: {
+    ch: 4,
+    title: 'Caderno do relojoeiro Ponteiro',
+    body: `<p>Caderno de oficina sobre a bancada, entre lupas e molas. Desenhos de engrenagens e, no fim, anotações apressadas.</p>
+<p>"Fui chamado à Torre para consertar o mecanismo do Relógio — e o <b>lampião do Vigia</b>. É o lampião que o mantém de pé: luz fria, sem chama. Se o vidro trincar, ele larga tudo e <b>volta à Torre para se reacender</b>. Ele não sai da praça; está preso a ela como o ponteiro ao eixo."</p>
+<p>"Ontem, às 3h07, os irmãos do Véu passaram pela praça com uma moça de cabelo solto, sem fita. O Vigia abriu a porta de ferro da Torre para eles e trancou de novo. A chave ele leva no cinto."</p>
+<p>"Todos os relógios de Véspera param às 3h07. Não é defeito: é a hora em que ele toca."</p>
+<p class="small">Na margem, um esboço da praça: o chafariz, os dois pedestais e a banca marcados com um X. "Ele corre em linha reta. Pedra não cede."</p>`,
+  },
 };
