@@ -193,7 +193,7 @@ try {
     T.tp(sl.x, -5, 1.7, Math.PI); out.d13 = T.interactAt('drawer_13'); T.run(0.8);
     out.d13open = g.level.drawers[13].open; out.crawlerWoke = !c.dormant;
     out.coldBefore = D.coldRoom.locked;
-    const aim = () => { T.tp(c.pos.x - 1.1, -5, c.pos.z + 0.6, 0); const y = Math.atan2(c.pos.x - g.player.pos.x, c.pos.z - g.player.pos.z); g.player.yaw = y; g.cameraCtl.yaw = y; };
+    let aimK = 0; const AIM = [[-1.1, 0.6], [-1.2, -0.3], [-0.6, 1.1], [-1.25, 0]]; const aim = () => { const [ox, oz] = AIM[aimK % AIM.length]; T.tp(c.pos.x + ox, -5, c.pos.z + oz, 0); const y = Math.atan2(c.pos.x - g.player.pos.x, c.pos.z - g.player.pos.z); g.player.yaw = y; g.cameraCtl.yaw = y; };
     // golpe leve (horizontal) passa por cima do Rastejador
     g.player.hp = 100; aim(); const hpL = c.hp; T.press('Mouse0'); T.run(0.9); out.lightDmg = hpL - c.hp;
     // Rastejador: golpes fortes (de cima para baixo)
@@ -203,7 +203,7 @@ try {
       g.player.hp = 100; if (g.player.state === 'grabbed') { for (let k = 0; k < 20; k++) T.press('Mouse0'); }
       // como um jogador faria: espera a garra passar (fora do alcance) e golpeia na recuperação
       for (let k = 0; k < 120 && c.alive && (c.state === 'attack' || c.state === 'grabbing' || g.player.state !== 'free'); k++) { T.tp(c.pos.x - 2.6, -5, c.pos.z + 1.2, 0); T.run(1 / 60); g.player.hp = 100; }
-      aim(); T.press('Mouse2'); swings++; T.run(1.1);
+      const hpB = c.hp; aim(); T.press('Mouse2'); swings++; T.run(1.1); if (c.hp === hpB) aimK++;
     }
     out.crawler = { alive: c.alive, hp0, hp: c.hp, swings };
     g.player.hp = 100;
@@ -308,6 +308,95 @@ try {
   await page.screenshot({ path: SHOTS + '07-mapa.png' });
   await page.evaluate(() => { T.key('KeyM'); });
   check('mapa fecha com M', await page.evaluate(() => __ocdc.state === 'playing'));
+  // --- Ala cirúrgica superior, telhado, martelo, parede do expurgo e cilindros de oxigênio
+  const wing = await page.evaluate(() => {
+    const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id), q = g.quest;
+    const UP2 = 4, ROOF = 7.3;
+    g.player.hp = g.player.maxHp;
+    // atalho: ferrolho da escada principal pelo térreo
+    out.msLocked = D.mainStair.locked;
+    T.tp(39.5, 0, 15.0, Math.PI); out.msDoor = T.interactAt('door_mainStair'); T.run(0.8);
+    out.msOpen = D.mainStair.open && !D.mainStair.locked && q.has('mainStairShortcut');
+    T.tp(39.5, 0, 14.8, 0); g.cameraCtl.yaw = 0; T.hold('KeyW', 4); T.run(0.3);
+    out.msTop = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    T.tp(39.5, UP2, 23.15, -Math.PI / 2); g.cameraCtl.yaw = -Math.PI / 2; T.hold('KeyW', 1.5);
+    out.msOut = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    // porta da ala (corredor da administração) → autosave
+    for (const id of ['enf_wing', 'int_roof']) E(id).setDeadInstant();
+    T.tp(26, UP2, 24.9, 0); out.wingDoor = T.interactAt('door_wing'); T.run(0.8);
+    T.tp(26, UP2, 25.2, 0); g.cameraCtl.yaw = 0; T.hold('KeyW', 1.0); T.run(0.2);
+    out.entered = q.has('enteredWing'); out.cpWing = g.checkpoint;
+    // cilindro de oxigênio: golpe real explode e fere o inimigo ao lado
+    const vic = E('ras_ster'); const vicHp0 = vic.hp;
+    vic.pos.set(24.3, UP2, 28.3); vic.dormant = true;
+    g.player.hp = g.player.maxHp; g.player.st = 100;
+    T.tp(22.0, UP2, 28.55, Math.PI / 2); g.cameraCtl.yaw = Math.PI / 2;
+    for (let i = 0; i < 4 && !q.has('exploded_o2_cor'); i++) { g.player.yaw = Math.PI / 2; T.press('Mouse0'); T.run(0.8); }
+    T.run(0.5);
+    out.blast = q.has('exploded_o2_cor'); out.vicHp = [vicHp0, vic.hp, vic.alive]; out.playerHp = g.player.hp;
+    out.tankCol = g.level.tanks.o2_cor.collider.enabled;
+    if (vic.alive) vic.setDeadInstant();
+    // esterilização: registro cirúrgico (pista do segredo)
+    g.player.hp = g.player.maxHp;
+    T.tp(20, UP2, 28.0, 0); out.sterDoor = T.interactAt('door_sterile'); T.run(0.8);
+    T.tp(22.2, UP2, 32.9, 0); out.log = T.interactAt('doc_registro_cirurgico'); T.run(0.1); out.readLog = q.has('readSurgLog');
+    // sala 2: a parede rachada não cede ao machado
+    T.tp(27.5, UP2, 28.0, 0); out.s2Door = T.interactAt('door_surgery2'); T.run(0.8);
+    const s2 = E('int_s2'); out.s2Dormant = s2.dormant; s2.setDeadInstant();
+    g.player.setWeapon('machado'); g.player.st = 100;
+    T.tp(27.5, UP2, 35.1, 0); g.cameraCtl.yaw = 0; T.press('Mouse0'); T.run(0.9);
+    out.axeImmune = !q.has('wallBroken') && q.has('wallTried') && g.level.crackedWall.collider.enabled;
+    // telhado pela escada dos fundos
+    T.tp(17.3, UP2, 27.5, -Math.PI / 2); out.rsDoor = T.interactAt('door_roofStair'); T.run(0.8);
+    T.tp(14.7, UP2, 27.3, 0); g.cameraCtl.yaw = 0; T.hold('KeyW', 4.5); T.run(0.2);
+    out.rsTop = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    T.tp(15.5, ROOF, 36.9, Math.PI / 2); out.roofDoor = T.interactAt('door_roofDoor'); T.run(0.8);
+    T.tp(15.5, ROOF, 36.9, Math.PI / 2); g.cameraCtl.yaw = Math.PI / 2; T.hold('KeyW', 1.5); T.run(0.2);
+    out.roof = q.has('reachedRoof'); out.cpRoof = g.checkpoint; out.roofPos = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    // barracão: martelo industrial e bilhete
+    T.tp(29.6, ROOF, 35.2, Math.PI / 2); g.cameraCtl.yaw = Math.PI / 2; T.hold('KeyW', 1.0);
+    out.inShed = g.script.room;
+    T.tp(33.9, ROOF, 36.6, 0); out.hammer = T.interactAt('pick_hammer');
+    out.weapon = g.player.weapon?.id; out.weapons = [...g.inventory.weapons];
+    T.tp(34.6, ROOF, 36.6, 0); out.note = T.interactAt('doc_bilhete_zelador');
+    // R troca de arma
+    T.press('KeyR'); out.swap1 = g.player.weapon?.id; T.run(0.1);
+    T.press('KeyR'); out.swap2 = g.player.weapon?.id; T.run(0.1);
+    // golpe leve do martelo não basta; o forte derruba a parede
+    g.player.st = 100; g.player.hp = g.player.maxHp;
+    T.tp(27.5, UP2, 35.1, 0); g.cameraCtl.yaw = 0; g.player.yaw = 0; T.press('Mouse0'); T.run(1.0);
+    out.lightKept = !q.has('wallBroken');
+    g.player.st = 100; g.player.yaw = 0; T.press('Mouse2'); T.run(1.6);
+    out.broken = q.has('wallBroken') && !g.level.crackedWall.collider.enabled && g.level.expurgoGate.open;
+    T.tp(27.5, UP2, 35.2, 0); g.cameraCtl.yaw = 0; T.hold('KeyW', 1.0); T.run(0.2);
+    out.expurgo = g.script.room; out.expZ = +g.player.pos.z.toFixed(2);
+    T.tp(27.2, UP2, 36.9, 0); out.stone = T.interactAt('pick_whetstone'); out.sharp = g.player.sharpened;
+    T.tp(28.1, UP2, 36.9, 0); out.last = T.interactAt('doc_ultimo_bilhete');
+    const b0 = g.inventory.items.bandagem || 0; T.tp(25.0, UP2, 36.9, 0); out.band = T.interactAt('pick_band_exp'); out.bandGain = (g.inventory.items.bandagem || 0) - b0;
+    // recuperação: livro de registros
+    T.tp(33.5, UP2, 28.0, 0); out.recDoor = T.interactAt('door_recovery'); T.run(0.8);
+    T.tp(35.3, UP2, 36.5, 0); out.book = T.interactAt('book_wing'); out.cpRec = g.checkpoint;
+    // dano do machado afiado
+    g.player.setWeapon('machado');
+    g.hud.update(1 / 60, g); out.hud = document.getElementById('weapon')?.textContent || '';
+    const sv = JSON.parse(localStorage.getItem('ocdc_save'));
+    out.saved = { weapons: sv.inventory.weapons, wall: sv.flags.wallBroken, sharp: sv.flags.sharpened, tank: sv.flags.exploded_o2_cor, ms: sv.doors.mainStair?.open, hammer: sv.flags.hasHammer };
+    // mapa: aba do telhado
+    T.key('KeyM'); T.key('Digit4'); out.mapRoof = g.menus.mapView.floor; out.mapRoofRooms = g.menus.lastMap?.rooms; T.key('KeyM');
+    return out;
+  });
+  check('escada principal: ferrolho pelo térreo vira atalho até o 2º andar', wing.msLocked && wing.msDoor === 'ok' && wing.msOpen && wing.msTop[1] > 3.8 && wing.msTop[2] > 22.4 && wing.msOut[0] < 37.5 && wing.msOut[1] > 3.8, JSON.stringify({ t: wing.msTop, o: wing.msOut }));
+  check('ala cirúrgica superior: porta pela administração e autosave', wing.wingDoor === 'ok' && wing.entered && wing.cpWing === 'wing', JSON.stringify(wing));
+  check('cilindro de oxigênio explode com golpe e fere inimigo próximo', wing.blast && !wing.tankCol && (!wing.vicHp[2] || wing.vicHp[1] <= wing.vicHp[0] - 40), JSON.stringify({ b: wing.blast, hp: wing.vicHp, php: wing.playerHp }));
+  check('parede rachada resiste ao machado', wing.sterDoor === 'ok' && wing.log === 'ok' && wing.readLog && wing.s2Door === 'ok' && wing.s2Dormant && wing.axeImmune, JSON.stringify(wing));
+  check('escada dos fundos sobe ao telhado (autosave)', wing.rsDoor === 'ok' && wing.rsTop[1] > 7 && wing.roofDoor === 'ok' && wing.roof && wing.cpRoof === 'roof' && wing.roofPos[0] > 17, JSON.stringify({ t: wing.rsTop, r: wing.roofPos }));
+  check('martelo industrial: coleta, equipa e R troca de arma', wing.inShed === 'shed' && wing.hammer === 'ok' && wing.weapon === 'martelo' && wing.weapons.length === 2 && wing.swap1 === 'machado' && wing.swap2 === 'martelo' && wing.note === 'ok', JSON.stringify(wing));
+  check('golpe forte do martelo derruba a parede do expurgo (segredo)', wing.lightKept && wing.broken && wing.expurgo === 'expurgo' && wing.expZ > 36.3, JSON.stringify(wing));
+  check('recompensa do expurgo: pedra de afiar (+30% machado), bandagens e bilhete', wing.stone === 'ok' && wing.sharp && wing.bandGain === 2 && wing.last === 'ok', JSON.stringify(wing));
+  check('HUD indica machado afiado', /afiado/.test(wing.hud), wing.hud);
+  check('livro da recuperação e save com armas/parede/afiação/cilindro', wing.book === 'ok' && wing.cpRec === 'recovery' && wing.saved.weapons?.length === 2 && wing.saved.wall && wing.saved.sharp && wing.saved.tank && wing.saved.ms && wing.saved.hammer, JSON.stringify(wing.saved));
+  check('mapa: aba Telhado', wing.mapRoof === 'roof' && wing.mapRoofRooms >= 2, JSON.stringify({ f: wing.mapRoof, n: wing.mapRoofRooms }));
+  await page.screenshot({ path: SHOTS + '08-ala-cirurgica.png' });
   // --- Chefe
   const boss = await page.evaluate(() => {
     const g = __ocdc; const b = g.boss;
@@ -368,7 +457,7 @@ try {
     const s = JSON.parse(localStorage.getItem('ocdc_save')); s.flags = { ...s.flags, bossDead: false, gateOpen: false, chapterDone: false }; s.checkpoint = 'pre_boss';
     localStorage.setItem('ocdc_save', JSON.stringify(s));
     document.getElementById('btnContinue').click();
-    const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray() };
+    const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray(), weapons: [...g.inventory.weapons], wall: !g.level.crackedWall.panel.visible && g.level.expurgoGate.open, sharp: g.player.sharpened, tank: !g.level.tanks.o2_cor.group.visible, hammerHidden: !g.level.pickupMeshes.hammer.visible };
     g.player.takeHit({ dmg: 999, from: { x: 0, y: 0, z: 0 }, blockable: false });
     T.run?.(0);
     return r;
@@ -378,12 +467,14 @@ try {
   const deadScr = await page.$eval('#dead', (e) => !e.classList.contains('hidden'));
   const dinfo = await page.evaluate(() => ({ st: __ocdc.state, hp: __ocdc.player.hp, alive: __ocdc.player.alive, pst: __ocdc.player.state, dy: __ocdc.dyingT }));
   check('continuar carrega checkpoint pré-chefe', death.state === 'playing' && Math.abs(death.pos[1] + 5) < 0.1, JSON.stringify(death));
+  check('carregar save restaura armas, parede derrubada, afiação e cilindro', death.weapons.length === 2 && death.wall && death.sharp && death.tank && death.hammerHidden, JSON.stringify(death));
   check('morte mostra tela e permite recarregar', deadScr, JSON.stringify(dinfo));
   await page.click('#btnRetry'); await new Promise((r) => setTimeout(r, 500));
   check('recarregar após morte', await page.evaluate(() => __ocdc.state === 'playing' && __ocdc.player.hp > 0));
   // --- desempenho aproximado (render real, swiftshader)
-  const fps = await page.evaluate(() => new Promise((res) => { const g = __ocdc; let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 3000) requestAnimationFrame(f); else res(n / 3); }; requestAnimationFrame(f); }));
-  check('renderização contínua', fps > 3, fps.toFixed(1) + ' fps (software)');
+  const fps = await page.evaluate(() => new Promise((res) => { const g = __ocdc; let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 3000) requestAnimationFrame(f); else res({ fps: n / 3, calls: g.renderer.info.render.calls, tris: g.renderer.info.render.triangles, lights: (() => { let k = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) k++; }); return k; })(), allLights: (() => { let k = 0; g.scene.traverse((o) => { if (o.isLight) k++; }); return k; })(), meshes: (() => { let k = 0; g.scene.traverse((o) => { if (o.isMesh) k++; }); return k; })() }); }; requestAnimationFrame(f); }));
+  check('orçamento de luzes limita luzes ativas', fps.lights <= fps.allLights - 16, 'visíveis: ' + fps.lights + ' de ' + fps.allLights);
+  check('renderização contínua', fps.fps > 2, fps.fps.toFixed(1) + ' fps (software, sem GPU) ' + JSON.stringify(fps));
   await page.screenshot({ path: SHOTS + '06-continuar.png' });
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

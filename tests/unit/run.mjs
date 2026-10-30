@@ -4,7 +4,8 @@ import { CollisionWorld } from '../../src/world/CollisionWorld.js';
 import { Navigation } from '../../src/world/Navigation.js';
 import { migrateSave, createEmptySave, SaveManager, SAVE_KEY, SAVE_VERSION } from '../../src/core/SaveManager.js';
 import { CombatSystem, testVolume } from '../../src/gameplay/CombatSystem.js';
-import { WEAPONS } from '../../src/data/weapons.js';
+import { WEAPONS, weaponDamage } from '../../src/data/weapons.js';
+import { Inventory } from '../../src/gameplay/Inventory.js';
 import { DOCUMENTS } from '../../src/data/documents.js';
 import { ENEMIES } from '../../src/data/enemies.js';
 import { ITEMS } from '../../src/data/items.js';
@@ -193,6 +194,43 @@ test('dados: anexo (escada, planta, medalha, hino) e cadeia de objetivos até a 
   const h = DOCUMENTS.hino_capela.body; const i = ['Brás', 'Luzia', 'Roque', 'Dimas'].map((n) => h.indexOf(n));
   assert.ok(i.every((x) => x >= 0) && i[0] < i[1] && i[1] < i[2] && i[2] < i[3], 'ordem do hino');
   assert.ok(SIDE_OBJECTIVES.length >= 11);
+});
+
+test('armas: martelo pesado e válido; pedra de afiar só vale para o machado', () => {
+  const m = WEAPONS.martelo, a = WEAPONS.machado;
+  assert.ok(m && m.breaksWalls && m.name);
+  for (const k of ['light1', 'light2', 'heavy']) { const d = m.attacks[k]; assert.ok(d.active[0] < d.active[1] && d.active[1] < d.dur, k); }
+  assert.ok(m.attacks.heavy.dmg > a.attacks.heavy.dmg && m.attacks.heavy.poise > a.attacks.heavy.poise && m.attacks.light1.dur > a.attacks.light1.dur);
+  assert.equal(weaponDamage(a, a.attacks.light1, true), Math.round(a.attacks.light1.dmg * 1.3));
+  assert.equal(weaponDamage(a, a.attacks.light1, false), a.attacks.light1.dmg);
+  assert.equal(weaponDamage(m, m.attacks.heavy, true), m.attacks.heavy.dmg);
+});
+
+test('inventário: lista de armas, migração de save v1 (só weapon) e serialização', () => {
+  const inv = new Inventory({ emit() {} });
+  inv.restore({ items: { bandagem: 1 }, weapon: 'machado' }, []);
+  assert.deepEqual(inv.weapons, ['machado']);
+  inv.addWeapon('martelo'); inv.addWeapon('martelo');
+  assert.deepEqual(inv.weapons, ['machado', 'martelo']);
+  const s = inv.serialize();
+  const inv2 = new Inventory({ emit() {} }); inv2.restore({ ...s, weapon: 'martelo' }, []);
+  assert.deepEqual([...inv2.weapons].sort(), ['machado', 'martelo']);
+  const empty = createEmptySave();
+  assert.deepEqual(empty.inventory.weapons, []);
+});
+
+test('mapa: ala cirúrgica superior, expurgo secreto e telhado', () => {
+  assert.equal(floorOf(7.3), 'roof'); assert.equal(floorOf(5.9), 'up2');
+  assert.equal(roomAt({ x: 26, y: 4, z: 27.5 }).id, 'wingCorridor');
+  assert.equal(roomAt({ x: 27.5, y: 4, z: 37.2 }).id, 'expurgo');
+  assert.equal(roomAt({ x: 33.5, y: 7.3, z: 36 }).id, 'shed');
+  assert.equal(roomAt({ x: 22, y: 7.3, z: 30 }).id, 'roof');
+  assert.equal(roomAt({ x: 39.5, y: 1, z: 18 }).id, 'mainStair');
+  assert.ok(!knownRooms({ hasMapPlan: true }, 'up2').some((r) => r.id === 'expurgo'));
+  assert.ok(knownRooms({ hasMapPlan: true }, 'roof').length >= 2);
+  for (const id of ['registro_cirurgico', 'bilhete_zelador', 'ultimo_bilhete']) assert.ok(DOCUMENTS[id]?.body, id);
+  assert.ok(ITEMS.pedra_afiar);
+  assert.ok(SIDE_OBJECTIVES.some((o) => o.done === 'wallBroken') && SIDE_OBJECTIVES.some((o) => o.done === 'hasHammer'));
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
