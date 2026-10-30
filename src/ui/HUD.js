@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 
 export class HUD {
   constructor() {
-    this.el = { hud: $('hud'), hp: $('hp'), st: $('st'), weapon: $('weapon'), items: $('items'), objective: $('objective'),
+    this.el = { hud: $('hud'), hp: $('hp'), st: $('st'), weapon: $('weapon'), items: $('items'), objective: $('objective'), objective2: $('objective2'),
       prompt: $('prompt'), hint: $('hint'), toast: $('toast'), boss: $('boss'), bossHp: $('bossHp'), struggle: $('struggle'),
       vignette: $('vignette'), fps: $('fps') };
     this.toastT = 0; this.hintT = 0; this.dmgFlash = 0;
@@ -30,6 +30,8 @@ export class HUD {
     const items = game.inventory.list().map((i) => `${ITEMS[i.id]?.name || i.id} ×${i.n}`).join(' · ');
     this._set('items', this.el.items, 'textContent', items);
     this._set('obj', this.el.objective, 'textContent', game.quest.current() ? '◆ ' + game.quest.current() : '');
+    const side = game.quest.side();
+    if (this.el.objective2) this._set('obj2', this.el.objective2, 'textContent', side.length ? '◇ ' + side[side.length - 1] : '');
     const it = game.currentInteractable;
     const ptxt = it ? '[E] ' + (typeof it.prompt === 'function' ? it.prompt() : it.prompt) : '';
     this._set('prompt', this.el.prompt, 'textContent', ptxt);

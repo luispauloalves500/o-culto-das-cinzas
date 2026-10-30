@@ -50,6 +50,13 @@ export class Menus {
     const items = g.inventory.list();
     $('invList').innerHTML = (g.player.weapon ? '<div class="inv-item"><b>Machado de incêndio</b> — golpe rápido / forte</div>' : '') +
       (items.length ? items.map((i) => `<div class="inv-item"><b>${i.name}</b> ×${i.n}<br><span class="small">${i.desc || ''}</span></div>`).join('') : (g.player.weapon ? '' : '<div class="inv-item small">Vazio</div>'));
+    // anotações: pistas opcionais + portas trancadas já tentadas (e ainda trancadas)
+    const notes = [...g.quest.side()];
+    for (const id in g.level?.doors || {}) {
+      const d = g.level.doors[id];
+      if (d.locked && g.quest.has('note_' + id)) notes.push(`${d.label[0].toUpperCase() + d.label.slice(1)}: ${d.lockMsg}`);
+    }
+    $('noteList').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
     const docs = g.inventory.documents;
     $('docList').innerHTML = docs.length ? docs.map((id) => `<div class="doc-item" data-doc="${id}">▸ ${DOCUMENTS[id].title}</div>`).join('') : '<div class="inv-item small">Nenhum documento</div>';
     for (const el of document.querySelectorAll('.doc-item')) el.onclick = () => { g.openDocument(el.dataset.doc, 'inventory'); };
@@ -57,7 +64,7 @@ export class Menus {
   }
   showChapterEnd(stats) {
     const t = Math.floor(stats.time);
-    $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${stats.docs}/4`;
+    $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${stats.docs}/${Object.keys(DOCUMENTS).length}`;
     this.show('chapterEnd');
   }
 }
