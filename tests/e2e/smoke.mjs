@@ -53,6 +53,8 @@ try {
       tp(x, y, z, yaw) { g.player.spawn({ x, y, z }, yaw ?? g.player.yaw); g.cameraCtl.yaw = yaw ?? g.cameraCtl.yaw; },
       hold(code, sec) { g.input.down.add(code); g.input.pressed.add(code); T.run(sec); g.input.down.delete(code); },
       press(code) { g.input.pressed.add(code); g.step(1 / 60); g.input.endFrame(); },
+      // tecla de menu (tratada fora do passo de simulação)
+      key(code) { g.input.pressed.add(code); g._handleMenuKeys(); g.input.endFrame(); },
       interact(id) { const it = g.interact.list.find((i) => i.id === id); if (!it) throw new Error('sem ' + id); T.tp(it.pos.x - Math.sin(g.player.yaw) * 0.6, g.player.pos.y, it.pos.z - Math.cos(g.player.yaw) * 0.6); g.step(1 / 60); const cur = g.currentInteractable; if (!cur || cur.id !== id) return 'interagível não focado: ' + (cur && cur.id); g.tryInteract(); return 'ok'; },
       // mira o jogador para um ponto e interage com o objeto mais próximo
       interactAt(id) {
@@ -122,7 +124,7 @@ try {
   // --- Quebra-cabeça elétrico
   const puzzle = await page.evaluate(() => {
     const g = __ocdc; const out = {};
-    g.enemies.forEach((e) => { if (e.alive && e.pos.y > -1 && !e.id.endsWith('_east')) e.setDeadInstant(); });
+    g.enemies.forEach((e) => { if (e.alive && e.pos.y > -1 && !e.id.endsWith('_east') && e.pos.y < 3 && e.id !== 'int_chapel') e.setDeadInstant(); });
     T.tp(19, 0, 20.3, 0); out.fuse = T.interactAt('pick_fuse');
     T.tp(36.6, 0, 16, Math.PI / 2); out.panel = T.interactAt('fusepanel');
     T.tp(36.7, 0, 18, Math.PI / 2); out.wrong = T.interactAt('breaker0'); out.afterWrong = g.script.breakerSeq.length; g.player.hp = 100; T.run(1);
@@ -230,6 +232,82 @@ try {
   check('bandagem escondida só aparece com a gaveta 20 aberta', morgue.hidden20 && morgue.d20 === 'ok' && morgue.band20 === 'ok', JSON.stringify(morgue));
   check('portas e gavetas do necrotério persistem no save', morgue.saved.cold?.open && morgue.saved.morgue?.open && morgue.saved.d13, JSON.stringify(morgue.saved));
   await page.screenshot({ path: SHOTS + '06-necroterio.png' });
+  // --- Lavanderia, incinerador, escada de serviço, administração, capela, mapa
+  const annex = await page.evaluate(() => {
+    const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id);
+    const LO = -5, UP2 = 4;
+    g.player.hp = 100;
+    T.tp(13.0, LO, 12, -Math.PI / 2); out.lavDoor = T.interactAt('door_laundry'); T.run(0.8);
+    g.cameraCtl.yaw = -Math.PI / 2; T.hold('KeyW', 1.2); T.run(0.3);
+    out.laundry = g.quest.has('enteredLaundry'); out.cpLav = g.checkpoint;
+    // calor: o jogador e inimigos diante da boca acesa se queimam
+    E('int_forno').setDeadInstant();
+    const lav = E('enf_lav'); out.lavDormant = lav.dormant;
+    T.tp(3.6, LO, 17, -Math.PI / 2); g.player.hp = 100; T.run(1.1); out.heatHp = g.player.hp;
+    g.player.hp = 100; T.tp(3.6, LO, 17, -Math.PI / 2); out.look = T.interactAt('furnace_look'); out.saw = g.quest.has('sawFurnaceKey');
+    out.keyBlocked = !g.interact.list.find((i) => i.id === 'pick_stair_key').enabled();
+    // registro de gás
+    T.tp(3.4, LO, 12.5, -Math.PI / 2); out.valve = T.interactAt('gas_valve');
+    out.off = g.quest.has('furnaceOff') && !g.level.furnace.lit; out.lavWoke = !lav.dormant;
+    lav.setDeadInstant();
+    T.tp(3.6, LO, 17, -Math.PI / 2); g.player.hp = 100; T.run(1.1); out.coolHp = g.player.hp;
+    out.key = T.interactAt('pick_stair_key'); out.hasKey = g.inventory.has('chave_escada');
+    T.tp(9.2, LO, 16.0, Math.PI); out.diary = T.interactAt('doc_diario_forneiro');
+    // escada de serviço → 2º andar
+    T.tp(26, 0, 12.9, 0); out.ssDoor = T.interactAt('door_serviceStair'); T.run(0.8);
+    out.ssOpen = D.serviceStair.open && !D.serviceStair.locked && !g.inventory.has('chave_escada');
+    E('enf_admin').setDeadInstant(); E('int_sec').setDeadInstant();
+    T.tp(26, 0, 15.2, 0); g.cameraCtl.yaw = 0; T.hold('KeyW', 4.5); T.run(0.3);
+    out.top = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.admin = g.quest.has('reachedAdmin'); out.cpAdmin = g.checkpoint;
+    T.tp(33, UP2, 23.3, Math.PI); out.dirDoor = T.interactAt('door_diretoria'); T.run(0.8);
+    T.tp(33.1, UP2, 16.9, Math.PI); out.plan = T.interactAt('pick_planta_hospital');
+    T.tp(31.9, UP2, 16.9, Math.PI); out.memo = T.interactAt('doc_memorando_diretoria');
+    T.tp(36.6, UP2, 16.6, Math.PI); out.book = T.interactAt('book_admin'); out.cpDir = g.checkpoint;
+    T.tp(19, UP2, 23.3, Math.PI); out.secDoor = T.interactAt('door_secretaria'); T.run(0.8);
+    T.tp(21.3, UP2, 17.1, Math.PI); out.list = T.interactAt('doc_lista_transferencia');
+    // coro → escada da capela
+    T.tp(13.2, UP2, 23, -Math.PI / 2); g.cameraCtl.yaw = -Math.PI / 2; T.hold('KeyW', 1.4);
+    out.coroX = +g.player.pos.x.toFixed(2);
+    T.tp(11, UP2, 22.6, Math.PI); g.cameraCtl.yaw = Math.PI; T.hold('KeyW', 4); T.run(0.3);
+    out.bottom = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.chapel = g.quest.has('enteredChapel'); out.cpChapel = g.checkpoint;
+    T.tp(3.0, 0, 20.5, 0); out.hymn = T.interactAt('doc_hino_capela'); T.run(0.1); out.readHymn = g.quest.has('readHymn');
+    // vela errada: apaga tudo e acorda o fiel
+    const fiel = E('int_chapel'); out.fielDormant = fiel.dormant;
+    T.tp(1.7, 0, 15.6, -Math.PI / 2); out.wrong = T.interactAt('candle_luzia');
+    out.fielWoke = !fiel.dormant; out.noneLit = Object.values(g.level.candles).every((c) => !c.lit);
+    fiel.setDeadInstant(); g.player.hp = 100;
+    const seq = [['bras', 8.1, 0, 15.7, Math.PI], ['luzia', 1.7, 0, 15.6, -Math.PI / 2], ['roque', 1.7, 0, 21.2, -Math.PI / 2], ['dimas', 3.3, 0.2, 22.3, 0]];
+    out.seq = seq.map(([id, x, y, z, yaw]) => { T.tp(x, y, z, yaw); return T.interactAt('candle_' + id); });
+    out.relicOpen = g.quest.has('relicOpen'); T.run(1);
+    T.tp(6, 0.2, 22.3, 0); out.relic = T.interactAt('pick_relic'); out.maxHp = g.player.maxHp; out.hp = g.player.hp;
+    T.tp(6, 0, 15.1, Math.PI); out.bolt = T.interactAt('door_chapel'); T.run(0.8);
+    out.shortcut = D.chapel.open && !D.chapel.locked && g.quest.has('chapelShortcut');
+    T.tp(6, 0, 15.6, Math.PI); g.cameraCtl.yaw = Math.PI; T.hold('KeyW', 1.5); out.outZ = +g.player.pos.z.toFixed(2);
+    g.saveGame('chapel');
+    const sv = JSON.parse(localStorage.getItem('ocdc_save'));
+    out.saved = { ss: sv.doors.serviceStair?.open, ch: sv.doors.chapel?.open, relic: sv.flags.relicOpen, hpUp: sv.flags.maxHpUp, off: sv.flags.furnaceOff, seen: Object.keys(sv.flags).filter((k) => k.startsWith('seen_')).length };
+    // mapa (M)
+    T.key('KeyM'); out.mapState = g.state; out.map1 = g.menus.lastMap;
+    T.key('Digit3'); out.map3 = g.menus.lastMap; out.mapFloor = g.menus.mapView.floor;
+    T.key('Digit1'); out.map0 = g.menus.lastMap;
+    out.mapNotes = document.getElementById('mapNotes').children.length;
+    return out;
+  });
+  check('lavanderia: porta, autosave na entrada', annex.lavDoor === 'ok' && annex.laundry && annex.cpLav === 'laundry', JSON.stringify(annex));
+  check('incinerador aceso queima e esconde a chave', annex.heatHp < 100 && annex.look === 'ok' && annex.saw && annex.keyBlocked, JSON.stringify({ hp: annex.heatHp, look: annex.look }));
+  check('registro de gás apaga o fogo e acorda a enfermeira', annex.valve === 'ok' && annex.off && annex.lavDormant && annex.lavWoke && annex.coolHp === 100, JSON.stringify(annex));
+  check('chave de ferro nas cinzas abre a escada de serviço', annex.key === 'ok' && annex.hasKey && annex.ssDoor === 'ok' && annex.ssOpen, JSON.stringify(annex));
+  check('escada de serviço sobe ao 2º andar (autosave)', annex.top[1] > 3.5 && annex.admin && annex.cpAdmin === 'admin', JSON.stringify(annex.top));
+  check('diretoria: planta, memorando e livro de registros', annex.dirDoor === 'ok' && annex.plan === 'ok' && annex.memo === 'ok' && annex.book === 'ok' && annex.cpDir === 'diretoria' && annex.list === 'ok', JSON.stringify(annex));
+  check('coro desce à capela pela escada', annex.coroX < 12 && annex.bottom[1] < 0.5 && annex.bottom[2] < 16.5 && annex.chapel, JSON.stringify(annex.bottom));
+  check('velas: ordem errada apaga tudo e acorda o fiel', annex.hymn === 'ok' && annex.readHymn && annex.wrong === 'ok' && annex.fielDormant && annex.fielWoke && annex.noneLit, JSON.stringify(annex));
+  check('velas na ordem do hino abrem o relicário (+vida máxima)', annex.seq.every((r) => r === 'ok') && annex.relicOpen && annex.relic === 'ok' && annex.maxHp === 125 && annex.hp === 125, JSON.stringify({ seq: annex.seq, maxHp: annex.maxHp }));
+  check('tranca da capela vira atalho para o corredor', annex.bolt === 'ok' && annex.shortcut && annex.outZ < 13.6, JSON.stringify(annex));
+  check('estado dos anexos persiste no save', annex.saved.ss && annex.saved.ch && annex.saved.relic && annex.saved.hpUp && annex.saved.off && annex.saved.seen >= 10, JSON.stringify(annex.saved));
+  check('mapa (M) mostra cômodos por andar', annex.mapState === 'map' && annex.map1?.rooms >= 5 && annex.mapFloor === 'up2' && annex.map3?.rooms >= 4 && annex.map0?.rooms >= 6, JSON.stringify({ m1: annex.map1, m3: annex.map3, m0: annex.map0 }));
+  await page.screenshot({ path: SHOTS + '07-mapa.png' });
+  await page.evaluate(() => { T.key('KeyM'); });
+  check('mapa fecha com M', await page.evaluate(() => __ocdc.state === 'playing'));
   // --- Chefe
   const boss = await page.evaluate(() => {
     const g = __ocdc; const b = g.boss;

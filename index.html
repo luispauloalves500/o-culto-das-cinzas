@@ -68,7 +68,7 @@
         <b>Controles</b><br/>
         WASD mover · Mouse câmera · Shift correr · E interagir<br/>
         Botão esq. ataque rápido · Botão dir. ataque forte<br/>
-        Q defender · Espaço esquivar · H usar bandagem · Tab inventário · F3 hitboxes
+        Q defender · Espaço esquivar · H usar bandagem · Tab inventário · M mapa · F3 hitboxes
       </div>
     </div>
 
@@ -80,6 +80,22 @@
       <h3>Documentos</h3>
       <div id="docList"></div>
       <p class="small">Tab ou Esc para fechar</p>
+    </div>
+
+    <div id="map" class="screen hidden">
+      <h2>Mapa — Hospital São Dimas</h2>
+      <div class="map-tabs"><button class="map-tab" data-floor="0">Subsolo</button><button class="map-tab" data-floor="1">Térreo</button><button class="map-tab" data-floor="2">2º andar</button></div>
+      <div class="map-wrap">
+        <canvas id="mapCanvas" width="720" height="600"></canvas>
+        <div class="map-side">
+          <div id="mapWhere" class="small"></div>
+          <div id="mapPlan" class="small"></div>
+          <div class="map-legend small"><span class="lg v"></span> visitado <span class="lg p"></span> só na planta <span class="lg x">×</span> porta trancada anotada <span class="lg s"></span> livro de registros</div>
+          <h3>Anotações</h3>
+          <div id="mapNotes"></div>
+        </div>
+      </div>
+      <p class="small">← → ou 1/2/3 troca o andar · M, Tab ou Esc para fechar</p>
     </div>
 
     <div id="reader" class="screen hidden">

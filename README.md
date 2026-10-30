@@ -29,6 +29,7 @@ npm run smoke      # teste de fumaça E2E no Chromium headless (precisa de Chrom
 | Interagir | E | A |
 | Curar (bandagem) | H | X |
 | Inventário e documentos | Tab | Y |
+| Mapa (←/→ ou 1–3 troca de andar) | M | Back/Select |
 | Pausa | Esc / P | Start |
 | Depuração (hitboxes) | F3 | — |
 
@@ -48,15 +49,20 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
 - **Inimigos** — *Interno* (lento, resistente) e *Enfermeiro* (rápido, agressivo): visão em cone com linha de visada, audição de ruídos (passos, corrida, golpes, disjuntor), investigação, perseguição com A* por grafo de salas (respeita portas fechadas), ataque, stagger por poise, morte. Inimigos mortos permanecem mortos após recarregar. *(unit + smoke)*
 - **Puzzle elétrico**: encontrar o fusível, instalá-lo, ligar disjuntores na ordem II → III → I (pista em documento; ordem errada causa faísca, dano, ruído e reinicia), alavanca geral → energia volta (luzes, elevador). *(smoke)*
 - **Elevador** funcional entre térreo e subsolo (chamada nos dois andares, painel interno, cabine move o jogador). *(smoke)*
-- **Documentos de lore** (7) legíveis e guardados no inventário.
+- **Documentos de lore** (12) legíveis e guardados no inventário.
 - **Atalho**: escada do subsolo de volta ao térreo e porta trancada que só abre por dentro, ligando à enfermaria. *(smoke)*
 - **Ala Leste (quarentena, térreo)**: porta metálica liberada quando a energia volta; enfermaria com leitos, cortinas, posto de enfermagem, sala de isolamento e livro de registro; *Enfermeiro* em patrulha e um *Interno* adormecido que desperta quando você pega a **chave do necrotério**; documento *Prontuário coletivo*; porta com ferrolho que abre por dentro para o **patamar da escada** (atalho de volta ao laço principal — descer por ela também conta como chegar ao subsolo). *(smoke)*
 - **Necrotério (subsolo)**: névoa e luz verde-doentia; bancos de gavetas procedurais numeradas (as gavetas 5, 13, 20 e 26 abrem de verdade, animadas e persistidas no save), mesas de autópsia com corpos, carrinho, pia e ralos; porta trancada por **chave**; autosave na entrada; documento *Livro de entradas*; bandagem escondida na gaveta 20 (só aparece com ela aberta). Novo arquétipo **Rastejador** (paciente amputado, adormecido sob um lençol): baixo demais para o golpe leve horizontal — só o **golpe forte** de cima para baixo o atinge —, agarra tornozelos e é atraído pelo rangido das gavetas. *(smoke: luta real até a morte; golpe leve confirma 0 de dano)*
 - **Área secreta — câmara fria do Morais**: só abre empurrando o fundo da **gaveta 13** depois de ler a pista do prontuário (condição real, não apenas proximidade). Recompensa: **2 bandagens** + a *Carta não enviada da Dra. Helena Arcos*. *(smoke + unit de navegação)*
 - **Anotações**: objetivos opcionais (pistas da Ala Leste, chave, gaveta 13) numa segunda linha do HUD e no inventário, junto das portas trancadas já tentadas. *(unit)*
+- **Lavanderia (subsolo)**: acesso pelo oeste do hall do subsolo; máquinas de lavar industriais, calandra, mesa de dobrar, carrinhos de roupa e lençóis pendurados; *Enfermeiro* adormecido atrás dos lençóis (acorda pela proximidade ou pelo ruído do registro de gás); bandagem; documento *Ordem de serviço da lavanderia*; autosave na entrada. *(smoke)*
+- **O forno — incinerador hospitalar**: sala de tijolos com a boca do forno acesa (luz tremulante, brasas). **Zona de calor real**: com o fogo aceso, dá dano periódico (inbloqueável, com empurrão) ao jogador **e aos inimigos** — dá para atrair um *Interno* para lá. A **chave da escada de serviço** está à vista dentro do forno: só dá para pegá-la depois de fechar o **registro de gás** na lavanderia (volante gira, fogo apaga, barulho alto acorda o enfermeiro). Estado do fogo persiste no save. Documento *Diário do forneiro*. *(smoke: dano do calor, registro, chave)*
+- **Andares superiores — escada de serviço → 2º andar (administração)**: porta trancada no corredor do térreo aberta com a chave do forno (consome a chave, persiste); escada real (rampa com colisão) até o **corredor da administração**, **Secretaria** (bandagem, *Lista de transferência*, *Interno* em patrulha) e **Diretoria** (**planta do hospital**, *Memorando da diretoria*, livro de registro); *Enfermeiro* patrulhando o corredor; autosaves na chegada e na diretoria. *(smoke)*
+- **Capela (térreo, com coro no 2º andar)**: bancos, altar, púlpito com hinário, vitrais com santos (só a luz da lua passa), quatro suportes de velas com placas dos santos e órgão no coro. Entra-se pelo **coro** (escada do 2º andar) e o ferrolho da porta para o corredor do térreo abre por dentro (**atalho**). **Puzzle das velas**: acender na ordem do *Hino de São Dimas* (Brás → Luzia → Roque → Dimas); errar apaga todas, faz barulho e acorda o *Interno* escondido entre os bancos. Acertar abre o relicário: **Medalha de São Dimas** (+25 de vida máxima, cura total, barra de vida dourada). Tudo persiste no save. *(smoke: ordem errada e certa, relíquia, atalho)*
+- **Mapa (tecla M)**: sistema real por andar (Subsolo / Térreo / 2º andar). Mostra só os **cômodos visitados** (preenchidos) — com a **planta do hospital** os demais aparecem tracejados, mas segredos (câmara fria) nunca, até você entrar. Marca portas trancadas **que você já tentou** (×) com a mesma anotação das *Anotações* do inventário, livros de registro, escadas/elevador, o forno (aceso/apagado) e sua posição/direção. Painel lateral com o cômodo atual e as anotações. *(unit + smoke + screenshot)*
 - **Chefe — O Cirurgião**: fases, golpes de bisturi em combo, agarrão (escapa martelando botões), investida que o atordoa ao bater em mesas/pilares; o avental absorve dano e o **frasco nas costas** é o ponto fraco (golpe forte de cima para baixo). Porta da sala tranca durante a luta; barra de vida própria. *(smoke: luta completa até a morte do chefe)*
 - **Portão de serviço** liberado após o chefe → pátio → tela de fim de capítulo com estatísticas e gancho para o Capítulo 2 (placeholder).
-- **Save versionado** (`localStorage`, chave `ocdc_save`, versão 1, com migração de v0): checkpoints automáticos (início, sala de máquinas, chegada ao subsolo, necrotério, antes do chefe, pátio) e livros de registro manuais. Morte → tela de morte → recarregar último registro. *(unit + smoke)*
+- **Save versionado** (`localStorage`, chave `ocdc_save`, versão 1, com migração de v0): checkpoints automáticos (início, sala de máquinas, chegada ao subsolo, necrotério, lavanderia, administração, capela, antes do chefe, pátio) e livros de registro manuais. Morte → tela de morte → recarregar último registro. *(unit + smoke)*
 - **Áudio** 100% sintetizado com Web Audio (passos, golpes, gemidos, portas, faíscas, elevador, ambiente e intensidade dinâmica de trilha), iniciado só após gesto do usuário.
 - **HUD**: vida, fôlego, arma, objetivo atual, aviso de interação, dicas, vinheta de dano, barra do chefe.
 - **Visual PS2**: render em baixa resolução com pixels nítidos, texturas procedurais em canvas, materiais Lambert, névoa, luzes piscando, energia de emergência.
@@ -69,9 +75,10 @@ Não foram usados GLB/texturas de terceiros: **todo o visual é procedural** (ge
 ## FALTA (para o Capítulo 1 completo, conforme o GDD)
 
 - Modelos/animações artesanais (GLB rigados) e texturas pintadas — hoje tudo é procedural/placeholder estilizado.
-- Áreas do GDD ainda ausentes no hospital: capela, ala cirúrgica superior/andares acima do térreo, lavanderia e o **forno** atrás do pátio (citado na carta da Dra. Helena); mais segredos.
+- Áreas do hospital ainda ausentes: ala cirúrgica superior e o restante do 2º andar além da administração (hoje: corredor, secretaria, diretoria e coro); 3º andar / telhado; mais segredos (só há um, a câmara fria).
+- A medalha e a planta não têm uso narrativo além do bônus/mapa; o documento da diretoria aponta para o Cap. 2 sem conteúdo jogável dele.
 - Armas além do machado (facão, martelo industrial, lança improvisada, arma de fogo antiga com munição escassa) e objetos ambientais.
-- **Mapa** de áreas visitadas (tecla M). (As anotações de portas bloqueadas já existem no inventário.)
+- Mapa: sem zoom, e sem marcação manual pelo jogador.
 - Dano localizado/desmembramento estilizado, finalizações, opção de reduzir sangue.
 - Mais tipos de inimigo; cutscenes; remapeamento de teclas; ajuste fino de dificuldade.
 - Streaming por setores (hoje o capítulo é carregado inteiro — é pequeno).

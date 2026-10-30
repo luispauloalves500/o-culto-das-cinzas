@@ -9,6 +9,7 @@ import { DOCUMENTS } from '../../src/data/documents.js';
 import { ENEMIES } from '../../src/data/enemies.js';
 import { ITEMS } from '../../src/data/items.js';
 import { SIDE_OBJECTIVES } from '../../src/data/chapters.js';
+import { roomAt, knownRooms, floorOf, ROOMS } from '../../src/data/map.js';
 import { QuestSystem } from '../../src/gameplay/QuestSystem.js';
 
 let ok = 0, fail = 0;
@@ -169,6 +170,29 @@ test('A*: câmara fria só é alcançável com o painel secreto aberto', () => {
   assert.equal(n.findPath('hall', 'cold'), null);
   cold.open = true;
   assert.deepEqual(n.findPath('hall', 'cold').map((x) => x.id ?? x), ['hall', 'mor', 'cold']);
+});
+
+test('mapa: roomAt por andar, planta revela só cômodos não secretos', () => {
+  assert.equal(floorOf(-5), 'lo'); assert.equal(floorOf(0), 'up'); assert.equal(floorOf(4), 'up2');
+  assert.equal(roomAt({ x: 6, y: -5, z: 8 }).id, 'laundry');
+  assert.equal(roomAt({ x: 6, y: 0, z: 18 }).id, 'chapel');
+  assert.equal(roomAt({ x: 10, y: 4, z: 23 }).id, 'coro');
+  assert.equal(roomAt({ x: 30, y: 4, z: 18 }).id, 'diretoria');
+  assert.equal(knownRooms({}, 'lo').length, 0);
+  const seen = knownRooms({ seen_laundry: true }, 'lo');
+  assert.deepEqual(seen.map((r) => r.id), ['laundry']); assert.ok(seen[0].visited);
+  const plan = knownRooms({ hasMapPlan: true }, 'lo');
+  assert.ok(plan.some((r) => r.id === 'furnace') && !plan.some((r) => r.id === 'coldRoom'));
+  assert.ok(knownRooms({ hasMapPlan: true, seen_coldRoom: true }, 'lo').some((r) => r.id === 'coldRoom'));
+  for (const r of ROOMS) assert.ok(r.rect[0] < r.rect[2] && r.rect[1] < r.rect[3], r.id);
+});
+
+test('dados: anexo (escada, planta, medalha, hino) e cadeia de objetivos até a capela', () => {
+  for (const id of ['chave_escada', 'planta_hospital', 'medalha_sao_dimas']) assert.ok(ITEMS[id], id);
+  for (const id of ['ordem_lavanderia', 'diario_forneiro', 'lista_transferencia', 'memorando_diretoria', 'hino_capela']) assert.ok(DOCUMENTS[id]?.body, id);
+  const h = DOCUMENTS.hino_capela.body; const i = ['Brás', 'Luzia', 'Roque', 'Dimas'].map((n) => h.indexOf(n));
+  assert.ok(i.every((x) => x >= 0) && i[0] < i[1] && i[1] < i[2] && i[2] < i[3], 'ordem do hino');
+  assert.ok(SIDE_OBJECTIVES.length >= 11);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
