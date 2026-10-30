@@ -123,7 +123,9 @@ export class Game {
       ...createEmptySave(),
       checkpoint,
       player: { hp: Math.round(this.player.hp) },
-      inventory: { items: { ...this.inventory.items }, weapon: this.player.weapon ? this.player.weapon.id : null, weapons: [...this.inventory.weapons], wear: { ...this.inventory.wear }, loaded: { ...this.inventory.loaded } },
+      inventory: { items: { ...this.inventory.items }, weapon: this.player.weapon ? this.player.weapon.id : null, weapons: [...this.inventory.weapons], wear: { ...this.inventory.wear }, loaded: { ...this.inventory.loaded },
+        // estado do sistema REV6 (machado coletado / na mão), derivado da lista de armas e da arma em mãos
+        possuiMachado: this.inventory.weapons.includes('machado'), machadoEquipado: this.player.weapon?.id === 'machado' },
       flags: this.quest.serialize(),
       doors,
       deadEnemies: this.enemies.filter((e) => !e.alive).map((e) => e.id),

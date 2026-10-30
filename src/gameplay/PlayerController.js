@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from './ProceduralRig.js';
 import { WEAPONS, weaponDamage, wearCost, conditionLabel } from '../data/weapons.js';
+import { EliasModel, RETARGET } from './EliasModel.js';
 
 const STATES = ['free', 'attack', 'dodge', 'block', 'aim', 'reload', 'repair', 'hit', 'grabbed', 'heal', 'dead', 'locked'];
 
@@ -64,12 +65,19 @@ export class PlayerController {
     const band = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.07, 0.26), M.bandage);
     band.position.y = 0.22; this.rig.head.add(band);
     game.scene.add(this.rig.root);
+    // malhas do boneco procedural: escondidas quando o GLB REV6 carregar (o rig segue animando, invisível)
+    this._procMeshes = [];
+    this.rig.root.traverse((o) => { if (o.isMesh) this._procMeshes.push(o); });
 
     // um modelo por arma, presos à mão; só o da arma equipada fica visível
     this.models = { machado: this._buildAxe(M), martelo: this._buildHammer(M), facao: this._buildMachete(M), revolver: this._buildRevolver(M), lanca: this._buildSpear(M) };
     for (const k in this.models) { this.rig.armR.end.add(this.models[k].group); this.models[k].group.visible = false; }
     this.axe = this.models.machado;
     this.sharpened = false;
+    // Elias REV6 (GLB): carrega em segundo plano; até lá (ou se falhar) fica o visual procedural
+    this.model = new EliasModel(this.rig);
+    this.model.whenReady(() => this._adoptModel());
+    this.model.load();
     // clarão do cano (luz única reaproveitada; intensidade 0 quando apagada)
     this.muzzle = new THREE.PointLight(0xffc070, 0, 7, 1.8);
     game.scene.add(this.muzzle);
@@ -181,6 +189,35 @@ export class PlayerController {
     this.weapon = id && WEAPONS[id] ? WEAPONS[id] : null;
     for (const k in this.models) this.models[k].group.visible = !!this.weapon && k === this.weapon.id;
     this.axe = this.models[this.weapon?.id] || this.models.machado;
+    if (this.model?.ready) this.model.syncWeapon(this.weapon?.id || null, !!this.game.inventory?.weapons?.includes('machado'));
+  }
+
+  /** GLB pronto: esconde o boneco procedural, põe as armas procedurais no socket da mão do GLB e usa o machado real */
+  _adoptModel() {
+    const M = this.model;
+    for (const m of this._procMeshes) m.visible = false;
+    for (const k in this.models) {
+      if (k === 'machado') continue;
+      M.adapter.add(this.models[k].group);
+    }
+    this.models.machado.group.parent?.remove(this.models.machado.group);
+    this.models.machado = { group: M.axe, tip: M.axeTip, mid: M.axeMid, real: true };
+    this.setWeapon(this.weapon?.id || null);
+    this.game.bus?.emit?.('EliasModelReady', M);
+  }
+
+  /**
+   * coleta REV6 do machado do cenário: distância ≤ 1,5 m até o marcador `Machado_Coletavel`,
+   * esconde o machado do cenário e mostra Machado_Equipado (clipes `_Machado`). Sem GLB, mesma regra.
+   */
+  coletarMachado(objeto, dist = 1.5) {
+    if (this.model?.ready) return this.model.sistema.tentarColetar(objeto, dist, this.pos);
+    if (!objeto || objeto.userData?.coletado || !objeto.visible) return false;
+    const mk = objeto.getObjectByName('Machado_Coletavel') || objeto;
+    const p = mk.getWorldPosition(new THREE.Vector3());
+    if (p.distanceTo(this.pos) > dist) return false;
+    objeto.userData.coletado = true; objeto.visible = false;
+    return true;
   }
 
   /** troca para a próxima arma que o jogador possui (tecla R) */
@@ -299,6 +336,14 @@ export class PlayerController {
     const dir = mv.len > 0.2 ? { x: mv.x / mv.len, z: mv.z / mv.len } : cf;
     const tgt = this._softTarget(dir) || this._softTarget(cf);
     this.yaw = tgt ? Math.atan2(tgt.pos.x - this.pos.x, tgt.pos.z - this.pos.z) : Math.atan2(dir.x, dir.z);
+    // REV6: o golpe do clipe alcança ~0,7 m à frente do quadril (o boneco procedural esticava ~1,2 m).
+    // Com alvo à frente, o avanço do golpe cobre a diferença (até 0,5 m) — a hitbox continua sendo a lâmina visível.
+    this.attack.reach = 0;
+    if (tgt && this.model?.ready && !a.shoot) {
+      const dist = Math.hypot(tgt.pos.x - this.pos.x, tgt.pos.z - this.pos.z);
+      const lungeDist = a.lunge * (a.lungeAt[1] - a.lungeAt[0]) * a.dur;
+      this.attack.reach = THREE.MathUtils.clamp(dist - (tgt.radius ?? 0.4) - 0.62 - lungeDist, 0, 0.5);
+    }
     this._setState('attack');
     this.game.audio.play('swing', this.pos, { heavy: kind === 'heavy' });
     this.game.perception.noise(this.pos, kind === 'heavy' ? 9 : 7, 'attack');
@@ -651,6 +696,7 @@ export class PlayerController {
     this._animate(dt, adt, hs);
     this.rig.root.position.copy(this.pos);
     this.rig.root.rotation.y = this.yaw;
+    if (this.model?.ready) this.model.update(dt);
   }
 
   _turnTo(target, maxStep) {
@@ -681,7 +727,8 @@ export class PlayerController {
   _lungeSpeed() {
     const a = this.attack, d = a.def;
     const t = a.t / d.dur;
-    return t > d.lungeAt[0] && t < d.lungeAt[1] ? d.lunge : 0;
+    const extra = a.reach ? a.reach / ((d.lungeAt[1] - d.lungeAt[0]) * d.dur) : 0;
+    return t > d.lungeAt[0] && t < d.lungeAt[1] ? d.lunge + extra : 0;
   }
 
   _updateAttack(adt, dt, input) {
@@ -695,7 +742,8 @@ export class PlayerController {
     // hitbox sincronizada: posição real da cabeça do machado (após aplicar a pose deste quadro)
     this._poseAttack(t);
     this.rig.root.position.copy(this.pos); this.rig.root.rotation.y = this.yaw;
-    this.rig.root.updateMatrixWorld(true);
+    // GLB: clipe posicionado no tempo casado com a janela active (ou pose procedural copiada) antes de ler a lâmina
+    if (this.model?.ready) { this.model.poseAttack(a, t); this.model.apply(); } else this.rig.root.updateMatrixWorld(true);
     const tip = new THREE.Vector3(), mid = new THREE.Vector3();
     this.axe.tip.getWorldPosition(tip); this.axe.mid.getWorldPosition(mid);
     if (a.shot) {
@@ -763,8 +811,22 @@ export class PlayerController {
   }
 
   _animate(dt, adt, hs) {
-    const r = this.rig;
     if (this.state === 'attack') return; // pose aplicada em _updateAttack
+    this._animateProc(dt, adt, hs);
+    const M = this.model;
+    if (!M?.ready) return;
+    // clipe do GLB por estado; estados sem clipe copiam a pose procedural para os ossos do GLB
+    switch (this.state) {
+      case 'free': M.locomote(hs, this.running, dt); M.mask = null; break;
+      case 'locked': M.locomote(0, false, dt); M.mask = null; break;
+      case 'block': M.locomote(hs, false, dt); M.mask = RETARGET.arms; break;
+      case 'aim': M.locomote(hs, false, dt); M.mask = RETARGET.aim; break;
+      default: M.base(); M.mask = RETARGET.full; break;
+    }
+  }
+
+  _animateProc(dt, adt, hs) {
+    const r = this.rig;
     resetPose(r);
     const t = this.stateT;
     switch (this.state) {

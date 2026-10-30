@@ -76,12 +76,16 @@ export class HospitalScript {
     if (save.flags.bossDead) this.boss.setDeadInstant();
 
     // ---------- itens ----------
+    // machado REV6: a coleta passa pela regra do pacote (≤ 1,5 m do marcador, esconde o do cenário, equipa o da mão)
     this._pickup('axe', { x: 4.1, y: 1.0, z: 9.3 }, 'Pegar machado de incêndio', () => {
       g.inventory.addWeapon('machado'); g.player.setWeapon('machado'); g.inventory.weapon = 'machado';
       this.q.set('hasAxe');
       g.hud.toast('Machado de incêndio');
       this.hint('combat', '<b>Botão esquerdo</b>: golpe rápido (combo) · <b>Botão direito</b>: golpe forte<br><b>Q</b>: defender · <b>Espaço</b>: esquivar. Golpes gastam fôlego.', 9);
-    }, () => this._axeMesh(4.1, 1.45, 9.78));
+    }, () => this._worldAxe(4.1, 9.3), null, (mesh) => {
+      if (g.player.coletarMachado(mesh)) return true;
+      g.hud.toast('Chegue mais perto do machado.', 1.5); return false;
+    });
     this._pickup('band_ward', { x: 0.9, y: 1.0, z: 9.0 }, 'Pegar bandagem', () => this._giveItem('bandagem'), () => this._bandMesh(0.5, 1.82, 9.2));
     this._pickup('band_dep', { x: 15.2, y: 1.1, z: 18 }, 'Pegar bandagem', () => this._giveItem('bandagem'), () => this._bandMesh(14.55, 1.25, 18));
     this._pickup('fuse', { x: 19, y: 0.9, z: 21 }, 'Pegar fusível', () => { this._giveItem('fusivel'); this.q.set('hasFuse'); }, () => {
@@ -318,11 +322,26 @@ export class HospitalScript {
     const m = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.1, 8), this.game.materials.bandage);
     m.position.set(x, y, z); return m;
   }
-  _pickup(id, pos, prompt, give, meshFn, cond = null) {
+  _pickup(id, pos, prompt, give, meshFn, cond = null, gate = null) {
     const g = this.game;
     const mesh = meshFn(); this.level.b.group.add(mesh); this.level.pickupMeshes[id] = mesh;
     g.interact.add({ id: 'pick_' + id, pos, radius: 1.4, prompt, enabled: () => !this.q.has('picked_' + id) && (!cond || cond()),
-      onInteract: () => { this.q.set('picked_' + id); mesh.visible = false; g.audio.play('pickup', null); give(); } });
+      onInteract: () => { if (gate && !gate(mesh)) return; this.q.set('picked_' + id); mesh.visible = false; g.audio.play('pickup', null); give(); } });
+  }
+  /**
+   * machado do cenário (no suporte da parede): grupo com o marcador `Machado_Coletavel` no chão diante do suporte.
+   * Visual procedural até o GLB REV6 carregar; depois, cópia da malha real de Machado_Equipado (mesmo 0,80 m).
+   */
+  _worldAxe(x, z) {
+    const g = this.game, gr = new THREE.Group();
+    gr.name = 'MachadoCenario'; gr.userData.itemId = 'machado_enferrujado';
+    const mk = new THREE.Object3D(); mk.name = 'Machado_Coletavel'; mk.position.set(x, 0, z); gr.add(mk);
+    const prop = this._axeMesh(x, 1.45, z + 0.48); gr.add(prop);
+    g.player.model?.whenReady((m) => {
+      for (const c of prop.children) c.visible = false;
+      prop.add(m.makeWorldAxe());
+    });
+    return gr;
   }
   _giveItem(id) { this.game.inventory.add(id); this.game.hud.toast((ITEMS[id]?.name || id) + ' obtido'); if (id === 'bandagem') this.hint('heal', `<b>H</b>: usar bandagem (+${this.game.player.healAmount || 45} de vida). <b>Tab</b>: inventário e documentos.`, 7); }
   _doc(id, pos, x, y, z, wall = false) {

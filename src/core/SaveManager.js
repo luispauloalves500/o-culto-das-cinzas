@@ -1,6 +1,6 @@
 // Saves versionados em localStorage. Nunca guarda referências a objetos Three.js.
 export const SAVE_KEY = 'ocdc_save';
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export function createEmptySave() {
   return {
@@ -8,7 +8,7 @@ export function createEmptySave() {
     chapter: 1,
     checkpoint: 'ward_bed',
     player: { hp: 100 },
-    inventory: { items: {}, weapon: null, weapons: [] },
+    inventory: { items: {}, weapon: null, weapons: [], possuiMachado: false, machadoEquipado: false },
     flags: {},
     doors: {},
     deadEnemies: [],
@@ -29,6 +29,14 @@ export function migrateSave(data) {
     const items = {};
     for (const it of s.inventory || []) items[it] = (items[it] || 0) + 1;
     s = { ...createEmptySave(), ...s, inventory: { items, weapon: s.weapon || null }, version: 1 };
+  }
+  // v1 → v2: campos do sistema REV6 do machado, derivados de hasAxe / lista de armas / arma em mãos
+  if (s.version === 1) {
+    const inv = { ...(s.inventory || {}) };
+    const weapons = Array.isArray(inv.weapons) ? [...inv.weapons] : [];
+    const has = weapons.includes('machado') || inv.weapon === 'machado' || s.flags?.hasAxe === true || s.flags?.picked_axe === true;
+    if (has && !weapons.includes('machado')) weapons.push('machado');
+    s = { ...s, inventory: { ...inv, weapons, possuiMachado: has, machadoEquipado: inv.weapon === 'machado' }, version: 2 };
   }
   if (s.version > SAVE_VERSION) return null; // save de versão futura
   const base = createEmptySave();
