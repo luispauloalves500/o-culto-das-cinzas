@@ -6,6 +6,8 @@ import { Door } from '../../world/Doors.js';
 import { buildAnnex, updateAnnex, ANNEX_CHECKPOINTS, ANNEX_ZONES } from './HospitalAnnex.js';
 import { buildWing, updateWing, WING_CHECKPOINTS, WING_ZONES } from './HospitalWing.js';
 import { buildPeds, updatePeds, PEDS_CHECKPOINTS, PEDS_ZONES } from './HospitalPeds.js';
+import { buildMaternity, MATERNITY_CHECKPOINTS, MATERNITY_ZONES } from './HospitalMaternity.js';
+import { buildDeadArchive, updateDeadArchive, DEAD_ARCHIVE_CHECKPOINTS, DEAD_ARCHIVE_ZONES } from './HospitalDeadArchive.js';
 
 const LIGHT_BUDGET = 16;
 
@@ -25,11 +27,15 @@ export const CHECKPOINTS = {
   ...ANNEX_CHECKPOINTS,
   ...WING_CHECKPOINTS,
   ...PEDS_CHECKPOINTS,
+  ...MATERNITY_CHECKPOINTS,
+  ...DEAD_ARCHIVE_CHECKPOINTS,
 };
 
 // zonas de atmosfera (névoa/cor) — o necrotério é frio e esverdeado
 export const ZONES = [
   ...PEDS_ZONES,
+  ...MATERNITY_ZONES,
+  ...DEAD_ARCHIVE_ZONES,
   ...WING_ZONES,
   ...ANNEX_ZONES,
   { id: 'morgue', minX: 16, maxX: 26, minZ: -3, maxZ: 10, minY: LO - 1, maxY: CEIL_LO, fog: 0x0a1a14, density: 0.11 },
@@ -61,6 +67,8 @@ export class HospitalLevel {
     buildAnnex(this);
     buildWing(this);
     buildPeds(this);
+    buildMaternity(this);
+    buildDeadArchive(this);
     return this;
   }
 
@@ -114,7 +122,7 @@ export class HospitalLevel {
     // ARQUIVO x26..36 z2..10
     b.floor(26, 2, 36, 10, LO, 'wood', 'archive');
     b.ceiling(26, 2, 36, 10, CEIL_LO, 'wallLower');
-    b.wallZ(26, 2, 10, LO, CEIL_LO, [], 'wallLower'); b.wallZ(36, 2, 10, LO, CEIL_LO, [], 'wallLower'); b.wallX(2, 26, 36, LO, CEIL_LO, [], 'wallLower');
+    b.wallZ(26, 2, 10, LO, CEIL_LO, [], 'wallLower'); b.wallZ(36, 2, 10, LO, CEIL_LO, [8.8], 'wallLower'); b.wallX(2, 26, 36, LO, CEIL_LO, [], 'wallLower');
     // CORREDOR CIRÚRGICO x20..24 z14..20
     b.floor(20, 14, 24, 20, LO, 'tile', 'surgeryCorridor');
     b.ceiling(20, 14, 24, 20, CEIL_LO, 'wallLower');
@@ -398,6 +406,7 @@ export class HospitalLevel {
     updateAnnex(this, dt, t);
     updateWing(this, dt, t);
     updatePeds(this, dt, t);
+    updateDeadArchive(this, dt);
     this._updateZone(dt);
   }
 

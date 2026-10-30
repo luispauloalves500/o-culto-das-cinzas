@@ -402,7 +402,7 @@ try {
     const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id);
     const ROOF = 7.3, UP2 = 4, PI = Math.PI;
     const PEDS = ['enf_ped', 'int_brinq', 'ras_berc', 'int_seg'];
-    g.enemies.forEach((e) => { if (e.alive && e.pos.y > 3 && !PEDS.includes(e.id)) e.setDeadInstant(); });
+    g.enemies.forEach((e) => { if (e.alive && e.pos.y > 3 && !PEDS.includes(e.id) && !['enf_mat', 'int_parto', 'ras_aloj'].includes(e.id)) e.setDeadInstant(); });
     g.player.hp = 100;
     // a porta da escada de incêndio não abre pelo patamar (atalho só por fora)
     T.tp(40.2, UP2, 23.15, PI / 2); out.feInside = T.interactAt('door_fireExit'); T.run(0.3); out.feLockedInside = D.fireExit.locked && !D.fireExit.open;
@@ -520,6 +520,104 @@ try {
   check('save guarda armas, munição, cadeado, teatrinho, amuleto e atalho', peds.saved.weapons?.length === 4 && peds.saved.ammo > 0 && peds.saved.lock && peds.saved.theater && peds.saved.amulet && peds.saved.fe && peds.saved.feDoor, JSON.stringify(peds.saved));
   check('mapa do 3º andar mostra a pediatria', peds.mapRooms >= 6, String(peds.mapRooms));
   await page.screenshot({ path: SHOTS + '09-pediatria.png' });
+  // --- Maternidade (2º andar), lança improvisada, arquivo morto (subsolo) e sala de batismo (segredo)
+  const mat = await page.evaluate(() => {
+    const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id);
+    const ROOF = 7.3, UP2 = 4, LO = -5, PI = Math.PI;
+    const MAT = ['enf_mat', 'int_parto', 'ras_aloj', 'int_morto', 'ras_morto'];
+    g.enemies.forEach((e) => { if (e.alive && e.pos.y > 3 && !MAT.includes(e.id)) e.setDeadInstant(); });
+    out.spawns = MAT.map((id) => !!E(id)?.alive);
+    E('enf_mat').setDeadInstant();
+    g.player.hp = 100; g.player.setWeapon('machado');
+    // porta da maternidade trancada sem a chave
+    T.tp(18.6, UP2, 15.2, PI); out.lockedTry = T.interactAt('door_maternity'); T.run(0.3); out.lockedStill = D.maternity.locked && !D.maternity.open;
+    // chave no quadro da segurança (3º andar)
+    T.tp(40.0, ROOF, 17.0, PI / 2); out.keyMat = T.interactAt('pick_key_mat'); out.hasKey = g.inventory.has('chave_maternidade');
+    T.tp(18.6, UP2, 15.2, PI); out.matDoor = T.interactAt('door_maternity'); T.run(0.8);
+    out.matOpen = D.maternity.open && !D.maternity.locked && g.quest.has('maternityOpen') && !g.inventory.has('chave_maternidade');
+    g.cameraCtl.yaw = PI; T.hold('KeyW', 1.0); T.run(0.1);
+    out.inMat = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.entered = g.quest.has('enteredMaternity'); out.cp = g.checkpoint;
+    // sala de parto: lança no suporte de soro
+    T.tp(18.0, UP2, 12.3, PI); out.partoDoor = T.interactAt('door_salaParto'); T.run(0.8);
+    const ip = E('int_parto'); out.partoDormant = ip.dormant;
+    T.tp(20.6, UP2, 6.7, PI); out.lanca = T.interactAt('pick_lanca'); out.wLanca = g.player.weapon?.id; out.partoWoke = !ip.dormant;
+    out.lanceHidden = !g.level.pickupMeshes.lanca.visible;
+    // lança em combate real: estocadas a ~1,5 m
+    const hp0 = ip.hp; let thrusts = 0, firstDmg = 0, firstDist = 0;
+    for (let i = 0; i < 70 && ip.alive; i++) {
+      g.player.hp = 100;
+      if (g.player.state === 'grabbed') for (let k = 0; k < 20; k++) T.press('Mouse0');
+      let dx = 18 - ip.pos.x, dz = 6.5 - ip.pos.z; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
+      T.tp(ip.pos.x + dx * 1.5, UP2, ip.pos.z + dz * 1.5, 0);
+      const y = Math.atan2(ip.pos.x - g.player.pos.x, ip.pos.z - g.player.pos.z); g.player.yaw = y; g.cameraCtl.yaw = y;
+      const hb = ip.hp, d = Math.hypot(ip.pos.x - g.player.pos.x, ip.pos.z - g.player.pos.z);
+      T.press('Mouse0'); thrusts++; T.run(0.75); if (!firstDmg && ip.hp < hb) { firstDmg = hb - ip.hp; firstDist = +d.toFixed(2); }
+    }
+    out.fight = { alive: ip.alive, hp0, thrusts, firstDmg, firstDist };
+    // R alterna entre as 5 armas
+    out.weapons = [...g.inventory.weapons];
+    const cyc = []; for (let i = 0; i < 5; i++) { T.press('KeyR'); cyc.push(g.player.weapon?.id); T.run(0.1); } out.cycle = cyc;
+    g.player.setWeapon('lanca'); g.player.hp = 100;
+    T.tp(16.5, UP2, 8.6, -PI / 2); out.prontuario = T.interactAt('doc_prontuario_parto');
+    // alojamento: manivela, carta, bandagem
+    T.tp(26.5, UP2, 12.3, PI); out.alojDoor = T.interactAt('door_alojamento'); T.run(0.8);
+    const ra = E('ras_aloj'); out.alojDormant = ra.dormant;
+    T.tp(23.6, UP2, 5.3, PI); out.crank = T.interactAt('pick_manivela'); out.alojWoke = !ra.dormant; out.hasCrank = g.inventory.has('manivela');
+    ra.setDeadInstant();
+    T.tp(26.5, UP2, 4.9, PI); out.carta = T.interactAt('doc_carta_mae');
+    const b0 = g.inventory.count('bandagem');
+    T.tp(29.4, UP2, 4.9, PI); out.band = T.interactAt('pick_band_mat'); out.bandDiff = g.inventory.count('bandagem') - b0;
+    // posto obstétrico: chave do arquivo morto, livro de partos, munição, livro de registros
+    T.tp(34.5, UP2, 12.3, PI); out.postoDoor = T.interactAt('door_postoObst'); T.run(0.8);
+    T.tp(36.9, UP2, 6.0, PI / 2); out.keyArq = T.interactAt('pick_key_arqm');
+    T.tp(32.9, UP2, 5.5, -PI / 2); out.livro = T.interactAt('doc_livro_partos'); T.run(0.1); out.readBook = g.quest.has('readBirthBook');
+    const a0 = g.inventory.count('municao_38');
+    T.tp(32.9, UP2, 7.8, -PI / 2); out.ammo = T.interactAt('pick_ammo_mat'); out.ammoDiff = g.inventory.count('municao_38') - a0;
+    T.tp(36.6, UP2, 3.9, PI); out.book = T.interactAt('book_mat'); out.cpBook = g.checkpoint;
+    // arquivo morto: porta de ferro no fundo do Arquivo (subsolo)
+    g.player.hp = 100;
+    T.tp(35.2, LO, 8.8, PI / 2); out.daDoor = T.interactAt('door_deadArchive'); T.run(0.8);
+    out.daOpen = D.deadArchive.open && g.quest.has('deadArchiveOpen') && !g.inventory.has('chave_arquivo_morto');
+    g.cameraCtl.yaw = PI / 2; T.hold('KeyW', 0.9); T.run(0.1);
+    out.inDa = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.daEntered = g.quest.has('enteredDeadArchive'); out.cpDa = g.checkpoint;
+    E('int_morto').setDeadInstant();
+    T.tp(45.0, LO, 8.0, 0); out.rn0 = T.interactAt('doc_prontuario_rn0');
+    // arquivo deslizante: sem manivela só examina; com ela, desliza e revela o vão
+    g.inventory.remove('manivela');
+    T.tp(42.9, LO, -1.5, PI); out.crankNo = T.interactAt('crank_shelf'); T.run(0.2);
+    out.noteRolling = g.quest.has('note_rolling') && !g.quest.has('shelfMoved');
+    T.tp(41, LO, -1.6, PI); g.cameraCtl.yaw = PI; T.hold('KeyW', 0.8); out.blockedZ = +g.player.pos.z.toFixed(2);
+    g.inventory.add('manivela');
+    const rm = E('ras_morto'); out.rmDormant = rm.dormant;
+    T.tp(42.9, LO, -1.5, PI); out.crankYes = T.interactAt('crank_shelf'); T.run(2.0);
+    out.shelf = { moved: g.quest.has('shelfMoved'), minX: +g.level.rolling.collider.min.x.toFixed(2), gx: +(g.level.rolling.group.position.x - g.level.rolling.x).toFixed(2), crankGone: !g.inventory.has('manivela'), rmWoke: !rm.dormant };
+    rm.setDeadInstant();
+    g.player.hp = 100;
+    T.tp(41, LO, -1.6, PI); g.cameraCtl.yaw = PI; T.hold('KeyW', 1.3); T.run(0.1);
+    out.inBt = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.found = g.quest.has('foundBatismo');
+    const am0 = g.inventory.count('municao_38'), bb0 = g.inventory.count('bandagem');
+    T.tp(38.8, LO, -4.5, PI); out.bracelet = T.interactAt('pick_pulseira');
+    out.reward = { ammo: g.inventory.count('municao_38') - am0, band: g.inventory.count('bandagem') - bb0, heal: g.player.healAmount, item: g.inventory.has('pulseira_recem_nascido') };
+    T.tp(41.4, LO, -3.7, PI); out.ata = T.interactAt('doc_ata_batismo');
+    g.saveGame('deadArchive');
+    const sv = JSON.parse(localStorage.getItem('ocdc_save'));
+    out.saved = { weapons: sv.inventory.weapons, shelf: sv.flags.shelfMoved, br: sv.flags.hasBracelet, mat: sv.doors.maternity?.open, da: sv.doors.deadArchive?.open };
+    g.player.setWeapon('machado');
+    return out;
+  });
+  check('maternidade: porta trancada sem chave; chave no quadro da segurança', mat.spawns.every(Boolean) && mat.lockedTry === 'ok' && mat.lockedStill && mat.keyMat === 'ok' && mat.hasKey, JSON.stringify(mat));
+  check('chave abre a maternidade pela secretaria (autosave)', mat.matDoor === 'ok' && mat.matOpen && mat.entered && mat.cp === 'maternity' && mat.inMat[2] < 13.9, JSON.stringify(mat.inMat));
+  check('lança improvisada: coleta, equipa e acorda o Interno', mat.partoDoor === 'ok' && mat.lanca === 'ok' && mat.wLanca === 'lanca' && mat.partoDormant && mat.partoWoke && mat.lanceHidden, JSON.stringify(mat));
+  check('lança mata o Interno da sala de parto à distância', !mat.fight.alive && mat.fight.firstDmg >= 15 && mat.fight.firstDist >= 1.2, JSON.stringify(mat.fight));
+  check('R alterna entre as 5 armas (com a lança)', mat.weapons.length === 5 && mat.weapons.includes('lanca') && new Set(mat.cycle).size === 5, JSON.stringify({ w: mat.weapons, c: mat.cycle }));
+  check('alojamento: manivela acorda o Rastejador; carta e bandagem', mat.alojDoor === 'ok' && mat.crank === 'ok' && mat.hasCrank && mat.alojDormant && mat.alojWoke && mat.carta === 'ok' && mat.band === 'ok' && mat.bandDiff === 1 && mat.prontuario === 'ok', JSON.stringify(mat));
+  check('posto obstétrico: chave do arquivo morto, livro de partos, munição ×2 e save', mat.postoDoor === 'ok' && mat.keyArq === 'ok' && mat.livro === 'ok' && mat.readBook && mat.ammo === 'ok' && mat.ammoDiff === 2 && mat.cpBook === 'maternity', JSON.stringify(mat));
+  check('arquivo morto: porta de ferro abre com a chave (autosave)', mat.daDoor === 'ok' && mat.daOpen && mat.daEntered && mat.cpDa === 'deadArchive' && mat.inDa[0] > 36.6 && mat.rn0 === 'ok', JSON.stringify(mat));
+  check('arquivo deslizante: sem manivela só examina e bloqueia o vão', mat.crankNo === 'ok' && mat.noteRolling && mat.blockedZ > -2.3, JSON.stringify(mat));
+  check('manivela desliza o arquivo e acorda o Rastejador', mat.crankYes === 'ok' && mat.shelf.moved && Math.abs(mat.shelf.minX - 36.8) < 0.05 && Math.abs(mat.shelf.gx + 2.8) < 0.05 && mat.shelf.crankGone && mat.rmDormant && mat.shelf.rmWoke, JSON.stringify(mat.shelf));
+  check('Sala de batismo (segredo): pulseira (bandagem +65), 3 balas e bandagem', mat.inBt[2] < -3.1 && mat.found && mat.bracelet === 'ok' && mat.reward.ammo === 3 && mat.reward.band === 1 && mat.reward.heal === 65 && mat.reward.item && mat.ata === 'ok', JSON.stringify({ p: mat.inBt, r: mat.reward, b: mat.bracelet, a: mat.ata }));
+  check('save guarda lança, portas, arquivo deslizante e pulseira', mat.saved.weapons?.length === 5 && mat.saved.shelf && mat.saved.br && mat.saved.mat && mat.saved.da, JSON.stringify(mat.saved));
+  await page.screenshot({ path: SHOTS + '10-maternidade.png' });
   // --- Chefe
   const boss = await page.evaluate(() => {
     const g = __ocdc; const b = g.boss;
@@ -580,7 +678,7 @@ try {
     const s = JSON.parse(localStorage.getItem('ocdc_save')); s.flags = { ...s.flags, bossDead: false, gateOpen: false, chapterDone: false }; s.checkpoint = 'pre_boss';
     localStorage.setItem('ocdc_save', JSON.stringify(s));
     document.getElementById('btnContinue').click();
-    const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray(), weapons: [...g.inventory.weapons], wall: !g.level.crackedWall.panel.visible && g.level.expurgoGate.open, sharp: g.player.sharpened, tank: !g.level.tanks.o2_cor.group.visible, hammerHidden: !g.level.pickupMeshes.hammer.visible, lock: !g.level.padlock.chain.visible, theater: g.level.theater.collider.min.z > 19, maxSt: g.player.maxSt, fe: g.level.doors.fireExit.open, ammo: g.inventory.count('municao_38') };
+    const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray(), weapons: [...g.inventory.weapons], wall: !g.level.crackedWall.panel.visible && g.level.expurgoGate.open, sharp: g.player.sharpened, tank: !g.level.tanks.o2_cor.group.visible, hammerHidden: !g.level.pickupMeshes.hammer.visible, lock: !g.level.padlock.chain.visible, theater: g.level.theater.collider.min.z > 19, maxSt: g.player.maxSt, fe: g.level.doors.fireExit.open, ammo: g.inventory.count('municao_38'), lance: !g.level.pickupMeshes.lanca.visible, shelf: Math.abs(g.level.rolling.group.position.x - g.level.rolling.x + 2.8) < 0.05 && g.level.rolling.collider.min.x < 37, heal: g.player.healAmount, matDoor: g.level.doors.maternity.open };
     g.player.takeHit({ dmg: 999, from: { x: 0, y: 0, z: 0 }, blockable: false });
     T.run?.(0);
     return r;
@@ -590,8 +688,9 @@ try {
   const deadScr = await page.$eval('#dead', (e) => !e.classList.contains('hidden'));
   const dinfo = await page.evaluate(() => ({ st: __ocdc.state, hp: __ocdc.player.hp, alive: __ocdc.player.alive, pst: __ocdc.player.state, dy: __ocdc.dyingT }));
   check('continuar carrega checkpoint pré-chefe', death.state === 'playing' && Math.abs(death.pos[1] + 5) < 0.1, JSON.stringify(death));
-  check('carregar save restaura armas, parede derrubada, afiação e cilindro', death.weapons.length === 4 && death.wall && death.sharp && death.tank && death.hammerHidden, JSON.stringify(death));
+  check('carregar save restaura armas, parede derrubada, afiação e cilindro', death.weapons.length === 5 && death.wall && death.sharp && death.tank && death.hammerHidden, JSON.stringify(death));
   check('carregar save restaura pediatria (cadeado, teatrinho, amuleto, atalho, munição)', death.lock && death.theater && death.maxSt === 125 && death.fe && death.ammo > 0, JSON.stringify(death));
+  check('carregar save restaura maternidade e arquivo morto (lança, porta, arquivo deslizante, pulseira)', death.lance && death.shelf && death.heal === 65 && death.matDoor, JSON.stringify(death));
   check('morte mostra tela e permite recarregar', deadScr, JSON.stringify(dinfo));
   await page.click('#btnRetry'); await new Promise((r) => setTimeout(r, 500));
   check('recarregar após morte', await page.evaluate(() => __ocdc.state === 'playing' && __ocdc.player.hp > 0));

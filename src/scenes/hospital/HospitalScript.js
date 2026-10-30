@@ -10,6 +10,8 @@ import { UP2, CANDLE_ORDER } from './HospitalAnnex.js';
 import { roomAt } from '../../data/map.js';
 import { setupWing, applyWing, updateWing, useDoorWing, WING_SPAWNS, WING_DOORS } from './HospitalWingScript.js';
 import { setupPeds, applyPeds, updatePedsScript, useDoorPeds, PEDS_SPAWNS, PEDS_DOORS } from './HospitalPedsScript.js';
+import { setupMaternity, applyMaternity, updateMaternityScript, useDoorMaternity, MATERNITY_SPAWNS, MATERNITY_DOORS } from './HospitalMaternityScript.js';
+import { setupDeadArchive, applyDeadArchive, updateDeadArchiveScript, useDoorDeadArchive, DEAD_ARCHIVE_SPAWNS, DEAD_ARCHIVE_DOORS } from './HospitalDeadArchiveScript.js';
 
 const BREAKER_ORDER = [1, 2, 0]; // II → III → I
 
@@ -36,6 +38,8 @@ export const ENEMY_SPAWNS = [
   // ala cirúrgica superior e telhado
   ...WING_SPAWNS,
   ...PEDS_SPAWNS,
+  ...MATERNITY_SPAWNS,
+  ...DEAD_ARCHIVE_SPAWNS,
 ];
 
 const SAINTS = { luzia: 'Santa Luzia', roque: 'São Roque', bras: 'São Brás', dimas: 'São Dimas' };
@@ -113,7 +117,7 @@ export class HospitalScript {
     this._saveBook('book_yard', { x: 38.6, y: LO + 0.95, z: 25.6 }, 38.6, LO + 0.92, 24.8, 'yard');
 
     // ---------- portas comuns ----------
-    for (const id of ['ward', 'shortcut', 'storage', 'machines', 'archive', 'arena', 'eastWard', 'eastLanding', 'morgue', 'laundry', 'furnace', 'serviceStair', 'secretaria', 'diretoria', 'chapel', ...WING_DOORS, ...PEDS_DOORS]) {
+    for (const id of ['ward', 'shortcut', 'storage', 'machines', 'archive', 'arena', 'eastWard', 'eastLanding', 'morgue', 'laundry', 'furnace', 'serviceStair', 'secretaria', 'diretoria', 'chapel', ...WING_DOORS, ...PEDS_DOORS, ...MATERNITY_DOORS, ...DEAD_ARCHIVE_DOORS]) {
       const d = L.doors[id];
       g.interact.add({
         id: 'door_' + id, radius: 1.7,
@@ -174,9 +178,13 @@ export class HospitalScript {
     this._setupAnnex();
     setupWing(this);
     setupPeds(this);
+    setupMaternity(this);
+    setupDeadArchive(this);
     this._applyState(save);
     applyWing(this, save);
     applyPeds(this, save);
+    applyMaternity(this, save);
+    applyDeadArchive(this, save);
   }
 
   // ---------- anexos: lavanderia, incinerador, administração, capela ----------
@@ -387,6 +395,8 @@ export class HospitalScript {
       }
       if (useDoorWing(this, d)) return;
       if (useDoorPeds(this, d)) return;
+      if (useDoorMaternity(this, d)) return;
+      if (useDoorDeadArchive(this, d)) return;
       if (d.id === 'chapel' && p.z > 14) {
         d.locked = false; d.setOpen(true); this.q.set('chapelShortcut');
         g.hud.toast('Você puxou a tranca. A capela agora dá para o corredor do térreo.');
@@ -541,6 +551,8 @@ export class HospitalScript {
     this._updateAnnex(dt);
     updateWing(this, dt);
     updatePedsScript(this, dt);
+    updateMaternityScript(this, dt);
+    updateDeadArchiveScript(this, dt);
     // descer pela escada (atalho da Ala Leste) também conta como chegar ao subsolo
     if (!this.q.has('reachedLower') && !E.moving && p.y < -4.5 && p.x < 40) { this.q.set('reachedLower'); g.saveGame('lower_hall'); }
     // elevador

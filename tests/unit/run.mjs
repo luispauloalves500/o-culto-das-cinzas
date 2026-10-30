@@ -253,5 +253,23 @@ test('3º andar: facão, revólver com munição, pediatria no mapa, Quarto 7 se
   for (const d of ['picked_facao', 'picked_revolver', 'lockBroken', 'fireExitShortcut']) assert.ok(SIDE_OBJECTIVES.some((o) => o.done === d), d);
 });
 
+test('maternidade, arquivo morto, lança improvisada e sala de batismo secreta', () => {
+  const l = WEAPONS.lanca, a = WEAPONS.machado;
+  assert.ok(l && l.sharpenable && !l.ranged && l.reach > 1, 'lança alcança mais que o machado');
+  for (const k of ['light1', 'heavy']) { const at = l.attacks[k]; assert.ok(at.active[0] < at.active[1] && at.active[1] <= at.dur, k); }
+  assert.ok(l.attacks.heavy.dmg > l.attacks.light1.dmg && l.attacks.heavy.stamina > l.attacks.light1.stamina);
+  const inv = new Inventory({ emit() {} });
+  inv.addWeapon('lanca'); assert.ok(inv.weapons.includes('lanca'));
+  assert.equal(roomAt({ x: 18, y: 4, z: 6 }).id, 'salaParto');
+  assert.equal(roomAt({ x: 26, y: 4, z: 12.5 }).id, 'matCorridor');
+  assert.equal(roomAt({ x: 34, y: 4, z: 6 }).id, 'postoObst');
+  assert.equal(roomAt({ x: 41, y: -5, z: 4 }).id, 'deadArchive');
+  assert.equal(roomAt({ x: 41, y: -5, z: -5 }).id, 'batismo');
+  assert.ok(!knownRooms({ hasMapPlan: true }, 'lo').some((x) => x.id === 'batismo'));
+  for (const id of ['prontuario_parto', 'carta_mae', 'livro_partos', 'prontuario_rn0', 'ata_batismo']) assert.ok(DOCUMENTS[id]?.body, id);
+  for (const id of ['chave_maternidade', 'chave_arquivo_morto', 'manivela', 'pulseira_recem_nascido']) assert.ok(ITEMS[id]?.name, id);
+  for (const d of ['maternityOpen', 'picked_lanca', 'deadArchiveOpen', 'shelfMoved', 'picked_pulseira']) assert.ok(SIDE_OBJECTIVES.some((o) => o.done === d), d);
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);
