@@ -61,6 +61,14 @@ export const ROOMS = [
   // escada de incêndio externa (3º andar ↔ patamar da escada principal no 2º)
   { id: 'fireEscape', floor: 'up2', name: 'Escada de incêndio', rect: [41, 14, 43.4, 23.9] },
   { id: 'fireEscapeTop', floor: 'roof', name: 'Escada de incêndio', rect: [41, 14, 43.4, 16.2] },
+  // maternidade (2º andar, ala norte, sobre a Ala Leste) — entrada pela secretaria
+  { id: 'matCorridor', floor: 'up2', name: 'Corredor da maternidade', rect: [14, 11, 38, 14] },
+  { id: 'salaParto', floor: 'up2', name: 'Sala de parto', rect: [14, 2, 22, 11] },
+  { id: 'alojamento', floor: 'up2', name: 'Alojamento conjunto', rect: [22, 2, 31, 11] },
+  { id: 'postoObst', floor: 'up2', name: 'Posto obstétrico', rect: [31, 2, 38, 11] },
+  // arquivo morto (subsolo, a leste do Arquivo) e a sala de batismo escondida
+  { id: 'deadArchive', floor: 'lo', name: 'Arquivo morto', rect: [36, -3, 46, 10] },
+  { id: 'batismo', floor: 'lo', name: 'Sala de batismo', rect: [38, -6.6, 44, -3], secret: true },
 ];
 
 // pontos de interesse desenhados no mapa quando o cômodo é conhecido
@@ -83,6 +91,7 @@ export const MAP_MARKS = [
   { kind: 'save', floor: 'roof', x: 34.8, z: 15.0, room: 'postoPed' },
   { kind: 'stairs', floor: 'up2', x: 42.2, z: 19, room: 'fireEscape' },
   { kind: 'stairs', floor: 'roof', x: 42.2, z: 15.2, room: 'fireEscapeTop' },
+  { kind: 'save', floor: 'up2', x: 36.6, z: 2.7, room: 'postoObst' },
 ];
 
 /** andar a partir da altura dos pés */

@@ -50,5 +50,12 @@ export const SIDE_OBJECTIVES = [
   { when: 'enteredPeds', done: 'securityOpen', text: 'A segurança do 3º andar está trancada — procure a chave no posto de enfermagem.' },
   { when: 'securityOpen', done: 'picked_revolver', text: 'O armário de armas da segurança foi arrombado. Sobrou alguma coisa na mesa do vigia?' },
   { when: 'readChildDrawing', done: 'lockBroken', text: '"O meu quarto é o 7" — atrás do teatrinho da brinquedoteca. Nenhuma lâmina corta a corrente.' },
+  { when: 'securityOpen', done: 'picked_key_mat', text: 'No quadro de chaves da segurança, uma etiqueta vermelha: "MATERNIDADE".' },
+  { when: 'hasMatKey', done: 'maternityOpen', text: 'A maternidade fica atrás da porta trancada na parede norte da secretaria (2º andar).' },
+  { when: 'enteredMaternity', done: 'picked_lanca', text: 'Na sala de parto, alguém amarrou um bisturi num suporte de soro.' },
+  { when: 'enteredMaternity', done: 'hasDeadArchiveKey', text: 'O posto obstétrico guarda a chave do arquivo morto.' },
+  { when: 'hasDeadArchiveKey', done: 'deadArchiveOpen', text: 'O arquivo morto fica no fundo do Arquivo do subsolo — porta de ferro na parede leste.' },
+  { when: 'note_rolling', done: 'shelfMoved', text: 'O arquivo deslizante do arquivo morto só anda com uma manivela de encaixe quadrado.' },
+  { when: 'shelfMoved', done: 'picked_pulseira', text: 'Atrás do arquivo deslizante, uma sala com cheiro de vela.' },
   { when: 'picked_revolver', done: 'fireExitShortcut', text: 'A saída de incêndio da segurança desce até a escada principal — destrave a porta corta-fogo pelo lado de fora.' },
 ];

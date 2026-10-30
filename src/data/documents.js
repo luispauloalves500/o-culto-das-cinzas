@@ -132,4 +132,41 @@ export const DOCUMENTS = {
 <p>Deixo o meu dente de leite para quem abrir a porta. A mamãe dizia que dente de leite dá fôlego para correr.</p>
 <p style="text-align:right">— Davi, 7 anos, Quarto 7</p>`,
   },
+  prontuario_parto: {
+    title: 'Prontuário de parto — leito 2',
+    body: `<p><b>MATERNIDADE — SALA DE PARTO</b> · Parturiente: Rosa Lima, 22 anos, transferida da Ala Leste.</p>
+<p>Parto normal, 03h40. RN masculino, 2,9 kg. Apgar 9/9. <s>Alta com a mãe.</s></p>
+<p>Conforme protocolo da Série Cinza (lote neonatal), aplicada a 1ª dose por inalação na própria sala. A mãe pediu para segurar o filho antes. <i>Negado.</i></p>
+<p class="small">Na margem, a caneta: "a enfermeira amarrou o bisturi no suporte de soro e ficou na porta. ninguém passou por ela até as 6."</p>`,
+  },
+  carta_mae: {
+    title: 'Carta debaixo do travesseiro',
+    body: `<p>Meu filho,</p>
+<p>Eles levaram você para o berçário lá de cima e disseram que é só para "esquentar o pulmão". Mas eu vi a fumaça cinza no vidro da incubadora, e você parou de chorar de repente.</p>
+<p>Se alguém achar isto: o menino da cama 2 se chama Tomé. Tem uma pinta atrás da orelha esquerda. Digam a ele que a mãe não deixou. Que a mãe brigou.</p>
+<p>Escondi a manivela da cama, para não me deitarem de novo. Eles cranqueiam a cama e a gente não consegue mais levantar.</p>
+<p style="text-align:right">— Rosa</p>`,
+  },
+  livro_partos: {
+    title: 'Livro de partos (1950–1960)',
+    body: `<p>Livro grosso, encadernado em couro. Nomes, horas, pesos. A partir de certa página, uma coluna nova à mão: <b>"C"</b>.</p>
+<p>Todos os recém-nascidos com "C" foram "transferidos ao berçário (3º)". Nenhum tem alta registrada.</p>
+<p>Na primeira folha, separado de todos os outros, um único registro antigo, sem data: <b>"RN 0 — Varga. Mãe: M. Varga (óbito). Prontuário selado — ARQUIVO MORTO."</b></p>
+<p class="small">Grampeado na contracapa: "a chave do arquivo morto fica no quadro do posto. o arquivo deslizante do fundo só anda com manivela — o volante foi arrancado por ordem da diretoria."</p>`,
+  },
+  prontuario_rn0: {
+    title: 'Prontuário selado — "RN 0"',
+    body: `<p><b>ARQUIVO MORTO · CAIXA 0 · NÃO REABRIR</b></p>
+<p>Recém-nascido do sexo masculino, filho de Marta Varga, operária. A mãe faleceu no parto, durante a primeira inalação experimental do Dr. Vernet — à época, residente.</p>
+<p>O RN sobreviveu. Temperatura corporal anormalmente baixa desde o nascimento. Registrado em cartório como <b>Elias Varga</b> e entregue ao pai, sem explicação.</p>
+<p>Observação final, em outra letra: "Trinta anos de espera. Ele vai voltar a este hospital por conta própria. Eles sempre voltam para onde foram batizados."</p>`,
+  },
+  ata_batismo: {
+    title: 'Ata do primeiro batismo',
+    body: `<p><i>Papel quebradiço, preso sob a pia batismal. A tinta é cinza, não preta.</i></p>
+<p>"Na madrugada deste dia, nesta sala, foi batizado na cinza o primeiro filho da Confraria. Não com água: com o que resta dos que vieram antes. Recebeu o número <b>zero</b>, pois é o começo da contagem."</p>
+<p>"Que ele esfrie em vez de queimar. Que cresça longe, sem saber. E que, maduro, retorne à Torre por vontade própria."</p>
+<p style="text-align:right">— assinado com as iniciais <b>S. V.</b> e mais doze sinais de cruz</p>
+<p class="small">Pendurada no altar, uma pulseira de recém-nascido com contas de louça: R · N · 0.</p>`,
+  },
 };

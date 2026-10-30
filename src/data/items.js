@@ -8,5 +8,9 @@ export const ITEMS = {
   pedra_afiar: { name: 'Pedra de afiar do Brandão', desc: 'Gasta no meio, de tanto uso. O machado de incêndio passou a cortar 30% mais fundo.' },
   municao_38: { name: 'Munição .38', desc: 'Cartuchos de revólver. Cada um conta — e cada tiro acorda o andar inteiro.' },
   chave_seguranca: { name: 'Chave da segurança', desc: 'Chave pequena num chaveiro de plástico em forma de ursinho. "SEG. 3º".' },
+  chave_maternidade: { name: 'Chave da maternidade', desc: 'Estava no quadro do vigia. Etiqueta vermelha: "MATERNIDADE — 2º andar (pela secretaria)".' },
+  manivela: { name: 'Manivela de cama', desc: 'Manivela de ferro de um leito do alojamento, com encaixe quadrado. Serve em algum mecanismo manual.' },
+  chave_arquivo_morto: { name: 'Chave do arquivo morto', desc: 'Chave de ferro grande e antiga. "ARQ. MORTO — SUBSOLO". O fundo do Arquivo tem uma porta de ferro.' },
+  pulseira_recem_nascido: { name: 'Pulseira de recém-nascido', desc: 'Contas de louça soletrando "R N 0". Quem a carrega se cuida melhor: bandagens curam 65 em vez de 45.' },
   amuleto_menino: { name: 'Amuleto do menino', desc: 'Um dente de leite numa fita vermelha. Quem o carrega respira mais fundo: fôlego máximo +25.' },
 };
