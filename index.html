@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 fill=%27%23111%27/%3E%3Ccircle cx=%278%27 cy=%278%27 r=%275%27 fill=%27%23c8902a%27/%3E%3C/svg%3E">
+  <title>O Culto das Cinzas — Capítulo 1: Hospital São Dimas</title>
+  <meta name="description" content="Survival horror em Three.js. Capítulo 1: Hospital São Dimas." />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <div id="bars">
+        <div class="bar"><span>VIDA</span><div class="track"><div id="hp" class="fill hp"></div></div></div>
+        <div class="bar"><span>FÔLEGO</span><div class="track"><div id="st" class="fill st"></div></div></div>
+        <div id="weapon">Desarmado</div>
+        <div id="items"></div>
+      </div>
+      <div id="objective"></div>
+      <div id="prompt" class="hidden"></div>
+      <div id="hint" class="hidden"></div>
+      <div id="toast" class="hidden"></div>
+      <div id="boss" class="hidden"><div id="bossName">O CIRURGIÃO</div><div class="track"><div id="bossHp" class="fill boss"></div></div></div>
+      <div id="struggle" class="hidden">AGARRADO! Martele <b>Botão esq. / E / Espaço</b> para se soltar</div>
+      <div id="vignette"></div>
+      <div id="fps" class="hidden"></div>
+      <div id="crosshair"></div>
+    </div>
+
+    <!-- Telas -->
+    <div id="menu" class="screen">
+      <h1>O CULTO<br/>DAS CINZAS</h1>
+      <h2>Capítulo 1 — Hospital São Dimas</h2>
+      <div class="buttons">
+        <button id="btnNew">Novo jogo</button>
+        <button id="btnContinue" class="hidden">Continuar</button>
+        <button id="btnOptions">Opções</button>
+      </div>
+      <p class="small">Fatia vertical jogável · Véspera, 1934 · Recomendado: teclado + mouse e fones</p>
+    </div>
+
+    <div id="options" class="screen hidden">
+      <h2>Opções</h2>
+      <label>Sensibilidade do mouse <input id="optSens" type="range" min="0.2" max="3" step="0.1" /><output id="optSensV"></output></label>
+      <label><input id="optInvert" type="checkbox" /> Inverter eixo Y</label>
+      <label>Volume <input id="optVol" type="range" min="0" max="1" step="0.05" /></label>
+      <label>Qualidade (resolução interna)
+        <select id="optScale"><option value="0.5">Baixa (50%)</option><option value="0.75">Média (75%)</option><option value="1">Alta (100%)</option></select>
+      </label>
+      <label>Campo de visão <input id="optFov" type="range" min="55" max="85" step="1" /><output id="optFovV"></output></label>
+      <label><input id="optShake" type="checkbox" /> Tremor de câmera</label>
+      <label><input id="optFps" type="checkbox" /> Mostrar FPS</label>
+      <div class="buttons"><button id="btnOptBack">Voltar</button></div>
+    </div>
+
+    <div id="pause" class="screen hidden">
+      <h2>Pausado</h2>
+      <div class="buttons">
+        <button id="btnResume">Continuar</button>
+        <button id="btnPauseOptions">Opções</button>
+        <button id="btnQuit">Menu principal</button>
+      </div>
+      <div id="controls">
+        <b>Controles</b><br/>
+        WASD mover · Mouse câmera · Shift correr · E interagir<br/>
+        Botão esq. ataque rápido · Botão dir. ataque forte<br/>
+        Q defender · Espaço esquivar · H usar bandagem · Tab inventário · F3 hitboxes
+      </div>
+    </div>
+
+    <div id="inventory" class="screen hidden">
+      <h2>Inventário</h2>
+      <div id="invList"></div>
+      <h3>Documentos</h3>
+      <div id="docList"></div>
+      <p class="small">Tab ou Esc para fechar</p>
+    </div>
+
+    <div id="reader" class="screen hidden">
+      <div class="paper"><h3 id="docTitle"></h3><div id="docBody"></div></div>
+      <div class="buttons"><button id="btnDocClose">Fechar (E)</button></div>
+    </div>
+
+    <div id="dead" class="screen hidden">
+      <h1 class="red">VOCÊ MORREU</h1>
+      <div class="buttons">
+        <button id="btnRetry">Carregar último registro</button>
+        <button id="btnDeadMenu">Menu principal</button>
+      </div>
+    </div>
+
+    <div id="chapterEnd" class="screen hidden">
+      <h2>Fim do Capítulo 1 — Hospital São Dimas</h2>
+      <p>Elias atravessa o portão de serviço. Lá fora, a fuligem do Bairro Operário cai como neve suja.</p>
+      <p class="small">Capítulo 2 — Fumaça: em desenvolvimento. Seu progresso foi salvo.</p>
+      <div id="stats"></div>
+      <div class="buttons"><button id="btnEndMenu">Menu principal</button></div>
+    </div>
+
+    <div id="loading" class="screen hidden"><h2>Carregando…</h2></div>
+    <div id="clickToPlay" class="screen hidden"><h2>Clique para retomar o controle</h2></div>
+    <div id="fatal" class="screen hidden"><h2>Erro</h2><pre id="fatalMsg"></pre></div>
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
