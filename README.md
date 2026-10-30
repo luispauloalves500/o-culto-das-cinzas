@@ -29,7 +29,7 @@ npm run smoke      # teste de fumaça E2E no Chromium headless (precisa de Chrom
 | Bloquear / esquivar | Q / Espaço | LT / B |
 | Interagir | E | A |
 | Curar (bandagem) | H | X |
-| Trocar arma (machado → martelo → facão → revólver) | R | LB |
+| Trocar arma (machado → martelo → facão → revólver → lança) | R | LB |
 | Inventário e documentos | Tab | Y |
 | Mapa (←/→ ou 1–4 troca de andar) | M | Back/Select |
 | Pausa | Esc / P | Start |
@@ -71,11 +71,15 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
 - **Nova arma — Facão**: cravado num berço; rápido e barato em fôlego (combo leve-leve), golpe forte curto; aceita a pedra de afiar. Pegá-lo acorda o Rastejador do berçário. *(unit + smoke: coleta, equipa, mata o Enfermeiro)*
 - **Nova arma — Revólver .38 (munição escassa)**: na mesa do vigia (com 3 balas). **Botão direito atira** (mira automática no alvo à frente dentro de um cone, alcance 20 m, 70 de dano, clarão e tiro altíssimo que atrai inimigos); **botão esquerdo dá coronhada**. Sem balas: clique seco. Munição contada no HUD e no inventário. Há **12 balas no capítulo** (3 no revólver, 2 no posto, 3 na segurança, 4 no Quarto 7). *(unit + smoke: tiro fere e gasta 1 bala, clique seco, R alterna as 4 armas)*
 - **Segredo 3 — o Quarto 7**: o *Desenho de criança* mostra o teatrinho; depois de lê-lo dá para **empurrar o teatrinho**, que revela uma porta acorrentada. O **cadeado não cede a golpes — só a uma bala**. Lá dentro: **Amuleto do menino** (fôlego máximo +25, permanente), 4 balas e o *Caderno do Quarto 7*. Não aparece no mapa até você entrar. Tudo persiste no save. *(smoke: facão não quebra, tiro quebra, recompensa, save/continuar)*
+- **2º andar — Maternidade (ligada ao laço)**: a chave com etiqueta vermelha fica no **quadro da segurança** (3º andar); ela abre a porta de metal na parede norte da **Secretaria**. Corredor (autosave, *Enfermeiro* em patrulha, maca e cadeira de rodas), **Sala de parto** (mesa ginecológica, incubadora, bandeja, *Prontuário de parto*, *Interno* adormecido), **Alojamento conjunto** (leitos com manivela, berços, *Carta debaixo do travesseiro*, bandagem, *Rastejador* adormecido) e **Posto obstétrico** (balcão, *Livro de partos*, 2 balas, livro de registro e a **chave do arquivo morto**). Névoa própria, navegação para os inimigos e 4 cômodos no mapa. *(smoke: porta trancada sem chave, chave, autosave, portas, docs, livro de registro)*
+- **Subsolo — Arquivo morto**: porta de ferro no fundo do Arquivo, aberta com a chave do posto obstétrico (autosave). Estantes altas que bloqueiam a visão, mesa de consulta com o prontuário selado *"RN 0"*, *Interno* em patrulha e um **arquivo deslizante** nos trilhos com o volante arrancado. *(smoke)*
+- **Nova arma — Lança improvisada**: suporte de soro com um bisturi de parto amarrado, na sala de parto. **Estocada longa** (acerta a ~1,5 m, antes de o inimigo alcançar), golpe forte que atravessa, fraca para os lados; aceita a pedra de afiar. Modelo procedural próprio e animações de estocada. Pegá-la acorda o *Interno* da sala. **R alterna as 5 armas**. *(unit + smoke: coleta, equipa, mata o Interno à distância, troca, save/continuar)*
+- **Segredo 4 — a Sala de batismo**: sem a manivela, o arquivo deslizante só pode ser examinado (e bloqueia o vão). Com a **manivela do alojamento**, ele desliza 2,8 m nos trilhos (barulho alto, acorda um *Rastejador*) e revela um vão para uma salinha de pedra com pia batismal cheia de cinza, velas e pulseiras penduradas: *Ata do primeiro batismo* (Elias é o "RN 0"), **Pulseira de recém-nascido** (bandagens curam 65 em vez de 45, permanente), 3 balas e uma bandagem. Não aparece no mapa até você entrar; arquivo, colisão, navegação e recompensa persistem no save. *(smoke: bloqueio, manivela, colisão nova, recompensa, save/continuar)*
 - **Objeto ambiental — caixinha de música**: dar corda toca por 12 s e faz barulho repetido que **atrai os inimigos do andar** até a brinquedoteca (passar despercebido ou emboscar). Inimigos não abrem portas: deixe a da brinquedoteca aberta. *(smoke: Interno investiga e caminha até ela)*
 - **Orçamento de luzes**: só as 16 lâmpadas mais próximas do jogador ficam ativas (contagem constante, sem recompilar shaders) — o hospital cresceu para 62 luzes. *(smoke)*
 - **Chefe — O Cirurgião**: fases, golpes de bisturi em combo, agarrão (escapa martelando botões), investida que o atordoa ao bater em mesas/pilares; o avental absorve dano e o **frasco nas costas** é o ponto fraco (golpe forte de cima para baixo). Porta da sala tranca durante a luta; barra de vida própria. *(smoke: luta completa até a morte do chefe)*
 - **Portão de serviço** liberado após o chefe → pátio → tela de fim de capítulo com estatísticas e gancho para o Capítulo 2 (placeholder).
-- **Save versionado** (`localStorage`, chave `ocdc_save`, versão 1, com migração de v0): checkpoints automáticos (início, sala de máquinas, chegada ao subsolo, necrotério, lavanderia, administração, capela, ala cirúrgica, telhado, recuperação, pediatria, escada de incêndio, antes do chefe, pátio) e livros de registro manuais. Morte → tela de morte → recarregar último registro. *(unit + smoke)*
+- **Save versionado** (`localStorage`, chave `ocdc_save`, versão 1, com migração de v0): checkpoints automáticos (início, sala de máquinas, chegada ao subsolo, necrotério, lavanderia, administração, capela, ala cirúrgica, telhado, recuperação, pediatria, escada de incêndio, maternidade, arquivo morto, antes do chefe, pátio) e livros de registro manuais. Morte → tela de morte → recarregar último registro. *(unit + smoke)*
 - **Áudio** 100% sintetizado com Web Audio (passos, golpes, gemidos, portas, faíscas, elevador, ambiente e intensidade dinâmica de trilha), iniciado só após gesto do usuário.
 - **HUD**: vida, fôlego, arma, objetivo atual, aviso de interação, dicas, vinheta de dano, barra do chefe.
 - **Visual PS2**: render em baixa resolução com pixels nítidos, texturas procedurais em canvas, materiais Lambert, névoa, luzes piscando, energia de emergência.
@@ -88,10 +92,10 @@ Não foram usados GLB/texturas de terceiros: **todo o visual é procedural** (ge
 ## FALTA (para o Capítulo 1 completo, conforme o GDD)
 
 - Modelos/animações artesanais (GLB rigados) e texturas pintadas — hoje tudo é procedural/placeholder estilizado.
-- Áreas do hospital ainda ausentes: **maternidade** e **arquivo morto** do GDD (o 3º andar hoje tem só a ala pediátrica + terraço); mais segredos (hoje há três: câmara fria, expurgo e Quarto 7).
+- Maternidade e arquivo morto já entraram; faltam mais segredos e variações de rota (hoje há quatro: câmara fria, expurgo, Quarto 7 e sala de batismo).
 - A medalha e a planta não têm uso narrativo além do bônus/mapa; o documento da diretoria aponta para o Cap. 2 sem conteúdo jogável dele.
-- Lança improvisada; **durabilidade/desgaste de armas**; recarga do revólver como ação própria (hoje as balas saem direto do inventário); mira manual (hoje é automática no cone à frente); mais objetos ambientais além dos cilindros, do forno e da caixinha de música.
-- O amuleto do menino e o Quarto 7 ainda não se ligam a uma trama maior.
+- **Durabilidade/desgaste de armas**; recarga do revólver como ação própria (hoje as balas saem direto do inventário); mira manual (hoje é automática no cone à frente); mais objetos ambientais além dos cilindros, do forno e da caixinha de música.
+- O amuleto do menino, o Quarto 7 e a revelação do "RN 0" ainda não se ligam a uma cena/desfecho próprios (só documentos).
 - Mapa: sem zoom, e sem marcação manual pelo jogador.
 - Dano localizado/desmembramento estilizado, finalizações, opção de reduzir sangue.
 - Mais tipos de inimigo; cutscenes; remapeamento de teclas; ajuste fino de dificuldade.
@@ -108,12 +112,14 @@ src/
   gameplay/  PlayerController, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem
   ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss
   scenes/hospital/  HospitalLevel (geometria, luzes, elevador, grafo), HospitalScript (puzzles, gatilhos, chefe),
-                    HospitalWing/WingScript (2º andar + telhado), HospitalPeds/PedsScript (3º andar · pediatria)
+                    HospitalWing/WingScript (2º andar + telhado), HospitalPeds/PedsScript (3º andar · pediatria),
+                    HospitalMaternity/MaternityScript (2º andar · maternidade),
+                    HospitalDeadArchive/DeadArchiveScript (subsolo · arquivo morto + sala de batismo)
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
   unit/run.mjs     testes de colisão, navegação, save, hitbox e dados
-  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (83 verificações)
+  e2e/smoke.mjs    joga o capítulo inteiro no Chromium headless (96 verificações)
 ```
 
 ## Licença
