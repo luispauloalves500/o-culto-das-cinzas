@@ -342,4 +342,30 @@ export const DOCUMENTS = {
 <p>Destino: <b>O ACERVO</b> — Museu de Ciências Proibidas, depósito do subsolo. "Receber pela doca. Catalogar antes do sinal. O Curador não aceita peças molhadas."</p>
 <p class="small">No verso, a lápis: "Guardiã da comporta: Lurdes. Se ela cair, a remessa já terá descido o rio."</p>`,
   },
+  guia_visitante: {
+    ch: 6,
+    title: 'Guia do visitante — Museu de Ciências Proibidas',
+    body: `<p>Folheto dobrado em três, papel cuchê amarelado, sobre o balcão da recepção. Na capa, o brasão do Museu: uma mão segurando uma chama.</p>
+<p>"Bem-vindo ao <b>Acervo</b>. Fundado em <b>1702</b>, quando a Primeira Cinza chegou a Véspera num relicário de ouro. O <b>Salão de Exposição Permanente</b> reúne as peças catalogadas pela Confraria ao longo de três séculos. Por favor, não toque nas vitrines."</p>
+<p>"Por tradição do fundador, a <b>Ala de Conservação</b> não usa chave: abre com o <b>número de inventário da peça mais antiga</b> exposta no Salão. Quem não sabe a história do Acervo não tem o que fazer lá dentro."</p>
+<p>"Destaque: o <b>Tabuleiro de ossos</b> (1790), com sua engenhosa <b>gaveta de fundo falso</b>, onde o jogador escondia as fichas."</p>
+<p class="small">Carimbo no verso: "VISITAS SUSPENSAS ATÉ O SINAL. — O Colecionador."</p>`,
+  },
+  diario_conservadora: {
+    ch: 6,
+    title: 'Diário da conservadora Irene Vaz',
+    body: `<p>Caderno de capa de linho, manchado de formol, aberto sobre a mesa de restauro.</p>
+<p>"12/nov. — O Colecionador mandou <b>encerar</b> mais três. Disse que eles não são cadáveres: são <b>exposições</b>. Ficam de pé na vitrine, quietos, enquanto o vidro estiver inteiro. Quando o vidro quebra, lembram que já andaram."</p>
+<p>"15/nov. — O nº 77 mexeu o dedo quando derrubei uma pinça. <b>Barulho de vidro os acorda</b>. Pedi para trocarem as vitrines do salão por acrílico. Ele riu."</p>
+<p>"18/nov. — Vai chegar uma <b>peça viva</b> pela doca, a remessa 31. Ele quer catalogá-la antes do sinal. Não vou ajudar. Vou deixar a ala destrancada e ir embora pelo rio."</p>
+<p class="small">Última linha, outra letra: "Ninguém deixa o Acervo. Bem-vinda à coleção, Irene."</p>`,
+  },
+  cartao_inventario_31: {
+    ch: 6,
+    title: 'Cartão de inventário — remessa nº 31',
+    body: `<p>Cartão pautado, pregado por dentro da tampa do caixote aberto. A palha ainda está afundada no formato de um corpo encolhido.</p>
+<p><b>ACERVO — ENTRADA Nº 31.</b> Peça: "moça, <b>fita vermelha no cabelo</b>. VIVA." Procedência: estação de bombeamento, comporta 3. Recebida pela doca em 19/nov.</p>
+<p>Destino: "<b>Galeria do Colecionador</b> — acervo particular. Não expor no Salão. Não encerar."</p>
+<p class="small">Rabiscado embaixo, a carvão: "Ela disse que alguém viria buscá-la. O Colecionador respondeu que quem vem buscar também se cataloga."</p>`,
+  },
 };

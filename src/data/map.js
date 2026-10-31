@@ -136,6 +136,16 @@ export const ROOMS_C5 = [
 ];
 ROOMS.push(...ROOMS_C5);
 
+// Capítulo 6 — O Acervo: Museu de Ciências Proibidas, um único piso (y 0)
+export const ROOMS_C6 = [
+  { id: 'c6_doca', floor: 'up', ch: 6, name: 'Doca de carga', rect: [8, 0, 22, 8] },
+  { id: 'c6_atrio', floor: 'up', ch: 6, name: 'Átrio do Museu', rect: [4, 8, 26, 22] },
+  { id: 'c6_salao', floor: 'up', ch: 6, name: 'Salão de Exposição', rect: [0, 22, 30, 44] },
+  { id: 'c6_conservacao', floor: 'up', ch: 6, name: 'Ala de Conservação', rect: [30, 26, 44, 40] },
+  { id: 'c6_deposito', floor: 'up', ch: 6, name: 'Depósito das remessas', rect: [30, 40, 44, 54] },
+];
+ROOMS.push(...ROOMS_C6);
+
 export const MAP_MARKS = [
   { kind: 'save', floor: 'up', x: 7.1, z: -2.3, room: 'ward' },
   { kind: 'save', floor: 'up', x: 34.6, z: -2.4, room: 'isolation' },
@@ -179,15 +189,17 @@ export const MAP_MARKS = [
   { kind: 'stairs', ch: 5, floor: 'up', x: 44.5, z: 34, room: 'c5_bombas' },
   { kind: 'stairs', ch: 5, floor: 'up2', x: 44.5, z: 41, room: 'c5_mezanino' },
   { kind: 'save', ch: 5, floor: 'up2', x: 38.6, z: 66.6, room: 'c5_turbinas' },
+  { kind: 'save', ch: 6, floor: 'up', x: 13.2, z: 14.6, room: 'c6_atrio' },
+  { kind: 'save', ch: 6, floor: 'up', x: 30.8, z: 38.7, room: 'c6_conservacao' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
 let MAP_CHAPTER = 1;
-export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4, 5].includes(ch) ? ch : 1; }
+export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4, 5, 6].includes(ch) ? ch : 1; }
 export function mapChapter() { return MAP_CHAPTER; }
 const inChapter = (r) => (r.ch || 1) === MAP_CHAPTER;
 /** andares com abas no mapa para o capítulo ativo */
-export function chapterFloors() { return MAP_CHAPTER === 5 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
+export function chapterFloors() { return MAP_CHAPTER === 5 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 || MAP_CHAPTER === 6 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
 
 /** andar a partir da altura dos pés */
 export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }

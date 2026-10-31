@@ -5,7 +5,7 @@ export const CHAPTERS = [
   { id: 3, name: 'A Confraria', place: 'Sede e arquivos subterrâneos', playable: true },
   { id: 4, name: 'Cidade Morta', place: 'Centro antigo de Véspera', playable: true },
   { id: 5, name: 'Águas Negras', place: 'Estação de bombeamento', playable: true },
-  { id: 6, name: 'O Acervo', place: 'Museu de Ciências Proibidas', playable: false },
+  { id: 6, name: 'O Acervo', place: 'Museu de Ciências Proibidas', playable: true },
   { id: 7, name: 'Sob a Pedra', place: 'Catacumbas e metrô antigo', playable: false },
   { id: 8, name: 'A Última Chama', place: 'Torre de transmissão', playable: false },
 ];
@@ -147,7 +147,7 @@ export const OBJECTIVES_C5 = [
   { done: 'c5_sliceDone', text: 'A comporta subiu. Atravesse a antecâmara das turbinas e abra as comportas ao fundo.' },
   { done: 'c5_afogadaDead', text: 'A Afogada guarda o salão das turbinas. Tire-a da água: alavanca da turbina (leste), ralo de drenagem (oeste) e as grades de ferro. Golpeie as guelras.' },
   { done: 'c5_chapterDone', text: 'A portinhola norte abriu. Saia pela galeria de descarga, atrás da turbina.' },
-  { done: 'c5_never', text: 'Capítulo 5 concluído. Capítulo 6 — O Acervo chega em breve.' },
+  { done: 'c5_never', text: 'Capítulo 5 concluído. A barcaça segue rio abaixo, rumo ao Museu — Capítulo 6, O Acervo.' },
 ];
 export const SIDE_OBJECTIVES_C5 = [
   { when: 'c5_inCanal', done: 'c5_readAviso', text: 'Há uma chapa de aviso aparafusada na parede, na boca da passagem.' },
@@ -156,5 +156,23 @@ export const SIDE_OBJECTIVES_C5 = [
   { when: 'c5_afogadaDead', done: 'c5_readFicha', text: 'Na galeria de descarga há uma ficha sobre um caixote de remessa.' },
 ];
 
-export function objectivesFor(ch) { return ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
-export function sideObjectivesFor(ch) { return ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
+// Capítulo 6 — O Acervo (primeira fatia): doca de carga do Museu → átrio → Salão de Exposição (vitrines quebráveis,
+// espécimes) → porta-cofre da Ala de Conservação (nº de inventário da peça mais antiga) → conservação → depósito →
+// porta da Galeria do Colecionador (chefe na próxima atualização)
+export const OBJECTIVES_C6 = [
+  { done: 'c6_inAtrium', text: 'Suba da doca de carga para dentro do Museu.' },
+  { done: 'c6_inHall', text: 'Atravesse o átrio até o Salão de Exposição (porta dupla ao norte).' },
+  { done: 'c6_vaultOpen', text: 'A porta-cofre da Ala de Conservação (leste do salão) abre com o nº de inventário da peça mais antiga do acervo. Leia as placas das vitrines e gire os três discos.' },
+  { done: 'c6_inStorage', text: 'Atravesse a Ala de Conservação até o depósito das remessas (porta ao norte).' },
+  { done: 'c6_sliceDone', text: 'No fundo do depósito, sob o arco de latão: a porta da Galeria do Colecionador.' },
+  { done: 'c6_never', text: 'Primeira parte do Capítulo 6 concluída. O Colecionador espera atrás da porta de ferro — chega na próxima atualização.' },
+];
+export const SIDE_OBJECTIVES_C6 = [
+  { when: 'c6_inAtrium', done: 'c6_readGuia', text: 'Há um guia do visitante sobre o balcão da recepção.' },
+  { when: 'c6_readGuia', done: 'c6_gotCache', text: 'O guia fala de um tabuleiro "com gaveta de fundo falso". Alguma vitrine do salão guarda mais do que ossos.' },
+  { when: 'c6_vaultOpen', done: 'c6_readDiario', text: 'O diário da conservadora ficou sobre a mesa de restauro.' },
+  { when: 'c6_inStorage', done: 'c6_readCartao', text: 'Um caixote aberto no depósito ainda tem o cartão de inventário pregado.' },
+];
+
+export function objectivesFor(ch) { return ch === 6 ? OBJECTIVES_C6 : ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
+export function sideObjectivesFor(ch) { return ch === 6 ? SIDE_OBJECTIVES_C6 : ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
