@@ -207,7 +207,7 @@ export const SIDE_OBJECTIVES_C7 = [
   { when: 'c7_wrongSignal', done: 'c7_readQuadro', text: 'A coluna das agulhas está no quadro de horários da plataforma da Sé Velha.' },
   { when: 'c7_vigiaWoke', done: 'c7_readAta', text: 'Um livro de atas está aberto no atril diante da parede de cal.' },
 ];
-// Capítulo 8 — A Última Chama (primeira fatia): Usina de Véspera — pátio → torre de carvão → caldeiras → turbina → base da torre
+// Capítulo 8 — A Última Chama: Usina de Véspera — pátio → torre de carvão → caldeiras → turbina → torre de transmissão → decisão final
 export const OBJECTIVES_C8 = [
   { done: 'c8_climbed', text: 'O portão da Casa das Caldeiras está trancado por dentro. Suba a escada da torre de carvão (leste do pátio) e siga pela esteira.' },
   { done: 'c8_hasWheel', text: 'As válvulas de alívio das caldeiras estão sem volante. Procure um na oficina (oeste, pelo corredor de tubos).' },
@@ -215,7 +215,16 @@ export const OBJECTIVES_C8 = [
   { done: 'c8_steamDoorOpen', text: 'Sem pressão na linha, a porta-pistão da Sala da Turbina (norte) destrava. Abra-a.' },
   { done: 'c8_sabotage', text: 'A torre está fechada por uma fechadura elétrica. Desarme a chave geral no quadro de transmissão (parede leste).' },
   { done: 'c8_sliceDone', text: 'A porta da torre está livre. Vá até a base da torre de transmissão (norte).' },
-  { done: 'c8_never', text: 'Base da torre alcançada. O monta-cargas sobe até Inês — o resto do capítulo vem na próxima atualização.' },
+  { done: 'c8_inMachine', text: 'O monta-cargas não tem força. Suba pela escada de marinheiro (parede oeste) até a casa de máquinas.' },
+  { done: 'c8_metHelena', text: 'Há alguém atrás dos caixotes da casa de máquinas.' },
+  { done: 'c8_liftPower', text: 'Feche a faca de força do monta-cargas no banco de baterias (parede sul).' },
+  { done: 'c8_atTop', text: 'Use as alavancas da cabine (com a manete) e suba até a Sala dos Transmissores.' },
+  { done: 'c8_vernetDown', text: 'Derrote o Dr. Silas Vernet. Atraia-o para os bocais e gire os registros dos acumuladores de vapor; a ampola nas costas é o ponto fraco.' },
+  { done: 'c8_cinzaDead', text: 'A Manifestação da Primeira Cinza se refaz pelas bobinas. Corte os três disjuntores e golpeie o núcleo exposto.' },
+  { done: 'c8_inesFree', text: 'Solte Inês da cadeira de transmissão.' },
+  { done: 'c8_choice', text: 'O monta-cargas desceu sozinho. Espere quem vem nele.' },
+  { done: 'c8_ending', text: 'Decida o destino da Primeira Cinza: segurar a chama, entregá-la a Helena ou quebrar a lâmpada.' },
+  { done: 'c8_never', text: 'Fim — O Culto das Cinzas.' },
 ];
 export const SIDE_OBJECTIVES_C8 = [
   { when: 'c8_inBoiler', done: 'c8_gateUnbarred', text: 'O portão de carga (parede sul da Casa das Caldeiras) se destranca por dentro — um atalho de volta ao pátio.' },
@@ -223,6 +232,8 @@ export const SIDE_OBJECTIVES_C8 = [
   { when: 'c8_started', done: 'c8_readBoletim', text: 'Há um boletim na mesa da guarita do pátio.' },
   { when: 'c8_hasWheel', done: 'c8_readHelena', text: 'Um bilhete ficou na bancada da oficina, ao lado do volante.' },
   { when: 'c8_inTurbine', done: 'c8_readOrdem', text: 'Há papéis na mesa do chefe de turno, na Sala da Turbina.' },
+  { when: 'c8_inMachine', done: 'c8_readDiario', text: 'Um caderno de oleado ficou aberto sobre um caixote, perto de Helena.' },
+  { when: 'c8_atTop', done: 'c8_readRelatorio', text: 'Há um relatório preso ao lado dos armários dos transmissores (leste).' },
 ];
 export function objectivesFor(ch) { return ch === 8 ? OBJECTIVES_C8 : ch === 7 ? OBJECTIVES_C7 : ch === 6 ? OBJECTIVES_C6 : ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
 export function sideObjectivesFor(ch) { return ch === 8 ? SIDE_OBJECTIVES_C8 : ch === 7 ? SIDE_OBJECTIVES_C7 : ch === 6 ? SIDE_OBJECTIVES_C6 : ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }

@@ -468,6 +468,24 @@ export const DOCUMENTS = {
 <p>"Se o peça 32 aparecer, deixem-no subir. Quero que ele veja."</p>
 <p class="small">Assinado: <b>Dr. Silas Vernet</b>, Tesoureiro da Confraria.</p>`,
   },
+  diario_helena: {
+    ch: 8,
+    title: 'Diário de Helena Arcos (folhas soltas)',
+    body: `<p>Caderno de capa de oleado, aberto sobre um caixote da casa de máquinas. A letra é a mesma dos bilhetes.</p>
+<p>"<b>14 de março.</b> S.V. insiste na ampola. Eu insisto no protocolo: sem um portador estável, a cinza devora o hospedeiro em dias. Precisamos de alguém que <b>segure sem queimar</b>."</p>
+<p>"<b>2 de abril.</b> Encontrei. Paciente da ala de isolamento, sem família além da irmã. Registrei como <b>RN 0</b>. Vernet quer a irmã também — 'a voz'. Eu disse não. Assinei mesmo assim."</p>
+<p>"<b>Ontem.</b> Ele vai usar a menina na torre. Arranquei a manete da cabine; se Elias chegar até aqui, ela é dele. Se não chegar, que a cabine apodreça lá em cima."</p>
+<p class="small">Na última página, em branco, só um título sublinhado duas vezes: <b>"Protocolo II"</b>.</p>`,
+  },
+  relatorio_transmissao: {
+    ch: 8,
+    title: 'Relatório de transmissão — Sala dos Transmissores',
+    body: `<p>Folha datilografada presa num gancho ao lado dos armários dos transmissores.</p>
+<p>"Três bobinas de Tesla alimentam a lâmpada. Enquanto houver arco, a <b>forma</b> se recompõe: o corte de uma bobina provoca colapso momentâneo e <b>expõe o núcleo</b>."</p>
+<p>"A lâmpada não é a fonte — é a <b>porta</b>. A porta precisa de uma <b>voz</b> para abrir. Sem voz, a cinza é só fuligem."</p>
+<p>"Acumuladores de vapor nos cantos sul para resfriamento de emergência. NÃO acionar com pessoal sob os bocais."</p>
+<p class="small">Carimbo: <b>Confraria do Véu — Usina de Véspera</b>.</p>`,
+  },
   placa_caldeiras: {
     ch: 8,
     title: 'Placa — Operação das caldeiras',

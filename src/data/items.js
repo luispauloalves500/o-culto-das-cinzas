@@ -30,4 +30,5 @@ export const ITEMS = {
   chave_coveiro: { name: 'Chave do coveiro-mor', desc: 'Chave de bronze com a cabeça em forma de crânio, presa ao cinto de ossos do coveiro-mor dentro do jazigo. Abre o cadeado da grade do fundo do ossuário.' },
   chave_escada_usina: { name: 'Chave da escada de serviço', desc: 'Chave de ferro presa ao gancho do Vigia por um arame, com uma etiqueta de papelão: "USINA". Abre o cadeado da grade da escada de serviço da Estação Sob a Pedra.' },
   volante_valvula: { name: 'Volante de válvula', desc: 'Volante de ferro com eixo quadrado, deixado por Helena na bancada da oficina da Usina. Encaixa nas válvulas de alívio das caldeiras e no registro de alimentação dos tubos — não se gasta.' },
+  manete_monta_cargas: { name: 'Manete do monta-cargas', desc: 'Alavanca de latão de cabo gasto, arrancada do painel da cabine por Helena. Sem ela, as alavancas da cabine do monta-cargas não têm onde encaixar.' },
 };
