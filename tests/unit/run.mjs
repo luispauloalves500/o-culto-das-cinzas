@@ -1477,5 +1477,62 @@ test('Trilha: volume da música é uma opção persistida (padrão 0,6)', () => 
   assert.equal(new SettingsCls(mem).get('musicVolume'), 0.25);
 });
 
+// ---------- pt46u/pt47u: opções gráficas, partículas, despawn e aberturas de capítulo ----------
+const GFX = await import('../../src/render/Graphics.js');
+const { CHAPTER_INTROS, buildIntroShots, safePoint } = await import('../../src/gameplay/ChapterIntro.js');
+const { fadeAt, FADE_IN, FADE_OUT } = await import('../../src/gameplay/Cutscene.js');
+test('Gráficos: 4 predefinições completas, crescentes em custo, e detectPreset reconhece cada uma', () => {
+  const ids = ['baixa', 'media', 'alta', 'ultra'];
+  for (const id of ids) { for (const k of GFX.GFX_KEYS) assert.ok(k in GFX.GFX_PRESETS[id], id + '.' + k); assert.equal(GFX.detectPreset({ ...GFX.GFX_PRESETS[id] }), id); }
+  const sc = ids.map((id) => GFX.GFX_PRESETS[id].renderScale); assert.deepEqual([...sc].sort((a, b) => a - b), sc);
+  const lights = ids.map((id) => GFX.SHADOW_LEVELS[GFX.GFX_PRESETS[id].shadows].lights); assert.deepEqual(lights, [0, 1, 2, 3]);
+  assert.equal(GFX.detectPreset({ ...GFX.GFX_PRESETS.media, bloom: false }), 'custom');
+  assert.equal(GFX.detectPreset({ ...DS2 }), 'media', 'o padrão das opções é a predefinição Média');
+});
+test('Gráficos: resolveGfx corrige valores inválidos e expõe sombra/partículas resolvidas', () => {
+  const o = GFX.resolveGfx({ shadows: 'xyz', particles: '??', renderScale: 9 });
+  assert.equal(o.shadows, 'baixa'); assert.equal(o.particles, 'media'); assert.equal(o.renderScale, 1.5);
+  assert.equal(o.shadow.size, 256); assert.equal(o.part.pool, 200);
+  const u = GFX.resolveGfx(GFX.GFX_PRESETS.ultra); assert.equal(u.shadow.soft, true); assert.equal(u.shadow.size, 1024);
+  assert.equal(GFX.dotTexture(), null, 'sem DOM não há textura (Node)');
+});
+test('Opções gráficas: setMany persiste num único save; corpseTime e cinemáticas têm padrão', () => {
+  const mem = { n: 0, d: {}, getItem(k) { return this.d[k] ?? null; }, setItem(k, v) { this.n++; this.d[k] = v; } };
+  const s1 = new SettingsCls(mem); assert.equal(s1.get('corpseTime'), 20); assert.equal(s1.get('cinematics'), true);
+  s1.setMany({ ...GFX.GFX_PRESETS.ultra }); assert.equal(mem.n, 1);
+  const s2 = new SettingsCls(mem); assert.equal(GFX.detectPreset(s2.data), 'ultra'); assert.equal(s2.get('shadows'), 'ultra');
+});
+test('Partículas: qualidade muda pool e multiplicador; scaled não perde partículas na média', () => {
+  const c = new CombatSystem({ scene: { add() {} } });
+  assert.equal(c.maxP, 200);
+  c.setQuality(GFX.PARTICLE_LEVELS.baixa); assert.equal(c.maxP, 120); assert.equal(c.pools, false);
+  let tot = 0; for (let i = 0; i < 100; i++) tot += c.scaled(8); assert.ok(Math.abs(tot - 400) <= 1, 'baixa ≈ metade: ' + tot);
+  assert.equal(c.scaled(1) >= 1, true); assert.equal(c.scaled(0), 0);
+  c.setQuality(GFX.PARTICLE_LEVELS.alta); assert.equal(c.maxP, 360); assert.equal(c.pools, true);
+  tot = 0; for (let i = 0; i < 100; i++) tot += c.scaled(10); assert.ok(Math.abs(tot - 1600) <= 1, 'alta = 1,6×: ' + tot);
+  assert.equal(c.bloodPool({ x: 0, y: 0, z: 0 }).name, 'bloodPool');
+});
+test('Cenas: fade abre do preto, fecha antes de corte em fade e fica limpo no meio do plano', () => {
+  assert.equal(fadeAt(0, 3, { first: true }), 1);
+  assert.equal(fadeAt(FADE_IN, 3, { first: true }), 0);
+  assert.equal(fadeAt(1.5, 3, { first: true, fadeOut: true }), 0);
+  assert.equal(fadeAt(3, 3, { fadeOut: true }), 1);
+  assert.ok(fadeAt(3 - FADE_OUT / 2, 3, { fadeOut: true }) > 0.4);
+  assert.equal(fadeAt(1, 3, {}), 0);
+});
+test('Aberturas de capítulo: os 8 capítulos têm cartela e 2 falas; planos não atravessam paredes', () => {
+  for (let n = 1; n <= 8; n++) { const c = CHAPTER_INTROS[n]; assert.ok(c.title && c.sub && c.lines.length === 2, 'cap ' + n); }
+  const col = new CollisionWorld();
+  col.addBox(-5, 0, 1.0, 5, 4, 1.4); // parede 1 m à frente do jogador (+z)
+  const g = { col, player: { pos: new THREE.Vector3(0, 0, 0), yaw: 0 } };
+  const p = safePoint(col, { x: 0, y: 1.6, z: 0 }, { x: 0, y: 0, z: 1 }, 5);
+  assert.ok(p.z < 1.0 && p.z > 0, 'recuado antes da parede: ' + p.z);
+  const shots = buildIntroShots(g, 3);
+  assert.equal(shots.length, 3); assert.equal(shots[0].title, 'Capítulo 3'); assert.equal(shots[0].sub, 'A Confraria');
+  assert.equal(shots[1].cut, 'fade'); assert.equal(shots[2].caption, CHAPTER_INTROS[3].lines[1]);
+  for (const s of shots) for (const q of [s.from, s.to]) assert.ok(q.z < 1.0, 'câmera não entra na parede: ' + JSON.stringify(q));
+  assert.equal(buildIntroShots(g, 99), null);
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);

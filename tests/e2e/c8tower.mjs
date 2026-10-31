@@ -93,7 +93,9 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     out.musIntro = g.syncMusic()?.key;
     out.csT = T.until(() => !g.cutscene, 30);
     out.mus1 = g.syncMusic()?.key;
-    const b = g.boss; out.active = g.script.bossActive; out.bst = b.state; out.locked = !!L.liftLocked; out.intro = q.has('c8_vernetIntro');
+    const b = g.boss; out.active = g.script.bossActive; out.bst = b.state;
+    // pt47u: modelo procedural do Vernet (luvas, bigode, colete, corrente e relógio, cauda da sobrecasaca, bengala)
+    out.vModel = { det: Object.keys(b.details || {}), hands: b.rig.parts?.hands?.length, stache: !!b.rig.root.getObjectByName('bigode'), tail: !!b.coatTail }; out.locked = !!L.liftLocked; out.intro = q.has('c8_vernetIntro');
     out.hud = document.getElementById('bossName')?.textContent || '';
     T.tp(13, 13.5, 77.6, Math.PI); out.lift = T.interactAt('c8_lift_a'); out.liftT = T.last();
     // vapor: Vernet longe, gira o registro oeste (segurar), depois atrai Vernet ao jato
@@ -120,6 +122,16 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
   check('Cap. 8 Vernet: intro na Sala dos Transmissores, porta do monta-cargas trava, registro de vapor (segurar) escalda e atordoa, ampola nas costas é o ponto fraco, fases',
     g4.cs === 'c8_vernet' && g4.csT > 5 && g4.active && g4.intro && g4.locked && /VERNET/.test(g4.hud) && /travad/.test(g4.liftT) && g4.steam === 'ok' && g4.hold && g4.tSteam > 1.3
     && g4.tHit > 0 && g4.vHit >= 20 && g4.steamHits === 1 && /recarregar/.test(g4.againT) && g4.bodyDmg <= 10 && g4.p2 > 0 && g4.n < 40, JSON.stringify(g4));
+  check('Modelos (pt47u): Vernet com luvas, bigode, colete/corrente/relógio e cauda da sobrecasaca',
+    ['stache', 'vest', 'chain', 'watch', 'gloves'].every((k) => g4.vModel.det.includes(k)) && g4.vModel.hands === 2 && g4.vModel.stache && g4.vModel.tail, JSON.stringify(g4.vModel));
+  const mdl = await page.evaluate(() => {
+    const g = __ocdc, L = g.level, m = g.boss;
+    return { he: Object.keys(L.helena.rig.detail || {}), ine: Object.keys(L.ines.rig.detail || {}), heGlasses: !!L.helena.rig.detail?.glasses, heFace: !!L.helena.rig.parts?.face, heHands: L.helena.rig.parts?.hands?.length,
+      m: m?.id, mDet: m?.details, crown: !!m?.rig.root.getObjectByName('coroa'), veinOp: m?.veinMat?.opacity, coreNoShadow: !!m?.coreLight?.userData.noShadow };
+  });
+  check('Modelos (pt47u): Helena (óculos, coque, estetoscópio, botões), Inês (tranças com fita, gola, saia) e Manifestação (coroa de cinza, garras, veias de brasa pulsando)',
+    ['glasses', 'bun', 'stethoscope', 'buttons'].every((k) => mdl.he.includes(k)) && mdl.heGlasses && mdl.heFace && mdl.heHands === 2 && ['braids', 'ribbon', 'collar', 'skirt'].every((k) => mdl.ine.includes(k))
+    && mdl.m === 'manifestacao' && mdl.mDet.crown >= 6 && mdl.mDet.claws === 8 && mdl.mDet.veins >= 10 && mdl.crown && mdl.veinOp > 0 && mdl.coreNoShadow, JSON.stringify(mdl));
   check('Cap. 8 Vernet cai → cutscene da transformação → Manifestação da Primeira Cinza ativa (save c8_arena), elevador travado',
     g4.vSt === 'dead' && g4.cs2 === 'c8_transform' && g4.vdown && g4.csT2 > 5 && g4.mId === 'manifestacao' && g4.mActive && g4.mSt !== 'dormant' && g4.cp === 'c8_arena' && g4.locked2 && /MANIFESTA/.test(g4.hud2) && !g4.vRig && g4.lights <= 16, JSON.stringify(g4));
   await page.screenshot({ path: SHOTS + 'c8-manifestacao.png' });

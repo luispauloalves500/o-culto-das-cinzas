@@ -43,6 +43,22 @@ try {
 
   await page.click('#btnNew');
   await new Promise((r) => setTimeout(r, 1500));
+  // --- pt47u: abertura cinematográfica do Cap. 1 (cartela + 2 planos, tarjas, fade) e pular com E
+  const intro1 = await page.evaluate(() => {
+    const g = __ocdc, c = g.cutscene, $ = (id) => document.getElementById(id);
+    const out = { st: g.state, id: c?.id, shots: c?.shots.length, title: $('csTitle').textContent, titleOn: $('csTitle').classList.contains('show'), bars: $('cutscene').classList.contains('on'), hud: $('hud').classList.contains('hidden') };
+    const p0 = g.player.pos.toArray();
+    for (let i = 0; i < 40; i++) g.step(1 / 60);
+    out.fade0 = +$('csFade').style.opacity; out.i0 = c?.i;
+    for (let i = 0; i < 160; i++) g.step(1 / 60);
+    out.i1 = c?.i; out.cap = $('csCaption').textContent; out.fadeMid = c?.fade;
+    out.frozen = g.player.pos.toArray().every((v, k) => Math.abs(v - p0[k]) < 1e-6);
+    g.input.pressed.add('KeyE'); g.step(1 / 60); g.input.endFrame();
+    out.after = g.state; out.skipped = c?.skipped; out.cs = !!g.cutscene; out.fadeEnd = +$('csFade').style.opacity; out.hidden = $('cutscene').classList.contains('hidden');
+    return out;
+  });
+  check('Cenas: novo jogo abre com a cinemática do Cap. 1 (cartela "Hospital São Dimas", tarjas, HUD oculto, mundo congelado)', intro1.st === 'cutscene' && intro1.id === 'intro_c1' && intro1.shots === 3 && /Hospital São Dimas/.test(intro1.title) && intro1.titleOn && intro1.bars && intro1.hud && intro1.frozen, JSON.stringify(intro1));
+  check('Cenas: fade em corte + legenda do Elias; E pula e devolve o controle', intro1.i0 === 0 && intro1.i1 === 1 && /Elias:/.test(intro1.cap) && intro1.after === 'playing' && intro1.skipped && !intro1.cs && intro1.fadeEnd === 0 && intro1.hidden, JSON.stringify(intro1));
   const st = await page.evaluate(() => ({ state: __ocdc.state, pos: __ocdc.player.pos.toArray(), hud: !document.getElementById('hud').classList.contains('hidden') }));
   check('novo jogo iniciado', st.state === 'playing' && st.hud, JSON.stringify(st));
   const mus0 = await page.evaluate(() => { const c = __ocdc.syncMusic(); return { key: c?.key, ctx: __ocdc.audio.ctx?.state, dir: !!__ocdc.audio.director }; });
@@ -76,6 +92,44 @@ try {
     };
   });
   await inject();
+
+  // --- pt46u: opções gráficas reais (predefinições aplicadas no renderer, salvas) e despawn de corpos
+  const gfx = await page.evaluate(() => {
+    const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
+    const D = () => g.gfx.debug();
+    out.def = D(); out.defPreset = $('optPreset').value;
+    const pick = (v) => { $('optPreset').value = v; $('optPreset').dispatchEvent(new Event('change')); for (let i = 0; i < 3; i++) g.step(1 / 60); g.gfx.render(g.scene, g.camera); return D(); };
+    out.ultra = pick('ultra'); out.alta = pick('alta'); out.baixa = pick('baixa');
+    out.saved = JSON.parse(localStorage.getItem('ocdc_settings_v1'));
+    $('optBloom').checked = true; $('optBloom').dispatchEvent(new Event('change'));
+    out.custom = { preset: $('optPreset').value, d: D() };
+    $('optPreset').value = 'baixa'; $('optPreset').dispatchEvent(new Event('change'));
+    out.info = $('optGfxInfo').textContent;
+    const ps = g.scene.getObjectByName('combatParticles'); out.pool = ps?.geometry.attributes.position.count;
+    return out;
+  });
+  check('Gráficos: padrão "Média" (pós-processamento + sombras de 1 luz + poeira) ativo no renderer', gfx.defPreset === 'media' && gfx.def.composer && gfx.def.shadowMap && gfx.def.shadowCasters === 1 && gfx.def.dust > 0 && gfx.def.bloom && gfx.def.grade, JSON.stringify(gfx.def));
+  check('Gráficos: "Ultra" liga sombras suaves em até 3 luzes, cenário projetando sombra, FXAA e escala 1,25', gfx.ultra.preset === 'ultra' && gfx.ultra.soft && gfx.ultra.shadowCasters >= 1 && gfx.ultra.shadowCasters <= 3 && gfx.ultra.worldCasters > 0 && gfx.ultra.fxaa && gfx.ultra.scale === 1.25 && gfx.ultra.pool === 360 && gfx.ultra.composerRenders > gfx.def.composerRenders, JSON.stringify(gfx.ultra));
+  check('Gráficos: "Baixa" desliga sombras, pós-processamento e poeira, reduz partículas e é salva', gfx.baixa.preset === 'baixa' && !gfx.baixa.shadowMap && !gfx.baixa.composer && gfx.baixa.shadowCasters === 0 && gfx.baixa.worldCasters === 0 && gfx.baixa.dust === 0 && gfx.baixa.pool === 120 && gfx.pool === 120 && gfx.saved.shadows === 'off' && gfx.saved.renderScale === 0.5, JSON.stringify({ b: gfx.baixa, s: gfx.saved }));
+  check('Gráficos: mexer num ajuste vira "Personalizada" e aplica (bloom liga o composer)', gfx.custom.preset === 'custom' && gfx.custom.d.bloom && gfx.custom.d.composer && /Baixa/.test(gfx.info), JSON.stringify(gfx.custom));
+  const corpse = await page.evaluate(() => {
+    const g = __ocdc, proto = g.enemies[0], kills = g.player.stats.kills, out = { ct: g.settings.get('corpseTime') };
+    const pp = document.getElementById('optParticles'); pp.value = 'media'; pp.dispatchEvent(new Event('change')); // poças só a partir de "Média"
+    out.poolsOn = g.combat.pools;
+    const p = g.player.pos;
+    const e = new proto.constructor(g, proto.type, { id: 'smoke_corpse', x: p.x + 1.5, y: p.y, z: p.z });
+    e.takeHit({ dmg: 9999, poise: 99, heavy: true, from: { x: p.x, y: p.y, z: p.z } });
+    out.dead = !e.alive; out.pool = !!e.pool?.parent;
+    for (let i = 0; i < (out.ct - 1) * 60; i++) e.update(1 / 60);
+    out.before = { inScene: !!e.rig.root.parent, despawned: !!e.despawned, poolOp: +e.pool?.material.opacity.toFixed(2) };
+    for (let i = 0; i < 1.2 * 60; i++) e.update(1 / 60);
+    out.sinking = { y: +(e.rig.root.position.y - e.pos.y).toFixed(2), sc: +e.rig.root.scale.x.toFixed(2) };
+    for (let i = 0; i < 1.5 * 60; i++) e.update(1 / 60);
+    out.after = { inScene: !!e.rig.root.parent, despawned: !!e.despawned, pool: !!e.pool };
+    g.player.stats.kills = kills;
+    return out;
+  });
+  check('Despawn: corpo fica no chão com poça de sangue até corpseTime (20 s), afunda em cinza e sai da cena', corpse.ct === 20 && corpse.poolsOn && corpse.dead && corpse.pool && corpse.before.inScene && !corpse.before.despawned && corpse.sinking.y < 0 && corpse.sinking.sc < 1 && !corpse.after.inScene && corpse.after.despawned && !corpse.after.pool, JSON.stringify(corpse));
 
   const locks0 = await page.evaluate(() => { const D = __ocdc.level.doors; return { east: D.eastWard.locked, morgue: D.morgue.locked, cold: D.coldRoom.locked, landing: D.eastLanding.locked }; });
   check('Ala Leste, necrotério e câmara fria começam trancados', locks0.east && locks0.morgue && locks0.cold && locks0.landing, JSON.stringify(locks0));
@@ -849,6 +903,15 @@ try {
   await new Promise((r) => setTimeout(r, 300));
   const endBtn = await page.$eval('#btnEndNext', (e) => ({ text: e.textContent, visible: !!e.offsetParent }));
   await page.click('#btnEndNext'); await new Promise((r) => setTimeout(r, 400));
+  // --- pt47u: a passagem de capítulo toca a abertura do Cap. 2; depois as cinemáticas são desligadas pela opção (persistida)
+  const intro2 = await page.evaluate(() => {
+    const g = __ocdc, c = g.cutscene, out = { st: g.state, id: c?.id, title: c?.title };
+    c?.finish(); out.after = g.state;
+    const cine = document.getElementById('optCine'); cine.checked = false; cine.dispatchEvent(new Event('change'));
+    out.saved = JSON.parse(localStorage.getItem('ocdc_settings_v1')).cinematics;
+    return out;
+  });
+  check('Cenas: "Seguir para o Capítulo 2" toca a abertura "Fumaça"; opção de cinemáticas desliga e persiste', intro2.st === 'cutscene' && intro2.id === 'intro_c2' && intro2.title?.sub === 'Fumaça' && intro2.after === 'playing' && intro2.saved === false, JSON.stringify(intro2));
   await inject();
   const c2a = await page.evaluate(() => {
     const g = __ocdc, out = {}, S = () => JSON.parse(localStorage.getItem('ocdc_save'));

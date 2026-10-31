@@ -111,6 +111,9 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   // ---------- corredor de tubos (jatos de vapor) e oficina ----------
   const d = await page.evaluate(() => {
     const g = __ocdc, L = g.level, q = g.quest, pl = g.player, out = {};
+    // o foguista c8_fog1 patrulha perto da porta dos tubos; a fase da patrulha varia com o tempo real gasto antes (cinemáticas/gráficos),
+    // então ele fica parado durante este bloco para o teste medir só os jatos (ele volta a agir no bloco das caldeiras)
+    const fogD = T.E('c8_fog1'), fogWas = fogD.dormant; fogD.dormant = true;
     T.heal();
     T.tp(1.2, 0, 33.2, -Math.PI / 2); out.door = T.interactAt('door_c8_pipes'); T.run(1.0); out.doorOpen = L.doors.c8_pipes.open;
     // parado sob o jato 0 até ele abrir: queima
@@ -134,7 +137,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
     T.heal(); T.tp(-13.2, 0, 33.4, Math.PI); out.feed = T.interactAt('c8_feed'); out.leaksOff = q.has('c8_leaksOff') && L.leaksOff;
     T.tp(-3.5, 0, 33.2, Math.PI / 2); const hp2 = pl.hp; T.run(3.4); out.afterDmg = +(hp2 - pl.hp).toFixed(1);
     out.anyLeak = [0, 1, 2].some((i) => L.leakActive(i));
-    out.lights = T.lights();
+    out.lights = T.lights(); fogD.dormant = fogWas;
     return out;
   });
   await page.screenshot({ path: SHOTS + '50-cap8-oficina.png' });
