@@ -7,6 +7,8 @@ import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from '../gameplay
 const tmp = new THREE.Vector3();
 const angDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
 
+const CORPSE_SINK = 1.6;
+
 export class Enemy {
   constructor(game, type, o) {
     this.game = game;
@@ -250,13 +252,45 @@ export class Enemy {
     g.audio.play('groan', this.pos, { pitch: this.def.groanPitch * 0.6 });
     g.player.stats.kills++;
     g.bus.emit('EnemyDied', this);
+    if (!this.def.aquatic && !this.submerged) this.pool = g.combat?.bloodPool?.(this.pos) || null;
   }
 
-  /** usado ao carregar save: já morto */
+  /** usado ao carregar save: já morto (com despawn ligado o corpo antigo nem volta à cena) */
   setDeadInstant() {
     this.state = 'dead'; this.stateT = 10; this.solid = false;
     this._animate(0, 0);
     this.rig.root.position.copy(this.pos);
+    if ((this.game.settings?.get('corpseTime') ?? 0) > 0) this._removeCorpse();
+  }
+
+  /** despawn de corpos: depois de `corpseTime` s o corpo se desfaz em cinza (afunda e encolhe ~1,6 s), sai da
+   *  cena e libera as geometrias. O inimigo continua em game.enemies (o save lista os mortos por id). */
+  _corpse(dt) {
+    const ct = this.game.settings?.get('corpseTime') ?? 0;
+    if (!(ct > 0) && !this.sinkT) { this._poolFade(dt, false); return; }
+    if (!this.sinkT && this.stateT < ct) { this._poolFade(dt, false); return; }
+    if (!this.sinkT) { this.sinkT = 0.0001; this.game.combat?.emit?.({ x: this.pos.x, y: this.pos.y + 0.4, z: this.pos.z }, 14, 0x6a625a, 1.2); }
+    this.sinkT += dt;
+    const k = Math.min(1, this.sinkT / CORPSE_SINK);
+    const r = this.rig.root;
+    r.position.y = this.pos.y - k * k * 0.9 * (this.rig.scale || 1);
+    const sc = 1 - k * 0.55; r.scale.set(sc, sc * (1 - k * 0.3), sc);
+    this._poolFade(dt, true);
+    if (Math.random() < dt * 14) this.game.combat?.emit?.({ x: this.pos.x + (Math.random() - 0.5) * 0.8, y: this.pos.y + 0.2, z: this.pos.z + (Math.random() - 0.5) * 0.8 }, 1, 0x5a524a, 0.6);
+    if (k >= 1) this._removeCorpse();
+  }
+  _poolFade(dt, fading) {
+    const P = this.pool; if (!P) return;
+    P.userData.t += dt;
+    const grow = Math.min(1, P.userData.t / 1.4); P.scale.setScalar(0.25 + grow * 0.75 * P.userData.r);
+    if (fading) P.material.opacity = Math.max(0, P.material.opacity - dt * 0.5);
+  }
+  _removeCorpse() {
+    const r = this.rig.root;
+    r.parent?.remove(r);
+    r.traverse((o) => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); });
+    if (this.pool) { this.pool.parent?.remove(this.pool); this.pool.geometry.dispose(); this.pool.material.dispose(); this.pool = null; }
+    this.despawned = true; this.sinkT = 0;
   }
 
   // ---- movimento ----
@@ -323,7 +357,12 @@ export class Enemy {
     this.stateT += dt; this.animT += dt;
     this.flinch = Math.max(0, this.flinch - dt);
     this.poiseT -= dt; if (this.poiseT <= 0) this.poise = this.def.poise;
-    if (this.state === 'dead') { this._animate(dt, 0); this.rig.root.position.copy(this.pos); return; }
+    if (this.state === 'dead') {
+      if (this.despawned) return;
+      this._animate(dt, 0); this.rig.root.position.copy(this.pos);
+      this._corpse(dt);
+      return;
+    }
     if (this.dormant) {
       // Emparedado (Cap. 7): emparedado vivo no nicho, acorda com barulho — e vai até o barulho, não até Elias
       // (todo passo: um ruído só existe por um passo, então a escuta do dormente não pode ser amostrada)
@@ -367,8 +406,9 @@ export class Enemy {
         this.yaw += angDiff(this.yaw, this.home.yaw) * Math.min(1, dt * 2);
         break;
       case 'patrol': {
+        if (!this.patrol?.length) { this._set('idle'); break; } // rota removida (roteiro/encontro): vira sentinela no lugar
         if (this.waitT > 0) { this.waitT -= dt; this.speed = 0; break; }
-        const wp = this.patrol[this.patrolI];
+        const wp = this.patrol[this.patrolI % this.patrol.length];
         if (this._moveTo(wp, d.walk * sm, dt)) { this.patrolI = (this.patrolI + 1) % this.patrol.length; this.waitT = 1.5 + Math.random() * 2; }
         break;
       }

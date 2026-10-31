@@ -5,7 +5,7 @@
 // alçapão; o MONTA-CARGAS é uma cabine com piso de colisão dinâmico que leva o jogador (e Helena) entre as três paradas,
 // com portas pantográficas que só abrem com a cabine parada no andar.
 import * as THREE from 'three';
-import { createHumanoid, resetPose, poseWalk, poseIdle } from '../../gameplay/ProceduralRig.js';
+import { createHumanoid, resetPose, poseWalk, poseIdle, part } from '../../gameplay/ProceduralRig.js';
 
 export const MACH_Y = 7;
 export const ARENA_Y = 13.5;
@@ -102,26 +102,71 @@ export class Lift {
 }
 
 // ---------- NPCs (Helena e Inês): humanoides procedurais com poses sentada/em pé/andando ----------
+const NPC_MATS = {};
+function npcMats() {
+  if (NPC_MATS.ribbon) return NPC_MATS;
+  NPC_MATS.ribbon = new THREE.MeshLambertMaterial({ color: 0xa01818, emissive: 0x200202 });
+  NPC_MATS.lens = new THREE.MeshBasicMaterial({ color: 0xc8dce0, transparent: true, opacity: 0.28, depthWrite: false });
+  NPC_MATS.wire = new THREE.MeshLambertMaterial({ color: 0x3a3632 });
+  NPC_MATS.hairHelena = new THREE.MeshLambertMaterial({ color: 0x3a2a20 });
+  NPC_MATS.hairInes = new THREE.MeshLambertMaterial({ color: 0x24170f });
+  NPC_MATS.collar = new THREE.MeshLambertMaterial({ color: 0xd8d2c0 });
+  NPC_MATS.lip = new THREE.MeshBasicMaterial({ color: 0x5a2420 });
+  return NPC_MATS;
+}
 export function makeNpc(M, kind) {
   const helena = kind === 'helena';
   const s = helena ? 0.96 : 0.9;
+  const N = npcMats();
   const coat = helena ? (M.nurseCoat || M.linen) : (M.linen || M.gown);
   const rig = createHumanoid({ scale: s, hunch: helena ? 0.05 : 0.08, torsoW: 0.4, armLen: 0.3, armW: 0.09, legLen: 0.46,
+    face: { mouth: N.lip, brow: helena ? N.hairHelena : N.hairInes },
     mats: { skin: M.skin, shirt: coat, arms: coat, pants: helena ? M.pantsGray : coat, legs: helena ? M.pantsGray : M.skin, feet: M.leatherDark, head: M.skin } });
-  const h = rig.head;
-  const hair = new THREE.Mesh(new THREE.BoxGeometry(0.24 * s, helena ? 0.08 * s : 0.1 * s, 0.26 * s), M.coal || M.leatherDark);
-  hair.position.set(0, 0.28 * s, -0.01); h.add(hair);
-  const back = new THREE.Mesh(new THREE.BoxGeometry(0.23 * s, helena ? 0.12 * s : 0.36 * s, 0.06 * s), M.coal || M.leatherDark);
-  back.position.set(0, helena ? 0.2 * s : 0.08 * s, -0.13 * s); h.add(back);
+  const h = rig.head, T = rig.torso, hairM = helena ? N.hairHelena : N.hairInes;
+  const detail = { };
+  // cabelo: calota arredondada + nuca
+  const hair = part(0.245 * s, helena ? 0.09 * s : 0.1 * s, 0.265 * s, hairM, 0.27 * s, 0, -0.01, 0.45); h.add(hair);
+  const back = part(0.235 * s, helena ? 0.14 * s : 0.3 * s, 0.07 * s, hairM, helena ? 0.19 * s : 0.1 * s, 0, -0.125 * s, 0.45); h.add(back);
   if (helena) {
+    // coque, óculos redondos, lapelas e botões do jaleco, estetoscópio
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.065 * s, 10, 8), hairM); bun.position.set(0, 0.24 * s, -0.16 * s); bun.castShadow = true; h.add(bun);
+    const glasses = new THREE.Group(); glasses.name = 'oculos';
+    for (const sx of [-1, 1]) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.032 * s, 0.005 * s, 6, 16), N.wire); ring.position.set(sx * 0.05 * s, 0.175 * s, 0.128 * s); glasses.add(ring);
+      const lens = new THREE.Mesh(new THREE.CircleGeometry(0.03 * s, 14), N.lens); lens.position.set(sx * 0.05 * s, 0.175 * s, 0.129 * s); glasses.add(lens);
+      const arm = part(0.006 * s, 0.006 * s, 0.13 * s, N.wire, 0.178 * s, sx * 0.112 * s, 0.07 * s, 0.4); glasses.add(arm);
+    }
+    glasses.add(part(0.03 * s, 0.006 * s, 0.006 * s, N.wire, 0.18 * s, 0, 0.13 * s, 0.4));
+    h.add(glasses);
+    for (const sx of [-1, 1]) { const lap = part(0.08 * s, 0.26 * s, 0.02 * s, N.collar, 0.46 * s, sx * 0.07 * s, 0.13 * s, 0.4); lap.rotation.z = sx * 0.32; T.add(lap); }
+    const buttons = [];
+    for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.013 * s, 6, 4), M.brass || M.metal); b.position.set(0.02 * s, (0.36 - i * 0.09) * s, 0.13 * s); T.add(b); buttons.push(b); }
+    const steth = new THREE.Mesh(new THREE.TorusGeometry(0.1 * s, 0.009 * s, 6, 20, Math.PI * 1.25), N.wire); steth.rotation.set(Math.PI / 2 - 0.25, 0, Math.PI * 0.62); steth.position.set(0, 0.56 * s, 0.03 * s); T.add(steth);
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.022 * s, 0.022 * s, 0.012 * s, 10), M.steel || M.metal); bell.rotation.x = Math.PI / 2; bell.position.set(-0.08 * s, 0.38 * s, 0.135 * s); T.add(bell);
+    const tube = part(0.01 * s, 0.17 * s, 0.01 * s, N.wire, 0.46 * s, -0.08 * s, 0.135 * s, 0.45); T.add(tube);
     // sangue no flanco (ferida) e a maleta de chumbo
-    const blood = new THREE.Mesh(new THREE.BoxGeometry(0.16 * s, 0.18 * s, 0.02), M.bloodDecal || M.ember); blood.position.set(0.12 * s, 0.25 * s, 0.13 * s); rig.torso.add(blood);
-    const caseM = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.1), M.steelDark || M.metal); caseM.position.set(0, -0.12, 0.02); rig.armL.end.add(caseM);
+    const blood = new THREE.Mesh(new THREE.BoxGeometry(0.16 * s, 0.18 * s, 0.02), M.bloodDecal || M.ember); blood.position.set(0.12 * s, 0.25 * s, 0.13 * s); T.add(blood);
+    const caseM = part(0.34, 0.24, 0.1, M.steelDark || M.metal, -0.12, 0, 0.02, 0.15); rig.armL.end.add(caseM);
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.01, 6, 12, Math.PI), M.leatherDark); handle.position.set(0, 0.0, 0.02); caseM.add(handle);
     rig.case = caseM;
+    Object.assign(detail, { bun, glasses, stethoscope: steth, buttons: buttons.length, lapels: 2 });
   } else {
-    // vestido até os joelhos (Inês)
-    const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.42 * s, 0.42 * s, 0.28 * s), coat); skirt.position.set(0, -0.22 * s, 0); rig.hips.add(skirt);
+    // tranças com a fita vermelha (a mesma fita do caderno), gola branca do vestido, vestido até os joelhos
+    const braids = [];
+    for (const sx of [-1, 1]) {
+      const br = new THREE.Group(); br.position.set(sx * 0.1 * s, 0.12 * s, -0.08 * s); h.add(br);
+      for (let i = 0; i < 4; i++) { const k = new THREE.Mesh(new THREE.SphereGeometry((0.034 - i * 0.004) * s, 8, 6), hairM); k.position.set(sx * 0.01 * s * i, -i * 0.055 * s, -0.01 * s * i); k.scale.y = 1.25; k.castShadow = true; br.add(k); }
+      const bow = new THREE.Group(); bow.position.set(sx * 0.03 * s, -0.24 * s, -0.03 * s); br.add(bow);
+      for (const bx of [-1, 1]) { const loop = part(0.045 * s, 0.03 * s, 0.012 * s, N.ribbon, 0, bx * 0.025 * s, 0, 0.4); loop.rotation.z = bx * 0.5; bow.add(loop); }
+      const tail = part(0.014 * s, 0.07 * s, 0.008 * s, N.ribbon, -0.045 * s, 0.008 * s, 0, 0.4); bow.add(tail);
+      braids.push(br);
+    }
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.105 * s, 0.022 * s, 6, 18), N.collar); collar.rotation.x = Math.PI / 2; collar.scale.set(1, 0.62, 1); collar.position.set(0, 0.585 * s, 0.01 * s); T.add(collar);
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.2 * s, 0.27 * s, 0.44 * s, 12), coat); skirt.position.set(0, -0.22 * s, 0); skirt.castShadow = true; rig.hips.add(skirt);
+    const sash = part(0.41 * s, 0.05 * s, 0.26 * s, N.ribbon, 0.05 * s, 0, 0, 0.4); T.add(sash);
+    Object.assign(detail, { braids: braids.length, ribbon: true, collar, skirt });
   }
+  rig.detail = detail;
   return { kind, rig, pos: new THREE.Vector3(), yaw: 0, mode: 'stand', walk: null, phase: 0, t: 0, ride: false };
 }
 export function placeNpc(n, x, y, z, yaw) { n.pos.set(x, y, z); n.yaw = yaw; n.rig.root.position.copy(n.pos); n.rig.root.rotation.y = yaw; }

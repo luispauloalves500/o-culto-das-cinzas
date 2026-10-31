@@ -8,7 +8,7 @@
 // Mecânica aprendida no capítulo: o VAPOR dos acumuladores da torre o queima e o atordoa (steamHit).
 import * as THREE from 'three';
 import { FurnaceBoss, FURNACE_PHASES } from './FurnaceBoss.js';
-import { createHumanoid } from '../gameplay/ProceduralRig.js';
+import { createHumanoid, part } from '../gameplay/ProceduralRig.js';
 
 export const VERNET_HP = 440;
 export const VERNET_STEAM = { dmg: 26, stun: 3.2 };
@@ -31,20 +31,39 @@ export class VernetBoss extends FurnaceBoss {
     this.scale = s;
     const coat = M.robe || M.leatherDark;
     this.rig = createHumanoid({ scale: s, hunch: 0.12, torsoW: 0.48, armLen: 0.34, armW: 0.12, legLen: 0.5,
-      mats: { skin: M.skin, shirt: coat, arms: coat, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.deadSkin || M.skin } });
-    const h = this.rig.head;
-    // cabelo grisalho penteado para trás, óculos redondos e o colarinho branco
-    const hair = new THREE.Mesh(new THREE.BoxGeometry(0.24 * s, 0.07 * s, 0.26 * s), M.ash || M.pantsGray); hair.position.set(0, 0.29 * s, -0.01 * s); h.add(hair);
+      mats: { skin: M.skin, shirt: coat, arms: coat, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.deadSkin || M.skin, hands: M.leatherDark } });
+    const h = this.rig.head, T = this.rig.torso;
+    // cabelo grisalho penteado para trás (com as têmporas), óculos redondos e o colarinho branco
+    const grey = M.ash || M.pantsGray;
+    const hair = part(0.245 * s, 0.075 * s, 0.265 * s, grey, 0.29 * s, 0, -0.01 * s, 0.45); h.add(hair);
+    for (const sx of [-1, 1]) h.add(part(0.03 * s, 0.1 * s, 0.12 * s, grey, 0.2 * s, sx * 0.112 * s, -0.04 * s, 0.4));
+    // bigode encerado e sobrancelhas cerradas
+    const stache = new THREE.Group(); stache.name = 'bigode';
+    for (const sx of [-1, 1]) { const m = part(0.06 * s, 0.016 * s, 0.022 * s, grey, 0, sx * 0.032 * s, 0, 0.45); m.rotation.z = sx * 0.28; stache.add(m); }
+    stache.position.set(0, 0.105 * s, 0.125 * s); h.add(stache);
+    for (const sx of [-1, 1]) { const b = part(0.06 * s, 0.016 * s, 0.02 * s, grey, 0.205 * s, sx * 0.05 * s, 0.12 * s, 0.4); b.rotation.z = sx * 0.22; h.add(b); }
+    // colete escuro, lapelas do sobretudo, botões, gravata e a corrente do relógio de bolso
+    const vest = part(0.3 * s, 0.4 * s, 0.03 * s, M.velvet || M.leatherDark, 0.33 * s, 0, 0.12 * s, 0.3); T.add(vest);
+    for (const sx of [-1, 1]) { const lap = part(0.09 * s, 0.3 * s, 0.025 * s, coat, 0.43 * s, sx * 0.12 * s, 0.135 * s, 0.35); lap.rotation.z = sx * 0.3; T.add(lap); }
+    for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.012 * s, 6, 4), M.brass || M.metal); b.position.set(0, (0.46 - i * 0.08) * s, 0.14 * s); T.add(b); }
+    const tie = part(0.05 * s, 0.12 * s, 0.02 * s, M.velvet || M.leatherDark, 0.5 * s, 0, 0.135 * s, 0.4); T.add(tie);
+    const chain = new THREE.Mesh(new THREE.TorusGeometry(0.07 * s, 0.005 * s, 4, 16, Math.PI), M.gold || M.brass); chain.position.set(-0.03 * s, 0.26 * s, 0.14 * s); chain.rotation.z = Math.PI; T.add(chain);
+    const watch = new THREE.Mesh(new THREE.CylinderGeometry(0.025 * s, 0.025 * s, 0.01 * s, 12), M.gold || M.brass); watch.rotation.x = Math.PI / 2; watch.position.set(-0.1 * s, 0.24 * s, 0.14 * s); T.add(watch);
+    this.details = { stache, vest, chain, watch, gloves: !!this.rig.parts.hands.length };
     for (const x of [-0.05, 0.05]) {
       const lens = new THREE.Mesh(new THREE.TorusGeometry(0.03 * s, 0.006 * s, 4, 10), M.brass || M.metal); lens.position.set(x * s, 0.17 * s, 0.125 * s); h.add(lens);
       const eye = new THREE.Mesh(new THREE.BoxGeometry(0.025 * s, 0.015 * s, 0.01), M.eyeGlow); eye.position.set(x * s, 0.17 * s, 0.122 * s); h.add(eye);
     }
     const collar = new THREE.Mesh(new THREE.BoxGeometry(0.2 * s, 0.06 * s, 0.06 * s), M.linen || M.paper); collar.position.set(0, 0.56 * s, 0.1 * s); this.rig.torso.add(collar);
     // casaco longo (abas até os joelhos)
-    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.5 * s, 0.55 * s, 0.05 * s), coat); tail.position.set(0, -0.32 * s, -0.12 * s); this.rig.hips.add(tail);
+    // abas abertas na frente e o rabo do casaco atrás; balançam com o passo (_animate de FurnaceBoss mexe nos quadris)
+    const tail = part(0.5 * s, 0.55 * s, 0.05 * s, coat, -0.32 * s, 0, -0.12 * s, 0.2); this.rig.hips.add(tail);
+    for (const sx of [-1, 1]) { const f = part(0.16 * s, 0.5 * s, 0.04 * s, coat, -0.3 * s, sx * 0.17 * s, 0.11 * s, 0.25); f.rotation.z = sx * 0.06; this.rig.hips.add(f); }
+    this.coatTail = tail;
     // bengala-bisturi: haste de ébano com lâmina cirúrgica na ponta
     const cane = new THREE.Group();
-    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 1.0), M.woodDark); shaft.position.z = 0.4; cane.add(shaft);
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 1.0, 8), M.woodDark); shaft.rotation.x = Math.PI / 2; shaft.position.z = 0.4; cane.add(shaft);
+    const ferrule = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.06, 8), M.brass || M.metal); ferrule.rotation.x = Math.PI / 2; ferrule.position.z = 0.88; cane.add(ferrule);
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), M.brass || M.metal); knob.position.z = -0.1; cane.add(knob);
     const blade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.09, 0.42), M.axeEdge || M.steel); blade.position.set(0, 0, 1.08); cane.add(blade);
     cane.position.y = -0.05; this.rig.armR.end.add(cane);
@@ -59,7 +78,7 @@ export class VernetBoss extends FurnaceBoss {
     this.rig.torso.add(this.vial);
     for (const y of [-0.2, 0.2]) { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.12 * s, 0.12 * s, 0.04 * s, 10), M.brass || M.metal); cap.position.y = y * s; this.vial.add(cap); }
     const tube = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.32 * s), M.leatherDark); tube.position.set(0, 0.62 * s, -0.16 * s); tube.rotation.x = 0.7; this.rig.torso.add(tube);
-    this.vialLight = new THREE.PointLight(0xff8a3a, 0.0, 4, 2);
+    this.vialLight = new THREE.PointLight(0xff8a3a, 0.0, 4, 2); this.vialLight.userData.noShadow = true;
     this.vial.add(this.vialLight);
     this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, 0.1); this.rig.armL.end.add(this.hand);
     // anel de cinza (fase 3), telegrafado no chão
