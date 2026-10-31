@@ -48,6 +48,8 @@ const WORLDS = {
 };
 import { HUD } from '../ui/HUD.js';
 import { Menus } from '../ui/Menus.js';
+import { playChapterIntro } from '../gameplay/ChapterIntro.js';
+import { Graphics } from '../render/Graphics.js';
 
 const STEP = 1 / 60;
 
@@ -65,6 +67,7 @@ export class Game {
     this.saves = new SaveManager();
     this.materials = createMaterials();
     this.camera = new THREE.PerspectiveCamera(this.settings.get('fov'), 1, 0.05, 90);
+    this.gfx = new Graphics(this);
     this.hud = new HUD();
     this.menus = new Menus(this);
     // em automação (testes) o pointer lock não está disponível; o jogo roda sem ele
@@ -95,7 +98,10 @@ export class Game {
     const w = window.innerWidth, h = window.innerHeight;
     this.renderer.setSize(Math.max(1, Math.floor(w * s)), Math.max(1, Math.floor(h * s)), false);
     this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
+    this.gfx?.resize();
   }
+  /** opções gráficas mudaram (menu): reaplica sombras, pós-processamento, partículas e resolução */
+  applyGraphics() { this.gfx.apply(); return this.gfx.debug(); }
 
   // ---------- mundo ----------
   _disposeWorld() {
@@ -142,7 +148,9 @@ export class Game {
     this.checkpoint = W.checkpoints[save.checkpoint] ? save.checkpoint : W.start;
     // luz de preenchimento discreta em volta do jogador (legibilidade no escuro)
     this.fill = new THREE.PointLight(0xffd2a0, 0.9, 5.5, 1.8);
+    this.fill.userData.noShadow = true;
     scene.add(this.fill);
+    this.gfx.onWorld();
     this.hud.reset();
     this.combatT = 0;
     this.bus.on('EnemyAlerted', () => { if (!this.script.bossActive) this.audio.setIntensity(1); this.combatT = 8; if (!this.script.tut.shown.noise) this.script.hint('noise', 'Inimigos <b>ouvem</b> passos de corrida, golpes e portas. Ande devagar para não chamar atenção.', 7); });
@@ -188,6 +196,7 @@ export class Game {
     this.saveGame('ward_bed');
     this._enterPlay();
     this.hud.toast('Hospital São Dimas — Véspera, 1934', 4);
+    playChapterIntro(this, 1);
   }
   continueGame() {
     const s = this.saves.load();
@@ -223,6 +232,7 @@ export class Game {
     this._buildWorld(s);
     this._enterPlay();
     this.script.intro?.();
+    playChapterIntro(this, 8);
   }
   /** passagem do Capítulo 6 para o 7: o alçapão da reserva técnica desce ao poço de serviço das catacumbas */
   startChapter7(prev) {
@@ -232,6 +242,7 @@ export class Game {
     this._buildWorld(s);
     this._enterPlay();
     this.script.intro?.();
+    playChapterIntro(this, 7);
   }
   /** passagem do Capítulo 5 para o 6: a barcaça da galeria de descarga atraca na doca do Museu de Ciências Proibidas */
   startChapter6(prev) {
@@ -241,6 +252,7 @@ export class Game {
     this._buildWorld(s);
     this._enterPlay();
     this.script.intro?.();
+    playChapterIntro(this, 6);
   }
   /** passagem do Capítulo 4 para o 5: a escada sob o Relógio desce até os canais da estação de bombeamento */
   startChapter5(prev) {
@@ -250,6 +262,7 @@ export class Game {
     this._buildWorld(s);
     this._enterPlay();
     this.script.intro?.();
+    playChapterIntro(this, 5);
   }
   /** passagem do Capítulo 3 para o 4: a galeria das catacumbas termina num bueiro do centro antigo */
   startChapter4(prev) {
@@ -259,6 +272,7 @@ export class Game {
     this._buildWorld(s);
     this._enterPlay();
     this.script.intro?.();
+    playChapterIntro(this, 4);
   }
   /** passagem do Capítulo 2 para o 3: o passe da Linha 4 leva Elias até o Largo do Véu */
   startChapter3(prev) {
@@ -268,6 +282,7 @@ export class Game {
     this._buildWorld(s);
     this._enterPlay();
     this.script.intro?.();
+    playChapterIntro(this, 3);
   }
   /** passagem real do Capítulo 1 para o 2: monta o save inicial do Bairro Operário a partir do estado atual */
   startChapter2(prev) {
@@ -277,6 +292,7 @@ export class Game {
     this._buildWorld(s);
     this._enterPlay();
     this.script.intro?.();
+    playChapterIntro(this, 2);
   }
   pause() {
     if (this.state !== 'playing') return;
@@ -363,7 +379,8 @@ export class Game {
       if (this.scene) {
         this.hud.update(dt, this);
         this.hud.setFps(this.settings.get('showFps'), this.fps);
-        this.renderer.render(this.scene, this.camera);
+        this.gfx.update(dt);
+        this.gfx.render(this.scene, this.camera);
       }
       this.syncMusic();
     } catch (e) {

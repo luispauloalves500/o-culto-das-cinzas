@@ -5,6 +5,7 @@ import { collectNotes } from './notes.js';
 import { WEAPONS, conditionLabel } from '../data/weapons.js';
 import { MapView } from './MapView.js';
 import { endingEpilogue, CREDITS } from '../data/endings.js';
+import { GFX_PRESETS, GFX_LABELS, detectPreset } from '../render/Graphics.js';
 
 const $ = (id) => document.getElementById(id);
 const SCREENS = ['menu', 'options', 'pause', 'inventory', 'map', 'reader', 'dead', 'chapterEnd', 'credits', 'loading', 'clickToPlay'];
@@ -46,17 +47,36 @@ export class Menus {
       mus.value = s.get('musicVolume'); mv();
       mus.oninput = () => { s.set('musicVolume', +mus.value); g.audio.setMusicVolume(+mus.value); mv(); };
     }
-    scale.onchange = () => { s.set('renderScale', +scale.value); g.resize(); };
+    // gráficos: predefinição preenche os ajustes; mexer num ajuste vira "Personalizada"; tudo salvo e aplicado na hora
+    const preset = $('optPreset'), shadows = $('optShadows'), parts = $('optParticles'), bloom = $('optBloom'), post = $('optPostfx'), aa = $('optAA'), corpse = $('optCorpse');
+    const syncGfx = () => {
+      scale.value = String(s.get('renderScale')); shadows.value = s.get('shadows'); parts.value = s.get('particles');
+      bloom.checked = !!s.get('bloom'); post.checked = !!s.get('postfx'); aa.checked = !!s.get('antialias'); corpse.value = String(s.get('corpseTime'));
+      preset.value = detectPreset(s.data);
+      const d = g.gfx?.debug?.();
+      if (d) $('optGfxInfo').textContent = `${GFX_LABELS[d.preset]} · ${d.size[0]}×${d.size[1]} · sombras de ${d.shadowCasters} luz(es) · ${d.composer ? 'pós-processamento ligado' : 'renderização direta'}`;
+    };
+    const applyGfx = (o) => { s.setMany(o); g.applyGraphics(); syncGfx(); };
+    preset.onchange = () => { if (GFX_PRESETS[preset.value]) applyGfx({ ...GFX_PRESETS[preset.value] }); };
+    scale.onchange = () => applyGfx({ renderScale: +scale.value });
+    shadows.onchange = () => applyGfx({ shadows: shadows.value });
+    parts.onchange = () => applyGfx({ particles: parts.value });
+    bloom.onchange = () => applyGfx({ bloom: bloom.checked });
+    post.onchange = () => applyGfx({ postfx: post.checked });
+    aa.onchange = () => applyGfx({ antialias: aa.checked });
+    corpse.onchange = () => { s.set('corpseTime', +corpse.value); syncGfx(); };
+    this.syncGfx = syncGfx; syncGfx();
     fov.oninput = () => { s.set('fov', +fov.value); $('optFovV').textContent = fov.value; g.camera.fov = +fov.value; g.camera.updateProjectionMatrix(); };
     shake.onchange = () => s.set('shake', shake.checked);
     fps.onchange = () => s.set('showFps', fps.checked);
+    const cine = $('optCine'); if (cine) { cine.checked = s.get('cinematics') !== false; cine.onchange = () => s.set('cinematics', cine.checked); }
   }
   show(name) {
     for (const id of SCREENS) $(id).classList.toggle('hidden', id !== name);
     if (name === 'menu') $('btnContinue').classList.toggle('hidden', !this.game.saves.hasSave());
   }
   hideAll() { this.show(null); }
-  openOptions(from) { this.optionsReturn = from; this.show('options'); }
+  openOptions(from) { this.optionsReturn = from; this.show('options'); this.syncGfx?.(); }
   showDocument(id) {
     const d = DOCUMENTS[id];
     $('docTitle').textContent = d.title; $('docBody').innerHTML = d.body;

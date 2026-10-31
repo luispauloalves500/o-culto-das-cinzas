@@ -9,6 +9,15 @@ export const DEFAULT_SETTINGS = {
   fov: 65,
   shake: true,
   showFps: false,
+  // gráficos (src/render/Graphics.js): o padrão é a predefinição "Média"
+  shadows: 'baixa',
+  particles: 'media',
+  bloom: true,
+  postfx: true,
+  antialias: false,
+  // corpos de inimigos somem depois de N segundos (0 = nunca)
+  corpseTime: 20,
+  cinematics: true,
 };
 
 export class Settings {
@@ -22,5 +31,7 @@ export class Settings {
   }
   get(k) { return this.data[k]; }
   set(k, v) { this.data[k] = v; this.save(); }
+  /** vários valores de uma vez (predefinições gráficas) com um único save */
+  setMany(o) { Object.assign(this.data, o); this.save(); }
   save() { try { this.storage?.setItem(KEY, JSON.stringify(this.data)); } catch (e) { /* armazenamento indisponível */ } }
 }
