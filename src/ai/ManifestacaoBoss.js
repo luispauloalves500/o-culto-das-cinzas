@@ -69,7 +69,34 @@ export class ManifestacaoBoss {
       const rb = new THREE.Mesh(new THREE.BoxGeometry(0.16 * s, 0.035 * s, 0.05 * s), coal);
       rb.position.set(side * 0.08 * s, (0.32 + y) * s, 0.21 * s); rb.userData.side = side; this.rig.torso.add(rb); this.ribs.push(rb);
     }
-    this.coreLight = new THREE.PointLight(0xff7a2a, 1.2, 7, 2); this.core.add(this.coreLight);
+    this.coreLight = new THREE.PointLight(0xff7a2a, 1.2, 7, 2); this.coreLight.userData.noShadow = true; this.core.add(this.coreLight);
+    // coroa de espinhos de cinza na cabeça, esporões nos ombros e garras nas mãos
+    const T = this.rig.torso;
+    this.crown = new THREE.Group(); this.crown.name = 'coroa';
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * Math.PI * 2, len = (i % 2 ? 0.16 : 0.24) * s;
+      const sp = new THREE.Mesh(new THREE.ConeGeometry(0.025 * s, len, 5), coal); sp.castShadow = true;
+      sp.position.set(Math.sin(a) * 0.1 * s, 0.29 * s + len / 2, Math.cos(a) * 0.1 * s - 0.01 * s); sp.rotation.set(Math.cos(a) * 0.35, 0, -Math.sin(a) * 0.35);
+      this.crown.add(sp);
+    }
+    h.add(this.crown);
+    for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) {
+      const sp = new THREE.Mesh(new THREE.ConeGeometry(0.04 * s, (0.2 - i * 0.04) * s, 5), coal); sp.castShadow = true;
+      sp.position.set(sx * (0.24 - i * 0.07) * s, (0.62 + (i === 0 ? 0.04 : 0)) * s, (-0.04 - i * 0.02) * s); sp.rotation.set(-0.4, 0, -sx * (0.7 - i * 0.2)); T.add(sp);
+    }
+    this.claws = [];
+    for (const arm of [this.rig.armR, this.rig.armL]) for (let i = 0; i < 4; i++) {
+      const c = new THREE.Mesh(new THREE.ConeGeometry(0.014 * s, 0.11 * s, 4), coal);
+      c.position.set((i - 1.5) * 0.028 * s, -0.17 * s, 0.03 * s); c.rotation.x = Math.PI + 0.35; arm.end.add(c); this.claws.push(c);
+    }
+    // veias de brasa no peito e nos braços: pulsam com o núcleo (mais fortes quando exposto)
+    this.veinMat = new THREE.MeshBasicMaterial({ color: 0xff6a20, transparent: true, opacity: 0.85 });
+    this.veins = [];
+    const vein = (parent, w, hh, x, y, z, rz) => { const v = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.012 * s), this.veinMat); v.position.set(x, y, z); v.rotation.z = rz; parent.add(v); this.veins.push(v); };
+    for (const [x, y, rz, l] of [[-0.14, 0.42, 0.5, 0.2], [0.14, 0.44, -0.5, 0.2], [-0.2, 0.24, -0.3, 0.16], [0.19, 0.22, 0.35, 0.18], [0, 0.12, 0.1, 0.14], [-0.06, 0.52, 1.2, 0.1], [0.07, 0.5, -1.1, 0.1]]) vein(T, 0.014 * s, l * s, x * s, y * s, 0.128 * s, rz);
+    for (const arm of [this.rig.armR, this.rig.armL]) { vein(arm.upper, 0.012 * s, 0.22 * s, 0, -0.2 * s, 0.087 * s, 0.15); vein(arm.lower, 0.012 * s, 0.2 * s, 0.01 * s, -0.2 * s, 0.077 * s, -0.2); }
+    this.details = { crown: this.crown.children.length, claws: this.claws.length, veins: this.veins.length };
+    this._trailT = 0;
     // flocos de cinza orbitando o corpo
     this.flakes = new THREE.Group();
     const fg = new THREE.BoxGeometry(0.12, 0.12, 0.02);
@@ -377,6 +404,18 @@ export class ManifestacaoBoss {
     this.coreLight.intensity += (glow - this.coreLight.intensity) * Math.min(1, dt * 5 || 1);
     if (this.coreMat.emissiveIntensity !== undefined) this.coreMat.emissiveIntensity = 0.6 + this.coreLight.intensity * 0.5;
     for (const e of this.eyes) e.visible = !this.blind && this.alive;
+    // veias pulsando com o núcleo; rastro de cinza/fumaça enquanto está de pé
+    const pulse = 0.55 + Math.sin(this.animT * (this.phase >= 3 ? 7 : 3.2)) * 0.25 + (this.exposed ? 0.25 : 0);
+    this.veinMat.opacity = Math.max(0.15, Math.min(1, pulse)) * (this.alive ? 1 : 0.3);
+    this.veinMat.color.setHex(this.state === 'stunned' ? 0xffc060 : 0xff6a20);
+    if (r.root.visible && this.alive && this.state !== 'dormant' && dt > 0) {
+      this._trailT -= dt;
+      if (this._trailT <= 0) {
+        this._trailT = 0.12;
+        const a = Math.random() * Math.PI * 2;
+        this.game.combat?.emit?.({ x: this.pos.x + Math.sin(a) * 0.6, y: this.pos.y + 0.3 + Math.random() * 2.6, z: this.pos.z + Math.cos(a) * 0.6 }, 1, Math.random() < 0.3 ? 0xff7a30 : 0x4a4440, 0.5);
+      }
+    }
     for (const f of this.flakes.children) {
       const u = f.userData; u.a += dt * u.w * (this.phase >= 3 ? 2 : 1);
       f.position.set(Math.sin(u.a) * u.r, u.y + Math.sin(this.animT * 1.3 + u.a) * 0.2, Math.cos(u.a) * u.r);
