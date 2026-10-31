@@ -264,6 +264,43 @@ Primeira fatia da lista FALTA: a trilha antiga (um pulso de serra) deu lugar a u
   - Opção **Música** (volume próprio, persistente) em Opções.
 - *(unit: 71 testes, sendo 7 da trilha: temas, notas no modo, mixes, valsa 3/4, fase cega, leitmotiv, determinismo, abafamento e persistência do volume. smoke: exploração do Cap. 1; temas dos chefes dos Caps. 1–4 ao início da luta; e, em tempo real no Chrome com notas agendadas e sinal no analisador, a exploração do Cap. 8, a valsa de Vernet nas fases 1→2, a transformação, a Manifestação, a fase cega só com batimento, o final "guardião", os créditos, o menu e o slider de volume)*
 
+### Polish — gráficos, opções gráficas, despawn de corpos, cenas e modelos (pt46u/pt47u)
+
+- **Opções gráficas reais (`src/render/Graphics.js`, menu Opções → Gráficos)**, salvas em `localStorage` e aplicadas na hora, sem recarregar:
+  - Predefinições **Baixa / Média (padrão) / Alta / Ultra**. Mexer num ajuste vira **Personalizada**.
+  - **Resolução de render**: 50–125%.
+  - **Sombras**: desligadas, ou 1/2/3 luzes com shadow map de 256/512/1024. As luzes que projetam sombra são as mais próximas e visíveis, escolhidas de novo a cada 0,4 s. Em Alta/Ultra o cenário também projeta sombra e as sombras são suaves.
+  - **Partículas**: pool de 120/200/360 e multiplicador de 0,5×/1×/1,6×. Na Baixa não há poeira nem poças de sangue.
+  - **Bloom**: brilho de lâmpadas, brasas e olhos.
+  - **Pós-processamento**: correção de cor, contraste, vinheta, granulação e leve aberração, feitos depois do tone mapping.
+  - **Antisserrilhado FXAA**.
+  - **Tempo até os corpos sumirem**: 10, 20 ou 45 s, ou nunca.
+  - **Cinemáticas de abertura**: liga/desliga.
+- **Gráficos do jogo todo**:
+  - Pipeline com EffectComposer: render → bloom → saída → grade → FXAA.
+  - Sombras de verdade nas luminárias.
+  - **Poeira/cinza no ar** com cor própria por capítulo (no Cap. 8 são brasas aditivas).
+  - Partículas redondas com textura em vez de quadrados.
+  - **Poças de sangue** sob os corpos.
+  - Filtro anisotrópico nas texturas.
+  - Personagens mais bem acabados (ver *Modelos*).
+- **Despawn de corpos**:
+  - Depois do tempo escolhido, o corpo afunda e se desfaz em cinza (cerca de 1,6 s, com partículas) e a poça some junto.
+  - O corpo então sai da cena e as geometrias dele são liberadas. Assim o capítulo não acumula malhas.
+  - O inimigo continua registrado como morto: o save lista os mortos, e ao carregar o corpo antigo nem volta à cena.
+- **Cenas (`src/gameplay/Cutscene.js`, `src/gameplay/ChapterIntro.js`)**:
+  - Todas as cenas ganharam tarjas que deslizam, fade do preto e cortes em fade, legenda que se revela, câmera "na mão" com leve balanço e cartela de título.
+  - Os **8 capítulos agora abrem com uma cinemática**: cartela "Capítulo N / nome" e dois planos (contraplano no rosto do Elias e volta por cima do ombro), com falas do Elias.
+  - Os planos são calculados a partir do ponto de chegada e recuados por raycast para nunca atravessar paredes.
+  - A cinemática toca no novo jogo e na passagem de capítulo, nunca ao carregar um save. **E/Esc** pulam.
+- **Modelos procedurais**:
+  - **Esqueleto (`ProceduralRig`)**: peças com cantos arredondados (RoundedBox compartilhado), pescoço, crânio, ombros e **mãos**, e rosto opcional (olhos, sobrancelhas, nariz e boca). Vale para todos os personagens.
+  - **Helena**: óculos redondos, coque, jaleco com lapelas e botões de latão, estetoscópio, mancha de sangue e maleta.
+  - **Inês**: duas tranças com fitas vermelhas, gola branca, saia e faixa.
+  - **Vernet**: luvas, bigode encerado, sobrancelhas, colete com botões, gravata, corrente e relógio de bolso, cauda da sobrecasaca e bengala com ponteira de latão.
+  - **Manifestação**: coroa de espinhos de cinza, esporões nos ombros, garras e **veias de brasa** que pulsam com o núcleo (mais fortes quando ela fica exposta). Ela solta um rastro de cinza e fagulhas.
+- *(unit: 77 testes, 6 novos: predefinições, resolveGfx, persistência, qualidade de partículas, fade e aberturas seguras contra paredes. smoke: Média/Ultra/Baixa/Personalizada aplicadas de verdade no renderer e salvas; despawn de corpo com poça; cinemática do Cap. 1 com cartela, fade, legenda e pular; abertura do Cap. 2 e desligar a opção; modelos de Helena, Inês, Vernet e Manifestação no Cap. 8)*
+
 ### Decisão narrativa — o Vigia (GDD × morte no Cap. 4)
 
 O GDD previa o **"Retorno do Vigia"** como chefe do Cap. 7, mas neste jogo o Vigia **morre de verdade no Cap. 4** (como foi pedido). A solução mantém as duas coisas sem desfazer a morte: **ele continua morto** — e é isso que a Confraria usou. A *Guia de remoção* e a *Ata da Primeira Cinza* contam que os acólitos desceram o corpo pela Linha Velha até a Estação Sob a Pedra e o **emparedaram em cal**, como fazem com os "guardas" das catacumbas (os emparedados). O que volta não é o Vigia vivo, e sim **O Vigia Caiado**: o mesmo sobretudo, chapéu, gancho e lampião frio, mas coberto de cal, **cego** (os olhos foram selados) e guiado só pelo som — por isso a luta é sobre ruído, sinetas e investidas às cegas, e não repete o Vigia da praça. Quando ele cai, "o lampião frio apaga — de vez, agora". O GDD continua respeitado (o Vigia é o chefe do Cap. 7) e a morte do Cap. 4 não é anulada.
@@ -281,7 +318,7 @@ Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, nã
 - A revelação RN 0 é uma cena curta com bonecos de cinza procedurais (sem animação facial nem voz); outras cenas do capítulo continuam só em texto.
 - Mapa: sem zoom, e sem marcação manual pelo jogador.
 - Dano localizado/desmembramento estilizado, finalizações, opção de reduzir sangue.
-- Mais tipos de inimigo; mais cutscenes; remapeamento de teclas; ajuste fino de dificuldade.
+- Mais tipos de inimigo; mais cutscenes no meio dos capítulos (cada capítulo já abre com uma cinemática); remapeamento de teclas; ajuste fino de dificuldade.
 - Streaming por setores (hoje o capítulo é carregado inteiro — é pequeno).
 - Capítulo 2: jogável do início ao fim, mas sem cenas (só texto/toasts), sem modelos próprios (caçador, carvoeiro e Brás são bonecos procedurais) e sem a Rua da Fundição.
 - **Capítulo 3 — A Confraria**: jogável do largo à galeria das catacumbas (cripta, O Sacristão e tela de fim). Faltam a investigação da organização (Dr. Silas Vernet, Dra. Helena Arcos), mais mecanismos/segurança antiga além dos discos e do sarilho, cenas (só texto/toasts) e modelos próprios (acólitos, noviços e o Sacristão são bonecos procedurais).
@@ -291,6 +328,7 @@ Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, nã
 - **Capítulo 7 — Sob a Pedra**: jogável do poço da escada à escada de serviço (O Vigia Caiado e tela de fim). Faltam cenas (só texto/toasts), um trem/vagão em movimento (o "último trem" que levou Inês só é citado), outras estações da Linha Velha além da Sé Velha e da Sob a Pedra, e modelos próprios (emparedados, acólitos e o Vigia Caiado são bonecos procedurais).
 - **Capítulo 8 — A Última Chama**: jogável do pátio do carvão aos três finais, com tela de fim e créditos. As cenas são de câmera e texto, sem dublagem nem animação facial. Faltam modelos próprios (Vernet, a Manifestação, Helena, Inês, foguistas, acólitos e carvoeiro são bonecos procedurais) e uma escolha de dificuldade/Novo Jogo+ depois dos créditos.
 - Trilha: já é adaptativa e tem temas por capítulo, chefe e final (ver *Polish — trilha sonora adaptativa*). Faltam gravações/instrumentos reais (é toda sintetizada), stingers de susto/descoberta e sons ambientes por sala.
+- Gráficos: faltam oclusão de ambiente (SSAO), luz volumétrica e níveis de detalhe (LOD). As predefinições foram medidas só em render por software (SwiftShader: cerca de 6 qps na Baixa e 3,5 na Média), não numa GPU real.
 - Gamepad implementado mas **não testado** com controle físico; desempenho só medido em render por software no CI local.
 
 ## Estrutura

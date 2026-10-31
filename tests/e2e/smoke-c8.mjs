@@ -27,6 +27,8 @@ try {
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle0' });
   await page.click('#btnNew'); await new Promise((r) => setTimeout(r, 1500));
+  // abertura do Cap. 1 (pt47u) é coberta no smoke principal: aqui pula e desliga as cinemáticas
+  await page.evaluate(() => { __ocdc.cutscene?.finish(); __ocdc.settings.set('cinematics', false); });
   const raw = await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('ocdc_save'));
     s.chapter = 7; s.checkpoint = 'c7_end';
