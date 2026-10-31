@@ -6,7 +6,7 @@ export const CHAPTERS = [
   { id: 4, name: 'Cidade Morta', place: 'Centro antigo de Véspera', playable: true },
   { id: 5, name: 'Águas Negras', place: 'Estação de bombeamento', playable: true },
   { id: 6, name: 'O Acervo', place: 'Museu de Ciências Proibidas', playable: true },
-  { id: 7, name: 'Sob a Pedra', place: 'Catacumbas e metrô antigo', playable: false },
+  { id: 7, name: 'Sob a Pedra', place: 'Catacumbas e metrô antigo', playable: true },
   { id: 8, name: 'A Última Chama', place: 'Torre de transmissão', playable: false },
 ];
 
@@ -168,7 +168,7 @@ export const OBJECTIVES_C6 = [
   { done: 'c6_galleryOpen', text: 'A porta de ferro está trancada por dentro. Ao lado dela, o cordão da campainha de entregas: anuncie a remessa.' },
   { done: 'c6_collectorDead', text: 'O Colecionador guarda a Galeria. Ele usa o próprio acervo contra você: atraia as investidas para as vitrines blindadas, solte as peças dos guinchos do teto em cima dele e golpeie o relicário no peito quando a gaiola abrir.' },
   { done: 'c6_chapterDone', text: 'A porta da reserva técnica (norte da Galeria) abriu. Desça pelo alçapão no fim dela.' },
-  { done: 'c6_never', text: 'Capítulo 6 concluído. O alçapão desce para as catacumbas e o metrô antigo — Capítulo 7, Sob a Pedra, em breve.' },
+  { done: 'c6_never', text: 'Capítulo 6 concluído. O alçapão desce para as catacumbas e o metrô antigo — siga para o Capítulo 7, Sob a Pedra.' },
 ];
 export const SIDE_OBJECTIVES_C6 = [
   { when: 'c6_inAtrium', done: 'c6_readGuia', text: 'Há um guia do visitante sobre o balcão da recepção.' },
@@ -177,5 +177,23 @@ export const SIDE_OBJECTIVES_C6 = [
   { when: 'c6_inStorage', done: 'c6_readCartao', text: 'Um caixote aberto no depósito ainda tem o cartão de inventário pregado.' },
   { when: 'c6_collectorDead', done: 'c6_readCatalogo', text: 'Na escrivaninha da reserva técnica está o catálogo do Colecionador.' },
 ];
-export function objectivesFor(ch) { return ch === 6 ? OBJECTIVES_C6 : ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
-export function sideObjectivesFor(ch) { return ch === 6 ? SIDE_OBJECTIVES_C6 : ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
+// Capítulo 7 — Sob a Pedra (primeira fatia): poço da escada de serviço → galeria de pedra → ossuário (emparedados
+// cegos nos nichos: acordam com barulho; ossos no chão estalam) → cripta (jazigo do coveiro-mor: pé de cabra → chave)
+// → grade do fundo do ossuário → túnel → plataforma da Estação Sé Velha → trilhos da Linha Velha (fim da fatia)
+export const OBJECTIVES_C7 = [
+  { done: 'c7_inOssuary', text: 'O alçapão bateu lá em cima. Siga pela galeria de pedra (norte) até as catacumbas.' },
+  { done: 'c7_sawGate', text: 'Atravesse o ossuário até a grade do fundo (norte). Os emparedados nos nichos não enxergam — mas ouvem: ande, não corra, e evite pisar nos ossos.' },
+  { done: 'c7_hasKey', text: 'A grade tem um cadeado em forma de crânio: a chave ficou com o coveiro-mor. O jazigo dele está na cripta (porta a oeste do ossuário).' },
+  { done: 'c7_ossOpen', text: 'Volte à grade do fundo do ossuário e abra o cadeado com a chave do coveiro-mor.' },
+  { done: 'c7_onPlatform', text: 'Siga pelo túnel além da grade.' },
+  { done: 'c7_sliceDone', text: 'Estação Sé Velha. Desça aos trilhos (escada de manutenção no fim leste da plataforma) e siga a Linha Velha para o leste.' },
+  { done: 'c7_never', text: 'Fim da primeira parte de Sob a Pedra. A Linha Velha segue para a Estação Sob a Pedra — o resto do Capítulo 7 vem na próxima atualização.' },
+];
+export const SIDE_OBJECTIVES_C7 = [
+  { when: 'c7_inOssuary', done: 'c7_readRegistro', text: 'Há um livro aberto na estante da entrada do ossuário.' },
+  { when: 'c7_triedJazigo', done: 'c7_hasCrowbar', text: 'A tampa do jazigo não se move com as mãos. O carrinho de ferramentas da galeria de pedra tinha uma alavanca.' },
+  { when: 'c7_onPlatform', done: 'c7_readQuadro', text: 'O quadro de horários da Linha Velha ainda está na parede da plataforma.' },
+  { when: 'c7_onPlatform', done: 'c7_shortcut', text: 'A porta de serviço no fundo leste da plataforma pode dar um caminho de volta ao poço da escada.' },
+];
+export function objectivesFor(ch) { return ch === 7 ? OBJECTIVES_C7 : ch === 6 ? OBJECTIVES_C6 : ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
+export function sideObjectivesFor(ch) { return ch === 7 ? SIDE_OBJECTIVES_C7 : ch === 6 ? SIDE_OBJECTIVES_C6 : ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
