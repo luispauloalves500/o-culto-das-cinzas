@@ -997,6 +997,7 @@ const { makeChapter7Save, normalizeChapter7Flags } = await import('../../src/cor
 const { OBJECTIVES_C7, SIDE_OBJECTIVES_C7 } = await import('../../src/data/chapters.js');
 const { PerceptionSystem } = await import('../../src/ai/PerceptionSystem.js');
 const C7L = await import('../../src/scenes/pedra/PedraLevel.js');
+const { VigiaCaiadoBoss, CAIADO_HP, CAIADO_BOUNDS } = await import('../../src/ai/VigiaCaiadoBoss.js');
 const C7S = await import('../../src/scenes/pedra/PedraScript.js');
 test('Cap. 7: migração do fim do Cap. 6, objetivos, documentos e capítulo jogável', () => {
   const end6 = migrateSave({ ...makeChapter6Save(null), checkpoint: 'c6_end', flags: { c6_chapterDone: true, c6_collectorDead: true, hasAmulet: true }, inventory: { items: { bandagem: 2, municao_38: 7 }, weapons: ['machado', 'revolver'], wear: {}, loaded: { revolver: 6 } }, documents: ['catalogo_colecionador'], player: { hp: 15 } });
@@ -1011,12 +1012,19 @@ test('Cap. 7: migração do fim do Cap. 6, objetivos, documentos e capítulo jog
   assert.equal(makeChapter7Save(null).chapter, 7);
   assert.ok(CHAPTERS.find((c) => c.id === 7)?.playable === true);
   assert.equal(objectivesFor(7), OBJECTIVES_C7); assert.equal(sideObjectivesFor(7), SIDE_OBJECTIVES_C7);
-  assert.deepEqual(OBJECTIVES_C7.map((o) => o.done), ['c7_inOssuary', 'c7_sawGate', 'c7_hasKey', 'c7_ossOpen', 'c7_onPlatform', 'c7_sliceDone', 'c7_never']);
+  assert.deepEqual(OBJECTIVES_C7.map((o) => o.done), ['c7_inOssuary', 'c7_sawGate', 'c7_hasKey', 'c7_ossOpen', 'c7_onPlatform', 'c7_sliceDone',
+    'c7_lineOpen', 'c7_sawPort', 'c7_portOpen', 'c7_vigiaWoke', 'c7_vigiaDead', 'c7_stairsOpen', 'c7_chapterDone', 'c7_never']);
   const q = new QuestSystem(null, 7); assert.equal(q.current(), OBJECTIVES_C7[0].text);
-  assert.ok(SIDE_OBJECTIVES_C7.length >= 2 && SIDE_OBJECTIVES_C7.length <= 5);
+  assert.ok(SIDE_OBJECTIVES_C7.length >= 2 && SIDE_OBJECTIVES_C7.length <= 8);
   for (const o of SIDE_OBJECTIVES_C7) assert.ok(o.when && o.done && o.text);
-  for (const id of ['registro_coveiro', 'recado_ines_pedra', 'quadro_linha_velha']) assert.ok(DOCUMENTS[id]?.ch === 7 && DOCUMENTS[id].title && DOCUMENTS[id].body, id);
-  assert.ok(ITEMS.pe_de_cabra && ITEMS.chave_coveiro);
+  for (const id of ['registro_coveiro', 'recado_ines_pedra', 'quadro_linha_velha', 'guia_remocao_vigia', 'placa_agulhas', 'ata_primeira_cinza']) assert.ok(DOCUMENTS[id]?.ch === 7 && DOCUMENTS[id].title && DOCUMENTS[id].body, id);
+  assert.ok(ITEMS.pe_de_cabra && ITEMS.chave_coveiro && ITEMS.chave_escada);
+  // a ficção do código das agulhas está nos documentos: guia (I reversa, II normal) + quadro (só um "R" no fim)
+  assert.match(DOCUMENTS.guia_remocao_vigia.body, /reversa desde 1912/); assert.match(DOCUMENTS.guia_remocao_vigia.body, /II<\/b> fica <b>normal/);
+  assert.match(DOCUMENTS.quadro_linha_velha.body, /menos um "<b>R<\/b>" no fim/); assert.match(DOCUMENTS.placa_agulhas.body, /SINAL/);
+  assert.deepEqual(C7L.SWITCH_CODE, { I: 'R', II: 'N', III: 'R' });
+  // o Vigia do Cap. 4 morreu de verdade: o que volta é o corpo emparedado (documentado na guia e na ata)
+  assert.match(DOCUMENTS.guia_remocao_vigia.body, /Torre do Relógio/); assert.match(DOCUMENTS.ata_primeira_cinza.body, /Usina/);
   // saves do Cap. 7: plataforma implica a cripta aberta e a grade aberta; fim da fatia implica a plataforma
   const plat = migrateSave({ ...s, checkpoint: 'c7_platform', flags: {} });
   assert.ok(plat.flags.c7_onPlatform && plat.flags.c7_ossOpen && plat.flags.c7_hasKey && plat.flags.c7_cryptOpen && plat.flags.c6_chapterDone);
@@ -1024,6 +1032,15 @@ test('Cap. 7: migração do fim do Cap. 6, objetivos, documentos e capítulo jog
   assert.ok(sl.flags.c7_sliceDone && sl.flags.c7_onPlatform && sl.flags.c7_ossOpen);
   const oss = migrateSave({ ...s, checkpoint: 'c7_ossuary', flags: {} });
   assert.ok(oss.flags.c7_inOssuary && !oss.flags.c7_ossOpen && !oss.flags.c7_hasKey);
+  // saves do resto do capítulo: fim → Vigia morto → grade levadiça → corrente → fatia
+  const end = migrateSave({ ...s, checkpoint: 'c7_end', flags: {} }).flags;
+  assert.ok(end.c7_chapterDone && end.ch7Done && end.c7_stairsOpen && end.c7_vigiaDead && end.c7_portOpen && end.c7_lineOpen && end.c7_sliceDone && end.c7_onPlatform && end.c7_ossOpen);
+  const boss = migrateSave({ ...s, checkpoint: 'c7_boss', flags: {} }).flags;
+  assert.ok(boss.c7_vigiaDead && boss.c7_vigiaWoke && boss.c7_portOpen && !boss.c7_chapterDone && !boss.c7_stairsOpen);
+  const st = migrateSave({ ...s, checkpoint: 'c7_station', flags: {} }).flags;
+  assert.ok(st.c7_portOpen && st.c7_lineOpen && !st.c7_vigiaDead && !st.c7_vigiaWoke);
+  const ln = migrateSave({ ...s, checkpoint: 'c7_line', flags: {} }).flags;
+  assert.ok(ln.c7_lineOpen && ln.c7_sliceDone && !ln.c7_portOpen);
   assert.equal(normalizeChapter7Flags({ chapter: 6, flags: {} }).flags.c6_chapterDone, undefined);
 });
 test('Cap. 7: emparedado cego que acorda com barulho; a pedra ecoa (acústica por área)', () => {
@@ -1033,8 +1050,9 @@ test('Cap. 7: emparedado cego que acorda com barulho; a pedra ecoa (acústica po
   assert.ok(e.attacks.length >= 2 && e.attacks.every((k) => k.windup > 0 && k.range > 0));
   for (const s of C7S.PEDRA_SPAWNS) assert.ok(ENEMIES[s.type], s.id);
   const niched = C7S.PEDRA_SPAWNS.filter((s) => s.niche);
-  assert.ok(niched.length >= 4 && niched.every((s) => s.dormant && s.type === 'emparedado'));
-  for (const s of niched) { const n = C7L.NICHES.find((o) => o.id === s.niche); assert.ok(n && n.enemy === s.id && Math.hypot(n.x - s.x, n.z - s.z) < 0.1, s.id); }
+  assert.ok(niched.length >= 8 && niched.every((s) => s.dormant && s.type === 'emparedado'));
+  const ALLN = [...C7L.NICHES, ...C7L.LINE_NICHES, ...C7L.SOB_NICHES];
+  for (const s of niched) { const n = ALLN.find((o) => o.id === s.niche); assert.ok(n && n.enemy === s.id && Math.hypot(n.x - s.x, n.z - s.z) < 0.1, s.id); }
   assert.ok(C7L.NICHES.some((n) => !n.enemy));
   // acústica: ossuário > cripta > galerias > fora
   const O = C7L.OSSUARY, a = (x, z) => C7L.acousticAt({ x, y: 0, z });
@@ -1058,9 +1076,15 @@ test('Cap. 7: emparedado cego que acorda com barulho; a pedra ecoa (acústica po
   for (const b of C7L.BONE_PATCHES) assert.ok(b.x0 >= O.minX && b.x1 <= O.maxX && b.z0 > O.minZ && b.z1 < O.maxZ, b.id);
   assert.ok(C7L.boneAt(18, 23) && !C7L.boneAt(18, 20) && !C7L.boneAt(18, 27));
 });
-test('Cap. 7: mapa, checkpoints, zonas e geometria da fatia (sem chefe)', () => {
+test('Cap. 7: mapa, checkpoints, zonas e geometria do capítulo', () => {
   const CP = C7L.PEDRA_CHECKPOINTS, L = Object.create(C7L.PedraLevel.prototype);
-  assert.deepEqual(Object.keys(CP).sort(), ['c7_ladder', 'c7_ossuary', 'c7_platform', 'c7_slice']);
+  assert.deepEqual(Object.keys(CP).sort(), ['c7_boss', 'c7_end', 'c7_ladder', 'c7_line', 'c7_ossuary', 'c7_platform', 'c7_slice', 'c7_station']);
+  assert.equal(L.zoneAt({ ...CP.c7_line, y: 0 })?.id, 'c7_cabine');
+  assert.equal(L.zoneAt({ ...CP.c7_station, y: 0 })?.id, 'c7_linha');
+  assert.equal(L.zoneAt({ ...CP.c7_boss, y: 0 })?.id, 'c7_sobapedra');
+  // a estação ecoa mais que tudo: é onde o chefe cego caça
+  const a = (x, z) => C7L.acousticAt({ x, y: 0, z });
+  assert.ok(a(92, 53) >= a(64, 52.6) && a(64, 52.6) > 1);
   assert.equal(L.zoneAt({ ...CP.c7_ladder, y: 1 })?.id, 'c7_poco');
   assert.equal(L.zoneAt({ ...CP.c7_ossuary, y: 1 })?.id, 'c7_ossuario');
   assert.equal(L.zoneAt({ ...CP.c7_platform, y: 1 })?.id, 'c7_estacao');
@@ -1082,9 +1106,105 @@ test('Cap. 7: mapa, checkpoints, zonas e geometria da fatia (sem chefe)', () => 
     assert.equal(roomAt({ x: 24, y: 0, z: 47 }).id, 'c7_plataforma');
     assert.equal(roomAt({ x: 38, y: 0, z: 20 }).id, 'c7_servico_n');
   } finally { setMapChapter(1); }
-  // a fatia não tem chefe: nenhum spawn de chefe e nenhuma flag de chefe nos objetivos
+  // Linha Velha → grade levadiça → Estação Sob a Pedra → escada; o chefe fica dentro da estação
+  const LN = C7L.LINE, SB = C7L.SOB, B = CAIADO_BOUNDS;
+  assert.ok(LN.minX > C7L.LINE_GATE.x && C7L.PORTCULLIS.x === LN.maxX && SB.minX === LN.maxX && C7L.PORTCULLIS.minZ === LN.minZ);
+  assert.ok(B.minX > SB.minX && B.maxX < SB.maxX && B.minZ > SB.minZ && B.maxZ < SB.maxZ && C7S.C7_ARENA_X > SB.minX);
+  assert.ok(C7L.CABIN.door.z === LN.minZ && C7L.CABIN.minX > LN.minX && C7L.CABIN.maxX < LN.maxX);
+  for (const l of [...Object.values(C7L.LEVERS), C7L.SIGNAL_LEVER]) assert.ok(l.x > C7L.CABIN.minX && l.x < C7L.CABIN.maxX && l.z > C7L.CABIN.minZ);
+  for (const p of C7L.SOB_PILLARS) assert.ok(p.x > B.minX + 2 && p.x < B.maxX - 2 && p.z > B.minZ && p.z < B.maxZ);
+  for (const b of C7L.SOB_BELLS) assert.ok(b.bell.x > B.minX && b.bell.x < SB.maxX && b.lever.x < b.bell.x - 10, b.id);
+  assert.ok(C7L.VIGIA_NICHE.x > SB.maxX && C7L.VIGIA_NICHE.out.x < B.maxX && C7L.STAIR.minZ === SB.maxZ && C7L.STAIR.endZ > SB.maxZ);
+  // cascalho: dentro da linha; sempre existe uma faixa limpa a ≥ 3,7 m do nicho mais próximo
+  for (const gp of C7L.GRAVEL_PATCHES) assert.ok(gp.x0 >= LN.minX && gp.x1 <= LN.maxX && gp.z0 >= LN.minZ && gp.z1 <= LN.maxZ, gp.id);
+  for (let x = LN.minX + 0.5; x < LN.maxX; x += 0.5) {
+    const clean = [];
+    for (let z = LN.minZ + 0.4; z < LN.maxZ - 0.3; z += 0.1) if (!C7L.gravelAt(x, z)) clean.push(z);
+    assert.ok(clean.length > 0, 'faixa limpa em x=' + x);
+    const best = Math.max(...clean.map((z) => Math.min(...C7L.LINE_NICHES.map((n) => Math.hypot(n.x - x, n.z - z)))));
+    assert.ok(best >= 3.7, 'longe dos nichos em x=' + x);
+  }
+  assert.ok(C7S.C7_GRAVEL_NOISE.run > C7S.C7_GRAVEL_NOISE.walk && C7S.C7_BELL_NOISE > C7S.C7_ALARM_NOISE && C7S.C7_ALARM_NOISE > C7S.C7_CHAIN_NOISE);
+  try {
+    setMapChapter(7);
+    assert.equal(roomAt({ x: 70, y: -1, z: 52 }).id, 'c7_linha');
+    assert.equal(roomAt({ x: 63, y: -1, z: 47 }).id, 'c7_cabine');
+    assert.equal(roomAt({ x: 92, y: -1, z: 53 }).id, 'c7_sobapedra');
+  } finally { setMapChapter(1); }
+  // o chefe não é spawn comum: os spawns são só emparedados; os objetivos chegam ao Vigia e ao fim do capítulo
   assert.ok(C7S.PEDRA_SPAWNS.every((s) => !ENEMIES[s.type].boss));
-  assert.ok(!OBJECTIVES_C7.some((o) => /Dead|boss|chefe/i.test(o.done)));
+  assert.ok(OBJECTIVES_C7.some((o) => o.done === 'c7_vigiaDead') && OBJECTIVES_C7.some((o) => o.done === 'c7_chapterDone'));
+  assert.ok(C7S.PEDRA_SPAWNS.filter((s) => s.arena).length >= 2);
+});
+
+function caiadoGame() {
+  const g = afogadaGame();
+  const SB = C7L.SOB, Y = C7L.TRACK_Y;
+  g.col.addFloor({ minX: SB.minX, maxX: SB.maxX + 2, minZ: SB.minZ, maxZ: SB.maxZ, y: Y });
+  for (const p of C7L.SOB_PILLARS) g.col.addBox(p.x - p.r, Y, p.z - p.r, p.x + p.r, Y + 4, p.z + p.r, { tag: 'obstacle' });
+  g.col.addBox(SB.minX, Y, SB.minZ - 1, SB.maxX, Y + 6, SB.minZ, {}); // parede norte
+  g.perception = new PerceptionSystem(g.col); g.perception.acoustics = C7L.acousticAt;
+  g.player.pos.set(84, Y, 53); g.player.vel = new THREE.Vector3();
+  g.player.hurtVolumes = function () { return [{ type: 'capsule', x: this.pos.x, z: this.pos.z, y0: this.pos.y + 0.3, y1: this.pos.y + 1.5, r: 0.32 }]; };
+  const hits = []; g.player.takeHit = (h) => { hits.push(h); return 'hit'; }; g.player.hitsLog = hits;
+  g.emitted = []; g.bus = { emit: (n, x) => g.emitted.push([n, x]) };
+  return g;
+}
+test('Cap. 7: O Vigia Caiado — cego (só ouve), grito de eco, sineta, investida no pilar, fases e morte', () => {
+  const g = caiadoGame(), Y = C7L.TRACK_Y, N = C7L.VIGIA_NICHE;
+  const b = new VigiaCaiadoBoss(g, { x: N.x - 1.6, y: Y, z: N.z, out: N.out, bounds: CAIADO_BOUNDS });
+  const run = (sec, f) => { for (let t = 0; t < sec; t += 1 / 30) { f?.(); b.update(1 / 30); g.perception.endStep(); } };
+  assert.equal(b.id, 'vigia_caiado'); assert.equal(b.maxHp, CAIADO_HP); assert.equal(b.state, 'dormant');
+  assert.equal(b.def.sight, 0);
+  assert.equal(b.takeHit({ dmg: 50, volume: { part: 'weak' } }), 'immune');
+  run(1); assert.equal(b.state, 'dormant');
+  b.activate(); assert.equal(b.state, 'emerge'); assert.equal(b.takeHit({ dmg: 50, volume: { part: 'weak' } }), 'immune');
+  run(4); assert.ok(b.seen.shriek >= 1, 'saiu da parede gritando'); assert.ok(Math.abs(b.pos.x - N.out.x) < 0.3);
+  // cego: Elias parado e calado a 17 m, à vista — ele não vem
+  const p = g.player; const d0 = Math.hypot(p.pos.x - b.pos.x, p.pos.z - b.pos.z);
+  run(3); assert.ok(b.seen.echo === 0 && b.seen.track === 0 && b.seen.charge === 0 && Math.abs(Math.hypot(p.pos.x - b.pos.x, p.pos.z - b.pos.z) - d0) < 0.5, b.state);
+  // a sineta atrai: ele vai até o som, não até Elias
+  const bell = C7L.SOB_BELLS.find((x) => x.id === 'n').bell;
+  g.perception.noise({ x: bell.x, y: Y, z: bell.z }, C7S.C7_BELL_NOISE, 'bell'); b.update(1 / 30); g.perception.endStep();
+  assert.equal(b.targetKind, 'bell'); assert.ok(Math.hypot(b.target.x - bell.x, b.target.z - bell.z) < 0.1);
+  assert.ok(['track', 'chargeWind'].includes(b.state));
+  // golpe no lampião enquanto ele persegue a sineta: bônus e cambaleia
+  b._set('track'); b.target = { x: bell.x, y: Y, z: bell.z }; b.targetKind = 'bell';
+  const hp0 = b.hp; b.takeHit({ dmg: 40, volume: { part: 'weak' } });
+  assert.ok(b.lastHit.lured && Math.abs(hp0 - b.hp - 64) < 0.01 && b.state === 'stagger');
+  // corpo de cal: golpe fora do lampião quase não entra
+  const hp1 = b.hp; b._set('listen'); b.takeHit({ dmg: 40, volume: { part: 'body' } }); assert.ok(Math.abs(hp1 - b.hp - 8) < 0.01);
+  // grito de eco: andar durante a janela denuncia a posição exata
+  b.target = null; b._set('shriek'); b.stateT = 0; b.shrieked = false;
+  run(0.6); assert.ok(b.echoT > 0);
+  p.vel.set(2, 0, 0); b.update(1 / 30); g.perception.endStep(); p.vel.set(0, 0, 0);
+  assert.equal(b.seen.echo, 1); assert.equal(b.targetKind, 'echo'); assert.ok(Math.hypot(b.target.x - p.pos.x, b.target.z - p.pos.z) < 0.1);
+  // investida às cegas contra um pilar de ferro: atordoado 4,2 s (no muro, só 2 s)
+  const P = C7L.SOB_PILLARS.find((o) => o.x === 91 && o.z === 46.5);
+  b.pos.set(P.x + 6, Y, P.z); b.yaw = -Math.PI / 2; b.chargeTarget = { x: P.x - 3, y: Y, z: P.z }; b.target = { ...b.chargeTarget };
+  b._set('charge'); b.chargeFrom = { x: b.pos.x, z: b.pos.z }; b.chargeHit = false;
+  run(1.2, () => { if (b.state !== 'charge') return; });
+  assert.equal(b.state, 'stunned'); assert.equal(b.stunDur, 4.2); assert.equal(b.seen.stunObst, 1);
+  assert.ok(g.emitted.some(([n]) => n === 'VigiaStunned'));
+  const hp2 = b.hp; b.takeHit({ dmg: 40, volume: { part: 'weak' } }); assert.ok(Math.abs(hp2 - b.hp - 56) < 0.01);
+  // fases pelos limiares de vida; fase 2 ouve mais longe
+  assert.equal(b.phase, 1);
+  b.hp = b.maxHp * 0.66; b._set('listen'); b.takeHit({ dmg: 20, volume: { part: 'weak' } }); assert.equal(b.phase, 2); assert.ok(b.hearMul > 1);
+  b.hp = b.maxHp * 0.31; b.takeHit({ dmg: 20, volume: { part: 'weak' } }); assert.equal(b.phase, 3); assert.ok(b.fast > 1.3);
+  b.hp = 10; assert.equal(b.takeHit({ dmg: 40, volume: { part: 'weak' } }), 'dead'); assert.equal(b.state, 'dead'); assert.equal(b.alive, false);
+  // save: corpo restaurado já morto, onde caiu
+  const b2 = new VigiaCaiadoBoss(caiadoGame(), { x: N.x - 1.6, y: Y, z: N.z, out: N.out, bounds: CAIADO_BOUNDS });
+  b2.setDeadAt(90, Y, 55); assert.ok(b2.state === 'dead' && !b2.alive && Math.abs(b2.pos.x - 90) < 0.01);
+});
+
+test('dados: itens e documentos sem chaves duplicadas (um capítulo não sobrescreve o item de outro)', () => {
+  for (const f of ['../../src/data/items.js', '../../src/data/documents.js']) {
+    const src = readFileSync(new URL(f, import.meta.url), 'utf8');
+    const keys = [...src.matchAll(/^  ([a-z0-9_]+): \{/gm)].map((m) => m[1]);
+    const dup = keys.filter((k, i) => keys.indexOf(k) !== i);
+    assert.deepEqual(dup, [], f + ' duplicadas: ' + dup.join(','));
+    assert.ok(keys.length > 10, f);
+  }
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
