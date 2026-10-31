@@ -157,4 +157,21 @@ export const ENEMIES = {
     walled: true,
     groanPitch: 0.8,
   },
+  // Capítulo 8 — A Última Chama: foguista da Usina de Véspera. Couro chamuscado, óculos de latão, o atiçador em
+  // brasa. Meio surdo de anos ao pé das caldeiras (ouve pouco), mas enxerga bem no clarão das fornalhas; o vapor
+  // escaldante não o fere (heatproof) — já os acólitos que o acompanham queimam como qualquer um.
+  foguista: {
+    name: 'Foguista',
+    hp: 120, poise: 60, radius: 0.42, height: 1.9, scale: 1.08, hunch: 0.3,
+    walk: 0.85, chase: 2.6, turn: 4.5,
+    sight: 10, fov: 75, hearing: 0.8,
+    attackTokens: 1,
+    attacks: [
+      { id: 'poker', range: 1.95, windup: 0.75, active: 0.18, recover: 0.9, dmg: 21, knock: 3.5, weight: 2 },
+      { id: 'shove', range: 1.4, windup: 0.5, active: 0.2, recover: 0.8, dmg: 11, knock: 5.5, weight: 1 },
+    ],
+    mats: 'foguista',
+    heatproof: true,
+    groanPitch: 0.75,
+  },
 };

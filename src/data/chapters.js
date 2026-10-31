@@ -7,7 +7,7 @@ export const CHAPTERS = [
   { id: 5, name: 'Águas Negras', place: 'Estação de bombeamento', playable: true },
   { id: 6, name: 'O Acervo', place: 'Museu de Ciências Proibidas', playable: true },
   { id: 7, name: 'Sob a Pedra', place: 'Catacumbas e metrô antigo', playable: true },
-  { id: 8, name: 'A Última Chama', place: 'Torre de transmissão', playable: false },
+  { id: 8, name: 'A Última Chama', place: 'Torre de transmissão', playable: true },
 ];
 
 export const OBJECTIVES = [
@@ -196,7 +196,7 @@ export const OBJECTIVES_C7 = [
   { done: 'c7_vigiaDead', text: 'O Vigia voltou — cego, caçando pelo som. Fique parado quando ele gritar, atraia-o com as sinetas, faça-o investir contra os pilares de ferro e acerte o lampião nas costas.' },
   { done: 'c7_stairsOpen', text: 'A grade da escada de serviço (norte) tem cadeado. Reviste o corpo do Vigia.' },
   { done: 'c7_chapterDone', text: 'Suba a escada de serviço rumo à Usina.' },
-  { done: 'c7_never', text: 'Capítulo 7 concluído. Inês foi levada para a Usina de Véspera — o Capítulo 8 vem na próxima atualização.' },
+  { done: 'c7_never', text: 'Capítulo 7 concluído. Inês foi levada para a Usina de Véspera — siga para o Capítulo 8.' },
 ];
 export const SIDE_OBJECTIVES_C7 = [
   { when: 'c7_inOssuary', done: 'c7_readRegistro', text: 'Há um livro aberto na estante da entrada do ossuário.' },
@@ -207,5 +207,22 @@ export const SIDE_OBJECTIVES_C7 = [
   { when: 'c7_wrongSignal', done: 'c7_readQuadro', text: 'A coluna das agulhas está no quadro de horários da plataforma da Sé Velha.' },
   { when: 'c7_vigiaWoke', done: 'c7_readAta', text: 'Um livro de atas está aberto no atril diante da parede de cal.' },
 ];
-export function objectivesFor(ch) { return ch === 7 ? OBJECTIVES_C7 : ch === 6 ? OBJECTIVES_C6 : ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
-export function sideObjectivesFor(ch) { return ch === 7 ? SIDE_OBJECTIVES_C7 : ch === 6 ? SIDE_OBJECTIVES_C6 : ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
+// Capítulo 8 — A Última Chama (primeira fatia): Usina de Véspera — pátio → torre de carvão → caldeiras → turbina → base da torre
+export const OBJECTIVES_C8 = [
+  { done: 'c8_climbed', text: 'O portão da Casa das Caldeiras está trancado por dentro. Suba a escada da torre de carvão (leste do pátio) e siga pela esteira.' },
+  { done: 'c8_hasWheel', text: 'As válvulas de alívio das caldeiras estão sem volante. Procure um na oficina (oeste, pelo corredor de tubos).' },
+  { done: 'c8_ventedAll', text: 'Alivie as três caldeiras com o volante (a III só pela passarela da galeria). O vapor queima quem estiver embaixo.' },
+  { done: 'c8_steamDoorOpen', text: 'Sem pressão na linha, a porta-pistão da Sala da Turbina (norte) destrava. Abra-a.' },
+  { done: 'c8_sabotage', text: 'A torre está fechada por uma fechadura elétrica. Desarme a chave geral no quadro de transmissão (parede leste).' },
+  { done: 'c8_sliceDone', text: 'A porta da torre está livre. Vá até a base da torre de transmissão (norte).' },
+  { done: 'c8_never', text: 'Base da torre alcançada. O monta-cargas sobe até Inês — o resto do capítulo vem na próxima atualização.' },
+];
+export const SIDE_OBJECTIVES_C8 = [
+  { when: 'c8_inBoiler', done: 'c8_gateUnbarred', text: 'O portão de carga (parede sul da Casa das Caldeiras) se destranca por dentro — um atalho de volta ao pátio.' },
+  { when: 'c8_sawLeaks', done: 'c8_leaksOff', text: 'O registro de alimentação no fim do corredor de tubos fecharia os vazamentos — com um volante.' },
+  { when: 'c8_started', done: 'c8_readBoletim', text: 'Há um boletim na mesa da guarita do pátio.' },
+  { when: 'c8_hasWheel', done: 'c8_readHelena', text: 'Um bilhete ficou na bancada da oficina, ao lado do volante.' },
+  { when: 'c8_inTurbine', done: 'c8_readOrdem', text: 'Há papéis na mesa do chefe de turno, na Sala da Turbina.' },
+];
+export function objectivesFor(ch) { return ch === 8 ? OBJECTIVES_C8 : ch === 7 ? OBJECTIVES_C7 : ch === 6 ? OBJECTIVES_C6 : ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
+export function sideObjectivesFor(ch) { return ch === 8 ? SIDE_OBJECTIVES_C8 : ch === 7 ? SIDE_OBJECTIVES_C7 : ch === 6 ? SIDE_OBJECTIVES_C6 : ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }

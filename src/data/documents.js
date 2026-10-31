@@ -440,5 +440,40 @@ export const DOCUMENTS = {
 <p>"O Vigia fica de guarda, de pé na cal, até o fim. Se o 'peça 32' chegar até aqui, o Vigia o ouvirá antes de vê-lo — <b>ele não precisa mais ver</b>."</p>
 <p class="small">Na margem, a lápis, numa letra que você conhece: "E. — a Usina. Sobe a escada de serviço. Eu ainda estou aqui. — I."</p>`,
   },
+  // ---------- Capítulo 8 — A Última Chama ----------
+  boletim_usina: {
+    ch: 8,
+    title: 'Boletim de turno — Usina de Véspera',
+    body: `<p>Folha datilografada presa numa prancheta, na mesa da guarita. Carimbo: <b>CIA. DE FORÇA E LUZ DE VÉSPERA — TURNO DA NOITE</b>.</p>
+<p>"As três caldeiras ficam <b>acesas e no vermelho</b> até a meia-noite: a linha alimenta a turbina, e a turbina alimenta a <b>torre</b>. Ordem do Dr. Vernet. Nenhum alívio sem autorização."</p>
+<p>"Lembrete: a <b>porta-pistão</b> da Sala da Turbina é travada pela <b>pressão da linha</b>. Enquanto houver caldeira pressurizada, ela não abre — nem por dentro."</p>
+<p>"A haste da válvula de alívio da <b>caldeira III</b> partiu na terça. Até o conserto, alívio só <b>por cima, pela passarela da galeria</b>."</p>
+<p class="small">A lápis, no rodapé: "Os volantes sumiram da oficina. Quem foi?"</p>`,
+  },
+  bilhete_helena: {
+    ch: 8,
+    title: 'Bilhete — H. A.',
+    body: `<p>Papel dobrado em quatro, enfiado no eixo do volante, na bancada da oficina. Letra miúda, apressada.</p>
+<p>"Elias — se você chegou até aqui, a cal não te pegou. Fui eu que tirei os volantes das caldeiras: sem eles, ninguém alivia nada e a pressão fica onde Vernet quer. Este eu deixei para você."</p>
+<p>"Abra as três válvulas e a linha morre. Sem linha, a turbina para; sem turbina, a porta da sala abre. A torre ainda tem as baterias — <b>a chave geral do quadro de transmissão</b> corta o resto."</p>
+<p>"Inês está viva. Levaram ela para o alto da torre, para a sala dos transmissores. Não confie em tudo o que eu escrevi antes. Confie nisto."</p>
+<p class="small">Assinado só com as iniciais: <b>H. A.</b> — Dra. Helena Arcos.</p>`,
+  },
+  ordem_vernet: {
+    ch: 8,
+    title: 'Ordem de serviço — Dr. S. Vernet',
+    body: `<p>Papel timbrado da Confraria sobre a mesa do chefe de turno, preso por um manômetro quebrado.</p>
+<p>"Transmissão da <b>Última Chama</b> à meia-noite. Todas as casas ligadas à rede de Véspera ouvirão. A turbina deve estar a plena carga e o quadro de transmissão <b>armado</b> — sob nenhuma hipótese desligue a chave geral."</p>
+<p>"A moça é <b>a última chama</b>: a voz dela abre a porta. Subam-na pelo monta-cargas à sala dos transmissores e a mantenham acordada."</p>
+<p>"Se o peça 32 aparecer, deixem-no subir. Quero que ele veja."</p>
+<p class="small">Assinado: <b>Dr. Silas Vernet</b>, Tesoureiro da Confraria.</p>`,
+  },
+  placa_caldeiras: {
+    ch: 8,
+    title: 'Placa — Operação das caldeiras',
+    body: `<p>Placa de esmalte aparafusada na parede leste, sob a galeria.</p>
+<p>"<b>ALÍVIO DE PRESSÃO</b>: encaixe o volante na válvula de alívio e gire até o fim, <b>sem soltar</b>. O vapor descarrega pelo bocal sobre o corredor entre as caldeiras — <b>NÃO PERMANEÇA SOB O BOCAL</b>."</p>
+<p>"Caldeiras I e II: válvula na frente da fornalha. Caldeira III: válvula no dorso, acesso pela passarela."</p>
+<p>"Interlock: a porta-pistão da Sala da Turbina só abre com a linha despressurizada (as três caldeiras aliviadas)."</p>`,
+  },
 };
-
