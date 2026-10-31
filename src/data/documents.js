@@ -334,4 +334,12 @@ export const DOCUMENTS = {
 <p>"É a minha <b>Lurdes</b>. Caiu na comporta na enchente de 29 e nunca acharam o corpo. Agora a Confraria a chama de <b>a Afogada</b> e diz que ela guarda as comportas das turbinas até a hora do sinal. Ela não me reconhece mais."</p>
 <p class="small">Última linha, tremida: "Se alguém vier atrás da moça: não lute com ela dentro d'água. Lá ela é a correnteza."</p>`,
   },
+  ficha_remessa: {
+    ch: 5,
+    title: 'Ficha de remessa nº 31',
+    body: `<p>Ficha de cartolina pregada num caixote vazio, com o lacre de cera da Confraria. O caixote tem o tamanho de uma criança deitada.</p>
+<p><b>REMESSA Nº 31</b> — conteúdo: "peça viva, fita vermelha". Origem: estação de bombeamento (comporta 3). Transporte: barcaça da descarga, pelo rio.</p>
+<p>Destino: <b>O ACERVO</b> — Museu de Ciências Proibidas, depósito do subsolo. "Receber pela doca. Catalogar antes do sinal. O Curador não aceita peças molhadas."</p>
+<p class="small">No verso, a lápis: "Guardiã da comporta: Lurdes. Se ela cair, a remessa já terá descido o rio."</p>`,
+  },
 };

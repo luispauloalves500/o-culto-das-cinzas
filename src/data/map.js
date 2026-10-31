@@ -130,6 +130,9 @@ export const ROOMS_C5 = [
   { id: 'c5_mezanino', floor: 'up2', ch: 5, name: 'Mezanino das bombas', rect: [26, 40, 46, 46] },
   { id: 'c5_passarela', floor: 'up2', ch: 5, name: 'Passarela do reservatório', rect: [26, 46, 40, 60] },
   { id: 'c5_turbinas', floor: 'up2', ch: 5, name: 'Antecâmara das turbinas', rect: [26, 60, 40, 68] },
+  { id: 'c5_salao', floor: 'up2', ch: 5, name: 'Salão das turbinas', rect: [24, 68, 42, 90] },
+  { id: 'c5_poco', floor: 'up2', ch: 5, name: 'Poço das turbinas', rect: [28, 72, 38, 84] },
+  { id: 'c5_descarga', floor: 'up2', ch: 5, name: 'Galeria de descarga', rect: [31.6, 90, 34.4, 101] },
 ];
 ROOMS.push(...ROOMS_C5);
 
