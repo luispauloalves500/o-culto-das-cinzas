@@ -14,6 +14,18 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
   await tools();
 
   // ---------- base: botoeira sem força → escada de marinheiro → casa de máquinas ----------
+  // trilha adaptativa (pt45u): mede em tempo real o que o diretor musical agenda e o que sai do analisador
+  const probe = async (ms = 2000) => {
+    const a = await page.evaluate(() => { const g = __ocdc; if (g.scene && g.boss?.alive && g.state === 'playing' && g.boss.state !== 'dormant') { g.boss.state = 'stunned'; g.boss.stunDur = 9; g.boss.stateT = 0; } if (g.scene && g.player) g.player.hp = g.player.maxHp; g.syncMusic(); return g.audio.musicDebug(); });
+    let rms = 0; const t0 = Date.now();
+    while (Date.now() - t0 < ms) { await new Promise((r) => setTimeout(r, 120)); rms = Math.max(rms, await page.evaluate(() => __ocdc.audio.director?.rms() || 0)); }
+    const b = await page.evaluate(() => { const g = __ocdc; if (g.scene && g.player) g.player.hp = g.player.maxHp; return __ocdc.audio.musicDebug(); });
+    if (!a || !b) return { ok: false, a, b };
+    const d = (k) => (b.perLayer[k] || 0) - (a.perLayer[k] || 0);
+    const kinds = {}; for (const k of Object.keys(b.perKind)) { const v = b.perKind[k] - (a.perKind[k] || 0); if (v > 0) kinds[k] = v; }
+    const x = await page.evaluate(() => ({ st: __ocdc.state, cs: __ocdc.cutscene?.id || null, boss: __ocdc.boss ? [__ocdc.boss.id, __ocdc.boss.state, __ocdc.boss.phase] : null }));
+    return { ...x, hist: b.history.slice(-4), key: b.key, theme: b.theme, ctx: b.ctx, bpm: b.bpm, notes: b.notes - a.notes, lead: d('lead'), bass: d('bass'), pad: d('pad'), choir: d('choir'), perc: d('perc'), kinds, rms: +rms.toFixed(4), mix: b.mix, voices: b.voices };
+  };
   const g1 = await page.evaluate(() => {
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     T.heal();
@@ -70,12 +82,17 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
   check('Cap. 8 torre: alavanca da cabine sobe o monta-cargas com Elias dentro até a Sala dos Transmissores (save c8_top), Vernet dormente',
     g3.up === 'ok' && g3.moving && g3.tTop > 2 && g3.stop === 'topo' && g3.py > 13 && g3.atTop && g3.cp === 'c8_top' && /Topo da torre/.test(g3.toast) && !g3.lockedEarly && g3.bossId === 'vernet' && g3.bossSt === 'dormant' && g3.lights <= 16, JSON.stringify(g3));
   await page.screenshot({ path: SHOTS + 'c8-topo.png' });
+  const m3 = await probe();
+  check('Trilha: exploração do Cap. 8 (frígio dominante) toca de verdade — notas agendadas em tempo real e sinal no analisador',
+    m3.ctx === 'running' && /^(explore|tension):c8$/.test(m3.key) && m3.theme === 'c8' && m3.notes >= 3 && m3.rms > 0.0005, JSON.stringify(m3));
 
   // ---------- Vernet: intro, vapor, ampola, fases → transformação ----------
   const g4 = await page.evaluate(() => {
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     T.tp(13, 13.5, 77.6, 0); T.run(0.1); out.cs = T.cs();
+    out.musIntro = g.syncMusic()?.key;
     out.csT = T.until(() => !g.cutscene, 30);
+    out.mus1 = g.syncMusic()?.key;
     const b = g.boss; out.active = g.script.bossActive; out.bst = b.state; out.locked = !!L.liftLocked; out.intro = q.has('c8_vernetIntro');
     out.hud = document.getElementById('bossName')?.textContent || '';
     T.tp(13, 13.5, 77.6, Math.PI); out.lift = T.interactAt('c8_lift_a'); out.liftT = T.last();
@@ -91,10 +108,10 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     out.again = T.interactAt('c8_steam_W'); out.againT = T.last();
     // a ampola nas costas: golpes no ponto fraco; o casaco quase não sente o resto
     const hp1 = b.hp; b._set('idle'); b.takeHit({ dmg: 30, from: g.player.pos, volume: { part: 'body' } }); out.bodyDmg = Math.round(hp1 - b.hp);
-    let n = 0; while (b.alive && n < 40) { b.stunDur = 5; b.state = 'stunned'; T.weak(b, 30); n++; if (b.phase === 2 && out.p2 === undefined) out.p2 = n; }
+    let n = 0; while (b.alive && n < 40) { b.stunDur = 5; b.state = 'stunned'; T.weak(b, 30); n++; if (b.phase === 2 && out.p2 === undefined) { out.p2 = n; out.mus2 = g.syncMusic()?.key; } }
     out.n = n; out.phase = b.phase; out.vSt = b.state;
-    T.run(0.1); out.cs2 = T.cs(); out.vdown = q.has('c8_vernetDown');
-    out.csT2 = T.until(() => !g.cutscene, 30);
+    T.run(0.1); out.cs2 = T.cs(); out.vdown = q.has('c8_vernetDown'); out.musCs = g.syncMusic()?.key;
+    out.csT2 = T.until(() => !g.cutscene, 30); out.musM = g.syncMusic()?.key;
     const m = g.boss; out.mId = m.id; out.mSt = m.state; out.cp = T.S().checkpoint; out.mActive = g.script.bossActive; out.locked2 = !!L.liftLocked;
     out.hud2 = document.getElementById('bossName')?.textContent || ''; out.vRig = b.rig.root.visible;
     out.hp = g.player.hp; out.lights = T.lights();
@@ -106,6 +123,11 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
   check('Cap. 8 Vernet cai → cutscene da transformação → Manifestação da Primeira Cinza ativa (save c8_arena), elevador travado',
     g4.vSt === 'dead' && g4.cs2 === 'c8_transform' && g4.vdown && g4.csT2 > 5 && g4.mId === 'manifestacao' && g4.mActive && g4.mSt !== 'dormant' && g4.cp === 'c8_arena' && g4.locked2 && /MANIFESTA/.test(g4.hud2) && !g4.vRig && g4.lights <= 16, JSON.stringify(g4));
   await page.screenshot({ path: SHOTS + 'c8-manifestacao.png' });
+  check('Trilha: valsa de Vernet (3/4) entra com a luta e acelera na fase 2; a transformação troca o tema; a Manifestação tem o seu',
+    g4.musIntro === 'cutscene:vernet' && g4.mus1 === 'boss:vernet:1' && g4.mus2 === 'boss:vernet:2' && /^cutscene:/.test(g4.musCs) && g4.musM === 'boss:manifestacao:1', JSON.stringify({ i: g4.musIntro, a: g4.mus1, b: g4.mus2, cs: g4.musCs, m: g4.musM }));
+  const m4 = await probe();
+  check('Trilha: tema da Manifestação toca em tempo real (baixo e pad/coro agendados, sinal no analisador)',
+    m4.key === 'boss:manifestacao:1' && m4.notes >= 4 && m4.bass >= 1 && m4.rms > 0.0005, JSON.stringify(m4));
 
   // ---------- Manifestação: piso de vida pelas bobinas, disjuntores, fase cega, núcleo ----------
   const g5 = await page.evaluate(() => {
@@ -118,19 +140,30 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     const away = () => { m.pos.set(20, 13.5, 70.5); m.state = 'stunned'; m.stunDur = 4; m.stateT = 0; };
     T.heal(); away();
     T.tp(4.6, 13.5, 81.5, -Math.PI / 2); out.b1 = T.interactAt('c8_breaker_W'); T.run(0.5); T.tp(7, 13.5, 81.5); T.run(0.1); out.cancel = !g.script.tw.hold && L.tower.coils.W.live; out.cancelT = T.last();
-    const cut = (id, x, z, yaw) => { T.heal(); away(); T.tp(x, 13.5, z, yaw); const r = T.interactAt('c8_breaker_' + id); const t = T.until(() => !g.script.tw.hold, 4); return { r, t, live: L.tower.coils[id].live, ph: m.phase, st: m.state, toast: T.last() }; };
+    const cut = (id, x, z, yaw) => { T.heal(); away(); T.tp(x, 13.5, z, yaw); const r = T.interactAt('c8_breaker_' + id); const t = T.until(() => !g.script.tw.hold, 4); return { r, t, live: L.tower.coils[id].live, ph: m.phase, st: m.state, toast: T.last(), mus: g.syncMusic()?.key }; };
     out.W = cut('W', 4.6, 81.5, -Math.PI / 2);
     out.E = cut('E', 21.4, 81.5, Math.PI / 2);
     out.N = cut('N', 18.2, 86.4, 0);
     out.live1 = m.liveCoils(); out.phase3 = m.phase; out.blindToast = window.__toasts.some((t) => /SOM/.test(t));
+    out.musP2 = out.W.mus; const cu = g.syncMusic(); out.musP3 = cu?.key; out.perc3 = cu?.perc; out.lead3 = cu?.mix.lead;
+    return out;
+  });
+  const m5 = await probe(2400);
+  Object.assign(g5, await page.evaluate(() => {
+    const g = __ocdc, L = g.level, q = g.quest, out = {}, m = g.boss;
     T.heal();
     let n = 0; while (m.alive && n < 60) { m.state = 'stunned'; m.stunDur = 5; T.weak(m, 40); n++; }
     out.n = n; out.mSt = m.state;
     T.run(0.2);
     out.dead = q.has('c8_cinzaDead'); out.cp = T.S().checkpoint; out.active = g.script.bossActive; out.unlocked = !L.liftLocked;
     out.coilsOff = ['W', 'E', 'N'].every((id) => !L.tower.coils[id].live); out.toast = T.last(); out.obj = q.current(); out.lights = T.lights();
+    out.musAfter = g.syncMusic()?.key;
     return out;
-  });
+  }));
+  check('Trilha: fase cega da Manifestação — só batimento cardíaco, sem melodia (o jogador precisa ouvir); morta, o tema do chefe sai',
+    g5.musP2 === 'boss:manifestacao:2' && g5.musP3 === 'boss:manifestacao:3' && /^H\.+H\.+$/.test(g5.perc3 || '') && g5.lead3 === 0
+    && m5.key === 'boss:manifestacao:3' && m5.lead === 0 && (m5.kinds.H || 0) >= 1 && Object.keys(m5.kinds).every((k) => k === 'H') && m5.rms > 0.0002 && !/^boss:/.test(g5.musAfter || ''),
+    JSON.stringify({ p2: g5.musP2, p3: g5.musP3, perc: g5.perc3, lead: g5.lead3, after: g5.musAfter, m5 }));
   check('Cap. 8 Manifestação: bobinas vivas seguram um piso de vida; soltar o disjuntor cancela; 3 disjuntores (segurar) atordoam e mudam as fases até a fase cega',
     g5.phase0 === 1 && g5.live0 === 3 && g5.alive0 && g5.floorHeld && g5.floorHp > 400 && g5.b1 === 'ok' && g5.cancel && /soltou/.test(g5.cancelT)
     && g5.W.r === 'ok' && !g5.W.live && g5.W.ph === 2 && g5.E.r === 'ok' && !g5.E.live && g5.N.r === 'ok' && !g5.N.live && g5.live1 === 0 && g5.phase3 === 3 && g5.blindToast, JSON.stringify(g5));
@@ -170,10 +203,11 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     const vis = (id) => { const el = document.getElementById(id); return !!el && !el.classList.contains('hidden') && getComputedStyle(el).display !== 'none'; };
     out.endVis = vis('chapterEnd'); out.title = document.getElementById('endTitle').textContent; out.text = document.getElementById('endText').textContent;
     out.epi = document.querySelectorAll('#endRn0 .epilogue-line').length; out.stats = document.getElementById('stats').textContent;
-    out.next = vis('btnEndNext'); out.cred = vis('btnEndCredits');
+    out.next = vis('btnEndNext'); out.cred = vis('btnEndCredits'); out.musEnd = g.syncMusic()?.key;
     document.getElementById('btnEndCredits').click();
+    out.musCred = g.syncMusic()?.key;
     out.credVis = vis('credits'); out.credN = document.querySelectorAll('#creditsList .credit').length; out.credTxt = document.getElementById('creditsList').textContent;
-    document.getElementById('btnCreditsBack').click(); out.back = vis('chapterEnd') && !vis('credits');
+    document.getElementById('btnCreditsBack').click(); out.back = vis('chapterEnd') && !vis('credits'); out.musBack = g.syncMusic()?.key;
     return out;
   });
   check('Cap. 8 final "guardião": segurar a chama 4 s drena vida → cutscene → fim do jogo (save c8_end), tela de fim com título, epílogo e estatísticas',
@@ -182,6 +216,10 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
   check('Cap. 8: créditos a partir da tela de fim (sem "Próximo capítulo"), com o final alcançado, e voltar',
     !g7.next && g7.cred && g7.credVis && g7.credN >= 5 && /Guardi/.test(g7.credTxt) && g7.back, JSON.stringify({ next: g7.next, cred: g7.cred, credVis: g7.credVis, n: g7.credN, back: g7.back }));
   await page.screenshot({ path: SHOTS + 'c8-fim.png' });
+  const m7 = await probe(2000);
+  check('Trilha: o final "guardião" toca a canção de ninar de Inês em maior; créditos têm tema próprio e voltar restaura o do final',
+    g7.musEnd === 'end:guardiao' && g7.musCred === 'credits' && g7.musBack === 'end:guardiao' && m7.key === 'end:guardiao' && m7.theme === 'end_guardiao' && m7.lead >= 2 && m7.rms > 0.0005,
+    JSON.stringify({ e: g7.musEnd, c: g7.musCred, b: g7.musBack, m7 }));
 
   // ---------- Continuar num save c8_end abre a tela de fim ----------
   const reload = async (raw) => {
@@ -191,6 +229,18 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     await page.evaluate(() => { window.__toasts = []; document.getElementById('btnContinue').click(); });
     await ext(); await tools();
   };
+  // menu: recarregar a página e só clicar no fundo (gesto real) — o tema do menu começa antes de qualquer botão
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.mouse.click(8, 8);
+  const m8 = await probe(1800);
+  const sl = await page.evaluate(() => {
+    const el = document.getElementById('optMusic'); el.value = '0.3'; el.dispatchEvent(new Event('input'));
+    const s = JSON.parse(localStorage.getItem('ocdc_settings_v1') || '{}');
+    const out = { vol: __ocdc.audio.musicVolume, saved: s.musicVolume, label: document.getElementById('optMusicV').textContent };
+    el.value = '0.6'; el.dispatchEvent(new Event('input')); return out;
+  });
+  check('Trilha: menu toca a canção de ninar após o primeiro gesto; opção "Música" ajusta e persiste o volume da trilha',
+    m8.ctx === 'running' && m8.key === 'menu' && m8.notes >= 3 && m8.rms > 0.0005 && sl.vol === 0.3 && sl.saved === 0.3 && sl.label === '30%', JSON.stringify({ m8, sl }));
   await reload(null);
   const g8 = await page.evaluate(() => {
     const g = __ocdc; const el = document.getElementById('chapterEnd');

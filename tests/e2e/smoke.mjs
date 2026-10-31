@@ -45,6 +45,9 @@ try {
   await new Promise((r) => setTimeout(r, 1500));
   const st = await page.evaluate(() => ({ state: __ocdc.state, pos: __ocdc.player.pos.toArray(), hud: !document.getElementById('hud').classList.contains('hidden') }));
   check('novo jogo iniciado', st.state === 'playing' && st.hud, JSON.stringify(st));
+  const mus0 = await page.evaluate(() => { const c = __ocdc.syncMusic(); return { key: c?.key, ctx: __ocdc.audio.ctx?.state, dir: !!__ocdc.audio.director }; });
+  check('Trilha: Cap. 1 começa no tema de exploração do hospital (caixinha de música em Ré eólio)', mus0.key === 'explore:c1' && mus0.ctx === 'running' && mus0.dir, JSON.stringify(mus0));
+  const musKeys = [];
   check('autosave inicial criado', await page.evaluate(() => !!localStorage.getItem('ocdc_save')));
   await page.screenshot({ path: SHOTS + '02-enfermaria.png' });
 
@@ -757,7 +760,7 @@ try {
     const pre = g.checkpoint;
     T.tp(22, -5, 22.5, 0); T.run(0.2);
     const active = g.script.bossActive, doorLocked = g.level.doors.arena.locked;
-    T.run(3);
+    T.run(3); window.__musK = g.syncMusic()?.key;
     // fase real: investida contra obstáculo → atordoado → golpes no frasco
     let guard = 0, stunnedSeen = false, hpStart = b.hp, weakHits = 0;
     while (b.alive && guard++ < 400) {
@@ -783,6 +786,7 @@ try {
     }
     return { pre, active, doorLocked, stunnedSeen, weakHits: b.weakHits || 0, alive: b.alive, hp: b.hp, hpStart, guard };
   });
+  musKeys.push(await page.evaluate(() => window.__musK));
   check('autosave pré-chefe', boss.pre === 'pre_boss', boss.pre);
   check('luta inicia e tranca a porta', boss.active && boss.doorLocked, JSON.stringify(boss));
   check('chefe atordoado por obstáculo e derrotado', boss.stunnedSeen && !boss.alive, JSON.stringify(boss));
@@ -963,10 +967,11 @@ try {
     T.tp(45, 0, 81.2, 0); T.run(0.2);
     out.active = g.script.bossActive; out.locked = g.level.doors.c2_arena.locked && !g.level.doors.c2_arena.open;
     out.name = document.getElementById('bossName')?.textContent; out.bossId = b.id; out.hpStart = b.hp;
-    T.run(2.5);
+    T.run(2.5); window.__musK = g.syncMusic()?.key;
     let lv = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) lv++; }); out.lights = lv;
     return out;
   });
+  musKeys.push(await page.evaluate(() => window.__musK));
   await page.screenshot({ path: SHOTS + '15-bras-chefe.png' });
   const c2fight = await page.evaluate(() => {
     const g = __ocdc, b = g.boss, out = {};
@@ -1221,7 +1226,7 @@ try {
     out.exitOff = !g.interact.list.find((i) => i.id === 'c3_exit').enabled();
     out.ribbonOff = !g.interact.list.find((i) => i.id === 'pick_c3_ribbon').enabled();
     T.tp(25, -8.5, 66.6, 0); T.hold('KeyW', 2.5); T.run(0.1);
-    out.active = g.script.bossActive; out.arena = { open: g.level.doors.c3_arena.open, locked: g.level.doors.c3_arena.locked };
+    out.active = g.script.bossActive; out.arena = { open: g.level.doors.c3_arena.open, locked: g.level.doors.c3_arena.locked }; window.__musK = g.syncMusic()?.key;
     out.hud = !g.hud.el.boss.classList.contains('hidden');
     out.inTargets = g.targets().includes(B);
     // save durante a luta não deixa a porta da arena trancada
@@ -1293,6 +1298,7 @@ try {
     out.raw = localStorage.getItem('ocdc_save');
     return out;
   });
+  musKeys.push(await page.evaluate(() => window.__musK));
   await page.screenshot({ path: SHOTS + '21-fim-cap3.png' });
   check('Cap. 3: O Sacristão desperta ao entrar na cripta e tranca a porta', c3e.exitOff && c3e.ribbonOff && c3e.active && !c3e.arena.open && c3e.arena.locked && c3e.inTargets && c3e.serArena === false, JSON.stringify({ a: c3e.active, d: c3e.arena, t: c3e.inTargets, s: c3e.serArena, h: c3e.hud }));
   check('Cap. 3: combate do Sacristão (pilares, relicário, varredura em área, incenso, 3 fases)', !c3e.alive && c3e.phase === 3 && c3e.c.weak >= 5 && c3e.log.stuns >= 2 && c3e.c.sweepN >= 1 && c3e.c.sweepHits >= 1 && c3e.c.cloudN >= 1 && c3e.log.cloudDmg > 0 && c3e.c.cloudHits >= 1, JSON.stringify({ t: c3e.t, c: c3e.c, l: c3e.log }));
@@ -1407,7 +1413,7 @@ try {
     out.active = g.script.bossActive; out.hud = !g.hud.el.boss.classList.contains('hidden'); out.bossName = g.hud.el.bossName?.textContent || document.getElementById('bossName')?.textContent;
     out.immune = B.takeHit({ dmg: 999, poise: 99, heavy: true, from: g.player.pos, point: B.pos.clone() });
     T.run(2.6); out.dropState = B.state; out.dropY = +B.pos.y.toFixed(2);
-    T.run(1.6); out.landY = +B.pos.y.toFixed(2); out.landState = B.state;
+    T.run(1.6); out.landY = +B.pos.y.toFixed(2); out.landState = B.state; window.__musK = g.syncMusic()?.key;
     T.run(2.0); out.afterIntro = B.state;
     out.inTargets = g.targets().includes(B);
     // território: o Vigia não sai da praça
@@ -1465,6 +1471,9 @@ try {
     out.obj5 = g.quest.current(); out.lightsTower = lights();
     return out;
   });
+  musKeys.push(await page.evaluate(() => window.__musK));
+  check('Trilha: cada chefe dos Caps. 1–4 tem tema próprio quando a luta começa (Cirurgião, Brás, Sacristão, Vigia)',
+    /^(boss|cutscene):cirurgiao/.test(musKeys[0] || '') && /^(boss|cutscene):bras/.test(musKeys[1] || '') && /^(boss|cutscene):sacristao/.test(musKeys[2] || '') && /^(boss|cutscene):vigia:/.test(musKeys[3] || ''), JSON.stringify(musKeys));
   await page.screenshot({ path: SHOTS + '24-cap4-torre.png' });
   check('Cap. 4: pátio (rastejador sob o lençol) e autosave na Praça do Relógio', c4b.back === 'ok' && c4b.yardZ > 40.4 && c4b.rasDormant && c4b.rasWoke && c4b.plaza && c4b.plazaCp === 'c4_plaza' && c4b.bossIdle, JSON.stringify({ b: c4b.back, z: c4b.yardZ, r: c4b.rasWoke, p: c4b.plaza, c: c4b.plazaCp }));
   check('Cap. 4: orçamento de luzes na praça (≤ 16)', c4b.lights <= 16 && c4b.lightsTower <= 16, 'v=' + c4b.lights + '/' + c4b.lightsTower);

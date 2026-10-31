@@ -1401,5 +1401,81 @@ test('Cap. 8: save — cadeia de checkpoints da torre até o fim', () => {
   assert.ok(!N('c8_slice').c8_inMachine);
 });
 
+// ---------- Trilha adaptativa (pt45u): partitura procedural ----------
+const SC = await import('../../src/audio/Score.js');
+const { DEFAULT_SETTINGS: DS2, Settings: SettingsCls } = await import('../../src/core/Settings.js');
+const bar = (cue, b) => { const out = []; for (let st = 0; st < (cue.theme.meter || 16); st++) out.push(...SC.composeStep(cue, b, st)); return out; };
+const play = (cue, bars = 8) => { const out = []; for (let b = 0; b < bars; b++) out.push(...bar(cue, b)); return out; };
+test('Trilha: tema para cada capítulo (1–8), cada chefe, cada final, menu e créditos', () => {
+  for (let ch = 1; ch <= 8; ch++) { const c = SC.cueFor({ state: 'playing', chapter: ch, intensity: 0 }); assert.equal(c.theme.id, 'c' + ch); assert.equal(c.key, 'explore:c' + ch); }
+  for (const id of SC.BOSS_IDS) { assert.ok(SC.THEMES[id], id); const c = SC.cueFor({ state: 'playing', chapter: 1, intensity: 2, boss: { id, phase: 1, alive: true } }); assert.equal(c.key, `boss:${id}:1`); }
+  for (const e of ['guardiao', 'herdeira', 'cinzas']) assert.equal(SC.cueFor({ state: 'end', chapter: 8, ending: e }).key, 'end:' + e);
+  assert.equal(SC.cueFor({ state: 'menu' }).key, 'menu');
+  assert.equal(SC.cueFor({ state: 'credits', chapter: 8 }).key, 'credits');
+  const roots = new Set(); for (let ch = 1; ch <= 8; ch++) { const t = SC.THEMES['c' + ch]; roots.add(t.root + t.mode + t.lead); assert.ok(SC.MODES[t.mode] && t.bpm > 30 && t.chords.length >= 2); }
+  assert.equal(roots.size, 8, 'cada capítulo tem identidade própria (tônica/modo/timbre)');
+});
+test('Trilha: toda nota tocada pertence ao modo do tema (8 compassos, todos os cues)', () => {
+  const cues = [{ state: 'menu' }, { state: 'credits' }, ...[1, 2, 3, 4, 5, 6, 7, 8].flatMap((ch) => [{ state: 'playing', chapter: ch, intensity: 0 }, { state: 'playing', chapter: ch, intensity: 1 }]),
+    ...SC.BOSS_IDS.flatMap((id) => [1, 2, 3].map((phase) => ({ state: 'playing', chapter: 8, intensity: 2, boss: { id, phase, alive: true } }))),
+    ...['guardiao', 'herdeira', 'cinzas'].map((ending) => ({ state: 'end', chapter: 8, ending }))].map(SC.cueFor);
+  let n = 0;
+  for (const c of cues) for (const x of play(c)) if (x.midi != null) { n++; assert.ok(SC.inMode(c.theme, x.midi), `${c.key} ${x.layer} ${x.midi}`); assert.ok(x.midi > 20 && x.midi < 100); }
+  assert.ok(n > 2000, 'notas=' + n);
+});
+test('Trilha: exploração é esparsa e sem percussão; tensão traz baixo e percussão; chefe acelera por fase', () => {
+  const ex = SC.cueFor({ state: 'playing', chapter: 3, intensity: 0 }), te = SC.cueFor({ state: 'playing', chapter: 3, intensity: 1 });
+  const pe = play(ex, 16), pt = play(te, 16);
+  assert.equal(pe.filter((x) => x.layer === 'perc' || x.layer === 'bass').length, 0);
+  assert.ok(pt.filter((x) => x.layer === 'perc').length > 8 && pt.filter((x) => x.layer === 'bass').length > 8);
+  assert.ok(pe.filter((x) => x.layer === 'lead').length < pt.filter((x) => x.layer === 'lead').length, 'exploração mais esparsa');
+  const b = (phase) => SC.cueFor({ state: 'playing', chapter: 8, intensity: 2, boss: { id: 'vernet', phase, alive: true } });
+  assert.ok(SC.stepDur(b(3)) < SC.stepDur(b(2)) && SC.stepDur(b(2)) < SC.stepDur(b(1)));
+  assert.equal(b(1).theme.meter, 12, 'Vernet: valsa em 3/4');
+  assert.ok(play(b(2)).some((x) => x.layer === 'choir') && !play(b(1)).some((x) => x.layer === 'choir'), 'fase 2 traz o coro');
+  const dead = (intensity) => SC.cueFor({ state: 'playing', chapter: 8, intensity, boss: { id: 'vernet', phase: 1, alive: false } }).key;
+  assert.equal(dead(2), 'tension:c8', 'chefe morto não toca o tema do chefe'); assert.equal(dead(0), 'explore:c8', 'e volta à exploração');
+});
+test('Trilha: Manifestação fase 3 (cega, caça pelo som) — só batimento cardíaco, sem melodia', () => {
+  const c = SC.cueFor({ state: 'playing', chapter: 8, intensity: 2, boss: { id: 'manifestacao', phase: 3, alive: true } });
+  const p = play(c, 8);
+  assert.equal(c.key, 'boss:manifestacao:3');
+  assert.equal(p.filter((x) => x.layer === 'lead').length, 0);
+  const kinds = new Set(p.filter((x) => x.layer === 'perc').map((x) => x.kind)); assert.deepEqual([...kinds], ['H']);
+  assert.ok(p.some((x) => x.layer === 'choir'));
+  const c1 = SC.cueFor({ state: 'playing', chapter: 8, intensity: 2, boss: { id: 'manifestacao', phase: 1, alive: true } });
+  assert.ok(play(c1).some((x) => x.layer === 'lead') && c.mix.gain < c1.mix.gain);
+});
+test('Trilha: a canção de ninar de Inês (caixinha do Cap. 1) é o motivo do menu, dos finais e dos créditos', () => {
+  assert.deepEqual(SC.LULLABY_HZ, [659, 784, 880, 784, 659, 587, 523, 587]);
+  const cmaj = { root: 60, mode: 'ionian' };
+  assert.deepEqual(SC.LULLABY_DEGREES.map((d) => Math.round(SC.midiToHz(SC.degreeToMidi(cmaj, d, 1)))), [659, 784, 880, 784, 659, 587, 523, 587]);
+  for (const id of ['menu', 'end_guardiao', 'end_herdeira', 'credits', 'colecionador', 'c6']) {
+    const degs = SC.parseMotif(SC.THEMES[id].motif).filter(Boolean).map((n) => n.deg).slice(0, 8);
+    assert.deepEqual(degs, SC.LULLABY_DEGREES, id);
+  }
+  // guardião (maior) resolve na tônica; herdeira (dórico) termina suspensa
+  const last = (id) => SC.parseMotif(SC.THEMES[id].motif).filter(Boolean).pop().deg;
+  assert.equal(last('end_guardiao') % 7, 0); assert.notEqual(last('end_herdeira') % 7, 0);
+});
+test('Trilha: determinística, pausa/leitura abaixam, cutscene e morte sem melodia', () => {
+  const c = SC.cueFor({ state: 'playing', chapter: 5, intensity: 0 });
+  assert.deepEqual(play(c, 6), play(c, 6));
+  const d = SC.cueFor({ state: 'reading', chapter: 5, intensity: 0 });
+  assert.equal(d.key, 'explore:c5:duck'); assert.ok(d.mix.gain < c.mix.gain); assert.equal(d.theme, c.theme);
+  const cs = SC.cueFor({ state: 'cutscene', chapter: 8, intensity: 2, boss: { id: 'manifestacao', phase: 1, alive: true } });
+  assert.equal(cs.key, 'cutscene:manifestacao'); assert.ok(!play(cs).some((x) => x.layer === 'lead'));
+  const ep = SC.cueFor({ state: 'cutscene', chapter: 8, ending: 'herdeira' }); assert.equal(ep.key, 'end:herdeira');
+  const de = SC.cueFor({ state: 'dead', chapter: 2 }); assert.ok(!play(de).some((x) => x.layer === 'lead' || x.layer === 'perc'));
+  assert.deepEqual(SC.parseMotif('1 - . 2'), [{ deg: 1, len: 2 }, null, null, { deg: 2, len: 1 }]);
+  assert.equal(SC.degreeToMidi({ root: 50, mode: 'aeolian' }, -1), 48); assert.equal(SC.degreeToMidi({ root: 50, mode: 'aeolian' }, 7), 62);
+});
+test('Trilha: volume da música é uma opção persistida (padrão 0,6)', () => {
+  assert.equal(DS2.musicVolume, 0.6);
+  const mem = { d: {}, getItem(k) { return this.d[k] ?? null; }, setItem(k, v) { this.d[k] = v; } };
+  const s1 = new SettingsCls(mem); assert.equal(s1.get('musicVolume'), 0.6); s1.set('musicVolume', 0.25);
+  assert.equal(new SettingsCls(mem).get('musicVolume'), 0.25);
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);

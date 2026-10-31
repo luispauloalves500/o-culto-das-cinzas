@@ -236,6 +236,34 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
   - **Conteúdo e saves**: objetivos até o fim, item *Manete*, documentos *Diário de Helena* e *Relatório de transmissão*, mapa com 4 andares (casa de máquinas e topo) e checkpoints novos `c8_machine`, `c8_top`, `c8_arena`, `c8_free` e `c8_end`. A migração mantém as flags coerentes por checkpoint, e as cenas puladas deixam o estado consistente. Orçamento de luzes ≤ 16 em todas as fases.
   - *(unit: 64 testes, entre eles piso e fases da Manifestação, vapor e ponto fraco de Vernet, finais/epílogos/créditos e migração das flags novas. smoke: escada até a casa de máquinas; monta-cargas sem força ou sem manete; acólito morto com golpes reais; cena de Helena, manete, diário, livro e faca; subida de cabine; Vernet (cena, trava, vapor e recarga, armadura × ponto fraco, fases, morte); transformação e save `c8_arena`; disjuntor cancelado e cortes W/L/N até a fase cega; morte pelo núcleo; Inês, Helena e verdade; os três finais (chama, entrega, machado); tela de fim, créditos e *Continuar* em `c8_end`. Capturas `c8-topo`, `c8-manifestacao`, `c8-fim`)*
 
+### Polish — trilha sonora adaptativa (pt45u)
+
+Primeira fatia da lista FALTA: a trilha antiga (um pulso de serra) deu lugar a uma **trilha adaptativa procedural**, toda em WebAudio, sem nenhum arquivo de áudio.
+
+- **Compositor puro (`src/audio/Score.js`)**: temas com tônica, modo, andamento e timbres próprios.
+  - Um tema para cada capítulo: c1 é uma caixinha de música em Ré eólio; c2, frígio de fornalha; c3, órgão em menor harmônico; c4, sinos em lócrio; c5, vidro em dórico; c6, menor harmônico; c7, sinos frígios sobre um ritmo de trilho de trem; c8, frígio dominante.
+  - Um tema para cada um dos 9 chefes. **Vernet** tem uma **valsa em 3/4** a 132 bpm. A **Manifestação** acrescenta coro na fase 2, e na **fase cega** (3) a melodia some e sobra só um **batimento cardíaco**: é preciso ouvir.
+  - Um tema para cada final: *O Guardião* em maior, *A Herdeira* em dórico, sem resolver, e *Cinzas ao Vento*. Mais os temas dos créditos e do menu.
+  - O leitmotiv é a **canção de ninar de Inês** (a mesma da caixinha do Cap. 1). Ele volta, transposto para o modo de cada tema, no menu, no Cap. 6 e no tema do Colecionador (que coleciona a caixinha), nos três finais e nos créditos.
+  - Tudo é determinístico (semente por tema/compasso), e todas as notas ficam dentro do modo.
+- **Estados de mixagem** (`cueFor`):
+  - **Exploração**: esparsa, sem baixo nem percussão.
+  - **Tensão**: quando um inimigo percebe o jogador, entram baixo e percussão.
+  - **Chefe por fase**: o andamento sobe ×1,1 e ×1,2, e o coro entra a partir da fase 2.
+  - **Cena**: sem melodia. **Morte**, **fim** e **créditos** têm mix própria.
+  - **Abafamento**: ×0,45 na pausa, na leitura, no inventário e no mapa.
+  - Um chefe morto devolve a trilha à tensão ou à exploração.
+- **Diretor em tempo real (`src/audio/MusicDirector.js`)**:
+  - Agendador *lookahead*: tique de 25 ms, 0,14 s à frente.
+  - Camadas pad, baixo, melodia, coro e percussão, com reverb de convolução procedural, delay na melodia e um analisador.
+  - Vozes de caixinha, sino, vidro, órgão, cordas pinçadas, metais, coro com formantes, pad e baixo. Percussão de bumbo, caixa, chimbal, metal, batimento e trilho.
+  - Limite de 40 vozes.
+  - Trocas de tema esperam o próximo tempo forte e fazem *crossfade*; mudanças só de mixagem são imediatas.
+- **Integração**:
+  - `Game.musicState()` alimenta o diretor a cada quadro. O áudio é destravado pelo primeiro clique ou tecla, então o menu já toca.
+  - Opção **Música** (volume próprio, persistente) em Opções.
+- *(unit: 71 testes, sendo 7 da trilha: temas, notas no modo, mixes, valsa 3/4, fase cega, leitmotiv, determinismo, abafamento e persistência do volume. smoke: exploração do Cap. 1; temas dos chefes dos Caps. 1–4 ao início da luta; e, em tempo real no Chrome com notas agendadas e sinal no analisador, a exploração do Cap. 8, a valsa de Vernet nas fases 1→2, a transformação, a Manifestação, a fase cega só com batimento, o final "guardião", os créditos, o menu e o slider de volume)*
+
 ### Decisão narrativa — o Vigia (GDD × morte no Cap. 4)
 
 O GDD previa o **"Retorno do Vigia"** como chefe do Cap. 7, mas neste jogo o Vigia **morre de verdade no Cap. 4** (como foi pedido). A solução mantém as duas coisas sem desfazer a morte: **ele continua morto** — e é isso que a Confraria usou. A *Guia de remoção* e a *Ata da Primeira Cinza* contam que os acólitos desceram o corpo pela Linha Velha até a Estação Sob a Pedra e o **emparedaram em cal**, como fazem com os "guardas" das catacumbas (os emparedados). O que volta não é o Vigia vivo, e sim **O Vigia Caiado**: o mesmo sobretudo, chapéu, gancho e lampião frio, mas coberto de cal, **cego** (os olhos foram selados) e guiado só pelo som — por isso a luta é sobre ruído, sinetas e investidas às cegas, e não repete o Vigia da praça. Quando ele cai, "o lampião frio apaga — de vez, agora". O GDD continua respeitado (o Vigia é o chefe do Cap. 7) e a morte do Cap. 4 não é anulada.
@@ -261,7 +289,8 @@ Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, nã
 - **Capítulo 5 — Águas Negras**: jogável do canal à galeria de descarga (A Afogada e tela de fim). Faltam o resto da estação de bombeamento e dos canais (outros ramais), a barcaça/rio em si (só citados), nado de verdade (Elias só anda na água rasa), cenas (só texto/toasts) e modelos próprios (afogados e a Afogada são bonecos procedurais).
 - **Capítulo 6 — O Acervo** (Museu de Ciências Proibidas): jogável da doca à reserva técnica (Galeria, O Colecionador e tela de fim). Faltam as alas superiores do Museu, um encontro com Inês (só citada nos documentos), cenas (só texto/toasts), animação própria do braço do trilho (é uma caixa que desliza) e modelos próprios (espécimes, acólitos e o Colecionador são bonecos procedurais).
 - **Capítulo 7 — Sob a Pedra**: jogável do poço da escada à escada de serviço (O Vigia Caiado e tela de fim). Faltam cenas (só texto/toasts), um trem/vagão em movimento (o "último trem" que levou Inês só é citado), outras estações da Linha Velha além da Sé Velha e da Sob a Pedra, e modelos próprios (emparedados, acólitos e o Vigia Caiado são bonecos procedurais).
-- **Capítulo 8 — A Última Chama**: jogável do pátio do carvão aos três finais, com tela de fim e créditos. As cenas são de câmera e texto, sem dublagem nem animação facial. Faltam modelos próprios (Vernet, a Manifestação, Helena, Inês, foguistas, acólitos e carvoeiro são bonecos procedurais), música dedicada para a luta final e uma escolha de dificuldade/Novo Jogo+ depois dos créditos.
+- **Capítulo 8 — A Última Chama**: jogável do pátio do carvão aos três finais, com tela de fim e créditos. As cenas são de câmera e texto, sem dublagem nem animação facial. Faltam modelos próprios (Vernet, a Manifestação, Helena, Inês, foguistas, acólitos e carvoeiro são bonecos procedurais) e uma escolha de dificuldade/Novo Jogo+ depois dos créditos.
+- Trilha: já é adaptativa e tem temas por capítulo, chefe e final (ver *Polish — trilha sonora adaptativa*). Faltam gravações/instrumentos reais (é toda sintetizada), stingers de susto/descoberta e sons ambientes por sala.
 - Gamepad implementado mas **não testado** com controle físico; desempenho só medido em render por software no CI local.
 
 ## Estrutura
