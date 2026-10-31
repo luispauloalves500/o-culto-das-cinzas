@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { criarSistemaMachado } from './rev6/sistemaMachado.js';
-import { CONFIG_MACHADO, CLIP, CLIP_SPEED, ATTACK_CLIPS, attackClipTime } from './rev6/configMachado.js';
+import { CONFIG_MACHADO, CLIP, CLIP_SPEED, ATTACK_CLIPS, ACTION_CLIPS, attackClipTime } from './rev6/configMachado.js';
 
 export const ELIAS_URL = './models/elias_rev6.glb';
 // marcadores da hitbox no espaço local de Machado_Equipado (cabo em +Y a partir da pegada, lâmina em −X)
@@ -44,6 +44,7 @@ export function prepareClips(clips) {
 export const IDLE_CLIP = 'Elias_Idle';
 export const IDLE_ARM_T = 0.47;
 const ARM_R = /^mixamorigRight(Shoulder|Arm|ForeArm|Hand)\.quaternion$/;
+const LOWER = /^mixamorig(Hips|(Left|Right)(UpLeg|Leg|Foot|ToeBase|Toe_End))\./;
 export function makeIdleClips(clips) {
   const src = clips.find((c) => c.name === CLIP.idleSrc), walk = clips.find((c) => c.name === CLIP.walk);
   if (!src || !walk || clips.some((c) => c.name === IDLE_CLIP)) return clips;
@@ -57,6 +58,22 @@ export function makeIdleClips(clips) {
   const idle = new THREE.AnimationClip(IDLE_CLIP, src.duration, tracks);
   const idleM = idle.clone(); idleM.name = IDLE_CLIP + '_Machado';
   clips.push(idle, idleM);
+  // mira parada: tronco, ombros e braços do Run_and_Shoot congelados em AIM.t (revólver erguido à frente),
+  // quadril e pernas do idle (respiração, base firme) — sem as pernas no meio da passada do clipe de corrida
+  const AIM = ACTION_CLIPS.aim;
+  for (const suf of ['', '_Machado']) {
+    const shoot = clips.find((c) => c.name === AIM.src + suf), base = clips.find((c) => c.name === IDLE_CLIP + suf);
+    if (!shoot || !base) continue;
+    const tr = base.tracks.map((t) => {
+      if (LOWER.test(t.name)) return t.clone();
+      const w = shoot.tracks.find((x) => x.name === t.name);
+      if (!w) return t.clone();
+      const v = Array.from(w.createInterpolant().evaluate(AIM.t));
+      const T = t.name.endsWith('.quaternion') ? THREE.QuaternionKeyframeTrack : THREE.VectorKeyframeTrack;
+      return new T(t.name, [0, base.duration], [...v, ...v]);
+    });
+    clips.push(new THREE.AnimationClip(AIM.clip + suf, base.duration, tr));
+  }
   for (const c of clips) if (CARRY_CLIPS.includes(c.name)) applyCarry(c);
   return clips;
 }
@@ -100,7 +117,11 @@ export const RETARGET = {
   aim: ['armR', 'armL', 'handR'],
   upper: ['spine', 'armR', 'armL', 'handR'],
   full: ['spine', 'armR', 'armL', 'handR', 'legR', 'legL'],
+  aimR: ['armR', 'handR'], // mira/tiro sobre o Run_and_Shoot: só o braço do revólver segue a linha da câmera
 };
+/** tempo (s) de entrada/saída da cópia procedural (defesa, golpe sofrido, cura, recarga…) */
+export const RETARGET_FADE = 0.15;
+const _down = new THREE.Vector3(0, -1, 0), _ax = new THREE.Vector3(), _e = new THREE.Vector3(), _qt = new THREE.Quaternion();
 
 // um download/parse por página; cada partida (novo PlayerController) usa um clone com esqueleto próprio
 let _shared = null;
@@ -125,6 +146,11 @@ export class EliasModel {
     this.ready = false; this.failed = false; this.progress = 0;
     this.mask = null; this.idleT = 0; this.fidget = false; this._atk = null;
     this._cbs = [];
+    // cópia procedural com peso (fade): máscara em uso, peso 0..1
+    this._maskCur = null; this.maskW = 0;
+    // água pela cintura (0..1), gesto (porta), esquiva e depuração (clipes tocados / ação atual)
+    this.wade = 0; this.wading = false; this._gest = null; this._dodge = null;
+    this.used = new Set(); this.action = null;
   }
   whenReady(cb) { if (this.ready) cb(this); else this._cbs.push(cb); }
 
@@ -166,8 +192,9 @@ export class EliasModel {
     this.root = root;
     this.yawFix = this._calibrate();
     this.rig.body.add(root);
-    this.sistema.tocar(CLIP.idle, { fade: 0 });
+    this._play(CLIP.idle, { fade: 0 });
     this.mixer.update(0);
+    this.restHipY = this.b.hips.position.y;
     this.ready = true;
     for (const cb of this._cbs.splice(0)) { try { cb(this); } catch (e) { console.warn('[Elias] callback', e); } }
   }
@@ -182,8 +209,22 @@ export class EliasModel {
   }
 
   /** escolhe idle / Walking / Running pela velocidade real (timeScale casado com a passada do clipe) */
+  /** toca um clipe base e registra o uso (os testes conferem quais clipes do GLB entram em cena) */
+  _play(base, opts) { this.used.add(base); return this.sistema.tocar(base, opts); }
+
   locomote(hs, running, dt) {
-    const S = this.sistema; this._atk = null; this.root.rotation.y = 0;
+    const S = this.sistema; this._atk = null; this._dodge = null; this.root.rotation.y = 0;
+    // gesto de porta (open_door_4): parado ou quase; andar de verdade cancela
+    if (this._gest) {
+      const G = this._gest; G.t += dt;
+      if (G.t < G.map.dur && hs < 1.4) {
+        if (!G.act) G.act = this._play(G.map.clip, { repetir: false, velocidade: 0, fade: 0.12 });
+        G.act.time = G.map.seg[0] + (G.map.seg[1] - G.map.seg[0]) * Math.min(1, G.t / G.map.dur);
+        this.action = G.kind; return;
+      }
+      this._gest = null;
+    }
+    this.action = null;
     if (hs < 0.35) {
       this.idleT += dt;
       if (this.fidget) {
@@ -192,18 +233,54 @@ export class EliasModel {
         else return;
       }
       // o gesto ergue as duas mãos à cabeça: só desarmado
-      if (this.idleT > 14 && !this.armed) { this.fidget = true; S.tocar(CLIP.fidget, { repetir: false, fade: 0.3 }); return; }
-      S.tocar(CLIP.idle, { fade: 0.2 });
+      if (this.idleT > 14 && !this.armed && this.wade < 0.1) { this.fidget = true; this._play(CLIP.fidget, { repetir: false, fade: 0.3 }); return; }
+      this._play(CLIP.idle, { fade: 0.25 });
       return;
     }
     this.idleT = 0; this.fidget = false;
-    const clip = running && hs > 3.2 ? CLIP.run : CLIP.walk;
-    const a = S.tocar(clip, { fade: 0.15 });
-    a.setEffectiveTimeScale(THREE.MathUtils.clamp(hs / CLIP_SPEED[clip], 0.55, 1.85));
+    // na água: sem correr, passada mais lenta e curta (o quadril baixa em _post)
+    const clip = running && hs > 3.2 && this.wade < 0.5 ? CLIP.run : CLIP.walk;
+    // walk↔run com fade maior que idle→walk (as passadas têm durações diferentes; a fase é casada em tocar)
+    const a = this._play(clip, { fade: S.nomeBase === CLIP.idle ? 0.18 : 0.22 });
+    a.setEffectiveTimeScale(THREE.MathUtils.clamp(hs / CLIP_SPEED[clip], 0.55, 1.85) * (1 - 0.22 * this.wade));
+  }
+
+  /** gesto curto por cima da locomoção (porta: open_door_4) */
+  gesture(kind) {
+    const map = ACTION_CLIPS[kind]; if (!this.ready || !map) return false;
+    this._gest = { kind, map, t: 0, act: null }; this.idleT = 0; this.fidget = false;
+    return true;
+  }
+
+  /** esquiva: Basic_Jump posicionado no tempo da esquiva (t em s desde o início); altura do pulo achatada em _post */
+  dodge(t) {
+    const D = ACTION_CLIPS.dodge; this._atk = null; this._gest = null; this.root.rotation.y = 0;
+    if (!this._dodge) this._dodge = { act: this._play(D.clip, { repetir: false, velocidade: 0, fade: 0.06 }) };
+    this._dodge.act.time = D.seg[0] + (D.seg[1] - D.seg[0]) * THREE.MathUtils.clamp(t / D.dur, 0, 1);
+    this.action = 'dodge';
+  }
+
+  /** mira do revólver: parado = Elias_Aim (tronco do Run_and_Shoot), andando = Run_and_Shoot com a passada casada */
+  aim(hs) {
+    this._atk = null; this._dodge = null; this._gest = null; this.root.rotation.y = 0; this.idleT = 0; this.fidget = false;
+    if (hs < 0.35) this._play(ACTION_CLIPS.aim.clip, { fade: 0.15 });
+    else {
+      const a = this._play(ACTION_CLIPS.aimMove.clip, { fade: 0.15 });
+      a.setEffectiveTimeScale(THREE.MathUtils.clamp(hs / ACTION_CLIPS.aimMove.speed, 0.45, 1.3));
+    }
+    this.action = 'aim';
+  }
+
+  /** água pela cintura: 0..1 suavizado (passos baixos, braços erguidos, passada lenta) */
+  setWade(inWater, dt) {
+    const k = Math.min(1, dt * 3);
+    this.wade += ((inWater ? 1 : 0) - this.wade) * k;
+    if (this.wade < 1e-3) this.wade = 0;
+    this.wading = this.wade > 0.5;
   }
 
   /** base parada (idle) para estados reescritos pelo rig procedural */
-  base() { this.root.rotation.y = 0; this._atk = null; this.idleT = 0; this.fidget = false; this.sistema.tocar(CLIP.idle, { fade: 0.12 }); }
+  base() { this.root.rotation.y = 0; this._atk = null; this._dodge = null; this._gest = null; this.action = null; this.idleT = 0; this.fidget = false; this._play(CLIP.idle, { fade: 0.15 }); }
 
   /**
    * golpe: se houver clipe, posiciona o clipe no tempo casado com a janela active (hitbox = lâmina visível);
@@ -211,11 +288,17 @@ export class EliasModel {
    */
   poseAttack(attack, t) {
     const map = ATTACK_CLIPS[attack.def.anim];
-    if (!map) { if (this._atk !== attack) { this.base(); this._atk = attack; } this.mask = RETARGET.upper; return false; }
+    // tiro: base Elias_Aim (Run_and_Shoot) + braço do revólver procedural (coice da curva "shoot")
+    if (attack.def.shoot) {
+      if (this._atk !== attack) { this.base(); this._atk = attack; this._play(ACTION_CLIPS.aim.clip, { fade: 0.08 }); }
+      this.mask = RETARGET.aimR; this.maskW = Math.max(this.maskW, 0.75); this.action = 'shoot'; return true;
+    }
+    if (!map) { if (this._atk !== attack) { this.base(); this._atk = attack; } this.mask = RETARGET.upper; this.action = attack.def.anim; return false; }
     if (this._atk !== attack) {
       this._atk = attack;
-      this._atkAction = this.sistema.tocar(map.clip, { repetir: false, velocidade: 0, fade: 0.1 });
+      this._atkAction = this._play(map.clip, { repetir: false, velocidade: 0, fade: 0.1 });
     }
+    this.action = attack.def.anim;
     this._atkAction.time = attackClipTime(map, attack.def.active, t);
     this.mask = null;
     // gira o corpo para o corte cruzar a frente: entra até o início da janela, sai depois do fim
@@ -251,31 +334,65 @@ export class EliasModel {
   }
 
   /** aplica clipes (+ cópia procedural) já neste quadro, para a hitbox ler a pose final */
-  apply() { this.mixer.update(0); this._retarget(); this.rig.root.updateMatrixWorld(true); }
+  apply() { this.sistema.atualizar(0); this.mixer.update(0); this._post(); this._retarget(0); this.rig.root.updateMatrixWorld(true); }
 
   update(dt) {
     if (!this.ready) return;
+    this.sistema.atualizar(dt);
     this.mixer.update(dt);
-    this._retarget();
+    this._post();
+    this._retarget(dt);
   }
 
-  _retarget() {
-    const m = this.mask; if (!m) return;
+  /** ajustes depois do mixer: altura do pulo na esquiva, postura na água */
+  _post() {
+    const B = this.b;
+    if (this._dodge && this.restHipY != null) {
+      const d = B.hips.position.y - this.restHipY;
+      if (d > 0) B.hips.position.y = this.restHipY + d * ACTION_CLIPS.dodge.hip;
+    }
+    const w = this.wade; if (w <= 0 || this._dodge || this._atk) return; // golpes: a lâmina (hitbox) fica só com o clipe
+    B.hips.position.y -= 0.07 * w; // joelhos mais dobrados, passos rentes (a água esconde os pés)
+    this.root.updateMatrixWorld(true);
+    // braços afastados do corpo e um pouco à frente, acima da linha d'água
+    B.spine.getWorldPosition(_d);
+    for (const arm of [B.armR, B.armL]) {
+      arm.getWorldPosition(_b); _e.subVectors(_b, _d); _e.y = 0;
+      if (_e.lengthSq() < 1e-8) continue;
+      _e.normalize();
+      _ax.crossVectors(_down, _e).normalize();
+      _qt.setFromAxisAngle(_ax, 0.5 * w);
+      arm.getWorldQuaternion(_qw).premultiply(_qt);
+      arm.parent.getWorldQuaternion(_qp);
+      arm.quaternion.copy(_qp.invert().multiply(_qw));
+      arm.updateMatrixWorld(true);
+    }
+  }
+
+  /** cópia procedural com fade de entrada/saída (RETARGET_FADE); sem máscara e peso 0 = só clipe */
+  _retarget(dt = 0) {
+    const m = this.mask;
+    if (m) this._maskCur = m;
+    this.maskW = THREE.MathUtils.clamp(this.maskW + (m ? 1 : -1) * dt / RETARGET_FADE, 0, 1);
+    const cur = this._maskCur;
+    if (!cur || this.maskW <= 0) { if (!m) this._maskCur = null; return; }
+    const w = this.maskW;
     const r = this.rig, B = this.b;
-    // altura do quadril (agachar na esquiva/reparo, erguido no agarrão)
-    B.hips.position.y += r.hips.position.y - r.baseHipY;
+    // altura do quadril (agachar no reparo, erguido no agarrão)
+    B.hips.position.y += (r.hips.position.y - r.baseHipY) * w;
     r.root.updateMatrixWorld(true);
-    for (const k of m) {
+    for (const k of cur) {
       switch (k) {
-        case 'spine': this._align(B.spine, B.neck, r.torso, r.neck); break;
-        case 'armR': this._align(B.armR, B.foreR, r.armR.upper, r.armR.lower); this._align(B.foreR, B.handR, r.armR.lower, r.armR.end); break;
-        case 'armL': this._align(B.armL, B.foreL, r.armL.upper, r.armL.lower); this._align(B.foreL, B.handL, r.armL.lower, r.armL.end); break;
-        case 'legR': this._align(B.upLegR, B.legR, r.legR.upper, r.legR.lower); this._align(B.legR, B.footR, r.legR.lower, r.legR.end); break;
-        case 'legL': this._align(B.upLegL, B.legL, r.legL.upper, r.legL.lower); this._align(B.legL, B.footL, r.legL.lower, r.legL.end); break;
+        case 'spine': this._align(B.spine, B.neck, r.torso, r.neck, w); break;
+        case 'armR': this._align(B.armR, B.foreR, r.armR.upper, r.armR.lower, w); this._align(B.foreR, B.handR, r.armR.lower, r.armR.end, w); break;
+        case 'armL': this._align(B.armL, B.foreL, r.armL.upper, r.armL.lower, w); this._align(B.foreL, B.handL, r.armL.lower, r.armL.end, w); break;
+        case 'legR': this._align(B.upLegR, B.legR, r.legR.upper, r.legR.lower, w); this._align(B.legR, B.footR, r.legR.lower, r.legR.end, w); break;
+        case 'legL': this._align(B.upLegL, B.legL, r.legL.upper, r.legL.lower, w); this._align(B.legL, B.footL, r.legL.lower, r.legL.end, w); break;
         case 'handR': {
           r.armR.end.getWorldQuaternion(_qw).multiply(this.handFromEnd);
           B.handR.parent.getWorldQuaternion(_qp);
-          B.handR.quaternion.copy(_qp.invert().multiply(_qw));
+          _qt.copy(_qp.invert().multiply(_qw));
+          if (w >= 1) B.handR.quaternion.copy(_qt); else B.handR.quaternion.slerp(_qt, w);
           B.handR.updateMatrixWorld(true);
           break;
         }
@@ -284,8 +401,8 @@ export class EliasModel {
     }
   }
 
-  /** gira `bone` (no mundo) para que bone→child aponte como pa→pb do rig procedural */
-  _align(bone, child, pa, pb) {
+  /** gira `bone` (no mundo) para que bone→child aponte como pa→pb do rig procedural (w = peso da cópia) */
+  _align(bone, child, pa, pb, w = 1) {
     pb.getWorldPosition(_c).sub(pa.getWorldPosition(_d));
     if (_c.lengthSq() < 1e-8) return;
     _c.normalize();
@@ -295,7 +412,8 @@ export class EliasModel {
     _q.setFromUnitVectors(_a, _c);
     bone.getWorldQuaternion(_qw).premultiply(_q);
     bone.parent.getWorldQuaternion(_qp);
-    bone.quaternion.copy(_qp.invert().multiply(_qw));
+    _qt.copy(_qp.invert().multiply(_qw));
+    if (w >= 1) bone.quaternion.copy(_qt); else bone.quaternion.slerp(_qt, w);
     bone.updateMatrixWorld(true);
   }
 

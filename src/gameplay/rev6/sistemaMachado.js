@@ -20,6 +20,11 @@ export function criarSistemaMachado({ THREE, personagem, mixer, clipes, config }
   const variante = () => equipado || outraNaMao;
   function nomeDe(base) { return variante() ? (config.clipMap[base] ?? base) : base; }
 
+  // Transições com pesos normalizados (soma sempre 1): o crossFadeTo do three.js, encadeado no meio de outro fade,
+  // deixava a soma dos pesos < 1 por alguns quadros e o mixer completava com a pose de ligação (pisca de T-pose).
+  const saindo = new Map(); // ação → peso atual (em fade-out)
+  let taxa = Infinity;     // ganho de peso/s da ação atual
+
   function tocar(base, opcoes = {}) {
     const { fade = 0.15, repetir = loops.has(base), velocidade = 1 } = opcoes;
     const nome = nomeDe(base);
@@ -31,19 +36,47 @@ export function criarSistemaMachado({ THREE, personagem, mixer, clipes, config }
     const anterior = atual === proxima ? null : atual;
     const fase = anterior && nomeBase === base && anterior.getClip().duration > 0
       ? Math.min(1, anterior.time / anterior.getClip().duration) : 0;
+    // voltando a um loop que ainda estava saindo: mantém tempo e peso (sem salto)
+    const voltando = saindo.has(proxima) && repetir;
+    const w0 = saindo.has(proxima) ? saindo.get(proxima) : proxima === atual ? proxima.getEffectiveWeight() : 0;
+    saindo.delete(proxima);
+    const t0 = proxima.time;
     proxima.reset();
     proxima.setLoop(repetir ? THREE.LoopRepeat : THREE.LoopOnce, repetir ? Infinity : 1);
     proxima.clampWhenFinished = !repetir;
     proxima.setEffectiveTimeScale(velocidade);
-    proxima.setEffectiveWeight(1);
-    proxima.time = fase * clip.duration;
+    proxima.time = voltando ? t0 : fase * clip.duration;
     proxima.play();
-    if (anterior && fade > 0) anterior.crossFadeTo(proxima, fade, false);
-    else if (anterior) anterior.stop();
+    if (anterior) saindo.set(anterior, anterior.getEffectiveWeight());
     atual = proxima;
+    if (fade > 0 && saindo.size) {
+      taxa = 1 / fade;
+      proxima.setEffectiveWeight(w0);
+      atualizar(0);
+    } else {
+      for (const a of saindo.keys()) a.stop();
+      saindo.clear();
+      proxima.setEffectiveWeight(1);
+    }
     nomeBase = base;
     opcoesAtuais = { ...opcoes };
     return proxima;
+  }
+
+  /** avança os fades (chamar antes de mixer.update); a ação atual sobe, as que saem dividem o resto */
+  function atualizar(dt) {
+    const a = atual ?? null;
+    if (!saindo.size) { if (a && a.getEffectiveWeight() !== 1) a.setEffectiveWeight(1); return; }
+    const w = a ? Math.min(1, a.getEffectiveWeight() + dt * taxa) : 1;
+    const resto = 1 - w;
+    let soma = 0; for (const v of saindo.values()) soma += v;
+    if (resto < 1e-3 || soma < 1e-6) {
+      for (const x of saindo.keys()) x.stop();
+      saindo.clear(); a?.setEffectiveWeight(1); return;
+    }
+    const k = resto / soma;
+    for (const [x, v] of saindo) { const nv = v * k; saindo.set(x, nv); x.setEffectiveWeight(nv); }
+    a?.setEffectiveWeight(w);
   }
 
   function trocarVariante(fn) {
@@ -88,10 +121,12 @@ export function criarSistemaMachado({ THREE, personagem, mixer, clipes, config }
     arma.visible = false;
   }
   return {
-    tocar, equipar, empunhar, tentarColetar, serializar, restaurar, dispose, nomeDe,
+    tocar, atualizar, equipar, empunhar, tentarColetar, serializar, restaurar, dispose, nomeDe,
     get possuiMachado() { return possui; },
     get equipado() { return equipado; },
     get atual() { return atual; },
     get nomeBase() { return nomeBase; },
+    /** soma dos pesos das ações ativas (1 = sem mistura com a pose de ligação) */
+    pesoTotal() { let s = atual ? atual.getEffectiveWeight() : 0; for (const v of saindo.values()) s += v; return s; },
   };
 }

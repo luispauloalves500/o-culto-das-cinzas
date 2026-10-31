@@ -15,8 +15,9 @@ export const CONFIG_MACHADO = {
     Triple_Combo_Attack: 'Triple_Combo_Attack_Machado',
     open_door_4: 'open_door_4_Machado',
     Elias_Idle: 'Elias_Idle_Machado', // gerado no carregamento (EliasModel.makeIdleClips)
+    Elias_Aim: 'Elias_Aim_Machado', // gerado no carregamento (EliasModel.makeIdleClips): tronco/braços do Run_and_Shoot + pernas do idle
   },
-  loopClips: ['Elias_Idle', 'Running', 'Walking', '_01a17993_5941_740d_a212_2815e139919a', 'Run_and_Shoot'],
+  loopClips: ['Elias_Idle', 'Running', 'Walking', '_01a17993_5941_740d_a212_2815e139919a', 'Run_and_Shoot', 'Elias_Aim'],
 };
 
 // Clipes inspecionados (quadro a quadro, posição da ponta do machado):
@@ -41,6 +42,23 @@ export const ATTACK_CLIPS = {
   light1: { clip: 'Double_Combo_Attack', seg: [0.1, 0.9], strike: [0.57, 0.77] },
   light2: { clip: 'Double_Combo_Attack', seg: [0.87, 1.5], strike: [1.03, 1.23] },
   heavy: { clip: 'Attack', seg: [0.15, 1.75], strike: [0.97, 1.13] },
+  // 3º corte do Triple_Combo_Attack (pico 12,2 m/s em 2,27 s); os dois primeiros repetem o Double
+  light3: { clip: 'Triple_Combo_Attack', seg: [1.85, 2.95], strike: [2.17, 2.4] },
+};
+
+/**
+ * Clipes de ação (trechos medidos em .dbg/anim5.mjs):
+ * - esquiva: Basic_Jump 1,38→2,78 s (agacha, impulso, pouso agachado); o pulo do clipe sobe 1,2 m, então a altura
+ *   do quadril é achatada (hip) para virar um salto curto rente ao chão;
+ * - porta: open_door_4 0,7→2,05 s (estende o braço e empurra a folha), tocado mais rápido (~0,8 s);
+ * - mira/tiro: Run_and_Shoot (braço do revólver erguido à frente, loop de corrida) — andando usa o clipe,
+ *   parado usa Elias_Aim (tronco/braços do Run_and_Shoot em AIM_T + pernas do idle).
+ */
+export const ACTION_CLIPS = {
+  dodge: { clip: 'Basic_Jump', seg: [1.38, 2.78], dur: 0.5, hip: 0.22 },
+  door: { clip: 'open_door_4', seg: [0.7, 2.05], dur: 0.8 },
+  aim: { clip: 'Elias_Aim', src: 'Run_and_Shoot', t: 0.07 },
+  aimMove: { clip: 'Run_and_Shoot', speed: 3.0 },
 };
 
 /** t normalizado do golpe (0..1) → tempo do clipe, linear por partes: a janela active coincide com o golpe do clipe. */

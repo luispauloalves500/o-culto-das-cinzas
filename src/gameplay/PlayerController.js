@@ -20,6 +20,14 @@ const ATTACK_ANIM = {
     upZ: [[0, 0.3], [0.25, 0.55], [0.55, -0.6], [1, 0]],
     loX: [[0, -0.6], [0.25, -1.2], [0.5, -0.1], [1, -0.3]],
   },
+  // finalizador do machado: corte diagonal de cima, com o tronco acompanhando
+  light3: {
+    torsoY: [[0, -0.5], [0.3, -0.9], [0.6, 0.8], [1, 0.1]],
+    torsoX: [[0, 0], [0.3, -0.2], [0.6, 0.35], [1, 0]],
+    upX: [[0, -0.5], [0.3, -2.4], [0.6, -0.9], [1, -0.3]],
+    upZ: [[0, -0.2], [0.3, -0.4], [0.6, 0.45], [1, 0]],
+    loX: [[0, -0.4], [0.3, -1.0], [0.55, -0.1], [1, -0.3]],
+  },
   heavy: {
     torsoY: [[0, 0], [0.4, -0.25], [0.6, 0.1], [1, 0]],
     torsoX: [[0, 0], [0.4, -0.3], [0.58, 0.55], [1, 0]],
@@ -554,7 +562,7 @@ export class PlayerController {
         else if (input.wasPressed('swap')) this.cycleWeapon();
         else if (input.wasPressed('reload')) this._tryReload();
         else if (input.wasPressed('repair')) this._tryRepair();
-        else if (input.wasPressed('interact')) g.tryInteract();
+        else if (input.wasPressed('interact')) this._interact();
         break;
       }
       case 'block': {
@@ -711,6 +719,18 @@ export class PlayerController {
     if (this.model?.ready) this.model.update(dt);
   }
 
+  /** E: interage; se a interação abriu uma porta perto, Elias faz o gesto (open_door_4) virado para ela */
+  _interact() {
+    const g = this.game; let door = null;
+    const off = g.bus?.on?.('DoorOpened', (d) => { door = d; });
+    try { g.tryInteract(); } finally { off?.(); }
+    if (door && this.state === 'free' && Math.hypot(door.x - this.pos.x, door.z - this.pos.z) < 3.5) {
+      this.yaw = Math.atan2(door.x - this.pos.x, door.z - this.pos.z);
+      this.model?.gesture?.('door');
+      this.lastGesture = 'door';
+    }
+  }
+
   _turnTo(target, maxStep) {
     let d = target - this.yaw;
     while (d > Math.PI) d -= Math.PI * 2;
@@ -828,11 +848,16 @@ export class PlayerController {
     const M = this.model;
     if (!M?.ready) return;
     // clipe do GLB por estado; estados sem clipe copiam a pose procedural para os ossos do GLB
+    // água pela cintura (Cap. 5): postura de vau (quadril baixo, braços erguidos, passada lenta)
+    M.setWade(!!this.game.level?.waterAt?.(this.pos), dt);
     switch (this.state) {
       case 'free': M.locomote(hs, this.running, dt); M.mask = null; break;
       case 'locked': M.locomote(0, false, dt); M.mask = null; break;
       case 'block': M.locomote(hs, false, dt); M.mask = RETARGET.arms; break;
-      case 'aim': M.locomote(hs, false, dt); M.mask = RETARGET.aim; break;
+      case 'aim': M.aim(hs); M.mask = RETARGET.aimR; break;
+      case 'dodge': M.dodge(this.stateT); M.mask = null; break;
+      // tronco/braços procedurais sobre o idle (pernas do clipe, com respiração)
+      case 'hit': case 'heal': case 'reload': M.base(); M.mask = RETARGET.upper; break;
       default: M.base(); M.mask = RETARGET.full; break;
     }
   }
