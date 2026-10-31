@@ -1458,9 +1458,116 @@ try {
     document.getElementById('btnContinue').click();
     const g = __ocdc; T.run(0.5);
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), boss: g.boss.state, bvis: g.boss.rig.root.visible, active: g.script.bossActive, hudOff: g.hud.el.boss.classList.contains('hidden'),
-      tower: g.level.doors.c4_tower.open && !g.level.doors.c4_tower.locked, watch: g.level.doors.c4_watch.open, keyHidden: !g.level.pickupMeshes.c4_towerkey.visible, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length };
+      tower: g.level.doors.c4_tower.open && !g.level.doors.c4_tower.locked, watch: g.level.doors.c4_watch.open, keyHidden: !g.level.pickupMeshes.c4_towerkey.visible, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length, maqDormant: !!g.enemies.find((e) => e.id === 'cin_maq')?.dormant };
   });
-  check('Cap. 4: continuar após a fatia restaura a Torre aberta e o Vigia ausente', c4z.st === 'playing' && c4z.ch === 4 && c4z.pos[2] > 77 && c4z.boss === 'gone' && !c4z.bvis && !c4z.active && c4z.hudOff && c4z.tower && c4z.watch && c4z.keyHidden && c4z.dead === c4z.n, JSON.stringify(c4z));
+  check('Cap. 4: continuar após a fatia restaura a Torre aberta e o Vigia ausente', c4z.st === 'playing' && c4z.ch === 4 && c4z.pos[2] > 77 && c4z.boss === 'gone' && !c4z.bvis && !c4z.active && c4z.hudOff && c4z.tower && c4z.watch && c4z.keyHidden && c4z.n === 8 && c4z.dead === c4z.n - 1 && c4z.maqDormant, JSON.stringify(c4z));
+  // --- Cap. 4: Torre do Relógio por dentro — escada em quatro lances até a galeria e a casa das máquinas
+  const c4t = await page.evaluate(() => {
+    const g = __ocdc, B = g.boss, out = {}, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
+    g.player.hp = g.player.maxHp;
+    T.tp(14.6, 0, 80.4, 0); out.rondas = T.interactAt('doc_livro_rondas'); T.run(0.05); out.readR = g.quest.has('c4_readRondas');
+    const fl = [[17.75, 0, 77.4, 0], [16.7, 2.4, 82.75, -Math.PI / 2], [12.25, 4.4, 81.7, Math.PI], [13.3, 6.8, 77.25, Math.PI / 2]];
+    out.flights = [];
+    for (const [x, y, z, yaw] of fl) { T.tp(x, y, z, yaw); T.hold('KeyW', 2.6); T.run(0.2); out.flights.push(+g.player.pos.y.toFixed(2)); }
+    out.landing = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    T.tp(17.75, 9, 79.5, 0); T.hold('KeyW', 2.4); T.run(0.1);
+    out.hallPos = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    out.inGears = g.quest.has('c4_inGears'); out.cp1 = S().checkpoint; out.room = g.currentRoom?.id || null;
+    out.lightsHall = g.renderer?.info ? undefined : undefined;
+    // mecanismo parado sem a roda
+    T.tp(15, 9, 90.6, 0); out.mech0 = T.interactAt('c4_mech'); out.saw = g.quest.has('c4_sawMech') && !g.quest.has('c4_mechRunning');
+    out.pendStill = !g.level.mechRunning;
+    // roda de escape na bancada do sineiro: o ajudante acorda
+    const w = E('cin_maq'); out.wDormant = w.dormant;
+    T.tp(23.0, 9, 91.0, Math.PI / 2); out.esc = T.interactAt('pick_c4_escape'); out.hasEsc = g.inventory.has('roda_escape') && g.quest.has('c4_hasEscape'); out.wAwake = !w.dormant;
+    w.setDeadInstant();
+    // encaixar: pêndulo anda, o sino toca e o Vigia desce do alçapão
+    g.player.hp = g.player.maxHp;
+    T.tp(15, 9, 90.6, 0); out.mech1 = T.interactAt('c4_mech'); out.running = g.level.mechRunning && g.level.escapeWheel.visible && !g.inventory.has('roda_escape');
+    T.run(0.1); out.active = g.script.bossActive; out.hud = !g.hud.el.boss.classList.contains('hidden');
+    T.tp(8, 9, 94, Math.PI / 2);
+    T.run(2.6); out.second = B.second; out.dropState = B.state; out.maxHp = B.maxHp;
+    T.run(2.4); out.landY = +B.pos.y.toFixed(2); out.landState = B.state;
+    const a0 = g.level.pendAngle; T.run(0.5); out.pendMoves = Math.abs(g.level.pendAngle - a0) > 0.01;
+    // luta: investidas contra as caixas de engrenagens e o mecanismo; golpe forte no lampião
+    const obst = [[7.5, 88.5, 1.9], [22.5, 88.5, 1.9], [7.5, 96.5, 1.9], [22.5, 96.5, 1.9], [15, 93.5, 2.6]];
+    const log = { stuns: 0, phases: [], minX: 99, maxX: 0, minZ: 999, maxZ: 0, minY: 99 };
+    let t = 0, was = false;
+    while (B.alive && t < 360) {
+      g.player.hp = Math.max(g.player.hp, g.player.maxHp * 0.8);
+      if (g.player.state === 'grabbed') for (let k = 0; k < 25; k++) T.press('Mouse0');
+      if (!log.phases.includes(B.phase)) log.phases.push(B.phase);
+      log.minX = Math.min(log.minX, B.pos.x); log.maxX = Math.max(log.maxX, B.pos.x); log.minZ = Math.min(log.minZ, B.pos.z); log.maxZ = Math.max(log.maxZ, B.pos.z); log.minY = Math.min(log.minY, B.pos.y);
+      if (B.state === 'stunned') {
+        if (!was) log.stuns++; was = true;
+        const bx = Math.sin(B.yaw), bz = Math.cos(B.yaw);
+        T.tp(B.pos.x - bx * 1.0, 9, B.pos.z - bz * 1.0, Math.atan2(bx, bz));
+        T.press('Mouse2'); T.run(1.1); t += 1.1;
+      } else {
+        was = false;
+        if (B.state !== 'chargeWind' && B.state !== 'charge' && B.state !== 'beam') {
+          let best = null, bd = -1;
+          for (const [x, z, r] of obst) {
+            const dx = x - B.pos.x, dz = z - B.pos.z, d = Math.hypot(dx, dz) || 1;
+            const sx = x + dx / d * r, sz = z + dz / d * r;
+            if (sx < 5.2 || sx > 24.8 || sz < 85.6 || sz > 98.8 || Math.abs(sz - 88.2) < 0.9) continue;
+            if (d > bd) { bd = d; best = [sx, sz]; }
+          }
+          if (best) T.tp(best[0], 9, best[1], Math.atan2(B.pos.x - best[0], B.pos.z - best[1]));
+        }
+        T.run(0.5); t += 0.5;
+      }
+    }
+    out.t = t; out.log = log; out.bState = B.state; out.weak = B.weakHits; out.pendBoss = g.quest.has('c4_pendBoss');
+    T.run(0.3);
+    out.dead = g.quest.has('c4_vigiaDead'); out.hudOff = g.hud.el.boss.classList.contains('hidden'); out.activeAfter = g.script.bossActive;
+    const s1 = S(); out.save1 = { cp: s1.checkpoint, dead: !!s1.flags.c4_vigiaDead, run: !!s1.flags.c4_mechRunning };
+    out.obj = g.quest.current();
+    // pêndulo derruba Elias
+    g.player.hp = g.player.maxHp; const hp0 = g.player.hp;
+    let hit = false; for (let k = 0; k < 60 && !hit; k++) { T.tp(15, 9, 88.2, 0); T.run(0.1); hit = g.player.hp < hp0; }
+    out.pendHit = hit; g.player.hp = g.player.maxHp;
+    // bilhete de Inês na engrenagem
+    T.tp(15.9, 9, 96.0, Math.PI); out.note = T.interactAt('pick_c4_note'); out.readB = g.quest.has('c4_readBilhete') && g.inventory.documents.includes('bilhete_ines');
+    // martelo fora de hora: nada abre
+    T.tp(16.3, 9, 96.2, Math.PI); out.ham0 = T.interactAt('c4_hammer'); out.wrong = g.quest.has('c4_wrongHour') && !g.quest.has('c4_passageOpen');
+    // manivela até 3h07 e martelo
+    T.tp(13.9, 9, 96.2, Math.PI); out.cr = [T.interactAt('c4_crank'), T.interactAt('c4_crank')]; out.hour = g.script.hourI;
+    T.tp(16.3, 9, 96.2, Math.PI); out.ham1 = T.interactAt('c4_hammer'); out.open = g.quest.has('c4_passageOpen') && !g.level.plateFloor.enabled;
+    const s2 = S(); out.save2 = { cp: s2.checkpoint, open: !!s2.flags.c4_passageOpen };
+    T.run(1.5); out.plateX = +g.level.plate.position.x.toFixed(2);
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '25-cap4-maquinas.png' });
+  check('Cap. 4: livro de rondas e escada da Torre em quatro lances até a galeria', c4t.rondas === 'ok' && c4t.readR && c4t.flights[0] > 2.0 && c4t.flights[1] > 4.0 && c4t.flights[2] > 6.4 && c4t.flights[3] > 8.6, JSON.stringify({ r: c4t.rondas, f: c4t.flights, l: c4t.landing }));
+  check('Cap. 4: casa das máquinas (autosave) e mecanismo parado sem a roda de escape', c4t.inGears && c4t.cp1 === 'c4_gears' && c4t.hallPos[2] > 85 && c4t.hallPos[1] > 8.5 && c4t.mech0 === 'ok' && c4t.saw && c4t.pendStill, JSON.stringify({ p: c4t.hallPos, g: c4t.inGears, c: c4t.cp1, m: c4t.mech0 }));
+  check('Cap. 4: roda de escape na bancada acorda o ajudante do sineiro', c4t.wDormant && c4t.esc === 'ok' && c4t.hasEsc && c4t.wAwake, JSON.stringify({ e: c4t.esc, h: c4t.hasEsc, w: c4t.wAwake }));
+  check('Cap. 4: mecanismo andando → o Vigia desce do campanário (2º confronto)', c4t.mech1 === 'ok' && c4t.running && c4t.active && c4t.hud && c4t.second && c4t.maxHp === 600 && c4t.landY === 9 && ['intro', 'stalk', 'roar', 'chargeWind', 'charge', 'beam', 'slash'].includes(c4t.landState) && c4t.pendMoves, JSON.stringify({ m: c4t.mech1, r: c4t.running, a: c4t.active, d: c4t.dropState, l: [c4t.landState, c4t.landY], hp: c4t.maxHp }));
+  check('Cap. 4: o Vigia morre de verdade na casa das máquinas (engrenagens, lampião, save)', c4t.bState === 'dead' && c4t.dead && c4t.hudOff && !c4t.activeAfter && c4t.log.stuns >= 2 && c4t.log.phases.includes(3) && c4t.log.minY >= 8.9 && c4t.log.minX >= 4.6 && c4t.log.maxX <= 25.4 && c4t.log.minZ >= 84.8 && c4t.save1.cp === 'c4_gears' && c4t.save1.dead, JSON.stringify({ t: c4t.t, st: c4t.bState, w: c4t.weak, l: c4t.log, pb: c4t.pendBoss, s: c4t.save1, o: c4t.obj }));
+  check('Cap. 4: pêndulo do Relógio machuca Elias', c4t.pendHit, '');
+  check('Cap. 4: bilhete de Inês, martelo fora de hora e manivela até 3h07 abrem a passagem (save)', c4t.note === 'ok' && c4t.readB && c4t.ham0 === 'ok' && c4t.wrong && c4t.cr.every((r) => r === 'ok') && c4t.hour === 2 && c4t.ham1 === 'ok' && c4t.open && c4t.save2.cp === 'c4_end' && c4t.save2.open && c4t.plateX > 16, JSON.stringify({ n: c4t.note, h0: c4t.ham0, c: c4t.cr, hr: c4t.hour, h1: c4t.ham1, o: c4t.open, s: c4t.save2, px: c4t.plateX }));
+  // --- desce a passagem do Relógio: fim do Capítulo 4
+  const c4e = await page.evaluate(() => {
+    const g = __ocdc, out = {};
+    T.tp(15, 9, 96.6, 0); T.hold('KeyW', 3.5); T.run(0.2);
+    out.pos = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.state = g.state; out.done = g.quest.has('c4_chapterDone');
+    out.title = document.getElementById('endTitle')?.textContent; out.note = document.getElementById('endNote')?.textContent;
+    out.btn = document.getElementById('btnEndNext').textContent; out.dis = document.getElementById('btnEndNext').disabled;
+    out.stats = document.getElementById('stats')?.textContent || ''; out.rn0 = document.getElementById('endRn0')?.textContent || '';
+    const s = JSON.parse(localStorage.getItem('ocdc_save')); out.save = { cp: s.checkpoint, ch: s.chapter, done: !!s.flags.c4_chapterDone };
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '26-cap4-fim.png' });
+  check('Cap. 4: passagem do Relógio → tela de fim do Capítulo 4 com gancho do Capítulo 5', c4e.state === 'end' && c4e.done && /Fim do Capítulo 4/.test(c4e.title) && /Águas Negras/.test(c4e.note) && c4e.dis && /Capítulo 5/.test(c4e.btn) && /Documentos: \d\/5/.test(c4e.stats) && /Afogada/.test(c4e.rn0) && c4e.save.cp === 'c4_end' && c4e.save.ch === 4 && c4e.save.done, JSON.stringify(c4e));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c4y = await page.evaluate(() => {
+    document.getElementById('btnContinue').click();
+    const g = __ocdc; T.run(0.5);
+    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), boss: g.boss.state, active: g.script.bossActive, hudOff: g.hud.el.boss.classList.contains('hidden'),
+      run: g.level.mechRunning && g.level.escapeWheel.visible, open: !g.level.plateFloor.enabled, hour: g.script.hourI, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length };
+  });
+  check('Cap. 4: continuar após o fim restaura Vigia morto, mecanismo andando e passagem aberta', c4y.st === 'playing' && c4y.ch === 4 && c4y.pos[1] > 8.5 && c4y.pos[2] > 96 && c4y.boss === 'dead' && !c4y.active && c4y.hudOff && c4y.run && c4y.open && c4y.hour === 2 && c4y.dead === c4y.n, JSON.stringify(c4y));
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));

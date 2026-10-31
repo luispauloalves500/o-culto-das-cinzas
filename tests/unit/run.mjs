@@ -544,7 +544,10 @@ test('Cap. 4: objetivos, mapa do centro antigo, cinzento e documentos', () => {
   for (const o of SIDE_OBJECTIVES_C4) assert.ok(o.when && o.done && o.text);
   try {
     setMapChapter(4);
-    assert.deepEqual(chapterFloors().map((f) => f.id), ['up']);
+    assert.deepEqual(chapterFloors().map((f) => f.id), ['up', 'roof']);
+    assert.equal(roomAt({ x: 15, y: 9, z: 90 }).id, 'c4_maquinas');
+    assert.equal(roomAt({ x: 17.7, y: 9, z: 80 }).id, 'c4_galeria');
+    assert.equal(roomAt({ x: 15, y: 5.8, z: 101 }).id, 'c4_passagem');
     assert.equal(roomAt({ x: 7, y: 0, z: 3 }).id, 'c4_beco');
     assert.equal(roomAt({ x: 7, y: 0, z: 30 }).id, 'c4_rua');
     assert.equal(roomAt({ x: 0, y: 0, z: 22 }).id, 'c4_farmacia');
@@ -573,6 +576,40 @@ test('Cap. 4: O Vigia — praça, gatilho, retirada e obstáculos', () => {
   // um save antigo do Cap. 3 concluído vira Cap. 4 ao continuar (Game.continueGame usa makeChapter4Save)
   const old = migrateSave({ ...makeChapter3Save(null), checkpoint: 'c3_end', flags: { c3_chapterDone: true } });
   assert.ok(old.flags.c3_chapterDone && makeChapter4Save(old).chapter === 4);
+});
+
+const C4L = await import('../../src/scenes/cidade/CidadeLevel.js');
+const C4S = await import('../../src/scenes/cidade/CidadeScript.js');
+test('Cap. 4: Torre do Relógio — escada, casa das máquinas, 2º confronto e passagem', () => {
+  // objetivos: depois da porta da Torre vêm subida, roda de escape, mecanismo, Vigia, ponteiros e passagem
+  const order = OBJECTIVES_C4.map((o) => o.done);
+  const after = order.slice(order.indexOf('c4_sliceDone') + 1);
+  assert.deepEqual(after, ['c4_inGears', 'c4_hasEscape', 'c4_mechRunning', 'c4_vigiaDead', 'c4_passageOpen', 'c4_chapterDone', 'c4_never']);
+  assert.ok(SIDE_OBJECTIVES_C4.some((o) => o.done === 'c4_readRondas') && SIDE_OBJECTIVES_C4.some((o) => o.done === 'c4_readBilhete'));
+  for (const id of ['livro_rondas', 'bilhete_ines']) assert.equal(DOCUMENTS[id]?.ch, 4, id);
+  assert.ok(/3h07/.test(DOCUMENTS.livro_rondas.body) && /Afogada/.test(DOCUMENTS.bilhete_ines.body));
+  assert.ok(ITEMS.roda_escape);
+  // a escada sobe do térreo (y 0) até a galeria (GEAR_Y), lance a lance, sem degrau impossível
+  const F = C4L.TOWER_FLIGHTS;
+  assert.equal(F.length, 4);
+  const ys = F.map((f) => [f.yb, f.ya]);
+  assert.equal(ys[0][0], 0); assert.equal(ys[ys.length - 1][1], C4L.GEAR_Y);
+  for (let i = 1; i < ys.length; i++) assert.equal(ys[i][0], ys[i - 1][1]);
+  // horas do mostrador: a certa é a do toque
+  assert.equal(C4L.C4_HOURS[C4L.C4_RIGHT_HOUR], '3h07');
+  assert.equal(new Set(C4L.C4_HOURS).size, C4L.C4_HOURS.length);
+  // checkpoints da Torre
+  assert.equal(C4L.CIDADE_CHECKPOINTS.c4_gears.y, C4L.GEAR_Y); assert.equal(C4L.CIDADE_CHECKPOINTS.c4_end.y, C4L.GEAR_Y);
+  const B = C4L.VIGIA_HALL_BOUNDS, H = C4L.HALL;
+  assert.ok(B.minX > H.minX && B.maxX < H.maxX && B.minZ > H.minZ && B.maxZ < H.maxZ);
+  for (const [x, z] of C4L.HALL_OBSTACLES) assert.ok(x > B.minX && x < B.maxX && z > B.minZ && z < B.maxZ);
+  const P = C4L.PASSAGE; assert.ok(P.minX > H.minX && P.maxX < H.maxX && P.maxZ <= H.maxZ && P.stairEnd > P.maxZ);
+  // pêndulo cruza a linha da galeria até o mecanismo
+  const PD = C4L.PENDULUM; assert.ok(PD.z > H.minZ && PD.z < C4L.MECH.minZ && C4L.GEAR_Y + PD.pivotY - PD.len < C4L.GEAR_Y + 1.6);
+  // um cinzento novo na casa das máquinas (8 inimigos no capítulo), adormecido
+  assert.equal(C4S.CIDADE_SPAWNS.length, 8);
+  const w = C4S.CIDADE_SPAWNS.find((e) => e.id === 'cin_maq'); assert.ok(w && w.dormant && w.y === C4L.GEAR_Y);
+  assert.ok(C4S.C4_VIGIA_HP2 > 300);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

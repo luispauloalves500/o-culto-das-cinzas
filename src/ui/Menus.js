@@ -85,8 +85,8 @@ export class Menus {
     for (const el of document.querySelectorAll('.map-tab')) {
       const fid = FLOORS[+el.dataset.floor].id;
       el.classList.toggle('active', fid === mv.floor);
-      el.classList.toggle('hidden', ((ch2 || ch4) && fid !== 'up') || (ch3 && fid !== 'up' && fid !== 'lo'));
-      el.textContent = ch4 ? 'Centro antigo' : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
+      el.classList.toggle('hidden', (ch2 && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo'));
+      el.textContent = ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
     }
     const r = roomAt(g.player.pos);
     $('mapWhere').textContent = 'Você está em: ' + (r ? r.name : 'lugar nenhum que conste na planta');
@@ -100,15 +100,19 @@ export class Menus {
     const docsHave = stats.docsList ? stats.docsList.filter((id) => (DOCUMENTS[id]?.ch || 1) === ch).length : stats.docs;
     $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${Math.min(docsHave, docsCh)}/${docsCh}`
       + (ch === 1 ? `<br>Revelação RN 0: ${stats.rn0 ? 'vista' : 'não encontrada'}`
+        : ch >= 4 ? `<br>Bilhete de Inês: ${stats.note ? 'lido' : 'ficou preso na engrenagem'} · Livro de rondas: ${stats.rounds ? 'lido' : 'não lido'}`
         : ch === 3 ? `<br>Fita de Inês: ${stats.ribbon ? 'com Elias' : 'ficou no altar da cripta'} · Ordem de transferência: ${stats.order ? 'lida' : 'não lida'}`
           : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
     const next = $('btnEndNext');
     if (ch >= 4) {
-      $('endTitle').textContent = 'Capítulo 4 — Cidade Morta';
-      $('endText').textContent = 'A porta de ferro da Torre do Relógio está aberta. Lá em cima, o mecanismo range.';
-      $('endNote').textContent = 'Seu progresso foi salvo. A subida da Torre continua na próxima atualização.';
-      $('endRn0').classList.add('hidden');
-      if (next) { next.disabled = true; next.textContent = 'Continua na próxima atualização'; }
+      $('endTitle').textContent = 'Fim do Capítulo 4 — Cidade Morta';
+      $('endText').textContent = 'O lampião do Vigia se parte entre as engrenagens e a luz fria se apaga de vez. Às 3h07 o martelo bate, o sino toca três vezes e a chapa de ferro da casa das máquinas desce. A passagem do Relógio afunda na pedra, úmida, rumo ao barulho de água corrente sob a cidade.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 5 — Águas Negras: os canais, a estação de bombeamento e a Afogada (em breve).';
+      $('endRn0').classList.remove('hidden');
+      $('endRn0').innerHTML = stats.note
+        ? 'O bilhete de Inês fala de uma <b>estação de bombeamento</b>, dos <b>canais</b> e de alguém que guarda as comportas: <b>a Afogada</b>. "Não confie no relógio. Confie na fita."'
+        : '<span class="small">Entre os dentes da engrenagem mais alta havia um papel dobrado. Inês passou por ali.</span>';
+      if (next) { next.disabled = true; next.textContent = 'Capítulo 5 — Águas Negras (em breve)'; }
       this.show('chapterEnd');
       return;
     }
