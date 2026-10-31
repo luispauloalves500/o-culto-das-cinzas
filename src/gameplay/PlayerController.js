@@ -90,7 +90,7 @@ export class PlayerController {
     this.model.load();
     // clarão do cano (luz única reaproveitada; intensidade 0 quando apagada)
     this.muzzle = new THREE.PointLight(0xffc070, 0, 7, 1.8);
-    game.scene.add(this.muzzle);
+    this.muzzle.userData.noShadow = true; game.scene.add(this.muzzle);
 
     this.pos = new THREE.Vector3();
     this.vel = new THREE.Vector3();

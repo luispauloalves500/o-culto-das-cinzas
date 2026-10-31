@@ -50,12 +50,31 @@
       <label><input id="optInvert" type="checkbox" /> Inverter eixo Y</label>
       <label>Volume <input id="optVol" type="range" min="0" max="1" step="0.05" /></label>
       <label>Música <input id="optMusic" type="range" min="0" max="1" step="0.05" /><output id="optMusicV"></output></label>
-      <label>Qualidade (resolução interna)
-        <select id="optScale"><option value="0.5">Baixa (50%)</option><option value="0.75">Média (75%)</option><option value="1">Alta (100%)</option></select>
+      <h3 class="opt-h">Gráficos</h3>
+      <label>Predefinição
+        <select id="optPreset"><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="ultra">Ultra</option><option value="custom" disabled>Personalizada</option></select>
       </label>
+      <label>Resolução interna
+        <select id="optScale"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.25">125% (supersample)</option></select>
+      </label>
+      <label>Sombras
+        <select id="optShadows"><option value="off">Desligadas</option><option value="baixa">Baixas</option><option value="alta">Altas (cenário bloqueia a luz)</option><option value="ultra">Ultra</option></select>
+      </label>
+      <label>Partículas
+        <select id="optParticles"><option value="baixa">Baixas</option><option value="media">Médias (+ poeira no ar)</option><option value="alta">Altas</option></select>
+      </label>
+      <label><input id="optBloom" type="checkbox" /> Brilho (bloom) de lâmpadas, brasas e olhos</label>
+      <label><input id="optPostfx" type="checkbox" /> Pós-processamento (cor, vinheta, granulação)</label>
+      <label><input id="optAA" type="checkbox" /> Antisserrilhado (FXAA)</label>
+      <label>Corpos de inimigos somem após
+        <select id="optCorpse"><option value="10">10 s</option><option value="20">20 s</option><option value="45">45 s</option><option value="0">Nunca</option></select>
+      </label>
+      <p id="optGfxInfo" class="small"></p>
+      <h3 class="opt-h">Câmera e interface</h3>
       <label>Campo de visão <input id="optFov" type="range" min="55" max="85" step="1" /><output id="optFovV"></output></label>
       <label><input id="optShake" type="checkbox" /> Tremor de câmera</label>
       <label><input id="optFps" type="checkbox" /> Mostrar FPS</label>
+      <label><input id="optCine" type="checkbox" /> Cinemáticas de abertura de capítulo</label>
       <div class="buttons"><button id="btnOptBack">Voltar</button></div>
     </div>
 
@@ -101,7 +120,7 @@
     </div>
 
     <!-- cena curta (faixas de cinema + legenda) -->
-    <div id="cutscene" class="hidden"><div class="cs-bar top"></div><div class="cs-bar bottom"></div><div id="csCaption"></div><div id="csSkip">E: pular</div></div>
+    <div id="cutscene" class="hidden"><div id="csFade"></div><div class="cs-bar top"></div><div class="cs-bar bottom"></div><div id="csTitle"></div><div id="csCaption"></div><div id="csSkip">E: pular</div></div>
 
     <div id="reader" class="screen hidden">
       <div class="paper"><h3 id="docTitle"></h3><div id="docBody"></div></div>

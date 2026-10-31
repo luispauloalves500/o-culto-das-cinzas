@@ -20,6 +20,9 @@ button { background: rgba(30,36,28,.9); color: #e3d9bd; border: 1px solid #5d665
 button:hover, button:focus { background: #4a3b1d; border-color: #c49a45; outline: none; }
 #options label { display: flex; gap: 12px; align-items: center; justify-content: space-between; width: 380px; margin: 6px 0; }
 #options input[type=range] { flex: 1; }
+#options { overflow-y: auto; justify-content: flex-start; padding: 28px 0; }
+#options .opt-h { margin: 14px 0 4px; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; color: #b89a70; width: 380px; border-bottom: 1px solid #4a3a2a; }
+#optGfxInfo { width: 380px; color: #8a8070; min-height: 1em; }
 select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
 
 #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
@@ -65,7 +68,16 @@ select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
 /* cena curta */
 #cutscene { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
 #cutscene .cs-bar { position: absolute; left: 0; right: 0; height: 11vh; background: #000; }
-#cutscene .cs-bar.top { top: 0; } #cutscene .cs-bar.bottom { bottom: 0; }
+#cutscene .cs-bar.top { top: 0; transform: translateY(-100%); } #cutscene .cs-bar.bottom { bottom: 0; transform: translateY(100%); }
+#cutscene .cs-bar { transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+#cutscene.on .cs-bar { transform: translateY(0); }
+#csFade { position: absolute; inset: 0; background: #000; opacity: 1; }
+#csTitle { position: absolute; left: 0; right: 0; top: 38%; text-align: center; opacity: 0; transition: opacity 1.2s ease; text-shadow: 0 0 18px #000; }
+#csTitle.show { opacity: 1; }
+#csTitle .cs-t1 { font-size: 15px; letter-spacing: .5em; color: #a8926a; text-transform: uppercase; }
+#csTitle .cs-t2 { margin-top: 10px; font-size: 38px; letter-spacing: .12em; color: #e6d6b4; font-variant: small-caps; }
+#csCaption.reveal { animation: csReveal .9s ease both; }
+@keyframes csReveal { from { opacity: 0; filter: blur(3px); letter-spacing: .06em; } to { opacity: 1; filter: none; } }
 #csCaption { position: absolute; left: 50%; bottom: 13vh; transform: translateX(-50%); width: 70%; text-align: center; font-size: 19px;
   color: #e6dcc0; text-shadow: 0 0 6px #000, 0 2px 2px #000; font-style: italic; line-height: 1.45; }
 #csCaption b { color: #d9b77a; font-style: normal; letter-spacing: .08em; }

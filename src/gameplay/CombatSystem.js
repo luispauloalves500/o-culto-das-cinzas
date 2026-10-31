@@ -1,5 +1,6 @@
 // Combate: testes de hitbox (esfera da arma varrida × cápsulas/esferas de dano), partículas e depuração.
 import * as THREE from 'three';
+import { dotTexture } from '../render/Graphics.js';
 
 /** distância de um ponto a um segmento vertical (cápsula) */
 export function sphereVsCapsule(p, r, c) {
@@ -56,19 +57,48 @@ export class CombatSystem {
     game.scene.add(this.debugGroup);
     this._dbgPool = [];
     this._dbgUsed = 0;
-    // partículas (sangue / faíscas) com pool fixo
-    this.maxP = 160;
+    // partículas (sangue / faíscas / cinza) com pool fixo; tamanho do pool e quantidade por emissão seguem a
+    // opção gráfica "Partículas" (src/render/Graphics.js → setQuality)
+    this.mult = 1; this.pools = true;
+    this._buildPool(200);
+    const q = game.gfx?.current?.part; if (q) this.setQuality(q);
+  }
+
+  _buildPool(n) {
+    if (this.points) { this.points.parent?.remove(this.points); this.points.geometry.dispose(); this.points.material.dispose(); }
+    this.maxP = n;
     const geo = new THREE.BufferGeometry();
     this.pPos = new Float32Array(this.maxP * 3);
     this.pCol = new Float32Array(this.maxP * 3);
     geo.setAttribute('position', new THREE.BufferAttribute(this.pPos, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(this.pCol, 3));
-    this.points = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.07, vertexColors: true, transparent: true, depthWrite: false }));
-    this.points.frustumCulled = false;
-    game.scene.add(this.points);
+    const map = dotTexture();
+    this.points = new THREE.Points(geo, new THREE.PointsMaterial({ size: map ? 0.1 : 0.07, map, alphaTest: map ? 0.05 : 0, vertexColors: true, transparent: true, depthWrite: false }));
+    this.points.frustumCulled = false; this.points.name = 'combatParticles';
+    this.game.scene.add(this.points);
     this.parts = Array.from({ length: this.maxP }, () => ({ life: 0, vx: 0, vy: 0, vz: 0 }));
-    this.pi = 0;
+    this.pi = 0; this._acc = 0;
     for (let i = 0; i < this.maxP; i++) this.pPos[i * 3 + 1] = -999;
+  }
+  /** qualidade de partículas: { mult, pool, pools } */
+  setQuality(q) {
+    this.mult = q.mult ?? 1; this.pools = q.pools !== false;
+    if (q.pool && q.pool !== this.maxP) this._buildPool(q.pool);
+  }
+  /** quantas partículas uma emissão de n gera nesta qualidade (fração acumulada: nada se perde em média) */
+  scaled(n) {
+    if (n <= 0) return 0;
+    const v = n * this.mult + this._acc; const k = Math.floor(v); this._acc = v - k;
+    return Math.max(1, k);
+  }
+  /** poça de sangue sob um corpo: disco escuro que cresce e some junto com o corpo (despawn) */
+  bloodPool(pos) {
+    if (!this.pools || !this.game.scene) return null;
+    const m = new THREE.Mesh(new THREE.CircleGeometry(0.6, 20), new THREE.MeshStandardMaterial({ color: 0x2a0303, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.82, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    m.rotation.x = -Math.PI / 2; m.position.set(pos.x + (Math.random() - 0.5) * 0.3, pos.y + 0.015, pos.z + (Math.random() - 0.5) * 0.3);
+    m.userData = { t: 0, r: 0.8 + Math.random() * 0.5, castOrig: false }; m.scale.setScalar(0.25); m.name = 'bloodPool';
+    this.game.scene.add(m);
+    return m;
   }
 
   /**
@@ -115,6 +145,7 @@ export class CombatSystem {
   }
 
   emit(pos, n, color, speed = 3) {
+    n = this.scaled(n);
     for (let i = 0; i < n; i++) {
       const p = this.parts[this.pi];
       const k = this.pi * 3;
