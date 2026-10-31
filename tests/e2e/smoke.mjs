@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import puppeteer from 'puppeteer-core';
 import { runC6 } from './c6.mjs';
+import { runC7 } from './c7.mjs';
 
 const PORT = 4179;
 const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome';
@@ -1800,7 +1801,8 @@ try {
   // --- Capítulo 6 — O Acervo (primeira fatia): botão do fim do Cap. 5
   await page.click('#btnEndNext');
   await new Promise((r) => setTimeout(r, 800));
-  await runC6(page, check, inject, SHOTS, c5z.raw);
+  const c6endRaw = await runC6(page, check, inject, SHOTS, c5z.raw);
+  await runC7(page, check, inject, SHOTS, c6endRaw);
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));

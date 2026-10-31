@@ -242,24 +242,28 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
     out.st = g.state; out.cp = s.checkpoint; out.flags = { d: !!s.flags.c6_chapterDone, c: !!s.flags.ch6Done };
     out.endVisible = !!$('chapterEnd')?.offsetParent; out.title = $('endTitle').textContent; out.note = $('endNote').textContent;
     out.btn = { dis: $('btnEndNext').disabled, txt: $('btnEndNext').textContent }; out.stats = $('stats').innerHTML; out.rn = $('endRn0').innerHTML;
-    $('btnEndNext').click(); out.stAfter = g.state;
+    out.raw = localStorage.getItem('ocdc_save');
+    $('btnEndNext').click(); T.run(0.3); out.stAfter = g.state; out.chAfter = g.chapter;
+    const s7 = JSON.parse(localStorage.getItem('ocdc_save')); out.after = { ch: s7.chapter, cp: s7.checkpoint, c6: !!s7.flags.c6_chapterDone, z: +g.player.pos.z.toFixed(2) };
     return out;
   });
   await page.screenshot({ path: SHOTS + '38-cap6-fim.png' });
   check('Cap. 6: relicário do Colecionador (drop real, documento com o gancho do Cap. 7) e catálogo na reserva técnica', c6e.relic === 'ok' && c6e.relicAtBody && c6e.reading === 'reading' && c6e.hasRelic && c6e.inReserve && c6e.cat === 'ok' && c6e.readCat && /alçapão/.test(c6e.objEnd), JSON.stringify({ r: c6e.relic, rd: c6e.reading, i: c6e.inReserve, z: c6e.z, c: c6e.cat, o: c6e.objEnd }));
   check('Cap. 6: alçapão da reserva encerra o capítulo (save c6_end, c6_chapterDone/ch6Done)', c6e.st === 'end' && c6e.cp === 'c6_end' && c6e.flags.d && c6e.flags.c && c6e.endVisible, JSON.stringify({ st: c6e.st, cp: c6e.cp, f: c6e.flags }));
-  check('Cap. 6: tela "Fim do Capítulo 6" com "Capítulo 7 — Sob a Pedra (em breve)" desabilitado', /Fim do Capítulo 6/.test(c6e.title) && c6e.btn.dis && /Capítulo 7 — Sob a Pedra \(em breve\)/.test(c6e.btn.txt) && /Relicário/.test(c6e.stats) && /Sob a Pedra/.test(c6e.rn) && c6e.stAfter === 'end' && c6e.map && c6e.map.rooms >= 7, JSON.stringify({ t: c6e.title, b: c6e.btn, s: c6e.stats, m: c6e.map }));
+  check('Cap. 6: tela "Fim do Capítulo 6" com o botão "Seguir para o Capítulo 7 — Sob a Pedra" habilitado', /Fim do Capítulo 6/.test(c6e.title) && !c6e.btn.dis && /Capítulo 7 — Sob a Pedra/.test(c6e.btn.txt) && !/em breve/.test(c6e.btn.txt) && /Relicário/.test(c6e.stats) && /Sob a Pedra/.test(c6e.rn) && c6e.map && c6e.map.rooms >= 7, JSON.stringify({ t: c6e.title, b: c6e.btn, s: c6e.stats, m: c6e.map }));
+  check('Cap. 6 → 7: o botão do fim do Cap. 6 inicia Sob a Pedra no pé da escada (save migrado c7_ladder)', c6e.stAfter === 'playing' && c6e.chAfter === 7 && c6e.after.ch === 7 && c6e.after.cp === 'c7_ladder' && c6e.after.c6 && c6e.after.z < 4, JSON.stringify(c6e.after));
 
-  // recarregar c6_end: capítulo concluído, chefe morto no pedestal, saídas abertas
+  // recarregar o save c6_end (gravado antes do botão): "Continuar" migra para o Cap. 7 (saves antigos do fim do Cap. 6)
+  await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c6e.raw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
   const c6z = await page.evaluate(() => {
     document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.4);
-    const D = g.level.doors;
-    return { st: g.state, ch: g.chapter, z: +g.player.pos.z.toFixed(2), dead: !g.boss.alive, doors: !D.c6_exit.locked && D.c6_exit.open && D.c6_collector.open,
-      gal: g.level.galleryCases.gc_w.broken, done: g.quest.has('c6_chapterDone'), obj: g.quest.current() };
+    const s = JSON.parse(localStorage.getItem('ocdc_save'));
+    return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, z: +g.player.pos.z.toFixed(2), done: !!s.flags.c6_chapterDone, dead: !!s.flags.c6_collectorDead,
+      axe: g.inventory.weapons.includes('machado'), docs: g.inventory.documents.includes('relicario_colecionador'), obj: g.quest.current() };
   });
-  check('Cap. 6: recarregar c6_end restaura chefe morto, portas abertas e capítulo concluído', c6z.st === 'playing' && c6z.ch === 6 && c6z.z > 74 && c6z.dead && c6z.doors && c6z.gal && c6z.done && /Sob a Pedra/.test(c6z.obj), JSON.stringify(c6z));
+  check('Cap. 6 → 7: "Continuar" num save c6_end migra para o Capítulo 7 (itens e documentos mantidos)', c6z.st === 'playing' && c6z.ch === 7 && c6z.sch === 7 && c6z.cp === 'c7_ladder' && c6z.z < 4 && c6z.done && c6z.dead && c6z.axe && c6z.docs && /galeria de pedra/.test(c6z.obj), JSON.stringify(c6z));
 
   // save antigo do fim do Cap. 5 (c5_end) → Continuar migra para o Cap. 6
   if (c5endRaw) {
@@ -273,4 +277,5 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
     });
     check('Cap. 6: "Continuar" num save c5_end migra para o Capítulo 6 (doca do Museu)', c6m.st === 'playing' && c6m.ch === 6 && c6m.sch === 6 && c6m.cp === 'c6_dock' && c6m.pos[2] < 4 && !c6m.fuse && c6m.c5, JSON.stringify(c6m));
   }
+  return c6e.raw;
 }

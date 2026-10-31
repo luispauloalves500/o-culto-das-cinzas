@@ -794,7 +794,7 @@ test('Cap. 5: migração das flags (fatia antiga, chefe, fim) e mapa do salão',
     assert.equal(roomAt({ x: 33, y: 4.5, z: 96 }).id, 'c5_descarga');
   } finally { setMapChapter(1); }
   assert.ok(CHAPTERS.find((c) => c.id === 6 && c.playable));
-  assert.ok(CHAPTERS.find((c) => c.id === 7 && !c.playable));
+  assert.ok(CHAPTERS.find((c) => c.id === 7 && c.playable));
 });
 
 const C6L = await import('../../src/scenes/acervo/AcervoLevel.js');
@@ -818,7 +818,7 @@ test('Cap. 6: migração do Cap. 5 concluído, objetivos, documentos e capítulo
   const q = new QuestSystem(null, 6); assert.equal(q.current(), OBJECTIVES_C6[0].text);
   assert.ok(SIDE_OBJECTIVES_C6.length >= 2 && SIDE_OBJECTIVES_C6.length <= 5);
   for (const o of SIDE_OBJECTIVES_C6) assert.ok(o.when && o.done && o.text);
-  assert.ok(/Sob a Pedra/.test(OBJECTIVES_C6.at(-1).text) && /em breve/.test(OBJECTIVES_C6.at(-1).text));
+  assert.ok(/Sob a Pedra/.test(OBJECTIVES_C6.at(-1).text) && !/em breve/.test(OBJECTIVES_C6.at(-1).text));
   for (const id of ['guia_visitante', 'diario_conservadora', 'cartao_inventario_31']) assert.equal(DOCUMENTS[id]?.ch, 6, id);
   // o guia dá a regra do cofre; o Cap. 5 aponta para o Cap. 6
   assert.ok(/peça mais antiga/.test(DOCUMENTS.guia_visitante.body));
@@ -990,6 +990,101 @@ test('Cap. 6: Galeria, reserva, guinchos, checkpoints c6_boss/c6_end e migraçã
   assert.ok(end.flags.c6_chapterDone && end.flags.ch6Done && end.flags.c6_collectorDead);
   assert.equal(normalizeChapter6Flags({ chapter: 5, flags: { ch6Done: true } }).flags.c6_collectorDead, undefined);
   assert.ok(C6S.C6_BELL_DELAY > 0 && C6S.C6_BELL_DELAY < 5);
+});
+
+// ---------------- Capítulo 7 — Sob a Pedra (primeira fatia) ----------------
+const { makeChapter7Save, normalizeChapter7Flags } = await import('../../src/core/SaveManager.js');
+const { OBJECTIVES_C7, SIDE_OBJECTIVES_C7 } = await import('../../src/data/chapters.js');
+const { PerceptionSystem } = await import('../../src/ai/PerceptionSystem.js');
+const C7L = await import('../../src/scenes/pedra/PedraLevel.js');
+const C7S = await import('../../src/scenes/pedra/PedraScript.js');
+test('Cap. 7: migração do fim do Cap. 6, objetivos, documentos e capítulo jogável', () => {
+  const end6 = migrateSave({ ...makeChapter6Save(null), checkpoint: 'c6_end', flags: { c6_chapterDone: true, c6_collectorDead: true, hasAmulet: true }, inventory: { items: { bandagem: 2, municao_38: 7 }, weapons: ['machado', 'revolver'], wear: {}, loaded: { revolver: 6 } }, documents: ['catalogo_colecionador'], player: { hp: 15 } });
+  const s = makeChapter7Save(end6);
+  assert.equal(s.chapter, 7); assert.equal(s.checkpoint, 'c7_ladder');
+  assert.ok(s.flags.c6_chapterDone && s.flags.ch6Done && s.flags.c6_collectorDead && s.flags.c7_started && s.flags.hasAmulet && s.flags.ch5Done);
+  assert.equal(s.inventory.items.bandagem, 2); assert.equal(s.inventory.items.municao_38, 7);
+  assert.ok(s.inventory.weapons.includes('revolver') && s.documents.includes('catalogo_colecionador'));
+  assert.ok(s.player.hp >= 80); assert.deepEqual(s.deadEnemies, []); assert.deepEqual(s.doors, {});
+  const again = migrateSave(JSON.parse(JSON.stringify(s)));
+  assert.equal(again.chapter, 7); assert.equal(again.checkpoint, 'c7_ladder');
+  assert.equal(makeChapter7Save(null).chapter, 7);
+  assert.ok(CHAPTERS.find((c) => c.id === 7)?.playable === true);
+  assert.equal(objectivesFor(7), OBJECTIVES_C7); assert.equal(sideObjectivesFor(7), SIDE_OBJECTIVES_C7);
+  assert.deepEqual(OBJECTIVES_C7.map((o) => o.done), ['c7_inOssuary', 'c7_sawGate', 'c7_hasKey', 'c7_ossOpen', 'c7_onPlatform', 'c7_sliceDone', 'c7_never']);
+  const q = new QuestSystem(null, 7); assert.equal(q.current(), OBJECTIVES_C7[0].text);
+  assert.ok(SIDE_OBJECTIVES_C7.length >= 2 && SIDE_OBJECTIVES_C7.length <= 5);
+  for (const o of SIDE_OBJECTIVES_C7) assert.ok(o.when && o.done && o.text);
+  for (const id of ['registro_coveiro', 'recado_ines_pedra', 'quadro_linha_velha']) assert.ok(DOCUMENTS[id]?.ch === 7 && DOCUMENTS[id].title && DOCUMENTS[id].body, id);
+  assert.ok(ITEMS.pe_de_cabra && ITEMS.chave_coveiro);
+  // saves do Cap. 7: plataforma implica a cripta aberta e a grade aberta; fim da fatia implica a plataforma
+  const plat = migrateSave({ ...s, checkpoint: 'c7_platform', flags: {} });
+  assert.ok(plat.flags.c7_onPlatform && plat.flags.c7_ossOpen && plat.flags.c7_hasKey && plat.flags.c7_cryptOpen && plat.flags.c6_chapterDone);
+  const sl = migrateSave({ ...s, checkpoint: 'c7_slice', flags: {} });
+  assert.ok(sl.flags.c7_sliceDone && sl.flags.c7_onPlatform && sl.flags.c7_ossOpen);
+  const oss = migrateSave({ ...s, checkpoint: 'c7_ossuary', flags: {} });
+  assert.ok(oss.flags.c7_inOssuary && !oss.flags.c7_ossOpen && !oss.flags.c7_hasKey);
+  assert.equal(normalizeChapter7Flags({ chapter: 6, flags: {} }).flags.c6_chapterDone, undefined);
+});
+test('Cap. 7: emparedado cego que acorda com barulho; a pedra ecoa (acústica por área)', () => {
+  const e = ENEMIES.emparedado;
+  assert.ok(e && e.blind && e.wakeOnNoise && e.walled && e.hearing > 1 && e.sight < 2.5);
+  assert.ok(e.dormantHearing > 0 && e.dormantHearing < 1);
+  assert.ok(e.attacks.length >= 2 && e.attacks.every((k) => k.windup > 0 && k.range > 0));
+  for (const s of C7S.PEDRA_SPAWNS) assert.ok(ENEMIES[s.type], s.id);
+  const niched = C7S.PEDRA_SPAWNS.filter((s) => s.niche);
+  assert.ok(niched.length >= 4 && niched.every((s) => s.dormant && s.type === 'emparedado'));
+  for (const s of niched) { const n = C7L.NICHES.find((o) => o.id === s.niche); assert.ok(n && n.enemy === s.id && Math.hypot(n.x - s.x, n.z - s.z) < 0.1, s.id); }
+  assert.ok(C7L.NICHES.some((n) => !n.enemy));
+  // acústica: ossuário > cripta > galerias > fora
+  const O = C7L.OSSUARY, a = (x, z) => C7L.acousticAt({ x, y: 0, z });
+  assert.ok(a(18, 26) > a(8, 34) && a(8, 34) > a(18, 10) && a(18, 10) > 1 && a(-50, -50) === 1);
+  const col = new CollisionWorld(), per = new PerceptionSystem(col);
+  per.acoustics = C7L.acousticAt;
+  const emp = { pos: new THREE.Vector3(O.minX - 0.5, 0, 26), def: e };
+  // andando (2,5) a 3 m: dormente ouve no ossuário (eco); a mesma distância fora da pedra, não
+  per.noise({ x: emp.pos.x + 3, y: 0, z: 26 }, 2.5, 'step');
+  assert.ok(per.hear(emp, e.dormantHearing)); per.endStep();
+  per.acoustics = null; per.noise({ x: emp.pos.x + 3, y: 0, z: 26 }, 2.5, 'step');
+  assert.equal(per.hear(emp, e.dormantHearing), null); per.endStep();
+  per.acoustics = C7L.acousticAt;
+  // andando pelo meio do ossuário (6 m), o nicho não acorda; correndo, acorda; ossos estalando (andando) acordam a ~5 m
+  per.noise({ x: emp.pos.x + 6, y: 0, z: 26 }, 2.5, 'step'); assert.equal(per.hear(emp, e.dormantHearing), null); per.endStep();
+  per.noise({ x: emp.pos.x + 6, y: 0, z: 26 }, 7.5, 'step'); assert.ok(per.hear(emp, e.dormantHearing)); per.endStep();
+  per.noise({ x: emp.pos.x + 5, y: 0, z: 26 }, C7S.C7_BONE_NOISE.walk, 'bones'); assert.ok(per.hear(emp, e.dormantHearing)); per.endStep();
+  assert.deepEqual(per.events, []); assert.equal(per.last.length, 1);
+  assert.ok(C7S.C7_BONE_NOISE.run > C7S.C7_BONE_NOISE.walk && C7S.C7_BONE_STEP > 0.3 && C7S.C7_PRY_NOISE >= C7S.C7_GATE_NOISE);
+  // ossos: manchas dentro do ossuário e fora do eixo central da entrada (dá para contornar)
+  for (const b of C7L.BONE_PATCHES) assert.ok(b.x0 >= O.minX && b.x1 <= O.maxX && b.z0 > O.minZ && b.z1 < O.maxZ, b.id);
+  assert.ok(C7L.boneAt(18, 23) && !C7L.boneAt(18, 20) && !C7L.boneAt(18, 27));
+});
+test('Cap. 7: mapa, checkpoints, zonas e geometria da fatia (sem chefe)', () => {
+  const CP = C7L.PEDRA_CHECKPOINTS, L = Object.create(C7L.PedraLevel.prototype);
+  assert.deepEqual(Object.keys(CP).sort(), ['c7_ladder', 'c7_ossuary', 'c7_platform', 'c7_slice']);
+  assert.equal(L.zoneAt({ ...CP.c7_ladder, y: 1 })?.id, 'c7_poco');
+  assert.equal(L.zoneAt({ ...CP.c7_ossuary, y: 1 })?.id, 'c7_ossuario');
+  assert.equal(L.zoneAt({ ...CP.c7_platform, y: 1 })?.id, 'c7_estacao');
+  assert.equal(L.zoneAt({ ...CP.c7_slice, y: 0 })?.id, 'c7_estacao');
+  assert.ok(CP.c7_slice.y === C7L.TRACK_Y && CP.c7_slice.x < C7L.TRACKS.maxX && CP.c7_slice.x < 48.9);
+  // o checkpoint do ossuário fica fora das manchas de ossos e longe dos nichos
+  assert.ok(!C7L.boneAt(CP.c7_ossuary.x, CP.c7_ossuary.z));
+  for (const n of C7L.NICHES) assert.ok(Math.hypot(n.x - CP.c7_ossuary.x, n.z - CP.c7_ossuary.z) > 5, n.id);
+  // cripta encosta no ossuário (porta oeste) e o jazigo fica dentro dela
+  const C = C7L.CRYPT, J = C7L.JAZIGO;
+  assert.ok(C.maxX === C7L.OSSUARY.minX && J.minX > C.minX && J.maxX < C.maxX && J.maxZ < C.maxZ && J.use.z < J.minZ);
+  assert.ok(C7L.TUNNEL.minZ === C7L.OSSUARY.maxZ && C7L.TUNNEL.maxZ === C7L.PLATFORM.minZ && C7L.TRACKS.minZ === C7L.PLATFORM.maxZ);
+  try {
+    setMapChapter(7);
+    assert.deepEqual(chapterFloors().map((f) => f.id), ['up']);
+    assert.equal(roomAt({ x: 18, y: 0, z: 3 }).id, 'c7_poco');
+    assert.equal(roomAt({ x: 18, y: 0, z: 26 }).id, 'c7_ossuario');
+    assert.equal(roomAt({ x: 8, y: 0, z: 34 }).id, 'c7_cripta');
+    assert.equal(roomAt({ x: 24, y: 0, z: 47 }).id, 'c7_plataforma');
+    assert.equal(roomAt({ x: 38, y: 0, z: 20 }).id, 'c7_servico_n');
+  } finally { setMapChapter(1); }
+  // a fatia não tem chefe: nenhum spawn de chefe e nenhuma flag de chefe nos objetivos
+  assert.ok(C7S.PEDRA_SPAWNS.every((s) => !ENEMIES[s.type].boss));
+  assert.ok(!OBJECTIVES_C7.some((o) => /Dead|boss|chefe/i.test(o.done)));
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
