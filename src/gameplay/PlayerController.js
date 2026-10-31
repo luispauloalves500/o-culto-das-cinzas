@@ -4,7 +4,9 @@ import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from './Procedura
 import { WEAPONS, weaponDamage, wearCost, conditionLabel } from '../data/weapons.js';
 import { EliasModel, RETARGET } from './EliasModel.js';
 
-const STATES = ['free', 'attack', 'dodge', 'block', 'aim', 'reload', 'repair', 'hit', 'grabbed', 'heal', 'dead', 'locked'];
+const STATES = ['free', 'attack', 'dodge', 'block', 'aim', 'reload', 'repair', 'hit', 'grabbed', 'heal', 'dead', 'locked', 'climb'];
+// escalada (Cap. 8): velocidades na escada de mão e folga da cabeça no topo (sai quando a cintura passa da borda)
+export const CLIMB_SPEED = 1.5, CLIMB_SPEED_FAST = 2.4, CLIMB_TOP_OFF = 0.9;
 
 // Curvas de animação por golpe (t normalizado). active = janela em que a hitbox causa dano.
 const ATTACK_ANIM = {
@@ -241,7 +243,7 @@ export class PlayerController {
 
   spawn(p, yaw = 0) {
     this.pos.set(p.x, p.y, p.z); this.vel.set(0, 0, 0); this.vy = 0;
-    this.yaw = yaw; this.state = 'free'; this.attack = null; this.queued = null; this.grabbedBy = null; this.repairing = null;
+    this.yaw = yaw; this.state = 'free'; this.attack = null; this.queued = null; this.grabbedBy = null; this.repairing = null; this.ladder = null;
     // teleporte / respawn: nada de tela de "agarrado" ou mira sobrando de um estado anterior
     this.game.hud?.setStruggle(false);
     if (this.game.cameraCtl) this.game.cameraCtl.aiming = false;
@@ -254,6 +256,49 @@ export class PlayerController {
   facing() { return { x: Math.sin(this.yaw), z: Math.cos(this.yaw) }; }
 
   _setState(s) { this.state = s; this.stateT = 0; }
+
+  /**
+   * Escalada (Cap. 8): agarra uma escada de mão. l = { id, x, z, y0, y1, yaw, top: {x,z}, bottom: {x,z} }.
+   * Na escada não há gravidade nem colisão lateral: W/S sobe/desce (Shift acelera e gasta fôlego), esquiva solta
+   * (cai), golpe recebido derruba. Chegar ao topo/pé desce na plataforma de saída.
+   */
+  startClimb(l) {
+    if (this.state !== 'free' || !l) return false;
+    const fromTop = this.pos.y > (l.y0 + l.y1) / 2;
+    this.attack = null; this.queued = null; this.ladder = l; this.vel.set(0, 0, 0); this.vy = 0;
+    this.knock.x = 0; this.knock.z = 0; this.rungAcc = 0; this.climbPhase = 0;
+    this.pos.set(l.x, fromTop ? l.y1 - CLIMB_TOP_OFF - 0.05 : l.y0 + 0.05, l.z);
+    this.yaw = l.yaw; this.onGround = false;
+    this._setState('climb');
+    this.game.audio.play('step', null, { vol: 0.4 });
+    return true;
+  }
+  /** sai da escada: 'top' / 'bottom' (desce na plataforma) ou 'drop' (solta e cai pela gravidade) */
+  endClimb(how = 'drop') {
+    const l = this.ladder; if (!l) return;
+    if (how === 'top') this.pos.set(l.top.x, l.y1, l.top.z);
+    else if (how === 'bottom') this.pos.set(l.bottom.x, l.y0, l.bottom.z);
+    this.ladder = null; this.vy = 0; this.onGround = how !== 'drop';
+    if (this.state === 'climb') this._setState('free');
+    this.game.bus?.emit?.('ClimbEnd', { id: l.id, how });
+  }
+  _updateClimb(dt, input) {
+    const g = this.game, l = this.ladder;
+    if (!l) { this._setState('free'); return; }
+    if (input.wasPressed('dodge')) { this.endClimb('drop'); return; }
+    const ax = input.moveAxis().y;
+    const fast = input.isDown('run') && this.st > 1 && ax !== 0;
+    if (fast) { this.st -= 16 * dt; this.stDelay = 0.4; }
+    const v = ax * (fast ? CLIMB_SPEED_FAST : CLIMB_SPEED);
+    this.pos.x = l.x; this.pos.z = l.z; this.yaw = l.yaw; this.vel.set(0, 0, 0); this.vy = 0;
+    this.pos.y += v * dt; this.climbPhase += Math.abs(v) * dt * 3.2; this.running = fast;
+    // degraus de ferro: rangem (ruído real, mais alto se subir apressado)
+    this.rungAcc += Math.abs(v) * dt;
+    if (this.rungAcc > 0.55) { this.rungAcc = 0; g.audio.play('step', null, { vol: fast ? 0.35 : 0.2 }); g.perception.noise(this.pos, fast ? 6.5 : 3, 'ladder'); }
+    if (this.pos.y >= l.y1 - CLIMB_TOP_OFF) this.endClimb('top');
+    else if (this.pos.y <= l.y0 && ax < 0) this.endClimb('bottom');
+    else this.pos.y = Math.max(l.y0, this.pos.y);
+  }
   useStamina(v) { this.st = Math.max(0, this.st - v); this.stDelay = 0.7; }
 
   /** dano recebido; from = posição do atacante */
@@ -284,6 +329,8 @@ export class PlayerController {
     g.cameraCtl.addShake(0.5);
     this.knock.x = -dx / d * knock; this.knock.z = -dz / d * knock;
     if (this.hp <= 0) { this.hp = 0; this._die(); return 'dead'; }
+    // na escada (Cap. 8): o golpe derruba — Elias solta os degraus e cai pela gravidade
+    if (this.state === 'climb') { const l = this.ladder; this.ladder = null; this.vy = 0; this.onGround = false; g.bus?.emit?.('ClimbEnd', { id: l?.id, how: 'knocked' }); }
     if (this.state !== 'grabbed') { this.attack = null; this.queued = null; this._setState('hit'); }
     return 'hit';
   }
@@ -541,6 +588,17 @@ export class PlayerController {
     // fôlego
     this.stDelay -= dt;
     if (this.stDelay <= 0 && this.state !== 'block') this.st = Math.min(this.maxSt, this.st + 30 * dt);
+
+    if (this.state === 'climb') {
+      this._updateClimb(dt, input);
+      if (this.state === 'climb') {
+        if (g.cameraCtl) g.cameraCtl.aiming = false;
+        this._animate(dt, adt, 0);
+        this.rig.root.position.copy(this.pos); this.rig.root.rotation.y = this.yaw;
+        if (this.model?.ready) this.model.update(dt);
+        return;
+      }
+    }
 
     const wish = this._wishDir();
     let speed = 0;
@@ -878,6 +936,15 @@ export class PlayerController {
           r.armL.upper.rotation.x = -1.2; r.armL.upper.rotation.z = -0.5; r.armL.lower.rotation.x = -1.1;
           r.torso.rotation.x = 0.12;
         }
+        break;
+      }
+      case 'climb': {
+        const s = Math.sin(this.climbPhase || 0);
+        r.armR.upper.rotation.x = -2.5 + s * 0.35; r.armL.upper.rotation.x = -2.5 - s * 0.35;
+        r.armR.lower.rotation.x = -0.5 - Math.max(0, s) * 0.5; r.armL.lower.rotation.x = -0.5 - Math.max(0, -s) * 0.5;
+        r.legR.upper.rotation.x = -0.6 - Math.max(0, -s) * 0.5; r.legL.upper.rotation.x = -0.6 - Math.max(0, s) * 0.5;
+        r.legR.lower.rotation.x = 0.9; r.legL.lower.rotation.x = 0.9;
+        r.torso.rotation.x = 0.08;
         break;
       }
       case 'dodge': {

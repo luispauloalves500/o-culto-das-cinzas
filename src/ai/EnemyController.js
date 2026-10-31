@@ -58,11 +58,14 @@ export class Enemy {
       : d.mats === 'emparedado'
       // Capítulo 7: monge emparedado vivo — hábito de estamenha apodrecido, pele cor de cal, cabeça coberta de argamassa
       ? { skin: M.lime || M.deadSkin, shirt: M.habit || M.leatherDark, arms: M.lime || M.deadSkin, pants: M.habit || M.leatherDark, legs: M.habit || M.leatherDark, feet: M.lime || M.deadSkin, head: M.mortar || M.stone }
+      : d.mats === 'foguista'
+      // Capítulo 8: foguista da Usina — braços de fuligem, avental de couro chamuscado, capuz de couro
+      ? { skin: M.soot || M.coal, shirt: M.scorched || M.apron, arms: M.soot || M.coal, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.leatherDark }
       : d.mats === 'cinzento'
       // Capítulo 4: morador da Cidade Morta, coberto de cinza dos pés à cabeça, terno puído de domingo
       ? { skin: M.ash || M.deadSkin, shirt: M.pantsGray, arms: M.pantsGray, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.ash || M.deadSkin }
       : { skin: M.deadSkin, shirt: M.nurseCoat, arms: M.nurseCoat, pants: M.nurseCoat, legs: M.pantsGray, feet: M.leatherDark, head: M.deadSkin };
-    this.rig = createHumanoid({ scale: d.scale, mats, hunch: d.hunch, armLen: d.mats === 'interno' || d.mats === 'carvoeiro' ? 0.34 : 0.32, torsoW: d.mats === 'interno' ? 0.4 : d.mats === 'carvoeiro' ? 0.52 : 0.42 , legLen: d.crawler ? 0.2 : undefined });
+    this.rig = createHumanoid({ scale: d.scale, mats, hunch: d.hunch, armLen: d.mats === 'interno' || d.mats === 'carvoeiro' ? 0.34 : 0.32, torsoW: d.mats === 'interno' ? 0.4 : d.mats === 'carvoeiro' ? 0.52 : d.mats === 'foguista' ? 0.48 : 0.42 , legLen: d.crawler ? 0.2 : undefined });
     if (d.crawler) {
       // lençol do necrotério: cobre o corpo enquanto ele finge estar morto
       this.sheet = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.12, 1.75), M.sheet || M.gown);
@@ -123,6 +126,13 @@ export class Enemy {
       for (const arm of [this.rig.armR, this.rig.armL]) for (const x of [-0.03, 0, 0.03]) {
         const f = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.14), M.lime || M.deadSkin); f.position.set(x, -0.04, 0.08); arm.end.add(f);
       }
+    } else if (d.mats === 'foguista') {
+      // óculos de latão sobre o capuz de couro e o atiçador de ferro com a ponta em brasa
+      for (const x of [-0.055, 0.055]) { const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.04 * s, 0.04 * s, 0.03 * s, 8), M.brass || M.gold); lens.rotation.x = Math.PI / 2; lens.position.set(x * s, 0.19 * s, 0.13 * s); h.add(lens); }
+      const hood = new THREE.Mesh(new THREE.BoxGeometry(0.29 * s, 0.3 * s, 0.3 * s), M.leatherDark); hood.position.set(0, 0.1 * s, -0.03 * s); h.add(hood);
+      const rod = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.8), M.rust); rod.position.set(0, -0.03, 0.34);
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.12), M.ember || M.fire); tip.position.set(0, -0.03, 0.78);
+      this.rig.armR.end.add(rod); this.rig.armR.end.add(tip);
     } else if (d.mats === 'interno') {
       const band = new THREE.Mesh(new THREE.BoxGeometry(0.25 * s, 0.07 * s, 0.27 * s), M.bandageDirty);
       band.position.y = 0.17 * s; h.add(band);
@@ -135,12 +145,12 @@ export class Enemy {
       blade.position.set(0, -0.03, 0.2); this.rig.armR.end.add(blade);
     }
     // olhos fracos: ajudam a ler o inimigo no escuro (caçadores: furos do capuz com brilho de brasa)
-    const eyeMat = d.mats === 'especime' ? (M.glassEye || M.eyeGlow) : d.mats === 'afogado' ? (M.drownedEye || M.eyeGlow) : d.mats === 'cacador' || d.mats === 'carvoeiro' || d.mats === 'acolito' ? (M.ember || M.eyeGlow) : M.eyeGlow;
+    const eyeMat = d.mats === 'especime' ? (M.glassEye || M.eyeGlow) : d.mats === 'afogado' ? (M.drownedEye || M.eyeGlow) : d.mats === 'cacador' || d.mats === 'carvoeiro' || d.mats === 'acolito' || d.mats === 'foguista' ? (M.ember || M.eyeGlow) : M.eyeGlow;
     if (!d.blind) for (const x of [-0.05, 0.05]) {
       const e = new THREE.Mesh(new THREE.BoxGeometry(0.03 * s, 0.02 * s, 0.01), eyeMat);
       e.position.set(x * s, 0.19 * s, (d.mats === 'cacador' || d.mats === 'acolito' ? 0.16 : 0.125) * s); h.add(e);
     }
-    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : d.mats === 'cinzento' ? 0.6 : d.mats === 'afogado' ? 0.14 : d.mats === 'especime' ? 0.1 : d.mats === 'emparedado' ? 0.14 : 0.38);
+    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : d.mats === 'cinzento' ? 0.6 : d.mats === 'afogado' ? 0.14 : d.mats === 'especime' ? 0.1 : d.mats === 'emparedado' ? 0.14 : d.mats === 'foguista' ? 0.72 : 0.38);
     this.rig.armR.end.add(this.hand);
     this.rig.root.position.copy(this.pos);
     if (this.submerged) this.rig.root.position.y -= 1.7;

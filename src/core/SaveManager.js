@@ -68,6 +68,23 @@ export function normalizeChapter7Flags(s) {
   return { ...s, flags: f };
 }
 
+/** Capítulo 8 (A Última Chama): deriva do checkpoint as flags que o roteiro espera (saves antigos / editados). */
+export function normalizeChapter8Flags(s) {
+  if (s.chapter !== 8 || !s.flags) return s;
+  const f = { ...s.flags };
+  if (s.checkpoint === 'c8_slice') { f.c8_sliceDone = true; f.c8_sabotage = true; }
+  if (f.c8_sliceDone || f.c8_sabotage) f.c8_inTurbine = true;
+  if (s.checkpoint === 'c8_turbine') f.c8_inTurbine = true;
+  if (f.c8_inTurbine) { f.c8_steamDoorOpen = true; }
+  if (f.c8_steamDoorOpen) { f.c8_vent_I = true; f.c8_vent_II = true; f.c8_vent_III = true; }
+  if (f.c8_vent_I && f.c8_vent_II && f.c8_vent_III) f.c8_ventedAll = true;
+  if (f.c8_vent_I || f.c8_vent_II || f.c8_vent_III || f.c8_leaksOff) f.c8_hasWheel = true;
+  if (f.c8_hasWheel || s.checkpoint === 'c8_boiler') { f.c8_climbed = true; f.c8_inBoiler = true; }
+  f.c8_started = true;
+  f.c7_chapterDone = true; f.ch7Done = true; f.c7_vigiaDead = true; f.c7_stairsOpen = true;
+  return { ...s, flags: f };
+}
+
 /** Migra saves antigos para a versão atual; retorna null se inválido. */
 export function migrateSave(data) {
   if (!data || typeof data !== 'object') return null;
@@ -91,6 +108,7 @@ export function migrateSave(data) {
   s = normalizeChapter5Flags(s);
   s = normalizeChapter6Flags(s);
   s = normalizeChapter7Flags(s);
+  s = normalizeChapter8Flags(s);
   const base = createEmptySave();
   return { ...base, ...s, player: { ...base.player, ...s.player }, inventory: { ...base.inventory, ...s.inventory } };
 }
@@ -250,6 +268,31 @@ export function makeChapter7Save(prev) {
     inventory: { ...(p.inventory || base.inventory), items },
     flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_chapterDone: true, ch2Done: true, c3_chapterDone: true, ch3Done: true, c4_chapterDone: true, ch4Done: true, c5_chapterDone: true, ch5Done: true, c5_afogadaDead: true,
       c6_chapterDone: true, ch6Done: true, c6_collectorDead: true, c6_galleryOpen: true, c7_started: true },
+    doors: {},
+    deadEnemies: [],
+    documents: [...(p.documents || [])],
+    elevatorLevel: 'upper',
+    playTime: p.playTime || 0,
+    stats: { ...(p.stats || {}) },
+  };
+}
+
+// Capítulo 8 — A Última Chama: começa no pátio do carvão da Usina, ao pé da escada de serviço que sobe das catacumbas
+export const CH7_KEY_ITEMS = ['pe_de_cabra', 'chave_coveiro', 'chave_escada_usina'];
+export function makeChapter8Save(prev) {
+  const base = createEmptySave();
+  const p = (prev && migrateSave({ version: SAVE_VERSION, ...prev })) || base;
+  const items = { ...(p.inventory?.items || {}) };
+  for (const k of [...CH1_KEY_ITEMS, ...CH2_KEY_ITEMS, ...CH3_KEY_ITEMS, ...CH4_KEY_ITEMS, ...CH5_KEY_ITEMS, ...CH6_KEY_ITEMS, ...CH7_KEY_ITEMS]) delete items[k];
+  return {
+    ...base,
+    chapter: 8,
+    checkpoint: 'c8_yard',
+    player: { hp: Math.max(80, Math.min(125, p.player?.hp ?? 100)) },
+    inventory: { ...(p.inventory || base.inventory), items },
+    flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_chapterDone: true, ch2Done: true, c3_chapterDone: true, ch3Done: true, c4_chapterDone: true, ch4Done: true, c5_chapterDone: true, ch5Done: true, c5_afogadaDead: true,
+      c6_chapterDone: true, ch6Done: true, c6_collectorDead: true, c6_galleryOpen: true,
+      c7_chapterDone: true, ch7Done: true, c7_vigiaDead: true, c7_stairsOpen: true, c8_started: true },
     doors: {},
     deadEnemies: [],
     documents: [...(p.documents || [])],
