@@ -124,6 +124,30 @@ export function makeChapter4Save(prev) {
   };
 }
 
+// itens de chave do Capítulo 4 que não atravessam a passagem do Relógio
+export const CH4_KEY_ITEMS = ['chave_relojoaria', 'chave_torre', 'roda_escape'];
+/** save inicial do Capítulo 5 (Águas Negras): mantém armas, desgaste, melhorias, documentos, tempo e a fita de Inês */
+export function makeChapter5Save(prev) {
+  const base = createEmptySave();
+  const p = (prev && migrateSave({ version: SAVE_VERSION, ...prev })) || base;
+  const items = { ...(p.inventory?.items || {}) };
+  for (const k of [...CH1_KEY_ITEMS, ...CH2_KEY_ITEMS, ...CH3_KEY_ITEMS, ...CH4_KEY_ITEMS]) delete items[k];
+  return {
+    ...base,
+    chapter: 5,
+    checkpoint: 'c5_passage',
+    player: { hp: Math.max(80, Math.min(125, p.player?.hp ?? 100)) },
+    inventory: { ...(p.inventory || base.inventory), items },
+    flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_chapterDone: true, ch2Done: true, c3_chapterDone: true, ch3Done: true, c4_chapterDone: true, ch4Done: true, c5_started: true },
+    doors: {},
+    deadEnemies: [],
+    documents: [...(p.documents || [])],
+    elevatorLevel: 'upper',
+    playTime: p.playTime || 0,
+    stats: { ...(p.stats || {}) },
+  };
+}
+
 export class SaveManager {
   constructor(storage = globalThis.localStorage) { this.storage = storage; }
   hasSave() { return !!this.load(); }
