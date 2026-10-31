@@ -6,13 +6,14 @@ import { mkdirSync } from 'node:fs';
 import puppeteer from 'puppeteer-core';
 import { runC6 } from './c6.mjs';
 import { runC7 } from './c7.mjs';
+import { runC8 } from './c8.mjs';
 
 const PORT = 4179;
 const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome';
 const SHOTS = new URL('./shots/', import.meta.url).pathname;
 mkdirSync(SHOTS, { recursive: true });
 
-const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
 await new Promise((res, rej) => {
   server.stdout.on('data', (d) => { if (String(d).includes(String(PORT))) res(); });
   server.on('exit', () => rej(new Error('preview saiu')));
@@ -1802,7 +1803,8 @@ try {
   await page.click('#btnEndNext');
   await new Promise((r) => setTimeout(r, 800));
   const c6endRaw = await runC6(page, check, inject, SHOTS, c5z.raw);
-  await runC7(page, check, inject, SHOTS, c6endRaw);
+  const c7endRaw = await runC7(page, check, inject, SHOTS, c6endRaw);
+  await runC8(page, check, inject, SHOTS, c7endRaw);
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));

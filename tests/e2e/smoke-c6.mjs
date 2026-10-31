@@ -8,7 +8,7 @@ const PORT = 4183;
 const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome';
 const SHOTS = new URL('./shots/', import.meta.url).pathname;
 mkdirSync(SHOTS, { recursive: true });
-const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
 await new Promise((res, rej) => {
   server.stdout.on('data', (d) => { if (String(d).includes(String(PORT))) res(); });
   server.on('exit', () => rej(new Error('preview saiu')));
