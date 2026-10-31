@@ -4,7 +4,7 @@ export const CHAPTERS = [
   { id: 2, name: 'Fumaça', place: 'Bairro Operário', playable: true },
   { id: 3, name: 'A Confraria', place: 'Sede e arquivos subterrâneos', playable: true },
   { id: 4, name: 'Cidade Morta', place: 'Centro antigo de Véspera', playable: true },
-  { id: 5, name: 'Águas Negras', place: 'Fábrica de bombeamento', playable: false },
+  { id: 5, name: 'Águas Negras', place: 'Estação de bombeamento', playable: true },
   { id: 6, name: 'O Acervo', place: 'Museu de Ciências Proibidas', playable: false },
   { id: 7, name: 'Sob a Pedra', place: 'Catacumbas e metrô antigo', playable: false },
   { id: 8, name: 'A Última Chama', place: 'Torre de transmissão', playable: false },
@@ -133,5 +133,25 @@ export const SIDE_OBJECTIVES_C4 = [
   { when: 'c4_vigiaDead', done: 'c4_readBilhete', text: 'Há um papel preso entre os dentes da engrenagem mais alta do mecanismo.' },
 ];
 
-export function objectivesFor(ch) { return ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
-export function sideObjectivesFor(ch) { return ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
+// Capítulo 5 — Águas Negras (primeira fatia): passagem do Relógio → canal principal (Afogados) → casa de bombas →
+// energia no painel (fusível do comporteiro + disjuntores na ordem do relatório) → mezanino → válvula da comporta →
+// antecâmara das turbinas, onde a Afogada guarda as comportas (o chefe vem na próxima atualização)
+export const OBJECTIVES_C5 = [
+  { done: 'c5_inCanal', text: 'Desça a passagem do Relógio até os canais.' },
+  { done: 'c5_crossed', text: 'Escombros fecham a margem sul do canal. Atravesse para a margem norte pela passarela de tábuas — e fique longe da água.' },
+  { done: 'c5_inPumps', text: 'Siga pela galeria de serviço (leste) até a casa de bombas.' },
+  { done: 'c5_hasFuse', text: 'O portão do salão das bombas está sem energia e falta o fusível do painel. Procure a casa do comporteiro, no fim da margem norte (oeste).' },
+  { done: 'c5_power', text: 'Na sala do painel (oeste da antecâmara): fusível no soquete, disjuntores na ordem do relatório e a chave geral.' },
+  { done: 'c5_upper', text: 'O portão abriu e a escada retrátil desceu (leste do salão). Suba ao mezanino das bombas.' },
+  { done: 'c5_sluiceOpen', text: 'Pela porta do mezanino, siga a passarela do reservatório e gire a válvula da comporta.' },
+  { done: 'c5_sliceDone', text: 'A comporta subiu. Atravesse até a antecâmara das turbinas.' },
+  { done: 'c5_never', text: 'A Afogada guarda as comportas das turbinas. (O confronto chega na próxima atualização.)' },
+];
+export const SIDE_OBJECTIVES_C5 = [
+  { when: 'c5_inCanal', done: 'c5_readAviso', text: 'Há uma chapa de aviso aparafusada na parede, na boca da passagem.' },
+  { when: 'c5_crossed', done: 'c5_gotRubble', text: 'Atrás dos escombros da margem sul há uma caixa de ferramentas — só se chega pelo canal.' },
+  { when: 'c5_sluiceOpen', done: 'c5_readDiario', text: 'Há um caderno sobre o cofre das turbinas, na antecâmara.' },
+];
+
+export function objectivesFor(ch) { return ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
+export function sideObjectivesFor(ch) { return ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }

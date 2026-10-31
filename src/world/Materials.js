@@ -72,6 +72,14 @@ export function createMaterials() {
     brass: L({ map: T.metal, color: 0xc8a050, emissive: 0x1a1004 }),
     velvet: L({ map: T.sheet, color: 0x4a1012 }),
     marble: L({ map: T.stone, color: 0xd8d2c4 }),
+    // Capítulo 5 — Águas Negras: pele de afogado, farrapos, lodo; água preta do canal e espuma
+    drownedSkin: L({ map: T.deadSkin, color: 0x7f9a88 }),
+    drownedCloth: L({ map: T.gown, color: 0x3a4640 }),
+    weed: L({ map: T.sheet, color: 0x2c3a20 }),
+    drownedEye: new THREE.MeshBasicMaterial({ color: 0xb8e8c8 }),
+    water: new THREE.MeshLambertMaterial({ color: 0x0e1a18, emissive: 0x020605, transparent: true, opacity: 0.86, depthWrite: false }),
+    waterFoam: new THREE.MeshBasicMaterial({ color: 0x5a6e66, transparent: true, opacity: 0.35, depthWrite: false }),
+    slime: L({ map: T.stone, color: 0x3c4a38 }),
   };
   M.textures = T;
   return M;

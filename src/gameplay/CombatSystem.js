@@ -128,6 +128,7 @@ export class CombatSystem {
   }
   blood(pos, n = 14) { this.emit(pos, n, 0x6a0804, 3.2); }
   sparks(pos, n = 12) { this.emit(pos, n, 0xffc060, 5); }
+  splash(pos, n = 18) { this.emit({ x: pos.x, y: (pos.y ?? 0) + 0.2, z: pos.z }, n, 0x7a908a, 3.6); }
 
   debugSphere(p, r, color) {
     let m = this._dbgPool[this._dbgUsed];

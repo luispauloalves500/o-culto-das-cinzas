@@ -8,10 +8,10 @@ export class Navigation {
     A.edges.push({ to: b, door }); B.edges.push({ to: a, door });
   }
   /** nó mais próximo no mesmo nível com linha livre (se col fornecido) */
-  nearest(p, col) {
+  nearest(p, col, maxDy = 1.5) {
     let best = null, bd = Infinity;
     for (const n of this.nodes.values()) {
-      if (Math.abs(n.y - p.y) > 1.5) continue;
+      if (Math.abs(n.y - p.y) > maxDy) continue;
       const d = Math.hypot(n.x - p.x, n.z - p.z);
       if (d >= bd) continue;
       if (col && !col.segmentClear({ x: p.x, y: p.y + 1, z: p.z }, { x: n.x, y: n.y + 1, z: n.z }, (b) => b.tag !== 'prop')) continue;
