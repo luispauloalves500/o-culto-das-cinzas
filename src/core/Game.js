@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { EventBus } from './EventBus.js';
 import { Settings } from './Settings.js';
 import { InputManager } from './InputManager.js';
-import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save, makeChapter4Save, makeChapter5Save, makeChapter6Save, makeChapter7Save } from './SaveManager.js';
+import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save, makeChapter4Save, makeChapter5Save, makeChapter6Save, makeChapter7Save, makeChapter8Save } from './SaveManager.js';
 import { AudioManager } from './AudioManager.js';
 import { CollisionWorld } from '../world/CollisionWorld.js';
 import { Navigation } from '../world/Navigation.js';
@@ -31,6 +31,8 @@ import { AcervoLevel, ACERVO_CHECKPOINTS, ACERVO_FOG } from '../scenes/acervo/Ac
 import { AcervoScript } from '../scenes/acervo/AcervoScript.js';
 import { PedraLevel, PEDRA_CHECKPOINTS, PEDRA_FOG } from '../scenes/pedra/PedraLevel.js';
 import { PedraScript } from '../scenes/pedra/PedraScript.js';
+import { UsinaLevel, USINA_CHECKPOINTS, USINA_FOG } from '../scenes/usina/UsinaLevel.js';
+import { UsinaScript } from '../scenes/usina/UsinaScript.js';
 import { setMapChapter } from '../data/map.js';
 
 // mundos por capítulo: geometria, roteiro, checkpoints e névoa padrão
@@ -42,6 +44,7 @@ const WORLDS = {
   5: { Level: AguasLevel, Script: AguasScript, checkpoints: AGUAS_CHECKPOINTS, start: 'c5_passage', fog: AGUAS_FOG },
   6: { Level: AcervoLevel, Script: AcervoScript, checkpoints: ACERVO_CHECKPOINTS, start: 'c6_dock', fog: ACERVO_FOG },
   7: { Level: PedraLevel, Script: PedraScript, checkpoints: PEDRA_CHECKPOINTS, start: 'c7_ladder', fog: PEDRA_FOG },
+  8: { Level: UsinaLevel, Script: UsinaScript, checkpoints: USINA_CHECKPOINTS, start: 'c8_yard', fog: USINA_FOG },
 };
 import { HUD } from '../ui/HUD.js';
 import { Menus } from '../ui/Menus.js';
@@ -102,7 +105,7 @@ export class Game {
   _buildWorld(save) {
     this._disposeWorld();
     this.bus = new EventBus();
-    this.chapter = [2, 3, 4, 5, 6, 7].includes(save.chapter) ? save.chapter : 1;
+    this.chapter = [2, 3, 4, 5, 6, 7, 8].includes(save.chapter) ? save.chapter : 1;
     const W = WORLDS[this.chapter];
     setMapChapter(this.chapter);
     const scene = (this.scene = new THREE.Scene());
@@ -194,14 +197,26 @@ export class Game {
     if (s.chapter === 5 && (s.flags.c5_chapterDone || s.checkpoint === 'c5_end')) return this.startChapter6(s);
     // save do Capítulo 6 concluído (de versões em que o Cap. 7 ainda não existia): segue para o Cap. 7
     if (s.chapter === 6 && (s.flags.c6_chapterDone || s.checkpoint === 'c6_end')) return this.startChapter7(s);
+    // save do Capítulo 7 concluído (de versões em que o Cap. 8 ainda não existia): segue para o Cap. 8
+    if (s.chapter === 7 && (s.flags.c7_chapterDone || s.checkpoint === 'c7_end')) return this.startChapter8(s);
     this._buildWorld(s);
     this._enterPlay();
+    if (this.chapter === 8) this.hud.toast(s.flags.c8_sliceDone ? 'Capítulo 8 — A Última Chama · base da torre de transmissão' : s.flags.c8_inTurbine ? 'Capítulo 8 — A Última Chama · Sala da Turbina' : s.flags.c8_inBoiler ? 'Capítulo 8 — A Última Chama · Casa das Caldeiras' : 'Capítulo 8 — A Última Chama · pátio do carvão', 3.5);
     if (this.chapter === 7) this.hud.toast(s.flags.c7_chapterDone ? 'Capítulo 7 — Sob a Pedra · escada de serviço (capítulo concluído)' : s.flags.c7_vigiaDead ? 'Capítulo 7 — Sob a Pedra · Estação Sob a Pedra (o Vigia caiu)' : s.flags.c7_portOpen ? 'Capítulo 7 — Sob a Pedra · boca da Estação Sob a Pedra' : s.flags.c7_lineOpen ? 'Capítulo 7 — Sob a Pedra · Linha Velha' : s.flags.c7_sliceDone ? 'Capítulo 7 — Sob a Pedra · trilhos da Linha Velha' : s.flags.c7_onPlatform ? 'Capítulo 7 — Sob a Pedra · Estação Sé Velha' : s.flags.c7_inOssuary ? 'Capítulo 7 — Sob a Pedra · ossuário' : 'Capítulo 7 — Sob a Pedra · catacumbas', 3.5);
     if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
     if (this.chapter === 3) this.hud.toast('Capítulo 3 — A Confraria · Sede do Véu', 3.5);
     if (this.chapter === 5) this.hud.toast(s.flags.c5_chapterDone ? 'Capítulo 5 — Águas Negras · galeria de descarga (capítulo concluído)' : s.flags.c5_afogadaDead ? 'Capítulo 5 — Águas Negras · salão das turbinas' : s.flags.c5_sliceDone ? 'Capítulo 5 — Águas Negras · antecâmara das turbinas' : s.flags.c5_power ? 'Capítulo 5 — Águas Negras · casa de bombas' : 'Capítulo 5 — Águas Negras · estação de bombeamento', 3.5);
     if (this.chapter === 6) this.hud.toast(s.flags.c6_chapterDone ? 'Capítulo 6 — O Acervo · reserva técnica (capítulo concluído)' : s.flags.c6_collectorDead ? 'Capítulo 6 — O Acervo · Galeria do Colecionador' : s.flags.c6_galleryOpen ? 'Capítulo 6 — O Acervo · Galeria do Colecionador (aberta)' : s.flags.c6_sliceDone ? 'Capítulo 6 — O Acervo · porta da Galeria do Colecionador' : s.flags.c6_vaultOpen ? 'Capítulo 6 — O Acervo · ala de conservação' : 'Capítulo 6 — O Acervo · Museu de Ciências Proibidas', 3.5);
     if (this.chapter === 4) this.hud.toast(s.flags.c4_sliceDone ? 'Capítulo 4 — Cidade Morta · Torre do Relógio' : 'Capítulo 4 — Cidade Morta · centro antigo de Véspera', 3.5);
+  }
+  /** passagem do Capítulo 7 para o 8: a escada de serviço sob a Estação Sob a Pedra sobe até o pátio de carvão da Usina */
+  startChapter8(prev) {
+    const from = prev || (this.scene && this.chapter === 7 ? this.serialize(this.checkpoint || 'c7_end') : this.saves.load());
+    const s = makeChapter8Save(from);
+    this.saves.write(s);
+    this._buildWorld(s);
+    this._enterPlay();
+    this.script.intro?.();
   }
   /** passagem do Capítulo 6 para o 7: o alçapão da reserva técnica desce ao poço de serviço das catacumbas */
   startChapter7(prev) {

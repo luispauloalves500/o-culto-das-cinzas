@@ -24,7 +24,7 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
-    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 7) return; if (g.chapter === 6) g.startChapter7(); else if (g.chapter === 5) g.startChapter6(); else if (g.chapter === 4) g.startChapter5(); else if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
+    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 8) return; if (g.chapter === 7) g.startChapter8(); else if (g.chapter === 6) g.startChapter7(); else if (g.chapter === 5) g.startChapter6(); else if (g.chapter === 4) g.startChapter5(); else if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
     for (const el of document.querySelectorAll('.map-tab')) el.onclick = () => this.mapFloor(+el.dataset.floor);
@@ -110,12 +110,12 @@ export class Menus {
         + `<br>Ata da Confraria: ${stats.ata ? 'lida' : 'ficou no atril'} · Guia de remoção: ${stats.guia ? 'lida' : 'não lida'}`;
       $('endTitle').textContent = 'Fim do Capítulo 7 — Sob a Pedra';
       $('endText').textContent = 'O Vigia Caiado cai de joelhos diante da parede de onde saiu, e a cal do corpo se esfarela até sobrar só o chapéu e o gancho. O lampião frio apaga — de vez, agora. A escada de serviço sobe para fora da pedra: lá em cima, o zumbido dos fios da Usina de Véspera.';
-      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 8 — A Última Chama: a Usina de Véspera e a torre de transmissão (em breve).';
+      $('endNote').textContent = 'Seu progresso foi salvo. A escada de serviço sobe até o pátio de carvão da Usina de Véspera — siga para o Capítulo 8.';
       $('endRn0').classList.remove('hidden');
       $('endRn0').innerHTML = stats.ata
         ? 'A <b>Primeira Cinza</b> dormia Sob a Pedra desde 1912 — e foi <b>acordada</b>. Inês foi levada no último trem para a <b>torre de transmissão da Usina</b>, onde <b>Vernet</b> espera: "a voz dela vai pelos fios para todas as casas". Na margem, a letra dela: <b>"Eu ainda estou aqui."</b>'
         : '<span class="small">No atril diante da parede de cal havia um livro de atas aberto. A tinta da última página ainda borrava.</span>';
-      if (next) { next.disabled = true; next.textContent = 'Capítulo 8 — A Última Chama (em breve)'; }
+      if (next) { next.disabled = false; next.textContent = 'Seguir para o Capítulo 8 — A Última Chama'; }
       this.show('chapterEnd');
       return;
     }
