@@ -368,4 +368,22 @@ export const DOCUMENTS = {
 <p>Destino: "<b>Galeria do Colecionador</b> — acervo particular. Não expor no Salão. Não encerar."</p>
 <p class="small">Rabiscado embaixo, a carvão: "Ela disse que alguém viria buscá-la. O Colecionador respondeu que quem vem buscar também se cataloga."</p>`,
   },
+  catalogo_colecionador: {
+    ch: 6,
+    title: 'Catálogo do Colecionador — livro de tombo',
+    body: `<p>Livro de capa de couro na escrivaninha da reserva técnica. Letra miúda, tinta castanha, cada linha com número, data e "estado de conservação".</p>
+<p><b>Nº 29</b> — o comporteiro e a esposa. "Peças de água. Não secam." <b>Nº 30</b> — o forneiro do hospital. "Cinza fina, boa para o pó das vitrines."</p>
+<p><b>Nº 31</b> — "moça, fita vermelha no cabelo. VIVA. Pergunta pelo irmão." Ao lado, uma anotação recente, outra caligrafia, a carvão: "<b>Transferida.</b> Não é peça de exposição: é <b>oferenda</b>. Vai para baixo, onde a Primeira Cinza foi enterrada."</p>
+<p>Na última página, um mapa a lápis: o alçapão da reserva, uma escada de serviço e as galerias de pedra que ligam o subsolo do Museu às <b>catacumbas</b> e à <b>linha antiga do metrô</b>, fechada desde o desabamento. Uma estação riscada três vezes: "<b>Sob a Pedra</b>".</p>
+<p class="small">Última entrada, sem número: "Elias — irmão da peça 31. Virá buscá-la. Catalogar na chegada." A linha não foi terminada.</p>`,
+  },
+  relicario_colecionador: {
+    ch: 6,
+    title: 'Relicário do Colecionador',
+    body: `<p>A gaiola de latão do peito do Colecionador, arrancada. O coração lá dentro parou de bater; era cera e linho costurados em volta de um punhado de <b>cinza ainda morna</b>.</p>
+<p>Presa à gaiola por um barbante, uma etiqueta de museu, preenchida à mão: "<b>Peça 32</b>. Procedência: Hospital, Fornos, Águas. Estado: <b>vivo</b>, armado, persistente. Destino: <b>não expor</b> — levar à peça 31, <b>sob a pedra</b>. Ela pediu que o irmão assistisse."</p>
+<p>No verso, um carimbo vermelho da Ordem: <b>PRIMEIRA CINZA — ESTAÇÃO SOB A PEDRA</b>. E uma chave de ferro pequena, com a tag "reserva técnica".</p>
+<p class="small">Inês está viva. E alguém lá embaixo quer que você chegue.</p>`,
+  },
 };
+

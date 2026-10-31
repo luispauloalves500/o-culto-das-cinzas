@@ -143,6 +143,8 @@ export const ROOMS_C6 = [
   { id: 'c6_salao', floor: 'up', ch: 6, name: 'Salão de Exposição', rect: [0, 22, 30, 44] },
   { id: 'c6_conservacao', floor: 'up', ch: 6, name: 'Ala de Conservação', rect: [30, 26, 44, 40] },
   { id: 'c6_deposito', floor: 'up', ch: 6, name: 'Depósito das remessas', rect: [30, 40, 44, 54] },
+  { id: 'c6_galeria', floor: 'up', ch: 6, name: 'Galeria do Colecionador', rect: [28, 54, 46, 74] },
+  { id: 'c6_reserva', floor: 'up', ch: 6, name: 'Reserva técnica', rect: [34, 74, 40, 84] },
 ];
 ROOMS.push(...ROOMS_C6);
 

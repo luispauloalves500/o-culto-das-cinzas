@@ -156,23 +156,26 @@ export const SIDE_OBJECTIVES_C5 = [
   { when: 'c5_afogadaDead', done: 'c5_readFicha', text: 'Na galeria de descarga há uma ficha sobre um caixote de remessa.' },
 ];
 
-// Capítulo 6 — O Acervo (primeira fatia): doca de carga do Museu → átrio → Salão de Exposição (vitrines quebráveis,
-// espécimes) → porta-cofre da Ala de Conservação (nº de inventário da peça mais antiga) → conservação → depósito →
-// porta da Galeria do Colecionador (chefe na próxima atualização)
+// Capítulo 6 — O Acervo: doca de carga do Museu → átrio → Salão de Exposição (vitrines quebráveis, espécimes) →
+// porta-cofre da Ala de Conservação (nº de inventário da peça mais antiga) → conservação → depósito → campainha de
+// entregas → Galeria do Colecionador (chefe) → reserva técnica → alçapão para as galerias sob a pedra (Capítulo 7)
 export const OBJECTIVES_C6 = [
   { done: 'c6_inAtrium', text: 'Suba da doca de carga para dentro do Museu.' },
   { done: 'c6_inHall', text: 'Atravesse o átrio até o Salão de Exposição (porta dupla ao norte).' },
   { done: 'c6_vaultOpen', text: 'A porta-cofre da Ala de Conservação (leste do salão) abre com o nº de inventário da peça mais antiga do acervo. Leia as placas das vitrines e gire os três discos.' },
   { done: 'c6_inStorage', text: 'Atravesse a Ala de Conservação até o depósito das remessas (porta ao norte).' },
   { done: 'c6_sliceDone', text: 'No fundo do depósito, sob o arco de latão: a porta da Galeria do Colecionador.' },
-  { done: 'c6_never', text: 'Primeira parte do Capítulo 6 concluída. O Colecionador espera atrás da porta de ferro — chega na próxima atualização.' },
+  { done: 'c6_galleryOpen', text: 'A porta de ferro está trancada por dentro. Ao lado dela, o cordão da campainha de entregas: anuncie a remessa.' },
+  { done: 'c6_collectorDead', text: 'O Colecionador guarda a Galeria. Ele usa o próprio acervo contra você: atraia as investidas para as vitrines blindadas, solte as peças dos guinchos do teto em cima dele e golpeie o relicário no peito quando a gaiola abrir.' },
+  { done: 'c6_chapterDone', text: 'A porta da reserva técnica (norte da Galeria) abriu. Desça pelo alçapão no fim dela.' },
+  { done: 'c6_never', text: 'Capítulo 6 concluído. O alçapão desce para as catacumbas e o metrô antigo — Capítulo 7, Sob a Pedra, em breve.' },
 ];
 export const SIDE_OBJECTIVES_C6 = [
   { when: 'c6_inAtrium', done: 'c6_readGuia', text: 'Há um guia do visitante sobre o balcão da recepção.' },
   { when: 'c6_readGuia', done: 'c6_gotCache', text: 'O guia fala de um tabuleiro "com gaveta de fundo falso". Alguma vitrine do salão guarda mais do que ossos.' },
   { when: 'c6_vaultOpen', done: 'c6_readDiario', text: 'O diário da conservadora ficou sobre a mesa de restauro.' },
   { when: 'c6_inStorage', done: 'c6_readCartao', text: 'Um caixote aberto no depósito ainda tem o cartão de inventário pregado.' },
+  { when: 'c6_collectorDead', done: 'c6_readCatalogo', text: 'Na escrivaninha da reserva técnica está o catálogo do Colecionador.' },
 ];
-
 export function objectivesFor(ch) { return ch === 6 ? OBJECTIVES_C6 : ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
 export function sideObjectivesFor(ch) { return ch === 6 ? SIDE_OBJECTIVES_C6 : ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }
