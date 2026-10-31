@@ -1,7 +1,7 @@
 # O Culto das Cinzas
 
 Survival horror em terceira pessoa feito com **Three.js + Vite**, com visual low‑poly inspirado no PS2 (verde doentio + âmbar).
-Este repositório contém o **Capítulo 1 — Hospital São Dimas** (véspera, 1934), o **Capítulo 2 — Fumaça** e o **Capítulo 3 — A Confraria**, jogáveis do início ao fim, e o **Capítulo 4 — Cidade Morta**, também jogáveis do início ao fim (beco → Rua do Comércio → relojoaria → Praça do Relógio → primeiro confronto com O Vigia → Torre do Relógio → casa das máquinas → segundo confronto com O Vigia → passagem do Relógio).
+Este repositório contém o **Capítulo 1 — Hospital São Dimas** (véspera, 1934), o **Capítulo 2 — Fumaça** e o **Capítulo 3 — A Confraria**, jogáveis do início ao fim, e o **Capítulo 4 — Cidade Morta**, também jogáveis do início ao fim (beco → Rua do Comércio → relojoaria → Praça do Relógio → primeiro confronto com O Vigia → Torre do Relógio → casa das máquinas → segundo confronto com O Vigia → passagem do Relógio), e a **primeira fatia jogável do Capítulo 5 — Águas Negras** (canais, casa de bombas, energia, mezanino e antecâmara das turbinas — o chefe A Afogada ainda falta).
 
 ▶ **Jogar no navegador:** https://luispauloalves500.github.io/o-culto-das-cinzas/
 
@@ -136,15 +136,23 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
   - **Mecanismo do relógio**: sem a roda só dá para examinar; com ela, *encaixar* solta a trava — o pêndulo começa a balançar, as engrenagens andam e o sino acorda. O pêndulo **derruba Elias** (18 de dano, sem defesa) e também **atordoa o Vigia** (lampião exposto).
   - **O Vigia — segundo confronto (morte real)**: o sino toca três vezes e ele desce pelo **alçapão do campanário** (imune na descida), 600 de vida, sem recuo. Mesmas regras do primeiro (investida contra as caixas/mecanismo atordoa, golpe forte no lampião), fase 3 abaixo de 35 % (lanterna mais frequente, emenda investida); território: o salão. Ao morrer, o corpo fica no assoalho (save `c4_gears`; recarregar mantém morto).
   - **Passagem do Relógio**: na face norte do mecanismo, **manivela** do mostrador de acerto (12h00 → 1h15 → **3h07** → 4h50 → 6h30 → 9h45) e **martelo do sino**. Fora de hora o sino responde rouco e nada abre; às **3h07** a **chapa de ferro** do piso afunda e desliza, revelando a escada (save `c4_end`). Preso na engrenagem mais alta, o **Bilhete de Inês** (gancho do Cap. 5).
-  - **Fim do Capítulo 4**: descer a passagem grava o save e mostra **"Fim do Capítulo 4 — Cidade Morta"** com estatísticas (documentos x/5, bilhete, livro de rondas) e o gancho **Capítulo 5 — Águas Negras** (canais, estação de bombeamento, a Afogada — botão "em breve"). *Continuar* volta ao alto da passagem com tudo resolvido.
+  - **Fim do Capítulo 4**: descer a passagem grava o save e mostra **"Fim do Capítulo 4 — Cidade Morta"** com estatísticas (documentos x/5, bilhete, livro de rondas) e o gancho **Capítulo 5 — Águas Negras** (o botão foi ativado em pt37u — ver abaixo). *Continuar* volta ao alto da passagem com tudo resolvido.
   - Objetivos novos (Torre → roda → mecanismo → Vigia → ponteiros → passagem) e opcionais (livro de rondas, bilhete); documentos novos *Livro de rondas do Vigia* e *Bilhete de Inês*; mapa do Cap. 4 com aba **Torre — casa das máquinas** (galeria, casa das máquinas, escada e passagem). Saves antigos do Cap. 4 (fatia pt35u, checkpoint `c4_tower`) continuam válidos e seguem da Torre.
   - *(unit: ordem dos objetivos novos, escada contínua 0 → 9 m, horas/3h07, limites do salão, obstáculos, passagem, pêndulo, 8 inimigos; smoke: livro de rondas, quatro lances, autosave da casa das máquinas, mecanismo sem roda, roda acorda o cinzento, mecanismo andando + descida do Vigia (600), luta até a morte (fases 1→2→3, atordoamentos, território), pêndulo fere Elias, bilhete, martelo fora de hora, manivela até 3h07, chapa abre, descida → tela de fim, recarregar com tudo restaurado — capturas `25-cap4-maquinas.png`, `26-cap4-fim.png`)*
+
+- **Capítulo 5 — Águas Negras · primeira fatia jogável (pt37u)**:
+  - **Botão ativo + migração de save**: na tela "Fim do Capítulo 4" o botão **"Seguir para o Capítulo 5 — Águas Negras"** agora funciona; *Continuar* num save `c4_end` (com `c4_chapterDone`) também migra. `makeChapter5Save`: capítulo 5, checkpoint `c5_passage` (pé da escada sob o Relógio), mantém armas/desgaste/melhorias/documentos/tempo/estatísticas e a **fita de Inês**, remove os itens-chave do Cap. 4 (chaves da relojoaria/Torre, roda de escape); vida 80–125.
+  - **Setor procedural PS2** (`src/scenes/aguas/`, névoa esverdeada própria): corredor de passagem → **Canal 3** com **água de verdade** (dano por tempo, **correnteza** que arrasta para leste, Elias lento e respingos; rampas de limpeza para sair), **passarela de tábuas estreita**, escombros com uma caixa só alcançável pela água → **galeria de serviço** e **casa do comporteiro** (porta real; **fusível de cerâmica**) → **antecâmara da casa de bombas** (autosave `c5_pumps`) → **salão das bombas** com portão **sem energia** → **sala do painel**: **quebra-cabeça de energia** (encaixar o fusível; disjuntores na ordem certa 2‑1‑3, ordem errada dá curto, choque e reinicia; chave geral). A energia abre o portão, estende a **escada retrátil** até o **mezanino** (nível superior) e acende o salão; **passarela sobre o reservatório** (grade quebrada — quem cai sai pela rampa, sem softlock), **volante** de 3 voltas que ergue a **comporta** e a **antecâmara das turbinas** com **livro de registros** (`c5_slice`). Colisão AABB, portas reais, grafo de navegação, ≤ 16 luzes.
+  - **Fim da fatia**: o portão das turbinas não abre — *"a Afogada guarda as comportas"* — autosave `c5_slice`, flag `c5_sliceDone` e aviso na tela (sem tela de fim).
+  - **Afogado** (inimigo novo): dorme **submerso** no canal/reservatório, **emerge** quando Elias chega perto, escala o muro de arrimo para a margem e ataca (garra e agarrão); **forte e rápido perto da água** (×1,35 velocidade, ×1,3 dano), **lento em terra seca** (×0,55). Cinzento na galeria e acólito nas turbinas; inimigos mortos persistem no save.
+  - **Conteúdo**: objetivos próprios (canal → casa de bombas → fusível → energia → mezanino → comporta → turbinas) e opcionais (caixa dos escombros, diário do comporteiro); documentos *Aviso da comporta*, *Relatório de bombeamento* e *Diário do comporteiro*; mapa do Cap. 5 com abas **Canais · casa de bombas** e **Mezanino · passarela**; checkpoints `c5_passage`, `c5_pumps`, `c5_slice`.
+  - *(unit: migração Cap. 4 → 5, ordem dos objetivos, documentos, mapa, afogado, checkpoints; smoke: botão do fim do Cap. 4, save `c4_end` migra ao continuar, afogados submersos, luzes, aviso, afogado emerge e ataca na margem, forte na água/lento no seco, água fere/arrasta/lentidão, rampa, passarela, caixa pela água, antecâmara + autosave, portão sem energia, fusível, curto, ordem certa, energia, escada, volante/comporta, turbinas, diário, fim da fatia com save, mapa, recarregar com tudo restaurado — capturas `27-cap5-passagem.png`, `28-cap5-canal.png`, `29-cap5-bombas.png`, `30-cap5-turbinas.png`)*
 
 ### Sobre modelos e texturas
 
 Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, não foram usados GLB/texturas de terceiros: **o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
 
-## FALTA (Capítulos 1–4 jogáveis do início ao fim, conforme o GDD)
+## FALTA (Capítulos 1–4 jogáveis do início ao fim e primeira fatia do 5, conforme o GDD)
 
 - Modelos/animações artesanais para inimigos, chefe e cenário (só o Elias usa GLB); clipes próprios para lança, tiro, esquiva, defesa e dano (hoje poses procedurais no esqueleto do GLB); o modelo dedicado `machado_coletavel_80cm.glb`.
 - Maternidade e arquivo morto já entraram; faltam mais segredos e variações de rota (hoje há quatro: câmara fria, expurgo, Quarto 7 e sala de batismo).
@@ -158,7 +166,8 @@ Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, nã
 - Capítulo 2: jogável do início ao fim, mas sem cenas (só texto/toasts), sem modelos próprios (caçador, carvoeiro e Brás são bonecos procedurais) e sem a Rua da Fundição.
 - **Capítulo 3 — A Confraria**: jogável do largo à galeria das catacumbas (cripta, O Sacristão e tela de fim). Faltam a investigação da organização (Dr. Silas Vernet, Dra. Helena Arcos), mais mecanismos/segurança antiga além dos discos e do sarilho, cenas (só texto/toasts) e modelos próprios (acólitos, noviços e o Sacristão são bonecos procedurais).
 - **Capítulo 4 — Cidade Morta**: jogável do beco à passagem do Relógio. Faltam o resto do centro antigo (outras ruas além da do Comércio), o campanário em si (o sino só se ouve), cenas (só texto/toasts) e modelos próprios (cinzentos e o Vigia são bonecos procedurais). Nota: o GDD previa o retorno do Vigia no Cap. 7; aqui ele morre de verdade no Cap. 4, como pedido.
-- **Capítulo 5 — Águas Negras** e seguintes: não implementados (a tela de fim do Cap. 4 só anuncia o gancho).
+- **Capítulo 5 — Águas Negras**: só a primeira fatia (canal → casa de bombas → mezanino → antecâmara das turbinas). **Falta o chefe A Afogada** (confronto nas comportas das turbinas), o resto da estação de bombeamento e dos canais, o fim do capítulo, cenas (só texto/toasts) e modelos próprios (afogados são bonecos procedurais).
+- **Capítulo 6** e seguintes: não implementados.
 - Gamepad implementado mas **não testado** com controle físico; desempenho só medido em render por software no CI local.
 
 ## Estrutura
@@ -169,6 +178,7 @@ src/
   world/     CollisionWorld, LevelBuilder, Doors, Interactables, Navigation (A*), Textures, Materials
   gameplay/  PlayerController, EliasModel (GLB REV6) + rev6/, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem, Cutscene
   ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss, FurnaceBoss (Brás, Cap. 2), SacristanBoss (O Sacristão, Cap. 3), VigiaBoss (O Vigia, Cap. 4)
+  scenes/aguas/     AguasLevel (canal com água/correnteza, galeria, casa do comporteiro, casa de bombas, painel, mezanino, reservatório, turbinas — Cap. 5), AguasScript (energia, comporta, afogados, fim da fatia)
   scenes/cidade/    CidadeLevel (beco, Rua do Comércio, farmácia, relojoaria, pátio, Praça do Relógio, Torre, casa das máquinas — Cap. 4), CidadeScript (chaves, sino, Vigia, Torre, casa das máquinas, passagem)
   scenes/sede/      SedeLevel (Largo do Véu, portaria, salão nobre, secretaria, arquivos, cripta — Cap. 3), SedeScript (postigo, discos, dossiê, sinete/sarilho, chefe, fim),
   scenes/bairro/    BairroLevel (Bairro Operário, Rua do Carvão, carvoaria, fábrica, casa das fornalhas — Cap. 2),
@@ -181,8 +191,8 @@ src/
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
-  unit/run.mjs     40 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
-  e2e/smoke.mjs    joga os Capítulos 1, 2, 3 e 4 inteiros no Chromium headless (203 verificações)
+  unit/run.mjs     42 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
+  e2e/smoke.mjs    joga os Capítulos 1, 2, 3 e 4 inteiros e a primeira fatia do 5 no Chromium headless (221 verificações)
 ```
 
 ## Licença
