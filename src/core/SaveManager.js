@@ -160,6 +160,35 @@ export function makeChapter5Save(prev) {
   };
 }
 
+// itens-chave do Capítulo 5 que ficam na estação de bombeamento (a fita de Inês e o amuleto seguem)
+export const CH5_KEY_ITEMS = ['fusivel_ceramico'];
+
+/**
+ * Save inicial do Capítulo 6 — O Acervo a partir do fim do Cap. 5 (ou de um save antigo com c5_chapterDone):
+ * a barcaça da galeria de descarga atraca na doca de carga do Museu de Ciências Proibidas.
+ * Mantém armas, munição, desgaste, documentos (incl. a ficha da remessa), a fita, estatísticas e melhorias.
+ */
+export function makeChapter6Save(prev) {
+  const base = createEmptySave();
+  const p = (prev && migrateSave({ version: SAVE_VERSION, ...prev })) || base;
+  const items = { ...(p.inventory?.items || {}) };
+  for (const k of [...CH1_KEY_ITEMS, ...CH2_KEY_ITEMS, ...CH3_KEY_ITEMS, ...CH4_KEY_ITEMS, ...CH5_KEY_ITEMS]) delete items[k];
+  return {
+    ...base,
+    chapter: 6,
+    checkpoint: 'c6_dock',
+    player: { hp: Math.max(80, Math.min(125, p.player?.hp ?? 100)) },
+    inventory: { ...(p.inventory || base.inventory), items },
+    flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_chapterDone: true, ch2Done: true, c3_chapterDone: true, ch3Done: true, c4_chapterDone: true, ch4Done: true, c5_chapterDone: true, ch5Done: true, c5_afogadaDead: true, c6_started: true },
+    doors: {},
+    deadEnemies: [],
+    documents: [...(p.documents || [])],
+    elevatorLevel: 'upper',
+    playTime: p.playTime || 0,
+    stats: { ...(p.stats || {}) },
+  };
+}
+
 export class SaveManager {
   constructor(storage = globalThis.localStorage) { this.storage = storage; }
   hasSave() { return !!this.load(); }

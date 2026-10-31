@@ -24,7 +24,7 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
-    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 5) return; if (g.chapter === 4) g.startChapter5(); else if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
+    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 6) return; if (g.chapter === 5) g.startChapter6(); else if (g.chapter === 4) g.startChapter5(); else if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
     for (const el of document.querySelectorAll('.map-tab')) el.onclick = () => this.mapFloor(+el.dataset.floor);
@@ -81,16 +81,16 @@ export class Menus {
   drawMap() {
     const g = this.game, mv = this.mapView;
     this.lastMap = mv.draw(g);
-    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4, ch5 = mapChapter() === 5;
+    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4, ch5 = mapChapter() === 5, ch6 = mapChapter() === 6;
     for (const el of document.querySelectorAll('.map-tab')) {
       const fid = FLOORS[+el.dataset.floor].id;
       el.classList.toggle('active', fid === mv.floor);
-      el.classList.toggle('hidden', (ch2 && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo') || (ch5 && fid !== 'up' && fid !== 'up2'));
-      el.textContent = ch5 ? (fid === 'up2' ? 'Mezanino · passarela' : 'Canais · casa de bombas') : ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
+      el.classList.toggle('hidden', ((ch2 || ch6) && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo') || (ch5 && fid !== 'up' && fid !== 'up2'));
+      el.textContent = ch6 ? 'Museu — O Acervo' : ch5 ? (fid === 'up2' ? 'Mezanino · passarela' : 'Canais · casa de bombas') : ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
     }
     const r = roomAt(g.player.pos);
     $('mapWhere').textContent = 'Você está em: ' + (r ? r.name : 'lugar nenhum que conste na planta');
-    $('mapPlan').textContent = ch5 ? 'Estação de bombeamento: sem planta — só aparece o que você já percorreu.' : ch4 ? 'Centro antigo de Véspera: sem planta — só aparece o que você já percorreu.' : ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
+    $('mapPlan').textContent = ch6 ? 'Museu de Ciências Proibidas: sem planta — só aparece o que você já percorreu.' : ch5 ? 'Estação de bombeamento: sem planta — só aparece o que você já percorreu.' : ch4 ? 'Centro antigo de Véspera: sem planta — só aparece o que você já percorreu.' : ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
     const notes = collectNotes(g);
     $('mapNotes').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
   }
@@ -108,12 +108,12 @@ export class Menus {
     if (ch >= 5) {
       $('endTitle').textContent = 'Fim do Capítulo 5 — Águas Negras';
       $('endText').textContent = 'A Afogada afunda pela última vez no poço das turbinas e a água fica parada. Pela galeria de descarga, Elias chega à grade do rio: lá embaixo, a esteira de uma barcaça ainda balança na água preta, rio abaixo, rumo ao Museu.';
-      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 6 — O Acervo (Museu de Ciências Proibidas) chega em breve.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 6 — O Acervo: o Museu de Ciências Proibidas (primeira parte jogável).';
       $('endRn0').classList.remove('hidden');
       $('endRn0').innerHTML = stats.ficha
         ? 'A ficha da <b>remessa nº 31</b> não deixa dúvida: "peça viva, fita vermelha", rio abaixo, para <b>O Acervo</b>. ' + (stats.diario ? 'E a guardiã da comporta tinha nome: <b>Lurdes</b>, a mulher do comporteiro Anselmo.' : 'Alguém deu nome à guardiã da comporta.')
         : '<span class="small">Sobre um caixote na galeria de descarga havia uma ficha com o lacre da Confraria.</span>';
-      if (next) { next.disabled = true; next.textContent = 'Capítulo 6 — O Acervo (em breve)'; }
+      if (next) { next.disabled = false; next.textContent = 'Seguir para o Capítulo 6 — O Acervo'; }
       this.show('chapterEnd');
       return;
     }

@@ -52,6 +52,9 @@ export class Enemy {
       : d.mats === 'afogado'
       // Capítulo 5: corpo inchado e esverdeado de quem passou anos no fundo do canal, roupa de operário em farrapos
       ? { skin: M.drownedSkin || M.deadSkin, shirt: M.drownedCloth || M.pantsGray, arms: M.drownedSkin || M.deadSkin, pants: M.drownedCloth || M.pantsGray, legs: M.drownedSkin || M.deadSkin, feet: M.drownedSkin || M.deadSkin, head: M.drownedSkin || M.deadSkin }
+      : d.mats === 'especime'
+      // Capítulo 6: corpo envernizado de peça de museu, faixas de linho nos braços e nas pernas
+      ? { skin: M.wax || M.deadSkin, shirt: M.linen || M.gown, arms: M.wax || M.deadSkin, pants: M.linen || M.gown, legs: M.linen || M.gown, feet: M.wax || M.deadSkin, head: M.wax || M.deadSkin }
       : d.mats === 'cinzento'
       // Capítulo 4: morador da Cidade Morta, coberto de cinza dos pés à cabeça, terno puído de domingo
       ? { skin: M.ash || M.deadSkin, shirt: M.pantsGray, arms: M.pantsGray, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.ash || M.deadSkin }
@@ -104,6 +107,10 @@ export class Enemy {
       }
       const chain = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 4, 8), M.rust); chain.position.set(0, -0.02, 0.04); this.rig.armL.end.add(chain);
       const link = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.28), M.rust); link.position.set(0, -0.12, 0.08); link.rotation.x = 0.9; this.rig.armL.end.add(link);
+    } else if (d.mats === 'especime') {
+      // etiqueta de inventário presa por arame no peito e a costura do embalsamador no crânio
+      const tag = new THREE.Mesh(new THREE.BoxGeometry(0.1 * s, 0.06 * s, 0.01), M.paper); tag.position.set(0.06 * s, 0.18 * s, 0.2 * s); this.rig.torso.add(tag);
+      const seam = new THREE.Mesh(new THREE.BoxGeometry(0.02 * s, 0.015 * s, 0.24 * s), M.leatherDark); seam.position.set(0, 0.27 * s, 0); h.add(seam);
     } else if (d.mats === 'interno') {
       const band = new THREE.Mesh(new THREE.BoxGeometry(0.25 * s, 0.07 * s, 0.27 * s), M.bandageDirty);
       band.position.y = 0.17 * s; h.add(band);
@@ -116,12 +123,12 @@ export class Enemy {
       blade.position.set(0, -0.03, 0.2); this.rig.armR.end.add(blade);
     }
     // olhos fracos: ajudam a ler o inimigo no escuro (caçadores: furos do capuz com brilho de brasa)
-    const eyeMat = d.mats === 'afogado' ? (M.drownedEye || M.eyeGlow) : d.mats === 'cacador' || d.mats === 'carvoeiro' || d.mats === 'acolito' ? (M.ember || M.eyeGlow) : M.eyeGlow;
+    const eyeMat = d.mats === 'especime' ? (M.glassEye || M.eyeGlow) : d.mats === 'afogado' ? (M.drownedEye || M.eyeGlow) : d.mats === 'cacador' || d.mats === 'carvoeiro' || d.mats === 'acolito' ? (M.ember || M.eyeGlow) : M.eyeGlow;
     for (const x of [-0.05, 0.05]) {
       const e = new THREE.Mesh(new THREE.BoxGeometry(0.03 * s, 0.02 * s, 0.01), eyeMat);
       e.position.set(x * s, 0.19 * s, (d.mats === 'cacador' || d.mats === 'acolito' ? 0.16 : 0.125) * s); h.add(e);
     }
-    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : d.mats === 'cinzento' ? 0.6 : d.mats === 'afogado' ? 0.14 : 0.38);
+    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : d.mats === 'cinzento' ? 0.6 : d.mats === 'afogado' ? 0.14 : d.mats === 'especime' ? 0.1 : 0.38);
     this.rig.armR.end.add(this.hand);
     this.rig.root.position.copy(this.pos);
     if (this.submerged) this.rig.root.position.y -= 1.7;
@@ -177,7 +184,7 @@ export class Enemy {
   takeHit({ dmg, poise, heavy, from, point }) {
     if (!this.alive) return 'immune';
     const g = this.game;
-    if (this.def.aquatic && this.dormant) this.wake();
+    if ((this.def.aquatic || this.def.exhibit) && this.dormant) this.wake();
     this.hp -= dmg;
     g.audio.play('hit', this.pos, { heavy });
     g.combat.blood(point || { x: this.pos.x, y: this.pos.y + 1.3, z: this.pos.z }, heavy ? 22 : 14);
@@ -444,6 +451,10 @@ export class Enemy {
       r.body.rotation.x = -Math.PI / 2 * k * k;
       r.body.position.y = 0.1 * k;
       r.armR.upper.rotation.z = -1.0 * k; r.armL.upper.rotation.z = 1.3 * k; r.legL.upper.rotation.x = -0.4 * k;
+      return;
+    }
+    if (this.dormant && this.def.exhibit) { // peça de museu: de pé, rígida, braços colados ao corpo, queixo erguido
+      r.head.rotation.x = -0.12; r.armR.upper.rotation.z = -0.05; r.armL.upper.rotation.z = 0.05;
       return;
     }
     if (this.dormant) { // sentado/encolhido no chão
