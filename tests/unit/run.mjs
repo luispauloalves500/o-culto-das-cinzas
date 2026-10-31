@@ -793,7 +793,88 @@ test('Cap. 5: migração das flags (fatia antiga, chefe, fim) e mapa do salão',
     assert.equal(roomAt({ x: 33, y: 3.1, z: 78 }).id, 'c5_poco');
     assert.equal(roomAt({ x: 33, y: 4.5, z: 96 }).id, 'c5_descarga');
   } finally { setMapChapter(1); }
-  assert.ok(CHAPTERS.find((c) => c.id === 6 && !c.playable));
+  assert.ok(CHAPTERS.find((c) => c.id === 6 && c.playable));
+  assert.ok(CHAPTERS.find((c) => c.id === 7 && !c.playable));
+});
+
+const C6L = await import('../../src/scenes/acervo/AcervoLevel.js');
+const C6S = await import('../../src/scenes/acervo/AcervoScript.js');
+const { makeChapter6Save, CH5_KEY_ITEMS } = await import('../../src/core/SaveManager.js');
+const { OBJECTIVES_C6, SIDE_OBJECTIVES_C6 } = await import('../../src/data/chapters.js');
+test('Cap. 6: migração do Cap. 5 concluído, objetivos, documentos e capítulo jogável', () => {
+  const end5 = migrateSave({ ...makeChapter5Save(null), checkpoint: 'c5_end', flags: { c5_chapterDone: true, c5_afogadaDead: true, hasBracelet: true }, inventory: { items: { bandagem: 3, municao_38: 9, fusivel_ceramico: 1, fita_vermelha: 1 }, weapons: ['machado', 'revolver'], wear: {}, loaded: { revolver: 6 } }, documents: ['ficha_remessa'], player: { hp: 20 } });
+  const s = makeChapter6Save(end5);
+  assert.equal(s.chapter, 6); assert.equal(s.checkpoint, 'c6_dock');
+  assert.ok(s.flags.c5_chapterDone && s.flags.ch5Done && s.flags.c5_afogadaDead && s.flags.c6_started && s.flags.hasBracelet);
+  for (const k of CH5_KEY_ITEMS) assert.equal(s.inventory.items[k], undefined, k);
+  assert.equal(s.inventory.items.bandagem, 3); assert.equal(s.inventory.items.municao_38, 9);
+  assert.ok(s.inventory.weapons.includes('revolver') && s.documents.includes('ficha_remessa'));
+  assert.ok(s.player.hp >= 80); assert.deepEqual(s.deadEnemies, []); assert.deepEqual(s.doors, {});
+  assert.equal(migrateSave(JSON.parse(JSON.stringify(s))).chapter, 6);
+  assert.equal(migrateSave(JSON.parse(JSON.stringify(s))).checkpoint, 'c6_dock');
+  assert.equal(makeChapter6Save(null).chapter, 6);
+  assert.equal(objectivesFor(6), OBJECTIVES_C6); assert.equal(sideObjectivesFor(6), SIDE_OBJECTIVES_C6);
+  assert.deepEqual(OBJECTIVES_C6.map((o) => o.done), ['c6_inAtrium', 'c6_inHall', 'c6_vaultOpen', 'c6_inStorage', 'c6_sliceDone', 'c6_never']);
+  const q = new QuestSystem(null, 6); assert.equal(q.current(), OBJECTIVES_C6[0].text);
+  assert.ok(SIDE_OBJECTIVES_C6.length >= 2 && SIDE_OBJECTIVES_C6.length <= 4);
+  for (const o of SIDE_OBJECTIVES_C6) assert.ok(o.when && o.done && o.text);
+  for (const id of ['guia_visitante', 'diario_conservadora', 'cartao_inventario_31']) assert.equal(DOCUMENTS[id]?.ch, 6, id);
+  // o guia dá a regra do cofre; o Cap. 5 aponta para o Cap. 6
+  assert.ok(/peça mais antiga/.test(DOCUMENTS.guia_visitante.body));
+  assert.ok(!/em breve/.test(OBJECTIVES_C5.at(-1).text));
+  assert.ok(CHAPTERS.find((c) => c.id === 6)?.playable === true);
+});
+test('Cap. 6: vitrines, código do cofre, espécime, mapa e checkpoints', () => {
+  const V = C6L.VITRINES;
+  assert.equal(new Set(V.map((v) => v.id)).size, V.length);
+  // a peça mais antiga do salão é a de vidro fosco, e o nº dela é o código
+  const dated = V.filter((v) => v.year && v.kind === 'low');
+  const oldest = dated.reduce((a, b) => (b.year < a.year ? b : a));
+  assert.equal(oldest.id, C6S.C6_ALARM_VITRINE); assert.ok(oldest.fogged);
+  assert.deepEqual(oldest.inv.split('').map(Number), C6L.VAULT_CODE);
+  assert.equal(V.filter((v) => v.fogged).length, 1);
+  // vitrines dentro das salas, espécimes nas vitrines altas
+  const H = C6L.HALL;
+  for (const v of V.filter((o) => o.id !== 'v_atrio')) assert.ok(v.x > H.minX && v.x < H.maxX && v.z > H.minZ && v.z < H.maxZ, v.id);
+  for (const v of V.filter((o) => o.kind === 'tall')) {
+    const sp = C6S.ACERVO_SPAWNS.find((s) => s.id === v.specimen);
+    assert.ok(sp && sp.dormant && sp.type === 'especime' && Math.hypot(sp.x - v.x, sp.z - v.z) < 0.1, v.id);
+  }
+  // espécime: novo arquétipo leve
+  const e = ENEMIES.especime;
+  assert.ok(e && e.exhibit && e.hp < ENEMIES.acolito.hp && e.chase > ENEMIES.acolito.walk);
+  assert.ok(e.attacks.length >= 2 && e.attacks.every((k) => k.windup > 0 && k.dmg > 0));
+  for (const s of C6S.ACERVO_SPAWNS) assert.ok(ENEMIES[s.type], s.id);
+  assert.ok(C6S.ACERVO_SPAWNS.some((s) => s.type === 'acolito') && C6S.ACERVO_SPAWNS.filter((s) => s.type === 'especime').length >= 3);
+  // prop real: hurtVolume e vida; quebra com dano suficiente, a vitrine alta acorda o espécime
+  const calls = []; const noop = () => {};
+  const S = { game: { audio: { play: noop }, perception: { noise: (p, r, k) => calls.push(['noise', r, k]) }, combat: { emit: noop } },
+    _wakeSpecimen: (id) => calls.push(['wake', id]), _breakVitrine: (id) => calls.push(['break', id]) };
+  const low = new C6S.Vitrine(S, V.find((v) => v.id === 'v_cranio'));
+  assert.ok(low.isProp && low.alive && low.hurtVolumes()[0].type === 'capsule');
+  assert.equal(low.takeHit({ dmg: 5 }), 'hit');
+  assert.equal(low.takeHit({ dmg: C6L.VITRINE_HP.low }), 'dead');
+  assert.ok(calls.find((c) => c[0] === 'break' && c[1] === 'v_cranio') && calls.find((c) => c[0] === 'noise'));
+  const tall = new C6S.Vitrine(S, V.find((v) => v.id === 'v_esp1'));
+  tall.takeHit({ dmg: 3 }); assert.ok(calls.find((c) => c[0] === 'wake' && c[1] === 'c6_esp1'));
+  // mapa
+  try {
+    setMapChapter(6);
+    assert.deepEqual(chapterFloors().map((f) => f.id), ['up']);
+    assert.equal(roomAt({ x: 15, y: 0, z: 3 }).id, 'c6_doca');
+    assert.equal(roomAt({ x: 15, y: 0, z: 12 }).id, 'c6_atrio');
+    assert.equal(roomAt({ x: 15, y: 0, z: 30 }).id, 'c6_salao');
+    assert.equal(roomAt({ x: 36, y: 0, z: 33 }).id, 'c6_conservacao');
+    assert.equal(roomAt({ x: 36, y: 0, z: 48 }).id, 'c6_deposito');
+  } finally { setMapChapter(1); }
+  // checkpoints dentro das salas e névoa por zona
+  const CP = C6L.ACERVO_CHECKPOINTS, L = Object.create(C6L.AcervoLevel.prototype);
+  for (const [id, room] of [['c6_dock', 'c6_doca'], ['c6_atrium', 'c6_atrio'], ['c6_hall', 'c6_salao'], ['c6_conserv', 'c6_conservacao'], ['c6_slice', 'c6_deposito']]) {
+    assert.ok(CP[id], id); assert.equal(CP[id].y, 0);
+    assert.equal(L.zoneAt({ ...CP[id], y: 1 })?.id, room, id);
+  }
+  assert.ok(CP.c6_slice.z < C6L.COLLECTOR_DOOR.z && CP.c6_slice.z > C6L.STORAGE.minZ);
+  assert.ok(C6L.DIAL.zs.length === 3 && C6L.DIAL.x < C6L.HALL.maxX);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

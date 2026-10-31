@@ -4,6 +4,7 @@
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import puppeteer from 'puppeteer-core';
+import { runC6 } from './c6.mjs';
 
 const PORT = 4179;
 const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome';
@@ -1790,13 +1791,16 @@ try {
     T.tp(33, 4.5, 97.6, 0); T.hold('KeyW', 2.5); T.run(0.3);
     const nb = document.getElementById('btnEndNext');
     out.st = g.state; out.title = document.getElementById('endTitle').textContent; out.next = nb.disabled; out.nextT = nb.textContent;
-    const s = JSON.parse(localStorage.getItem('ocdc_save')); out.cp = s.checkpoint; out.done = !!s.flags.c5_chapterDone && !!s.flags.ch5Done;
-    nb.click(); out.st2 = g.state;
+    const s = JSON.parse(localStorage.getItem('ocdc_save')); out.cp = s.checkpoint; out.done = !!s.flags.c5_chapterDone && !!s.flags.ch5Done; out.raw = localStorage.getItem('ocdc_save');
     return out;
   });
   await page.screenshot({ path: SHOTS + '32-cap5-fim.png' });
   check('Cap. 5: galeria de descarga (afogado de guarda) e ficha de remessa (gancho do Acervo)', c5z.p[2] > 89.5 && c5z.woke && c5z.ficha === 'ok' && c5z.readF, JSON.stringify(c5z));
-  check('Cap. 5: fim do capítulo com save c5_end e botão "Capítulo 6 — O Acervo (em breve)" desativado', c5z.st === 'end' && /Capítulo 5/.test(c5z.title) && c5z.next && /Acervo/.test(c5z.nextT) && c5z.cp === 'c5_end' && c5z.done && c5z.st2 === 'end', JSON.stringify(c5z));
+  check('Cap. 5: fim do capítulo com save c5_end e botão "Seguir para o Capítulo 6 — O Acervo" ativo', c5z.st === 'end' && /Capítulo 5/.test(c5z.title) && !c5z.next && /Capítulo 6/.test(c5z.nextT) && /Acervo/.test(c5z.nextT) && !/em breve/.test(c5z.nextT) && c5z.cp === 'c5_end' && c5z.done, JSON.stringify({ ...c5z, raw: undefined }));
+  // --- Capítulo 6 — O Acervo (primeira fatia): botão do fim do Cap. 5
+  await page.click('#btnEndNext');
+  await new Promise((r) => setTimeout(r, 800));
+  await runC6(page, check, inject, SHOTS, c5z.raw);
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));
