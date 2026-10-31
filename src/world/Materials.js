@@ -80,6 +80,15 @@ export function createMaterials() {
     water: new THREE.MeshLambertMaterial({ color: 0x0e1a18, emissive: 0x020605, transparent: true, opacity: 0.86, depthWrite: false }),
     waterFoam: new THREE.MeshBasicMaterial({ color: 0x5a6e66, transparent: true, opacity: 0.35, depthWrite: false }),
     slime: L({ map: T.stone, color: 0x3c4a38 }),
+    // Capítulo 6 — O Acervo: pele envernizada das peças, linho de embalsamar, olho de vidro, vidro de vitrine
+    wax: L({ map: T.deadSkin, color: 0xc8b48a, emissive: 0x0e0a04 }),
+    linen: L({ map: T.bandage, color: 0xb8ab8a }),
+    glassEye: new THREE.MeshBasicMaterial({ color: 0xe8e0c0 }),
+    showcase: new THREE.MeshLambertMaterial({ color: 0x9ab8b0, transparent: true, opacity: 0.22, depthWrite: false }),
+    showcaseFog: new THREE.MeshLambertMaterial({ color: 0x8a8878, transparent: true, opacity: 0.85 }),
+    shards: new THREE.MeshLambertMaterial({ color: 0xb8d0c8, transparent: true, opacity: 0.55, depthWrite: false }),
+    parquet: L({ map: T.wood, color: 0x7a5434 }),
+    museumWall: L({ map: T.wall, color: 0x8a6e5a }),
   };
   M.textures = T;
   return M;

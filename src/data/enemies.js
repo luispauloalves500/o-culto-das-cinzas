@@ -120,4 +120,21 @@ export const ENEMIES = {
     emergeTime: 1.1,
     groanPitch: 0.6,
   },
+  // Capítulo 6 — O Acervo: peça humana embalsamada e envernizada, exposta de pé numa vitrine do Museu.
+  // Fica imóvel como as outras peças até o vidro estalar (golpe, barulho de vitrine quebrando perto ou alguém
+  // encostando no vidro). Leve e frágil, mas dá um bote rápido; ouve bem — o museu é silencioso.
+  especime: {
+    name: 'Espécime',
+    hp: 70, poise: 30, radius: 0.36, height: 1.8, scale: 1.0, hunch: 0.05,
+    walk: 0.8, chase: 3.1, turn: 6.0,
+    sight: 9, fov: 70, hearing: 1.7,
+    attackTokens: 1,
+    attacks: [
+      { id: 'claw', range: 1.6, windup: 0.5, active: 0.18, recover: 0.75, dmg: 13, knock: 2.4, weight: 2 },
+      { id: 'lunge', range: 2.4, windup: 0.75, active: 0.22, recover: 1.1, dmg: 19, knock: 3.6, weight: 1 },
+    ],
+    mats: 'especime',
+    exhibit: true,
+    groanPitch: 1.35,
+  },
 };
