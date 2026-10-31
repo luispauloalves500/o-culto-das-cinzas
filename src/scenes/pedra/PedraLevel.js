@@ -1,10 +1,12 @@
-// Capítulo 7 — Sob a Pedra (primeira fatia) · catacumbas sob o Museu e a estação velha do metrô. A escada de serviço do
+// Capítulo 7 — Sob a Pedra · catacumbas sob o Museu e a estação velha do metrô. A escada de serviço do
 // alçapão da reserva técnica termina num poço de pedra; dali, a galeria de pedra da Companhia do Metrô (carrinho de
 // ferramentas), a grade rangente do ossuário, o ossuário (paredes de crânios, pilares, ossos espalhados no chão que
 // estalam, nichos emparedados com cal — os "irmãos da vigília", cegos, que acordam com barulho), a cripta do coveiro-mor
 // (jazigo com tampa de pedra: alavanca → chave + recado de Inês), a grade do fundo (cadeado de crânio), o túnel de
 // serviço e a plataforma da Estação Sé Velha (Linha Velha, fechada desde 1912), com os trilhos 1 m abaixo e o túnel
-// leste para a Estação Sob a Pedra (fim da fatia). Um corredor de serviço volta da plataforma ao poço (atalho com
+// leste. Além da grade acorrentada (pé de cabra): a Linha Velha (cascalho que range, dois nichos), a cabine de
+// sinalização (agulhas + sinal → grade levadiça), a Estação Sob a Pedra (pilares de ferro, vagão funerário, sinetas,
+// parede de cal do Vigia Caiado — chefe final) e a escada de serviço para a Usina (fim do capítulo). Um corredor de serviço volta da plataforma ao poço (atalho com
 // ferrolho do lado de lá). A pedra ecoa: cada área multiplica o raio dos ruídos (PerceptionSystem.acoustics).
 // Mesma base modular (LevelBuilder/Door/Navigation), tudo procedural; um único piso em y = 0 (trilhos em y = −1).
 import * as THREE from 'three';
@@ -47,11 +49,63 @@ export const BONE_PATCHES = [
 ];
 export function boneAt(x, z) { for (const b of BONE_PATCHES) if (x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1) return b; return null; }
 
+// ---------- resto do capítulo: Linha Velha além da grade, cabine de sinalização, Estação Sob a Pedra ----------
+// grade acorrentada (x 49) no fim dos trilhos da Sé Velha: a corrente nova só sai com o pé de cabra
+export const LINE_GATE = { x: 49, z: 52.6, use: { x: 48.2, z: 52.6 } };
+// túnel da Linha Velha (piso dos trilhos, teto baixo) até a grade levadiça da Estação Sob a Pedra (x 78)
+export const LINE = { minX: 50, maxX: 78, minZ: 50, maxZ: 55.2 };
+export const LINE_H = 3.6;
+// cabine de sinalização ao norte dos trilhos: quadro de alavancas (agulhas I, II, III + sinal), livro de registros
+export const CABIN = { minX: 60, maxX: 66, minZ: 45, maxZ: 50, door: { x: 63, z: 50 } };
+export const LEVERS = [
+  { id: 'I', x: 61.3, z: 45.45 }, { id: 'II', x: 62.2, z: 45.45 }, { id: 'III', x: 63.1, z: 45.45 },
+];
+export const SIGNAL_LEVER = { x: 64.6, z: 45.45 };
+// combinação de agulhas da quarta estação (apagada no quadro): I e II pela guia de remoção, III pelo quadro de horários
+export const SWITCH_CODE = { I: 'R', II: 'N', III: 'R' };
+// sineta de alarme do túnel: o sinal errado toca aqui (perto do nicho do leste)
+export const LINE_BELL = { x: 70.5, z: 51.2 };
+// grade levadiça na boca da estação (comandada pelo sinal da cabine)
+export const PORTCULLIS = { x: 78, minZ: 50, maxZ: 55.2, h: 3.4 };
+// Estação Sob a Pedra: salão alto, pilares de ferro fundido, vagão funerário nos trilhos, parede de cal do Vigia a leste
+export const SOB = { minX: 78, maxX: 104, minZ: 42, maxZ: 64, h: 7 };
+export const SOB_PILLARS = [84, 91, 98].flatMap((x) => [46.5, 59.5].map((z) => ({ x, z, r: 0.42 })));
+export const WAGON = { minX: 86, maxX: 93, minZ: 51.5, maxZ: 53.7 };
+// nicho do Vigia na parede leste (lacrado com cal)
+export const VIGIA_NICHE = { x: 104.9, z: 52.8, out: { x: 101.4, z: 52.8 }, minZ: 51.4, maxZ: 54.2 };
+// sinetas da estação: alavanca na parede oeste, sino no canto leste (barulho real lá longe = isca)
+export const SOB_BELLS = [
+  { id: 'n', lever: { x: 78.75, z: 43.4 }, bell: { x: 102.8, z: 43.4 } },
+  { id: 's', lever: { x: 78.75, z: 62.6 }, bell: { x: 102.8, z: 62.6 } },
+];
+// atril com a ata da Primeira Cinza (diante da parede de cal)
+export const ATRIL = { x: 101.6, z: 47.6 };
+// escada de serviço (saída norte) para a Usina — grade com cadeado, chave no corpo do Vigia
+export const STAIR = { minX: 97.4, maxX: 100.6, minZ: 64, maxZ: 69.5, door: { x: 99, z: 64 }, endZ: 65.6 };
+// cascalho solto no leito dos trilhos: range sob os pés (como os ossos do ossuário)
+export const GRAVEL_PATCHES = [
+  { id: 'g0', x0: 56.4, x1: 61.6, z0: 52.0, z1: 55.1 },
+  { id: 'g1', x0: 69.4, x1: 74.6, z0: 50.1, z1: 53.2 },
+];
+export function gravelAt(x, z) { for (const g of GRAVEL_PATCHES) if (x >= g.x0 && x <= g.x1 && z >= g.z0 && z <= g.z1) return g; return null; }
+export const LINE_NICHES = [
+  { id: 'nL1', x: 59, z: 55.7, y: TRACK_Y, face: Math.PI, enemy: 'c7_emp6' },   // parede sul do túnel
+  { id: 'nL2', x: 72, z: 49.5, y: TRACK_Y, face: 0, enemy: 'c7_emp7' },         // parede norte do túnel
+];
+export const SOB_NICHES = [
+  { id: 'nS1', x: 77.5, z: 45.6, y: TRACK_Y, face: Math.PI / 2, enemy: 'c7_emp8' },
+  { id: 'nS2', x: 77.5, z: 59.6, y: TRACK_Y, face: Math.PI / 2, enemy: 'c7_emp9' },
+];
+
 export const PEDRA_CHECKPOINTS = {
   c7_ladder: { x: 18, y: GROUND, z: 2.2, yaw: 0 },
   c7_ossuary: { x: 18, y: GROUND, z: 17.4, yaw: 0 },
   c7_platform: { x: 9.6, y: GROUND, z: 46.4, yaw: Math.PI / 2 },
   c7_slice: { x: 45.4, y: TRACK_Y, z: 52.6, yaw: Math.PI / 2 },
+  c7_line: { x: 63, y: TRACK_Y, z: 47.6, yaw: Math.PI },
+  c7_station: { x: 76.2, y: TRACK_Y, z: 52.6, yaw: Math.PI / 2 },
+  c7_boss: { x: 92, y: TRACK_Y, z: 56.4, yaw: Math.PI / 2 },
+  c7_end: { x: 99, y: TRACK_Y, z: 62.6, yaw: 0 },
 };
 
 // névoa padrão: poeira de cal e umidade de pedra
@@ -65,6 +119,10 @@ export const PEDRA_ZONES = [
   { id: 'c7_tunel', minX: 16, maxX: 20, minZ: 36, maxZ: 44, minY: -1, maxY: 5, fog: 0x080808, density: 0.06, acoustic: 1.2 },
   { id: 'c7_estacao', minX: 4, maxX: 50, minZ: 44, maxZ: 56, minY: -2, maxY: 6, fog: 0x0a0c0c, density: 0.042, acoustic: 1.2 },
   { id: 'c7_servico', minX: 22, maxX: 40, minZ: 1, maxZ: 44, minY: -1, maxY: 5, fog: 0x080808, density: 0.06, acoustic: 1.0 },
+  { id: 'c7_cabine', minX: 60, maxX: 66, minZ: 44.8, maxZ: 49.9, minY: -2, maxY: 3, fog: 0x0a0907, density: 0.05, acoustic: 1.0 },
+  { id: 'c7_linha', minX: 50, maxX: 78, minZ: 49, maxZ: 56, minY: -2, maxY: 4, fog: 0x080908, density: 0.06, acoustic: 1.3 },
+  { id: 'c7_sobapedra', minX: 78, maxX: 106, minZ: 42, maxZ: 64, minY: -2, maxY: 7, fog: 0x0c0d0c, density: 0.034, acoustic: 1.4 },
+  { id: 'c7_saida', minX: 97, maxX: 101, minZ: 64, maxZ: 70, minY: -2, maxY: 5, fog: 0x0a0908, density: 0.05, acoustic: 1.2 },
 ];
 export function pedraZoneAt(p) {
   for (const z of PEDRA_ZONES) if (p.x > z.minX && p.x < z.maxX && p.z > z.minZ && p.z < z.maxZ && p.y > z.minY && p.y < z.maxY) return z;
@@ -84,6 +142,11 @@ export class PedraLevel {
     this.zone = null;
     this.niches = {};
     this.jazigo = null;
+    this.lineGate = null;
+    this.portcullis = null;
+    this.levers = {};
+    this.vigiaWall = null;
+    this.bells = {};
   }
 
   build() {
@@ -94,7 +157,11 @@ export class PedraLevel {
     this._tunnel();
     this._station();
     this._service();
-    for (const n of NICHES) this._niche(n);
+    this._line();
+    this._cabin();
+    this._sobPedra();
+    this._stair();
+    for (const n of [...NICHES, ...LINE_NICHES, ...SOB_NICHES]) this._niche(n);
     this._doors();
     this._lights();
     this._nav();
@@ -217,27 +284,37 @@ export class PedraLevel {
     this.sign('AQUI ESPERAM OS DA VIGÍLIA', 18, Y + 3.0, 35.88, Math.PI, 2.4, 0.24, { bg: '#16140f', fg: '#c8b890' });
   }
 
-  /** nicho na parede: alcova de pedra; se tem morador, uma parede de cal na frente (quebra quando ele sai) */
+  /** nicho na parede: alcova de pedra; se tem morador, uma parede de cal na frente (quebra quando ele sai).
+   *  face = direção para onde o nicho abre (π/2 → +x, −π/2 → −x, 0 → +z, π → −z); y = piso (padrão: GROUND) */
   _niche(n) {
-    const b = this.b, west = n.face > 0, wx = west ? n.x + 0.5 : n.x - 0.5; // linha da parede
-    const back = west ? n.x - 0.5 : n.x + 0.5;
-    const [x0, x1] = west ? [back - 0.1, wx - 0.1] : [wx + 0.1, back + 0.1];
-    b.box(Math.min(back - 0.1, back + 0.1), Y, n.z - 0.9, Math.max(back - 0.1, back + 0.1), Y + 2.6, n.z + 0.9, 'cantaria');
-    b.box(x0, Y, n.z - 0.9, x1, Y + 2.6, n.z - 0.7, 'cantaria');
-    b.box(x0, Y, n.z + 0.7, x1, Y + 2.6, n.z + 0.9, 'cantaria');
-    b.box(x0, Y + 2.4, n.z - 0.9, x1, Y + 2.6, n.z + 0.9, 'cantaria', { collide: false });
+    const b = this.b, y0 = n.y ?? Y;
+    const dx = Math.round(Math.sin(n.face)), dz = Math.round(Math.cos(n.face)), alongX = dz !== 0;
+    // coordenadas locais: u = profundidade (+ para fora do nicho, a linha da parede fica em u = 0,5), v = ao longo da parede
+    const W = (u, v) => (alongX ? { x: n.x + v, z: n.z + dz * u } : { x: n.x + dx * u, z: n.z + v });
+    const bx = (u0, u1, v0, v1, ya, yb, mat, opts) => {
+      const A = W(u0, v0), B = W(u1, v1);
+      return b.box(Math.min(A.x, B.x), ya, Math.min(A.z, B.z), Math.max(A.x, B.x), yb, Math.max(A.z, B.z), mat, opts);
+    };
+    bx(-0.6, -0.4, -0.9, 0.9, y0, y0 + 2.6, 'cantaria');
+    bx(-0.6, 0.4, -0.9, -0.7, y0, y0 + 2.6, 'cantaria');
+    bx(-0.6, 0.4, 0.7, 0.9, y0, y0 + 2.6, 'cantaria');
+    bx(-0.6, 0.4, -0.9, 0.9, y0 + 2.4, y0 + 2.6, 'cantaria', { collide: false });
     // ossos ao pé do nicho
-    for (let i = 0; i < 3; i++) this._skull(n.x + (west ? -0.25 : 0.25), Y + 0.1, n.z - 0.45 + i * 0.45, 0.8);
+    for (let i = 0; i < 3; i++) { const q = W(-0.25, -0.45 + i * 0.45); this._skull(q.x, y0 + 0.1, q.z, 0.8); }
     const plaster = new THREE.Group();
+    const rotY = alongX ? Math.PI / 2 : 0;
     if (n.enemy) {
       // parede de cal com rachaduras: cobre o vão do nicho (só visual; o morador atravessa ao acordar)
+      const q = W(0.5, 0);
       const p = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.35, 1.4), this.M.lime || this.M.wall);
-      p.position.set(wx, Y + 1.18, n.z); plaster.add(p);
+      p.position.set(q.x, y0 + 1.18, q.z); p.rotation.y = rotY; plaster.add(p);
+      const qc = W(0.5, 0.15);
       const crack = new THREE.Mesh(new THREE.BoxGeometry(0.09, 1.2, 0.03), this.M.mortar || this.M.soot);
-      crack.position.set(wx, Y + 1.4, n.z + 0.15); crack.rotation.x = 0.4; plaster.add(crack);
+      crack.position.set(qc.x, y0 + 1.4, qc.z); crack.rotation.set(0.4, rotY, 0, 'YXZ'); plaster.add(crack);
       // uma fresta no alto: dá para ver o capuz lá dentro
+      const qh = W(0.5, -0.2);
       const hole = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, 0.4), new THREE.MeshBasicMaterial({ color: 0x050403 }));
-      hole.position.set(wx, Y + 1.85, n.z - 0.2); plaster.add(hole);
+      hole.position.set(qh.x, y0 + 1.85, qh.z); hole.rotation.y = rotY; plaster.add(hole);
     }
     b.group.add(plaster);
     // cal quebrada no chão (aparece quando o nicho abre; o nicho vazio já nasce aberto)
@@ -246,7 +323,8 @@ export class PedraLevel {
     for (let i = 0; i < 7; i++) {
       const s = 0.12 + rnd() * 0.18;
       const m = new THREE.Mesh(new THREE.BoxGeometry(s, s * 0.5, s * 1.2), this.M.lime || this.M.wall);
-      m.position.set(wx + (west ? 1 : -1) * (0.2 + rnd() * 0.7), Y + s * 0.25, n.z - 0.6 + rnd() * 1.2); m.rotation.y = rnd() * 3; rubble.add(m);
+      const q = W(0.5 + 0.2 + rnd() * 0.7, -0.6 + rnd() * 1.2);
+      m.position.set(q.x, y0 + s * 0.25, q.z); m.rotation.y = rnd() * 3; rubble.add(m);
     }
     rubble.visible = !n.enemy;
     b.group.add(rubble);
@@ -334,15 +412,10 @@ export class PedraLevel {
     b.box(P.minX - 0.2, TRACK_Y, P.minZ, P.minX, Y + 4.6, T.maxZ, 'cantaria');
     b.box(P.maxX, TRACK_Y, P.minZ, P.maxX + 0.2, Y + 4.6, P.maxZ, 'stationTile');
     b.box(P.minX, TRACK_Y, T.maxZ, T.maxX, Y + 4.6, T.maxZ + 0.2, 'cantaria');
-    // túnel leste (continuação dos trilhos): teto baixo, grade acorrentada no fundo
+    // túnel leste (continuação dos trilhos): grade acorrentada da Linha Velha (abre com o pé de cabra) e testeira de pedra
     b.box(P.maxX, Y + 2.4, T.minZ, T.maxX, Y + 4.6, T.minZ + 0.2, 'cantaria', { collide: false });
-    b.box(T.maxX, TRACK_Y, T.minZ, T.maxX + 0.2, Y + 4.6, T.maxZ, 'cantaria');
-    b.box(48.9, TRACK_Y, T.minZ, 49.1, Y + 2.4, T.maxZ, 'rust');
-    for (let z = T.minZ + 0.3; z < T.maxZ; z += 0.45) b.box(48.85, TRACK_Y, z - 0.03, 48.88, Y + 2.3, z + 0.03, 'rust', { collide: false });
-    b.box(48.8, Y + 0.0, 52.1, 48.86, Y + 0.12, 53.4, 'steel', { collide: false });  // corrente e cadeado
-    b.box(48.76, Y - 0.15, 52.6, 48.84, Y + 0.12, 52.9, 'brass', { collide: false });
-    const dark = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 3.4), new THREE.MeshBasicMaterial({ color: 0x020202 }));
-    dark.rotation.y = -Math.PI / 2; dark.position.set(T.maxX - 0.02, Y + 0.7, (T.minZ + T.maxZ) / 2); b.group.add(dark);
+    b.box(48.9, Y + 2.4, T.minZ, 50.1, Y + 4.6, T.maxZ, 'cantaria');
+    this._lineGate();
     // desabamento a oeste (sobre os trilhos)
     b.box(T.minX, TRACK_Y, T.minZ, T.minX + 2.4, Y + 1.2, T.maxZ, 'stone');
     b.box(T.minX + 2.4, TRACK_Y, T.minZ + 1.6, T.minX + 3.6, Y + 0.2, T.maxZ, 'stone');
@@ -393,6 +466,260 @@ export class PedraLevel {
     this.sign('← POÇO 3', 37.2, Y + 1.9, 4.62, 0, 0.9, 0.18, { bg: '#1a1712', fg: '#cbbf98' });
   }
 
+  // ---------- GRADE ACORRENTADA DA LINHA VELHA (x 49): folha de ferro na dobradiça norte, corrente + cadeado ----------
+  _lineGate() {
+    const b = this.b, T = TRACKS, M = this.M, G = LINE_GATE;
+    const pivot = new THREE.Group(); pivot.position.set(G.x, TRACK_Y, T.minZ); b.group.add(pivot);
+    const H = Y + 2.4 - TRACK_Y, Wd = T.maxZ - T.minZ;
+    const bar = (x0, y0, z0, x1, y1, z1, mat, parent = pivot) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat);
+      m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); m.castShadow = true; parent.add(m); return m;
+    };
+    for (let z = 0.3; z < Wd; z += 0.45) bar(-0.03, 0, z - 0.025, 0.03, H - 0.05, z + 0.025, M.rust);
+    for (const y of [0.25, 1.6, H - 0.15]) bar(-0.05, y, 0.05, 0.05, y + 0.1, Wd - 0.05, M.rust);
+    // corrente nova e cadeado (lado da plataforma): somem quando o pé de cabra arrebenta um elo
+    const chain = new THREE.Group(); b.group.add(chain);
+    bar(48.8, Y + 0.0, 52.1, 48.86, Y + 0.12, 53.4, M.steel, chain);
+    bar(48.76, Y - 0.15, 52.6, 48.84, Y + 0.12, 52.9, M.brass, chain);
+    for (let i = 0; i < 6; i++) bar(48.84, Y - 0.6 + i * 0.12, 52.15 + (i % 2) * 0.05, 48.9, Y - 0.52 + i * 0.12, 52.25 + (i % 2) * 0.05, M.steel, chain);
+    const broken = new THREE.Group(); broken.visible = false; b.group.add(broken);
+    bar(48.4, TRACK_Y, 52.2, 48.7, TRACK_Y + 0.05, 53.3, M.steel, broken);
+    bar(48.3, TRACK_Y, 52.9, 48.45, TRACK_Y + 0.12, 53.1, M.brass, broken);
+    const collider = this.game.col.addBox(G.x - 0.1, TRACK_Y, T.minZ, G.x + 0.1, Y + 2.4, T.maxZ, { tag: 'wall' });
+    this.lineGate = { pivot, chain, broken, collider, open: false, t: -1 };
+  }
+  /** pé de cabra na corrente: a grade cai aberta para leste (encosta na parede norte do túnel) */
+  openLineGate(instant = false) {
+    const L = this.lineGate;
+    if (!L || L.open) return false;
+    L.open = true; L.chain.visible = false; L.broken.visible = true; L.collider.enabled = false;
+    if (instant) this._placeGate(1); else L.t = 0;
+    return true;
+  }
+  _placeGate(k) { const s = Math.min(1, k); this.lineGate.pivot.rotation.y = (Math.PI / 2 - 0.12) * (1 - (1 - s) * (1 - s)); }
+
+  // ---------- LINHA VELHA x50..78 z50..55.2 (piso dos trilhos): túnel baixo, cascalho, dois nichos, refúgio ----------
+  _line() {
+    const b = this.b, L = LINE, M = this.M, y0 = TRACK_Y, yT = TRACK_Y + LINE_H;
+    b.floor(L.minX, L.minZ, L.maxX, L.maxZ, y0, 'concrete', 'c7_linha');
+    b.ceiling(L.minX, L.minZ, L.maxX, L.maxZ, yT, 'brick');
+    // parede norte: porta da cabine (x 63) e o nicho nL2 (x 72)
+    b.box(L.minX, y0, L.minZ - 0.2, CABIN.door.x - 0.6, yT, L.minZ, 'brick');
+    b.box(CABIN.door.x - 0.6, y0 + 2.3, L.minZ - 0.2, CABIN.door.x + 0.6, yT, L.minZ, 'brick');
+    b.box(CABIN.door.x + 0.6, y0, L.minZ - 0.2, 71.3, yT, L.minZ, 'brick');
+    b.box(71.3, y0 + 2.4, L.minZ - 0.2, 72.7, yT, L.minZ, 'brick');
+    b.box(72.7, y0, L.minZ - 0.2, L.maxX, yT, L.minZ, 'brick');
+    // parede sul: nicho nL1 (x 59) e um refúgio de manutenção (x 66..67.6)
+    b.box(L.minX, y0, L.maxZ, 58.3, yT, L.maxZ + 0.2, 'brick');
+    b.box(58.3, y0 + 2.4, L.maxZ, 59.7, yT, L.maxZ + 0.2, 'brick');
+    b.box(59.7, y0, L.maxZ, 66, yT, L.maxZ + 0.2, 'brick');
+    b.box(66, y0 + 2.2, L.maxZ, 67.6, yT, L.maxZ + 0.2, 'brick');
+    b.box(67.6, y0, L.maxZ, L.maxX, yT, L.maxZ + 0.2, 'brick');
+    b.floor(66, L.maxZ, 67.6, L.maxZ + 1.2, y0, 'concrete', 'c7_refugio');
+    b.box(65.8, y0, L.maxZ + 0.2, 66, y0 + 2.2, L.maxZ + 1.4, 'brick');
+    b.box(67.6, y0, L.maxZ + 0.2, 67.8, y0 + 2.2, L.maxZ + 1.4, 'brick');
+    b.box(65.8, y0, L.maxZ + 1.2, 67.8, y0 + 2.2, L.maxZ + 1.4, 'brick');
+    b.box(65.8, y0 + 2.2, L.maxZ, 67.8, y0 + 2.4, L.maxZ + 1.4, 'brick', { collide: false });
+    this.sign('REFÚGIO', 66.8, y0 + 2.0, L.maxZ - 0.02, Math.PI, 0.8, 0.16, { bg: '#2a2010', fg: '#d0b070' });
+    // trilhos, dormentes e cascalho solto (visual) sobre as manchas que rangem
+    for (const z of [51.7, 53.3]) b.box(L.minX, y0, z - 0.04, L.maxX, y0 + 0.14, z + 0.04, 'steel', { collide: false });
+    for (let x = L.minX + 0.4; x < L.maxX; x += 0.9) b.box(x, y0, 51.3, x + 0.25, y0 + 0.06, 53.7, 'woodDark', { collide: false });
+    const rnd = mulberry(4711);
+    for (const P of GRAVEL_PATCHES) {
+      const pale = new THREE.Mesh(new THREE.PlaneGeometry(P.x1 - P.x0, P.z1 - P.z0), M.stone);
+      pale.rotation.x = -Math.PI / 2; pale.position.set((P.x0 + P.x1) / 2, y0 + 0.01, (P.z0 + P.z1) / 2); b.group.add(pale);
+      const n = Math.round((P.x1 - P.x0) * (P.z1 - P.z0) * 9);
+      for (let i = 0; i < n; i++) {
+        const s = 0.05 + rnd() * 0.08;
+        const m = new THREE.Mesh(new THREE.BoxGeometry(s, s * 0.6, s), rnd() < 0.5 ? M.stone : M.concrete);
+        m.position.set(P.x0 + rnd() * (P.x1 - P.x0), y0 + 0.03, P.z0 + rnd() * (P.z1 - P.z0)); m.rotation.y = rnd() * 3; b.group.add(m);
+      }
+    }
+    // cabos ao longo da parede e marcos quilométricos
+    b.box(L.minX, yT - 0.5, L.maxZ - 0.15, L.maxX, yT - 0.4, L.maxZ - 0.05, 'rust', { collide: false });
+    this.sign('KM 2,4', 55, y0 + 1.6, L.minZ + 0.02, 0, 0.6, 0.18, { bg: '#e0d8c0', fg: '#1a1712' });
+    this.sign('KM 2,6', 75, y0 + 1.6, L.minZ + 0.02, 0, 0.6, 0.18, { bg: '#e0d8c0', fg: '#1a1712' });
+    this.sign('CABINE DE SINALIZAÇÃO 4', CABIN.door.x, y0 + 2.6, L.minZ + 0.02, 0, 2.0, 0.2, { bg: '#1a1712', fg: '#cbbf98' });
+    // sineta de alarme do túnel (o sinal errado da cabine toca aqui)
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.26, 10, 1, true), M.brass);
+    bell.position.set(LINE_BELL.x, yT - 0.45, L.minZ + 0.25); b.group.add(bell);
+    b.box(LINE_BELL.x - 0.03, yT - 0.32, L.minZ + 0.02, LINE_BELL.x + 0.03, yT, L.minZ + 0.3, 'rust', { collide: false });
+    this.bells.line = { mesh: bell, t: -1 };
+    this._portcullis();
+  }
+
+  // ---------- GRADE LEVADIÇA (x 78): sobe com o sinal certo da cabine; desce atrás de Elias na luta ----------
+  _portcullis() {
+    const P = PORTCULLIS, M = this.M, y0 = TRACK_Y;
+    const g = new THREE.Group(); g.position.set(P.x, y0, 0); this.b.group.add(g);
+    const bar = (x0, y, z0, x1, y1, z1) => { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y, z1 - z0), M.rust); m.position.set((x0 + x1) / 2, (y + y1) / 2, (z0 + z1) / 2); m.castShadow = true; g.add(m); };
+    for (let z = P.minZ + 0.25; z < P.maxZ; z += 0.4) { bar(-0.04, 0, z - 0.035, 0.04, P.h, z + 0.035); bar(-0.05, -0.12, z - 0.02, 0.05, 0.02, z + 0.02); }
+    for (const y of [0.6, 1.6, 2.6, P.h - 0.1]) bar(-0.06, y, P.minZ, 0.06, y + 0.1, P.maxZ);
+    const collider = this.game.col.addBox(P.x - 0.12, y0, P.minZ, P.x + 0.12, y0 + LINE_H, P.maxZ, { tag: 'wall', blocksSight: false });
+    this.portcullis = { group: g, collider, open: false, k: 0, target: 0 };
+  }
+  setPortcullis(open, instant = false) {
+    const P = this.portcullis;
+    if (!P) return false;
+    const was = P.open;
+    P.open = open; P.target = open ? 1 : 0;
+    if (instant) P.k = P.target;
+    // fechada: colide já (cai de uma vez); aberta: só quando passa da altura de Elias
+    if (!open) P.collider.enabled = true;
+    else if (instant) P.collider.enabled = false;
+    P.group.position.y = TRACK_Y + P.k * (PORTCULLIS.h - 0.3);
+    return was !== open;
+  }
+
+  // ---------- CABINE DE SINALIZAÇÃO x60..66 z45..50 (piso dos trilhos) ----------
+  _cabin() {
+    const b = this.b, C = CABIN, M = this.M, y0 = TRACK_Y, yT = TRACK_Y + 2.8;
+    b.floor(C.minX, C.minZ, C.maxX, C.maxZ, y0, 'woodDark', 'c7_cabine');
+    b.ceiling(C.minX, C.minZ, C.maxX, C.maxZ, yT, 'woodDark');
+    b.box(C.minX - 0.2, y0, C.minZ - 0.2, C.maxX + 0.2, yT, C.minZ, 'brick');
+    b.box(C.minX - 0.2, y0, C.minZ, C.minX, yT, C.maxZ - 0.2, 'brick');
+    b.box(C.maxX, y0, C.minZ, C.maxX + 0.2, yT, C.maxZ - 0.2, 'brick');
+    // quadro de alavancas (agulhas I, II, III + sinal vermelho) encostado na parede norte
+    b.box(60.8, y0, C.minZ, 65.2, y0 + 0.5, C.minZ + 0.6, 'steelDark', { tag: 'prop-low', sight: false });
+    for (const Lv of LEVERS) this._lever(Lv.id, Lv.x, Lv.z + 0.35, M.steel, Lv.id);
+    this._lever('S', SIGNAL_LEVER.x, SIGNAL_LEVER.z + 0.35, M.lampRed || M.rust, 'SINAL');
+    // painel do diagrama da linha (luzes das agulhas) acima das alavancas
+    b.box(60.8, y0 + 1.6, C.minZ, 65.2, y0 + 2.5, C.minZ + 0.05, 'blueprint', { collide: false });
+    this.signalLamp = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), M.lampRed || M.lampOff); this.signalLamp.position.set(64.6, y0 + 2.2, C.minZ + 0.08); b.group.add(this.signalLamp);
+    // mesa do sinaleiro (guia de remoção + livro de registros) e placa esmaltada das agulhas
+    b.box(64.4, y0, 47.6, 65.8, y0 + 0.85, 49.2, 'woodDark', { tag: 'prop-low', sight: false });
+    b.box(64.6, y0 + 0.86, 48.2, 65.1, y0 + 0.88, 48.6, 'paper', { collide: false });
+    b.box(60.2, y0, 47.8, 61.0, y0 + 1.6, 49.4, 'woodDark', { tag: 'prop', sight: false });   // armário (longe do quadro de alavancas)
+    this.sign('AGULHAS: N = NORMAL (ALAVANCA EMPURRADA) · R = REVERSA (PUXADA)', 63, y0 + 2.62, C.minZ + 0.06, 0, 4.2, 0.18, { bg: '#e8e0c8', fg: '#20180c' });
+    this.sign('I', 61.3, y0 + 1.45, C.minZ + 0.07, 0, 0.3, 0.2, { bg: '#e8e0c8', fg: '#20180c' });
+    this.sign('II', 62.2, y0 + 1.45, C.minZ + 0.07, 0, 0.3, 0.2, { bg: '#e8e0c8', fg: '#20180c' });
+    this.sign('III', 63.1, y0 + 1.45, C.minZ + 0.07, 0, 0.3, 0.2, { bg: '#e8e0c8', fg: '#20180c' });
+    this.sign('SINAL', 64.6, y0 + 1.45, C.minZ + 0.07, 0, 0.5, 0.2, { bg: '#5a1010', fg: '#f0e0d0' });
+  }
+  /** alavanca de quadro: haste que inclina (N empurrada / R puxada) */
+  _lever(id, x, z, mat, label) {
+    const pivot = new THREE.Group(); pivot.position.set(x, TRACK_Y + 0.5, z); this.b.group.add(pivot);
+    const rod = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.95, 0.06), mat); rod.position.y = 0.47; pivot.add(rod);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.08), this.M.steelDark || this.M.metal); grip.position.y = 0.95; pivot.add(grip);
+    const L = { id, label, pivot, state: 'N', t: 0, target: -0.35 };
+    pivot.rotation.x = L.target;
+    this.levers[id] = L;
+    return L;
+  }
+  setLever(id, state, instant = false) {
+    const L = this.levers[id]; if (!L) return;
+    L.state = state;
+    L.target = id === 'S' ? (state === 'R' ? 0.45 : -0.35) : state === 'R' ? 0.45 : -0.35;
+    if (instant) L.pivot.rotation.x = L.target;
+  }
+
+  // ---------- ESTAÇÃO SOB A PEDRA x78..104 z42..64 (piso dos trilhos): a arena do Vigia Caiado ----------
+  _sobPedra() {
+    const b = this.b, S = SOB, M = this.M, y0 = TRACK_Y, yT = TRACK_Y + S.h;
+    b.floor(S.minX, S.minZ, S.maxX, S.maxZ, y0, 'stationTile', 'c7_sobapedra');
+    b.ceiling(S.minX, S.minZ, S.maxX, S.maxZ, yT, 'cantaria');
+    // paredes: sul, norte (porta da escada x 99), oeste (boca do túnel + dois nichos), leste (nicho do Vigia)
+    b.box(S.minX - 0.2, y0, S.minZ - 0.2, S.maxX + 0.2, yT, S.minZ, 'cantaria');
+    b.box(S.minX - 0.2, y0, S.maxZ, STAIR.door.x - 0.8, yT, S.maxZ + 0.2, 'cantaria');
+    b.box(STAIR.door.x + 0.8, y0, S.maxZ, S.maxX + 0.2, yT, S.maxZ + 0.2, 'cantaria');
+    b.box(STAIR.door.x - 0.8, y0 + 2.4, S.maxZ, STAIR.door.x + 0.8, yT, S.maxZ + 0.2, 'cantaria');
+    const wW = (z0, z1, ya = y0) => b.box(S.minX - 0.1, ya, z0, S.minX + 0.1, yT, z1, 'cantaria');
+    wW(S.minZ, 44.9); wW(46.3, LINE.minZ); wW(LINE.maxZ, 58.9); wW(60.3, S.maxZ);
+    wW(44.9, 46.3, y0 + 2.4); wW(58.9, 60.3, y0 + 2.4); wW(LINE.minZ, LINE.maxZ, y0 + LINE_H);
+    const V = VIGIA_NICHE;
+    b.box(S.maxX - 0.1, y0, S.minZ, S.maxX + 0.1, yT, V.minZ, 'cantaria');
+    b.box(S.maxX - 0.1, y0, V.maxZ, S.maxX + 0.1, yT, S.maxZ, 'cantaria');
+    b.box(S.maxX - 0.1, y0 + 3.4, V.minZ, S.maxX + 0.1, yT, V.maxZ, 'cantaria');
+    // alcova do Vigia (atrás da parede de cal)
+    b.floor(S.maxX, V.minZ, S.maxX + 1.8, V.maxZ, y0, 'cantaria', 'c7_nicho_vigia');
+    b.box(S.maxX + 1.6, y0, V.minZ - 0.2, S.maxX + 1.8, y0 + 3.4, V.maxZ + 0.2, 'cantaria');
+    b.box(S.maxX, y0, V.minZ - 0.2, S.maxX + 1.8, y0 + 3.4, V.minZ, 'cantaria');
+    b.box(S.maxX, y0, V.maxZ, S.maxX + 1.8, y0 + 3.4, V.maxZ + 0.2, 'cantaria');
+    b.box(S.maxX, y0 + 3.2, V.minZ, S.maxX + 1.8, y0 + 3.4, V.maxZ, 'cantaria', { collide: false });
+    // parede de cal: lacre fresco com uma silhueta em relevo; colide até ele rompê-la
+    const wall = new THREE.Group(); b.group.add(wall);
+    const lime = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.35, V.maxZ - V.minZ), M.lime || M.wall); lime.position.set(S.maxX - 0.02, y0 + 1.68, (V.minZ + V.maxZ) / 2); wall.add(lime);
+    const fig = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.5, 0.8), M.mortar || M.stone); fig.position.set(S.maxX - 0.1, y0 + 1.4, V.z); wall.add(fig);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 6), M.mortar || M.stone); head.position.set(S.maxX - 0.1, y0 + 2.85, V.z); head.scale.set(0.3, 1, 0.9); wall.add(head);
+    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.9), M.mortar || M.stone); brim.position.set(S.maxX - 0.12, y0 + 3.0, V.z); wall.add(brim);
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.18, 0.14), new THREE.MeshBasicMaterial({ color: 0x6c8ca0 })); glow.position.set(S.maxX - 0.09, y0 + 2.2, V.z + 0.28); wall.add(glow);
+    const wallCol = this.game.col.addBox(S.maxX - 0.1, y0, V.minZ, S.maxX + 0.05, y0 + 3.4, V.maxZ, { tag: 'wall' });
+    const rubble = new THREE.Group(); rubble.visible = false; b.group.add(rubble);
+    const rnd = mulberry(1912);
+    for (let i = 0; i < 16; i++) {
+      const s = 0.15 + rnd() * 0.3;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(s, s * 0.5, s * 1.3), M.lime || M.wall);
+      m.position.set(S.maxX - 0.4 - rnd() * 2.2, y0 + s * 0.25, V.minZ + rnd() * (V.maxZ - V.minZ)); m.rotation.y = rnd() * 3; rubble.add(m);
+    }
+    this.vigiaWall = { wall, collider: wallCol, rubble, broken: false };
+    // velas e oferendas ao pé da parede de cal
+    for (const [x, z] of [[103.4, 50.6], [103.5, 51.2], [103.4, 54.5], [103.6, 55.2], [103.0, 52.8]]) b.box(x - 0.05, y0, z - 0.05, x + 0.05, y0 + 0.24, z + 0.05, 'candle', { collide: false });
+    // pilares de ferro fundido (investida contra eles = atordoado) com capitéis
+    for (const P of SOB_PILLARS) {
+      b.box(P.x - P.r, y0, P.z - P.r, P.x + P.r, yT, P.z + P.r, 'steelDark', { tag: 'obstacle' });
+      b.box(P.x - 0.6, y0, P.z - 0.6, P.x + 0.6, y0 + 0.35, P.z + 0.6, 'steel', { collide: false });
+      b.box(P.x - 0.65, yT - 0.5, P.z - 0.65, P.x + 0.65, yT - 0.2, P.z + 0.65, 'steel', { collide: false });
+    }
+    // trilhos atravessando a estação e o vagão funerário (obstáculo)
+    for (const z of [51.7, 53.3]) b.box(S.minX, y0, z - 0.04, 102, y0 + 0.14, z + 0.04, 'steel', { collide: false });
+    for (let x = S.minX + 0.4; x < 102; x += 0.9) b.box(x, y0, 51.3, x + 0.25, y0 + 0.06, 53.7, 'woodDark', { collide: false });
+    b.box(101.8, y0, 51.1, 102.4, y0 + 1.0, 53.9, 'rust');   // para-choque do fim da linha
+    const Wg = WAGON;
+    b.box(Wg.minX, y0 + 0.5, Wg.minZ, Wg.maxX, y0 + 2.9, Wg.maxZ, 'woodDark', { tag: 'obstacle' });
+    b.box(Wg.minX - 0.1, y0 + 2.9, Wg.minZ - 0.1, Wg.maxX + 0.1, y0 + 3.05, Wg.maxZ + 0.1, 'coal', { collide: false });
+    for (let x = Wg.minX + 0.6; x < Wg.maxX - 0.4; x += 1.4) {
+      b.box(x, y0 + 1.6, Wg.minZ - 0.02, x + 0.8, y0 + 2.4, Wg.minZ, 'glass', { collide: false });
+      b.box(x, y0 + 1.6, Wg.maxZ, x + 0.8, y0 + 2.4, Wg.maxZ + 0.02, 'glass', { collide: false });
+    }
+    for (const x of [Wg.minX + 1, Wg.maxX - 1]) for (const z of [51.7, 53.3]) {
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.1, 12), M.steelDark || M.rust); w.rotation.x = Math.PI / 2; w.position.set(x, y0 + 0.4, z); b.group.add(w);
+    }
+    this.sign('IRMANDADE — TRANSLADO', (Wg.minX + Wg.maxX) / 2, y0 + 1.1, Wg.minZ - 0.03, Math.PI, 2.4, 0.22, { bg: '#16140f', fg: '#c8b890' });
+    // atril com a ata, bancos de pedra, placas
+    const A = ATRIL;
+    b.box(A.x - 0.3, y0, A.z - 0.25, A.x + 0.3, y0 + 1.05, A.z + 0.25, 'woodDark', { tag: 'prop-low', sight: false });
+    b.box(A.x - 0.35, y0 + 1.05, A.z - 0.3, A.x + 0.35, y0 + 1.12, A.z + 0.3, 'paper', { collide: false });
+    for (const z of [44.2, 61.8]) b.box(86, y0, z - 0.3, 89, y0 + 0.5, z + 0.3, 'stone', { tag: 'prop-low', sight: false });
+    this.sign('SOB A PEDRA', 91, y0 + 3.6, S.minZ + 0.12, 0, 4.2, 0.6, { bg: '#0c2a3a', fg: '#e8e0c8' });
+    this.sign('SOB A PEDRA', 84, y0 + 3.6, S.maxZ - 0.12, Math.PI, 4.2, 0.6, { bg: '#0c2a3a', fg: '#e8e0c8' });
+    this.sign('AQUI DORME A PRIMEIRA CINZA', S.maxX - 0.12, y0 + 4.2, V.z, -Math.PI / 2, 3.2, 0.3, { bg: '#16140f', fg: '#c8b890' });
+    this.sign('SAÍDA DE SERVIÇO ↑', STAIR.door.x, y0 + 2.75, S.maxZ - 0.12, Math.PI, 1.8, 0.22, { bg: '#1a1712', fg: '#cbbf98' });
+    // sinetas da estação: alavanca na parede oeste, cabo pelo teto, sino no canto leste
+    for (const B of SOB_BELLS) {
+      const pv = new THREE.Group(); pv.position.set(B.lever.x - 0.25, y0 + 0.9, B.lever.z); b.group.add(pv);
+      const rod = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.5), M.rust); rod.position.z = 0; rod.position.x = 0.25; rod.rotation.y = Math.PI / 2; pv.add(rod);
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), M.brass); knob.position.x = 0.5; pv.add(knob);
+      b.box(S.minX + 0.1, y0 + 0.9, B.lever.z - 0.02, B.lever.x - 0.2, yT - 0.6, B.lever.z + 0.02, 'rust', { collide: false });
+      b.box(S.minX + 0.1, yT - 0.62, B.lever.z - 0.015, B.bell.x, yT - 0.58, B.lever.z + 0.015, 'rust', { collide: false });
+      const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.32, 0.4, 12, 1, true), M.brass);
+      bell.position.set(B.bell.x, yT - 0.9, B.bell.z); b.group.add(bell);
+      this.bells[B.id] = { ...B, mesh: bell, lever: pv, t: -1, rung: 0 };
+    }
+  }
+  /** balança uma sineta (visual); o barulho de verdade é do script (PerceptionSystem) */
+  ringBell(id) { const B = this.bells[id]; if (B) { B.t = 0; B.rung = (B.rung || 0) + 1; } return !!B; }
+
+  /** a parede de cal do Vigia se rompe (ou já está rompida, no save) */
+  breakVigiaWall() {
+    const V = this.vigiaWall;
+    if (!V || V.broken) return false;
+    V.broken = true; V.wall.visible = false; V.rubble.visible = true; V.collider.enabled = false;
+    return true;
+  }
+
+  // ---------- ESCADA DE SERVIÇO (norte, x97.4..100.6 z64..69.5): grade com cadeado, degraus subindo para a Usina ----------
+  _stair() {
+    const b = this.b, S = STAIR, y0 = TRACK_Y;
+    b.floor(S.minX, S.minZ, S.maxX, S.maxZ, y0, 'concrete', 'c7_saida');
+    b.ceiling(S.minX, S.minZ, S.maxX, S.maxZ, y0 + 6, 'cantaria');
+    b.box(S.minX - 0.2, y0, S.minZ, S.minX, y0 + 6, S.maxZ, 'cantaria');
+    b.box(S.maxX, y0, S.minZ, S.maxX + 0.2, y0 + 6, S.maxZ, 'cantaria');
+    b.box(S.minX - 0.2, y0, S.maxZ, S.maxX + 0.2, y0 + 6, S.maxZ + 0.2, 'cantaria');
+    // degraus de ferro subindo para o norte (visual: a saída encerra o capítulo)
+    for (let i = 0; i < 12; i++) b.box(S.minX + 0.3, y0, 65.4 + i * 0.34, S.maxX - 0.3, y0 + 0.2 + i * 0.3, 65.74 + i * 0.34, 'steelDark', { collide: false });
+    this.sign('USINA DE VÉSPERA — TORRE DE TRANSMISSÃO ↑', 99, y0 + 4.6, S.maxZ - 0.02, Math.PI, 2.6, 0.24, { bg: '#2a1a0c', fg: '#f0c070' });
+  }
+
   _doors() {
     const ctx = { materials: this.M, group: this.b.group, col: this.game.col, audio: this.game.audio, bus: this.game.bus };
     const D = (o) => (this.doors[o.id] = new Door({ mat: this.M.door, ...o }, ctx));
@@ -402,6 +729,9 @@ export class PedraLevel {
     D({ id: 'c7_ossGate', axis: 'x', x: 18, y: GROUND, z: OSSUARY.maxZ, width: 1.8, height: 2.6, swing: 1, mat: this.M.rust || this.M.doorMetal, locked: true,
       lockMsg: 'Grade de ferro com um cadeado de bronze em forma de crânio. A fechadura fica na boca. Alguém levou a chave.', label: 'grade do fundo do ossuário' });
     D({ id: 'c7_corridor', axis: 'x', x: 38, y: GROUND, z: PLATFORM.minZ, width: 1.2, height: 2.3, swing: 1, mat: this.M.doorMetal || this.M.door, label: 'porta de serviço da plataforma' });
+    D({ id: 'c7_cabin', axis: 'x', x: CABIN.door.x, y: TRACK_Y, z: CABIN.maxZ - 0.1, width: 1.2, height: 2.3, swing: -1, mat: this.M.door, label: 'porta da cabine de sinalização' });
+    D({ id: 'c7_stairs', axis: 'x', x: STAIR.door.x, y: TRACK_Y, z: SOB.maxZ + 0.1, width: 1.6, height: 2.4, swing: 1, mat: this.M.rust || this.M.doorMetal, locked: true,
+      lockMsg: 'Grade de ferro da escada de serviço, com um cadeado grosso da Irmandade. Do outro lado, degraus sobem para o escuro e um cheiro de óleo queimado.', label: 'grade da escada de serviço' });
   }
 
   _lights() {
@@ -418,6 +748,14 @@ export class PedraLevel {
     this.lamp(24, Y + 4.3, 47, cold, 0.9, 12, { flicker: true });
     this.lamp(38, Y + 4.3, 47, cold, 0.8, 10);
     this.lamp(47.4, Y + 1.8, 52.6, red, 0.7, 7, { emergency: true });        // grade da Linha Velha
+    this.lamp(56, TRACK_Y + 3.4, 52.6, sodium, 0.55, 8, { flicker: true });  // Linha Velha
+    this.lamp(70.5, TRACK_Y + 3.4, 52.6, sodium, 0.5, 8);
+    this.lamp(63, TRACK_Y + 2.6, 47.4, warm, 0.8, 7);                        // cabine de sinalização
+    this.lamp(76.4, TRACK_Y + 3.2, 52.6, red, 0.7, 7, { emergency: true });  // grade levadiça
+    this.lamp(84, TRACK_Y + 6.6, 52.6, cold, 0.9, 14);                       // Estação Sob a Pedra
+    this.lamp(96, TRACK_Y + 6.6, 52.6, cold, 0.8, 14, { flicker: true });
+    this.lamp(103, TRACK_Y + 1.4, 52.8, candle, 0.9, 8, { flicker: true });  // velas da parede de cal
+    this.lamp(99, TRACK_Y + 3.0, 66.4, warm, 0.6, 7);                        // escada de serviço
     this.lamp(26, Y + 2.4, 3, sodium, 0.5, 6, { flicker: true });            // corredor de serviço
     this.lamp(38, Y + 2.4, 12, sodium, 0.5, 7);
     this.lamp(38, Y + 2.4, 26, sodium, 0.5, 7, { flicker: true });
@@ -437,6 +775,13 @@ export class PedraLevel {
     N('pl0', 18, 46.4); N('plW', 9.6, 47.6); N('plE', 28, 48.4); N('plE2', 38, 45.6); N('plE3', 42, 48.6);
     N('tr0', 42, 52.6, TRACK_Y); N('trW', 12, 52.5, TRACK_Y); N('trE', 46.4, 52.6, TRACK_Y);
     N('s0', 38, 42.6); N('s1', 38, 24); N('s2', 38, 3); N('s3', 24, 3);
+    // Linha Velha, cabine, Estação Sob a Pedra (piso dos trilhos)
+    const T = TRACK_Y;
+    N('l0', 51, 52.6, T); N('l1', 55, 52.6, T); N('l2', 59, 51.0, T); N('l3', 63, 52.6, T); N('l4', 68, 52.6, T); N('l5', 72, 54.2, T); N('l6', 76, 52.6, T);
+    N('nL1', 59, 55.7, T); N('nL2', 72, 49.5, T); N('cab0', 63, 48.4, T); N('cab1', 62.6, 46.6, T);
+    N('sp0', 80, 52.6, T); N('spNW', 81, 45, T); N('spSW', 81, 61, T); N('nS1', 77.5, 45.6, T); N('nS2', 77.5, 59.6, T);
+    N('spN1', 87.5, 49.5, T); N('spS1', 87.5, 56, T); N('spN2', 94.5, 49.5, T); N('spS2', 94.5, 56, T);
+    N('spNE', 101, 45, T); N('spE', 100.5, 52.8, T); N('spSE', 101, 61, T); N('spX', 99, 62.6, T); N('st0', 99, 66, T);
     const L = (a, b, door) => n.link(a, b, door);
     L('p0', 'p1'); L('p0', 'pE'); L('p1', 'pE'); L('p1', 'gl0'); L('gl0', 'gl1');
     L('gl1', 'o0', d.c7_gate);
@@ -447,6 +792,11 @@ export class PedraLevel {
     L('pl0', 'plW'); L('pl0', 'plE'); L('plE', 'plE2'); L('plE', 'plE3'); L('plE2', 'plE3'); L('plE3', 'tr0'); L('tr0', 'trW'); L('tr0', 'trE');
     L('plE2', 's0', d.c7_corridor); L('s0', 's1'); L('s1', 's2'); L('s2', 's3');
     L('s3', 'pE', d.c7_service);
+    L('trE', 'l0'); L('l0', 'l1'); L('l1', 'l2'); L('l2', 'l3'); L('l3', 'l4'); L('l4', 'l5'); L('l5', 'l6'); L('l6', 'sp0');
+    L('l2', 'nL1'); L('l5', 'nL2'); L('l4', 'nL2'); L('l3', 'cab0', d.c7_cabin); L('cab0', 'cab1');
+    L('sp0', 'spNW'); L('sp0', 'spSW'); L('spNW', 'nS1'); L('spSW', 'nS2'); L('sp0', 'spN1'); L('sp0', 'spS1');
+    L('spNW', 'spN1'); L('spSW', 'spS1'); L('spN1', 'spN2'); L('spS1', 'spS2'); L('spN2', 'spNE'); L('spN2', 'spE'); L('spS2', 'spE'); L('spS2', 'spSE');
+    L('spNE', 'spE'); L('spSE', 'spE'); L('spSE', 'spX'); L('spX', 'st0', d.c7_stairs);
   }
 
   _cullLights(dt) {
@@ -468,6 +818,21 @@ export class PedraLevel {
     for (const id in this.doors) this.doors[id].update(dt);
     const J = this.jazigo;
     if (J && J.t >= 0) { J.t += dt; this._placeLid(J.t / 0.9); if (J.t >= 0.9) J.t = -1; }
+    const G = this.lineGate;
+    if (G && G.t >= 0) { G.t += dt; this._placeGate(G.t / 0.8); if (G.t >= 0.8) G.t = -1; }
+    const P = this.portcullis;
+    if (P && P.k !== P.target) {
+      // sobe devagar (corrente), desce de uma vez
+      P.k = P.target > P.k ? Math.min(P.target, P.k + dt / 2.4) : Math.max(P.target, P.k - dt / 0.35);
+      P.group.position.y = TRACK_Y + P.k * (PORTCULLIS.h - 0.3);
+      if (P.open && P.k > 0.6) P.collider.enabled = false;
+    }
+    for (const id in this.levers) { const Lv = this.levers[id]; Lv.pivot.rotation.x += (Lv.target - Lv.pivot.rotation.x) * Math.min(1, dt * 10); }
+    if (this.signalLamp) this.signalLamp.material = this.portcullis?.open ? (this.M.lampGreen || this.M.lampOn) : (this.M.lampRed || this.M.lampOff);
+    for (const id in this.bells) {
+      const B = this.bells[id];
+      if (B.t >= 0) { B.t += dt; B.mesh.rotation.z = Math.sin(B.t * 14) * 0.5 * Math.max(0, 1 - B.t / 2.2); if (B.lever) B.lever.rotation.z = -0.6 * Math.max(0, 1 - B.t / 0.6); if (B.t > 2.2) B.t = -1; }
+    }
     this._updateZone(dt);
   }
   zoneAt(p) { return pedraZoneAt(p); }
