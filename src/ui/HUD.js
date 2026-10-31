@@ -49,6 +49,11 @@ export class HUD {
     this._set('obj', this.el.objective, 'textContent', game.quest.current() ? '◆ ' + game.quest.current() : '');
     const side = game.quest.side();
     if (this.el.objective2) this._set('obj2', this.el.objective2, 'textContent', side.length ? '◇ ' + side[side.length - 1] : '');
+    // objetivo longo (2 linhas) empurra o secundário para baixo em vez de sobrepor
+    if (this.el.objective2 && this._last.objH !== this.el.objective.offsetHeight) {
+      this._last.objH = this.el.objective.offsetHeight;
+      this.el.objective2.style.top = (18 + Math.max(22, this._last.objH + 4)) + 'px';
+    }
     const it = game.currentInteractable;
     const ptxt = it ? '[E] ' + (typeof it.prompt === 'function' ? it.prompt() : it.prompt) : '';
     this._set('prompt', this.el.prompt, 'textContent', ptxt);

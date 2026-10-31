@@ -280,6 +280,15 @@ export class PlayerController {
     return 'hit';
   }
 
+  /** dano do ambiente (água podre, choque): sem defesa nem empurrão, sem interromper a ação */
+  envDamage(dmg) {
+    if (this.state === 'dead') return 'ignored';
+    this.hp -= dmg; this.stats.damageTaken += dmg;
+    this.game.hud.flashDamage();
+    if (this.hp <= 0) { this.hp = 0; this._die(); return 'dead'; }
+    return 'hit';
+  }
+
   startGrab(enemy, need = 7) {
     if (this.state === 'dead' || this.iframes > 0 || this.state === 'grabbed') return false;
     this.attack = null; this.queued = null;
@@ -642,6 +651,9 @@ export class PlayerController {
       default: break;
     }
 
+    // água (Cap. 5): o nível informa lentidão e correnteza onde Elias está com água pela cintura
+    const env = g.level?.waterAt?.(this.pos) || null;
+    if (env) { moveX *= env.slow; moveZ *= env.slow; }
     // velocidade suavizada + empurrões
     const acc = this.state === 'dodge' || this.state === 'attack' ? 30 : 12;
     const k = Math.min(1, acc * dt);
@@ -652,8 +664,8 @@ export class PlayerController {
       this.vel.x = Math.sin(this.yaw) * lunge; this.vel.z = Math.cos(this.yaw) * lunge;
     }
     if (this.state === 'grabbed' || this.state === 'dead') { this.vel.x = 0; this.vel.z = 0; }
-    this.pos.x += (this.vel.x + this.knock.x) * dt;
-    this.pos.z += (this.vel.z + this.knock.z) * dt;
+    this.pos.x += (this.vel.x + this.knock.x + (env ? env.cx : 0)) * dt;
+    this.pos.z += (this.vel.z + this.knock.z + (env ? env.cz : 0)) * dt;
     this.knock.x *= Math.max(0, 1 - 8 * dt); this.knock.z *= Math.max(0, 1 - 8 * dt);
 
     // colisões: cenário e inimigos

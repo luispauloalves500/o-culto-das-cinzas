@@ -29,6 +29,8 @@ export class Enemy {
     this.speed = 0;
     this.groanT = 3 + Math.random() * 6;
     this.dormant = !!o.dormant; // só desperta por trigger
+    // Afogado: espera deitado no fundo do canal (submerso) e emerge ao acordar
+    this.submerged = !!(o.submerged && this.dormant); this.emerging = 0;
     this._build();
   }
 
@@ -47,6 +49,9 @@ export class Enemy {
       : d.mats === 'acolito'
       // Capítulo 3: túnica vermelho-sangue até os pés, mãos cinzentas, cabeça coberta pelo véu negro
       ? { skin: M.deadSkin, shirt: M.robe || M.altarCloth, arms: M.robe || M.altarCloth, pants: M.robe || M.altarCloth, legs: M.robe || M.altarCloth, feet: M.leatherDark, head: M.veil || M.coal }
+      : d.mats === 'afogado'
+      // Capítulo 5: corpo inchado e esverdeado de quem passou anos no fundo do canal, roupa de operário em farrapos
+      ? { skin: M.drownedSkin || M.deadSkin, shirt: M.drownedCloth || M.pantsGray, arms: M.drownedSkin || M.deadSkin, pants: M.drownedCloth || M.pantsGray, legs: M.drownedSkin || M.deadSkin, feet: M.drownedSkin || M.deadSkin, head: M.drownedSkin || M.deadSkin }
       : d.mats === 'cinzento'
       // Capítulo 4: morador da Cidade Morta, coberto de cinza dos pés à cabeça, terno puído de domingo
       ? { skin: M.ash || M.deadSkin, shirt: M.pantsGray, arms: M.pantsGray, pants: M.pantsGray, legs: M.pantsGray, feet: M.leatherDark, head: M.ash || M.deadSkin }
@@ -91,6 +96,14 @@ export class Enemy {
       const crown = new THREE.Mesh(new THREE.BoxGeometry(0.22 * s, 0.1 * s, 0.22 * s), M.woodDark); crown.position.set(0, 0.33 * s, 0.01 * s); h.add(crown);
       const bar = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.7), M.rust); bar.position.set(0, -0.03, 0.3);
       this.rig.armR.end.add(bar);
+    } else if (d.mats === 'afogado') {
+      // cabelo de lodo escorrendo, algas penduradas nos braços e um pedaço de corrente presa no pulso
+      const hair = new THREE.Mesh(new THREE.BoxGeometry(0.27 * s, 0.34 * s, 0.24 * s), M.weed || M.coal); hair.position.set(0, 0.1 * s, -0.04 * s); h.add(hair);
+      for (const [arm, x] of [[this.rig.armR, 0.03], [this.rig.armL, -0.03]]) {
+        const w = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.02), M.weed || M.coal); w.position.set(x, -0.16, 0.02); arm.upper.add(w);
+      }
+      const chain = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 4, 8), M.rust); chain.position.set(0, -0.02, 0.04); this.rig.armL.end.add(chain);
+      const link = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.28), M.rust); link.position.set(0, -0.12, 0.08); link.rotation.x = 0.9; this.rig.armL.end.add(link);
     } else if (d.mats === 'interno') {
       const band = new THREE.Mesh(new THREE.BoxGeometry(0.25 * s, 0.07 * s, 0.27 * s), M.bandageDirty);
       band.position.y = 0.17 * s; h.add(band);
@@ -103,17 +116,24 @@ export class Enemy {
       blade.position.set(0, -0.03, 0.2); this.rig.armR.end.add(blade);
     }
     // olhos fracos: ajudam a ler o inimigo no escuro (caçadores: furos do capuz com brilho de brasa)
-    const eyeMat = d.mats === 'cacador' || d.mats === 'carvoeiro' || d.mats === 'acolito' ? (M.ember || M.eyeGlow) : M.eyeGlow;
+    const eyeMat = d.mats === 'afogado' ? (M.drownedEye || M.eyeGlow) : d.mats === 'cacador' || d.mats === 'carvoeiro' || d.mats === 'acolito' ? (M.ember || M.eyeGlow) : M.eyeGlow;
     for (const x of [-0.05, 0.05]) {
       const e = new THREE.Mesh(new THREE.BoxGeometry(0.03 * s, 0.02 * s, 0.01), eyeMat);
       e.position.set(x * s, 0.19 * s, (d.mats === 'cacador' || d.mats === 'acolito' ? 0.16 : 0.125) * s); h.add(e);
     }
-    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : d.mats === 'cinzento' ? 0.6 : 0.38);
+    this.hand = new THREE.Object3D(); this.hand.position.set(0, -0.05, d.mats === 'interno' ? 0.05 : d.mats === 'cacador' ? 0.36 : d.mats === 'carvoeiro' ? 0.8 : d.mats === 'acolito' ? 0.42 : d.mats === 'cinzento' ? 0.6 : d.mats === 'afogado' ? 0.14 : 0.38);
     this.rig.armR.end.add(this.hand);
     this.rig.root.position.copy(this.pos);
+    if (this.submerged) this.rig.root.position.y -= 1.7;
     this.rig.root.rotation.y = this.yaw;
     this.game.scene.add(this.rig.root);
   }
+
+  /** Afogado: quão "molhado" está o terreno (0 seco … 1 água/margem), informado pelo nível */
+  wetness() { return this.def.aquatic ? Math.max(0, Math.min(1, this.game.level?.wetness?.(this.pos) ?? 0)) : 0; }
+  /** multiplicador de velocidade conforme o terreno (só para quem é da água) */
+  speedMul() { const d = this.def; if (!d.aquatic) return 1; const w = this.wetness(); return d.drySpeed + (d.wetSpeed - d.drySpeed) * w; }
+  dmgMul() { const d = this.def; return d.aquatic ? 1 + (d.wetDmg - 1) * this.wetness() : 1; }
 
   hurtVolumes() {
     const d = this.def;
@@ -129,7 +149,17 @@ export class Enemy {
     return [{ type: 'capsule', part: 'body', x: this.pos.x, z: this.pos.z, y0: this.pos.y + 0.35, y1: this.pos.y + top, r: this.radius }];
   }
 
-  wake() { if (this.dormant) { this.dormant = false; this._alert(this.game.player.pos); } }
+  wake() {
+    if (!this.dormant) return;
+    this.dormant = false;
+    if (this.submerged) {
+      // emerge do canal: a água ferve, o corpo sobe devagar e só então ele corre
+      this.submerged = false; this.emerging = this.def.emergeTime || 1;
+      this.game.audio.play('splash', this.pos);
+      this.game.combat?.splash?.(this.pos);
+    }
+    this._alert(this.game.player.pos);
+  }
 
   _set(s) {
     if (this.state === 'attack' || this.state === 'grabbing') this.game.director.release(this);
@@ -147,6 +177,7 @@ export class Enemy {
   takeHit({ dmg, poise, heavy, from, point }) {
     if (!this.alive) return 'immune';
     const g = this.game;
+    if (this.def.aquatic && this.dormant) this.wake();
     this.hp -= dmg;
     g.audio.play('hit', this.pos, { heavy });
     g.combat.blood(point || { x: this.pos.x, y: this.pos.y + 1.3, z: this.pos.z }, heavy ? 22 : 14);
@@ -191,7 +222,7 @@ export class Enemy {
 
   // ---- movimento ----
   _clear(a, b) {
-    const f = (bx) => bx.tag !== 'prop-low';
+    const f = this.def.aquatic ? (bx) => bx.tag !== 'prop-low' && bx.tag !== 'retain' : (bx) => bx.tag !== 'prop-low';
     const y1 = this.pos.y + 0.9;
     return this.game.col.segmentClear({ x: a.x, y: y1, z: a.z }, { x: b.x, y: y1, z: b.z }, f);
   }
@@ -204,7 +235,8 @@ export class Enemy {
       const nav = this.game.nav;
       if (this.repath <= 0 || !this.path) {
         this.repath = 0.7;
-        const a = nav.nearest(this.pos, this.game.col), b = nav.nearest(target, this.game.col) || nav.nearest(target);
+        const dy = this.def.aquatic ? 0.9 : 1.5; // aquáticos: nó da mesma cota (leito × margem)
+        const a = nav.nearest(this.pos, this.game.col, dy) || nav.nearest(this.pos, this.game.col), b = nav.nearest(target, this.game.col, dy) || nav.nearest(target, this.game.col) || nav.nearest(target);
         this.path = a && b ? nav.findPath(a.id, b.id) : null;
         this.pathI = 0;
       }
@@ -253,7 +285,16 @@ export class Enemy {
     this.flinch = Math.max(0, this.flinch - dt);
     this.poiseT -= dt; if (this.poiseT <= 0) this.poise = this.def.poise;
     if (this.state === 'dead') { this._animate(dt, 0); this.rig.root.position.copy(this.pos); return; }
-    if (this.dormant) { this._animate(dt, 0); return; }
+    if (this.dormant) { this._animate(dt, 0); if (this.submerged) { this.rig.root.position.copy(this.pos); this.rig.root.position.y -= 1.7; } return; }
+    if (this.emerging > 0) {
+      this.emerging = Math.max(0, this.emerging - dt);
+      const k = this.emerging / (this.def.emergeTime || 1);
+      this._face(p.pos, this.def.turn, dt); this.speed = 0;
+      this._animate(dt, 0);
+      this.rig.root.position.copy(this.pos); this.rig.root.position.y -= 1.7 * k * k;
+      this.rig.root.rotation.y = this.yaw;
+      return;
+    }
 
     // percepção a cada 0.2 s
     this.percT -= dt;
@@ -273,7 +314,7 @@ export class Enemy {
     }
 
     const dist = Math.hypot(p.pos.x - this.pos.x, p.pos.z - this.pos.z);
-    const d = this.def;
+    const d = this.def, sm = this.speedMul();
     switch (this.state) {
       case 'idle':
         this.speed = 0;
@@ -282,11 +323,11 @@ export class Enemy {
       case 'patrol': {
         if (this.waitT > 0) { this.waitT -= dt; this.speed = 0; break; }
         const wp = this.patrol[this.patrolI];
-        if (this._moveTo(wp, d.walk, dt)) { this.patrolI = (this.patrolI + 1) % this.patrol.length; this.waitT = 1.5 + Math.random() * 2; }
+        if (this._moveTo(wp, d.walk * sm, dt)) { this.patrolI = (this.patrolI + 1) % this.patrol.length; this.waitT = 1.5 + Math.random() * 2; }
         break;
       }
       case 'investigate':
-        if (this._moveTo(this.lastKnown, d.walk * 1.5, dt) || this.stateT > 10) this._set('search');
+        if (this._moveTo(this.lastKnown, d.walk * 1.5 * sm, dt) || this.stateT > 10) this._set('search');
         break;
       case 'chase': {
         if (!p.alive) { this._set('return'); break; }
@@ -300,7 +341,7 @@ export class Enemy {
           if (atk && facing < 0.6 && g.director.request(this)) { this._startAttack(atk); break; }
           if (dist < 1.2) { this.speed = 0; break; } // espera sua vez
         }
-        const arrived = this._moveTo(target, d.chase, dt);
+        const arrived = this._moveTo(target, d.chase * sm, dt);
         if (arrived && !sees && this.lostT > 1.2) this._set('search');
         // grunhidos ocasionais
         this.groanT -= dt;
@@ -315,7 +356,7 @@ export class Enemy {
       }
       case 'return': {
         const goal = this.patrol ? this.patrol[this.patrolI] : this.home;
-        if (this._moveTo(goal, d.walk, dt)) { this.alerted = false; this._set(this.patrol ? 'patrol' : 'idle'); }
+        if (this._moveTo(goal, d.walk * sm, dt)) { this.alerted = false; this._set(this.patrol ? 'patrol' : 'idle'); }
         break;
       }
       case 'attack': this._updateAttack(dt); break;
@@ -342,8 +383,10 @@ export class Enemy {
       const dx = this.pos.x - p.pos.x, dz = this.pos.z - p.pos.z, dd = Math.hypot(dx, dz), m = this.radius + p.radius;
       if (dd < m && dd > 1e-4 && Math.abs(p.pos.y - this.pos.y) < 1.5) { this.pos.x += dx / dd * (m - dd); this.pos.z += dz / dd * (m - dd); }
     }
-    g.col.resolveCircle(this.pos, this.radius, d.height);
-    const gy = g.col.groundAt(this.pos.x, this.pos.z, this.pos.y);
+    // aquáticos escalam o muro de arrimo do canal (emergem da água para a margem); o jogador não
+    const climb = d.aquatic && this.pos.y < -0.3;
+    g.col.resolveCircle(this.pos, this.radius, d.height, climb ? (b) => b.tag !== 'retain' : null);
+    const gy = g.col.groundAt(this.pos.x, this.pos.z, this.pos.y, climb ? 1.7 : 0.6);
     if (gy > -Infinity) this.pos.y = gy;
 
     this._animate(dt, this.speed);
@@ -379,7 +422,7 @@ export class Enemy {
           if (a.grab) {
             if (p.startGrab(this)) { this.grabTick = 0.5; this._set('grabbing'); g.director.request(this); return; }
           } else {
-            p.takeHit({ dmg: a.dmg, from: this.pos, knock: a.knock, source: this });
+            p.takeHit({ dmg: Math.round(a.dmg * this.dmgMul()), from: this.pos, knock: a.knock, source: this });
           }
         }
       }
