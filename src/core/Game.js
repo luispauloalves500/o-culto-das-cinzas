@@ -201,7 +201,8 @@ export class Game {
     if (s.chapter === 7 && (s.flags.c7_chapterDone || s.checkpoint === 'c7_end')) return this.startChapter8(s);
     this._buildWorld(s);
     this._enterPlay();
-    if (this.chapter === 8) this.hud.toast(s.flags.c8_sliceDone ? 'Capítulo 8 — A Última Chama · base da torre de transmissão' : s.flags.c8_inTurbine ? 'Capítulo 8 — A Última Chama · Sala da Turbina' : s.flags.c8_inBoiler ? 'Capítulo 8 — A Última Chama · Casa das Caldeiras' : 'Capítulo 8 — A Última Chama · pátio do carvão', 3.5);
+    if (this.chapter === 8 && s.flags.c8_chapterDone) { this.endChapter(); return; }
+    if (this.chapter === 8) this.hud.toast(s.flags.c8_cinzaDead ? 'Capítulo 8 — A Última Chama · Sala dos Transmissores (a Primeira Cinza caiu)' : s.flags.c8_vernetDown ? 'Capítulo 8 — A Última Chama · Sala dos Transmissores (a Primeira Cinza)' : s.flags.c8_atTop ? 'Capítulo 8 — A Última Chama · topo da torre' : s.flags.c8_inMachine ? 'Capítulo 8 — A Última Chama · casa de máquinas da torre' : s.flags.c8_sliceDone ? 'Capítulo 8 — A Última Chama · base da torre de transmissão' : s.flags.c8_inTurbine ? 'Capítulo 8 — A Última Chama · Sala da Turbina' : s.flags.c8_inBoiler ? 'Capítulo 8 — A Última Chama · Casa das Caldeiras' : 'Capítulo 8 — A Última Chama · pátio do carvão', 3.5);
     if (this.chapter === 7) this.hud.toast(s.flags.c7_chapterDone ? 'Capítulo 7 — Sob a Pedra · escada de serviço (capítulo concluído)' : s.flags.c7_vigiaDead ? 'Capítulo 7 — Sob a Pedra · Estação Sob a Pedra (o Vigia caiu)' : s.flags.c7_portOpen ? 'Capítulo 7 — Sob a Pedra · boca da Estação Sob a Pedra' : s.flags.c7_lineOpen ? 'Capítulo 7 — Sob a Pedra · Linha Velha' : s.flags.c7_sliceDone ? 'Capítulo 7 — Sob a Pedra · trilhos da Linha Velha' : s.flags.c7_onPlatform ? 'Capítulo 7 — Sob a Pedra · Estação Sé Velha' : s.flags.c7_inOssuary ? 'Capítulo 7 — Sob a Pedra · ossuário' : 'Capítulo 7 — Sob a Pedra · catacumbas', 3.5);
     if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
     if (this.chapter === 3) this.hud.toast('Capítulo 3 — A Confraria · Sede do Véu', 3.5);
@@ -316,7 +317,8 @@ export class Game {
       note: this.inventory.documents.includes('bilhete_ines'), rounds: this.inventory.documents.includes('livro_rondas'),
       ficha: this.inventory.documents.includes('ficha_remessa'), diario: this.inventory.documents.includes('diario_comporteiro'),
       catalogo: this.inventory.documents.includes('catalogo_colecionador'), relic: this.inventory.documents.includes('relicario_colecionador'),
-      ata: this.inventory.documents.includes('ata_primeira_cinza'), guia: this.inventory.documents.includes('guia_remocao_vigia') });
+      ata: this.inventory.documents.includes('ata_primeira_cinza'), guia: this.inventory.documents.includes('guia_remocao_vigia'),
+      ending: this.quest.flags?.c8_ending || null, flags: { ...(this.quest.flags || {}) } });
   }
 
   // ---------- interação ----------

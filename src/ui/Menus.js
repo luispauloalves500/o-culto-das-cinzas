@@ -4,9 +4,10 @@ import { FLOORS, roomAt, mapChapter } from '../data/map.js';
 import { collectNotes } from './notes.js';
 import { WEAPONS, conditionLabel } from '../data/weapons.js';
 import { MapView } from './MapView.js';
+import { endingEpilogue, CREDITS } from '../data/endings.js';
 
 const $ = (id) => document.getElementById(id);
-const SCREENS = ['menu', 'options', 'pause', 'inventory', 'map', 'reader', 'dead', 'chapterEnd', 'loading', 'clickToPlay'];
+const SCREENS = ['menu', 'options', 'pause', 'inventory', 'map', 'reader', 'dead', 'chapterEnd', 'credits', 'loading', 'clickToPlay'];
 
 export class Menus {
   constructor(game) {
@@ -24,6 +25,9 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
+    if ($('btnEndCredits')) $('btnEndCredits').onclick = () => this.showCredits();
+    if ($('btnCreditsBack')) $('btnCreditsBack').onclick = () => this.show('chapterEnd');
+    if ($('btnCreditsMenu')) $('btnCreditsMenu').onclick = () => g.toMenu();
     $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 8) return; if (g.chapter === 7) g.startChapter8(); else if (g.chapter === 6) g.startChapter7(); else if (g.chapter === 5) g.startChapter6(); else if (g.chapter === 4) g.startChapter5(); else if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
@@ -81,11 +85,13 @@ export class Menus {
   drawMap() {
     const g = this.game, mv = this.mapView;
     this.lastMap = mv.draw(g);
-    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4, ch5 = mapChapter() === 5, ch6 = mapChapter() === 6, ch7 = mapChapter() === 7;
+    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4, ch5 = mapChapter() === 5, ch6 = mapChapter() === 6, ch7 = mapChapter() === 7, ch8 = mapChapter() === 8;
     for (const el of document.querySelectorAll('.map-tab')) {
       const fid = FLOORS[+el.dataset.floor].id;
       el.classList.toggle('active', fid === mv.floor);
       el.classList.toggle('hidden', ((ch2 || ch6 || ch7) && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo') || (ch5 && fid !== 'up' && fid !== 'up2'));
+      if (ch8) { el.textContent = { up: 'Usina — térreo', up2: 'Esteira · galeria', roof: 'Torre — casa de máquinas', lo: 'Torre — Sala dos Transmissores' }[fid]; el.style.order = { up: 0, up2: 1, roof: 2, lo: 3 }[fid]; continue; }
+      el.style.order = '';
       el.textContent = ch7 ? 'Catacumbas · Linha Velha · Sob a Pedra' : ch6 ? 'Museu — O Acervo' : ch5 ? (fid === 'up2' ? 'Mezanino · passarela' : 'Canais · casa de bombas') : ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
     }
     const r = roomAt(g.player.pos);
@@ -93,6 +99,12 @@ export class Menus {
     $('mapPlan').textContent = mapChapter() === 7 ? 'Catacumbas e Linha Velha: sem planta — só aparece o que você já percorreu.' : ch6 ? 'Museu de Ciências Proibidas: sem planta — só aparece o que você já percorreu.' : ch5 ? 'Estação de bombeamento: sem planta — só aparece o que você já percorreu.' : ch4 ? 'Centro antigo de Véspera: sem planta — só aparece o que você já percorreu.' : ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
     const notes = collectNotes(g);
     $('mapNotes').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
+  }
+  showCredits() {
+    const el = $('creditsList');
+    if (el) el.innerHTML = CREDITS.map(([a, b]) => `<div class="credit"><span class="credit-role">${a}</span><span class="credit-name">${b}</span></div>`).join('')
+      + (this.lastEnding ? `<div class="credit credit-end"><span class="credit-role">Final alcançado</span><span class="credit-name">${this.lastEnding.title}</span></div>` : '');
+    this.show('credits');
   }
   showChapterEnd(stats) {
     const t = Math.floor(stats.time), ch = stats.chapter || 1;
@@ -105,6 +117,24 @@ export class Menus {
         : ch === 3 ? `<br>Fita de Inês: ${stats.ribbon ? 'com Elias' : 'ficou no altar da cripta'} · Ordem de transferência: ${stats.order ? 'lida' : 'não lida'}`
           : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
     const next = $('btnEndNext');
+    $('btnEndCredits')?.classList.add('hidden');
+    if (next) next.classList.remove('hidden');
+    if (ch >= 8) {
+      const ep = endingEpilogue(stats.ending || 'cinzas', { docs: stats.docsList || [], flags: stats.flags || {} });
+      $('stats').innerHTML = $('stats').innerHTML.replace(/<br>Caderno do comporteiro.*$/, '')
+        + `<br>Diário de Helena: ${(stats.docsList || []).includes('diario_helena') ? 'lido' : 'não lido'} · Relatório de transmissão: ${(stats.docsList || []).includes('relatorio_transmissao') ? 'lido' : 'não lido'}`
+        + `<br>Final: <b>${ep.title}</b> — ${ep.choice}`;
+      $('endTitle').textContent = 'Fim — O Culto das Cinzas';
+      $('endText').textContent = `Capítulo 8 — A Última Chama · Final: ${ep.title}`;
+      $('endNote').textContent = 'Seu progresso foi salvo. Obrigado por jogar.';
+      $('endRn0').classList.remove('hidden');
+      $('endRn0').innerHTML = ep.lines.map((l) => `<span class="epilogue-line">${l}</span>`).join('<br><br>');
+      this.lastEnding = ep;
+      if (next) next.classList.add('hidden');
+      $('btnEndCredits')?.classList.remove('hidden');
+      this.show('chapterEnd');
+      return;
+    }
     if (ch >= 7) {
       $('stats').innerHTML = $('stats').innerHTML.replace(/<br>Caderno do comporteiro.*$/, '')
         + `<br>Ata da Confraria: ${stats.ata ? 'lida' : 'ficou no atril'} · Guia de remoção: ${stats.guia ? 'lida' : 'não lida'}`;

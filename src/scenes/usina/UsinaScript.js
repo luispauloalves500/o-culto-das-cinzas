@@ -8,7 +8,7 @@
 // pela passarela, por cima. Pressão da linha a zero → a porta-pistão da Sala da Turbina destrava. O ronco das máquinas
 // abafa os passos; conforme elas param, a usina fica silenciosa (acústica dinâmica). Sala da Turbina (save; foguista e
 // acólito) → quadro de transmissão: a chave geral desarmada corta a corrente da torre e solta a fechadura elétrica →
-// base da torre: o monta-cargas sobe até Inês (fim da fatia; o resto do capítulo e o chefe vêm depois).
+// base da torre → casa de máquinas, monta-cargas, Vernet/Manifestação, Inês, Helena e a decisão final (UsinaTowerScript.js).
 import * as THREE from 'three';
 import { HospitalScript } from '../hospital/HospitalScript.js';
 import { Enemy } from '../../ai/EnemyController.js';
@@ -16,6 +16,8 @@ import { ammoMesh } from '../hospital/HospitalPedsScript.js';
 import { GROUND, GALLERY_Y, YARD, HUT, BOILER_HOUSE, BOILERS, LADDER_C8, PIPES, LEAKS, LEAK, leakAt, FEED_VALVE, OFICINA, WORKBENCH,
   TURBINE_HALL, BOARD, TOWER_BASE, SLICE_END_Z, CARGO_GATE, inPlume } from './UsinaLevel.js';
 import { roomAt } from '../../data/map.js';
+import { setupTower, updateTowerFlow } from './UsinaTowerScript.js';
+import { MACH_Y } from './UsinaTower.js';
 import { DOCUMENTS } from '../../data/documents.js';
 
 const Y = GROUND, G = GALLERY_Y;
@@ -33,6 +35,9 @@ export const USINA_SPAWNS = [
   { id: 'c8_fog2', type: 'foguista', x: 4, y: Y, z: 55, yaw: Math.PI / 2,
     patrol: [{ x: 4, y: Y, z: 55 }, { x: 25, y: Y, z: 55 }, { x: 25, y: Y, z: 65 }, { x: 4, y: Y, z: 65 }] },
   { id: 'c8_aco3', type: 'acolito', x: 27, y: Y, z: 60, yaw: -Math.PI / 2 },
+  // casa de máquinas do monta-cargas: acólito de ronda entre o guincho e o alçapão (acorda com a faca de força)
+  { id: 'c8_aco4', type: 'acolito', x: 10.5, y: MACH_Y, z: 71.3, yaw: Math.PI / 2,
+    patrol: [{ x: 10.5, y: MACH_Y, z: 71.3 }, { x: 15.8, y: MACH_Y, z: 71.3 }] },
 ];
 const C8_DOORS = ['c8_hut', 'c8_cargo', 'c8_pipes', 'c8_steamDoor', 'c8_towerDoor'];
 export const C8_VENT_TIME = 2.2;        // girar o volante da válvula de alívio
@@ -113,9 +118,7 @@ export class UsinaScript extends HospitalScript {
       g.inventory.add('municao_38', 4); g.hud.toast(`Munição .38 ×4 (total ${g.inventory.count('municao_38')})`, 2.5);
     }, () => ammoMesh(M, 26.6, Y + 0.05, 67.2, 4));
     // ---------- base da torre ----------
-    g.interact.add({ id: 'c8_lift', pos: { x: 13, y: 1, z: 71.6 }, radius: 1.3, prompt: 'Chamar o monta-cargas',
-      onInteract: () => { g.audio.play('locked', { x: 13, y: 1, z: 72.4 });
-        g.hud.toast('O botão afunda sem resposta: a cabine está lá no alto, travada na casa de máquinas. Lá em cima, na torre, alguém está cantando.', 5); } });
+    setupTower(this, save);
 
     // ---------- portas ----------
     for (const id of C8_DOORS) {
@@ -360,6 +363,7 @@ export class UsinaScript extends HospitalScript {
     if (!q.has('c8_hasWheel') && g.inventory.has('volante_valvula')) q.set('c8_hasWheel');
     this._updateVent(dt);
     this._updateSteam(dt);
+    updateTowerFlow(this, dt);
     if (!q.has('c8_climbed') && p.y > G - 0.4 && p.z < BOILER_HOUSE.minZ && g.player.state !== 'climb') {
       q.set('c8_climbed');
       g.hud.toast('Topo da torre de carvão. A esteira coberta segue para a Casa das Caldeiras — dá pra ouvir o ronco delas daqui.', 4);
@@ -383,7 +387,8 @@ export class UsinaScript extends HospitalScript {
       this._ended = true;
       q.set('c8_sliceDone');
       g.saveGame('c8_slice');
-      g.hud.toast('Base da torre de transmissão · progresso salvo. O monta-cargas está lá no alto; os cabos tremem. Inês está lá em cima — o resto do capítulo vem na próxima atualização.', 8);
+      g.hud.toast('Base da torre de transmissão · progresso salvo. O monta-cargas está lá no alto; os cabos tremem. Lá em cima, alguém está cantando.', 6);
+      this.hint('c8_base', 'Chame o <b>monta-cargas</b> pela botoeira ao lado da porta pantográfica.', 7);
     }
   }
 }
