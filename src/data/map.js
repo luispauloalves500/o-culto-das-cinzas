@@ -181,6 +181,10 @@ export const ROOMS_C8 = [
   { id: 'c8_galeria', floor: 'up2', ch: 8, name: 'Galeria das caldeiras', rect: [20, 24, 30, 44] },
   { id: 'c8_patamar', floor: 'up2', ch: 8, name: 'Patamar da escada', rect: [20, 44, 26, 49] },
   { id: 'c8_passarela', floor: 'up2', ch: 8, name: 'Passarela da caldeira III', rect: [10, 47.6, 20, 49] },
+  // torre de transmissão: casa de máquinas (y 7 → aba 'roof') e Sala dos Transmissores (y 13.5 → aba 'lo', só no Cap.8)
+  { id: 'c8_maquinas', floor: 'roof', ch: 8, name: 'Casa de máquinas do monta-cargas', rect: [8, 68, 18, 76] },
+  { id: 'c8_transmissores', floor: 'lo', ch: 8, name: 'Sala dos Transmissores', rect: [3, 68, 23, 88] },
+  { id: 'c8_cadeira', floor: 'lo', ch: 8, name: 'Cadeira de transmissão', rect: [8, 82, 18, 88] },
 ];
 ROOMS.push(...ROOMS_C8);
 
@@ -238,6 +242,9 @@ export const MAP_MARKS = [
   { kind: 'stairs', ch: 8, floor: 'up', x: 22, z: 12.2, room: 'c8_torre_carvao' },
   { kind: 'stairs', ch: 8, floor: 'up2', x: 22, z: 13.2, room: 'c8_esteira' },
   { kind: 'fire', ch: 8, floor: 'up', x: 15, z: 38, room: 'c8_caldeiras' },
+  { kind: 'stairs', ch: 8, floor: 'up', x: 9.2, z: 69.4, room: 'c8_torre' },
+  { kind: 'stairs', ch: 8, floor: 'roof', x: 9.9, z: 69.4, room: 'c8_maquinas' },
+  { kind: 'save', ch: 8, floor: 'roof', x: 17.35, z: 71.5, room: 'c8_maquinas' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
@@ -246,10 +253,11 @@ export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4, 5, 6, 7, 8].includes
 export function mapChapter() { return MAP_CHAPTER; }
 const inChapter = (r) => (r.ch || 1) === MAP_CHAPTER;
 /** andares com abas no mapa para o capítulo ativo */
-export function chapterFloors() { return MAP_CHAPTER === 5 || MAP_CHAPTER === 8 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 || MAP_CHAPTER === 6 || MAP_CHAPTER === 7 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
+export function chapterFloors() { return MAP_CHAPTER === 8 ? ['up', 'up2', 'roof', 'lo'].map((id) => FLOORS.find((f) => f.id === id)) : MAP_CHAPTER === 5 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 || MAP_CHAPTER === 6 || MAP_CHAPTER === 7 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
 
 /** andar a partir da altura dos pés */
-export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }
+export function floorOf(y) { if (MAP_CHAPTER === 8) return y < 3.0 ? 'up' : y < 6.6 ? 'up2' : y < 11 ? 'roof' : 'lo';
+  return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }
 
 /** cômodo em que um ponto está (o primeiro que contém, com prioridade para cômodos menores) */
 export function roomAt(p) {

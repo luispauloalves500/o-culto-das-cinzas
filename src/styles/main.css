@@ -103,3 +103,11 @@ select { background: #222; color: #ddd; border: 1px solid #555; padding: 4px; }
 .cond-worn { color: #d0a050; } .cond-broken { color: #d05a40; }
 
 .panel button:disabled, button:disabled { opacity: 0.45; cursor: default; filter: grayscale(0.6); }
+/* fim do jogo: epílogo e créditos */
+#endRn0 .epilogue-line { font-style: italic; }
+#credits { background: radial-gradient(ellipse at center, rgba(20, 16, 12, .92), rgba(0, 0, 0, .98)); }
+.credits-roll { max-width: 620px; max-height: 60vh; overflow-y: auto; margin: 6px 0 14px; }
+.credit { display: flex; flex-direction: column; margin: 12px 0; }
+.credit-role { font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: #9a8c6a; }
+.credit-name { font-size: 19px; color: #e3d9bd; }
+.credit-end .credit-name { color: #d9b77a; }

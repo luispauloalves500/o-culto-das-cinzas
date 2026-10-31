@@ -72,7 +72,21 @@ export function normalizeChapter7Flags(s) {
 export function normalizeChapter8Flags(s) {
   if (s.chapter !== 8 || !s.flags) return s;
   const f = { ...s.flags };
-  if (s.checkpoint === 'c8_slice') { f.c8_sliceDone = true; f.c8_sabotage = true; }
+  const cp = s.checkpoint;
+  if (cp === 'c8_end') f.c8_chapterDone = true;
+  if (f.c8_chapterDone) { f.c8_choice = true; f.c8_inesFree = true; f.c8_helenaUp = true; f.ch8Done = true; if (!f.c8_ending) f.c8_ending = 'cinzas'; }
+  if (f.c8_ending || f.c8_choice) f.c8_helenaUp = true;
+  if (f.c8_helenaUp) f.c8_inesFree = true;
+  if (cp === 'c8_free' || f.c8_inesFree) f.c8_cinzaDead = true;
+  if (f.c8_cinzaDead || cp === 'c8_arena') f.c8_vernetDown = true;
+  if (f.c8_vernetDown) f.c8_vernetIntro = true;
+  if (f.c8_vernetDown || cp === 'c8_top') f.c8_atTop = true;
+  if (f.c8_atTop) { f.c8_liftPower = true; f.c8_metHelena = true; }
+  if (f.c8_metHelena) f.c8_hasCrank = true;
+  if (f.c8_metHelena || f.c8_liftPower || cp === 'c8_machine') f.c8_inMachine = true;
+  if (f.c8_inMachine) f.c8_sliceDone = true;
+  if (cp === 'c8_slice') { f.c8_sliceDone = true; f.c8_sabotage = true; }
+  if (f.c8_sliceDone) f.c8_sabotage = true;
   if (f.c8_sliceDone || f.c8_sabotage) f.c8_inTurbine = true;
   if (s.checkpoint === 'c8_turbine') f.c8_inTurbine = true;
   if (f.c8_inTurbine) { f.c8_steamDoorOpen = true; }
