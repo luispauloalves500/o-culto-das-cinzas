@@ -19,11 +19,42 @@ export const PLAZA_OBSTACLES = [[15, 62], [6, 68], [24, 68], [24, 56]];
 export const VIGIA_BALCONY = { x: 15, y: 9.25, z: 75.2 };
 export const VIGIA_POS = { x: 15, y: GROUND, z: 74.4, yaw: Math.PI };
 
+// Torre por dentro e casa das máquinas (segunda metade do capítulo): piso da galeria/salão em y = 9
+export const GEAR_Y = 9;
+// lances da escada quadrada (a = topo… não: a = início, b = fim do lance; ya/yb as alturas correspondentes)
+export const TOWER_FLIGHTS = [
+  { axis: 'z', minX: 16.9, maxX: 18.6, a: 81.9, b: 77.2, ya: 2.4, yb: 0, steps: 10 },     // leste, sobe para o norte
+  { axis: 'x', minZ: 81.9, maxZ: 83.6, a: 13.1, b: 16.9, ya: 4.4, yb: 2.4, steps: 8 },    // norte, sobe para oeste
+  { axis: 'z', minX: 11.4, maxX: 13.1, a: 78.1, b: 81.9, ya: 6.8, yb: 4.4, steps: 9 },    // oeste, sobe para o sul
+  { axis: 'x', minZ: 76.4, maxZ: 78.1, a: 16.9, b: 13.1, ya: 9.0, yb: 6.8, steps: 8 },    // sul, sobe para leste
+];
+export const TOWER_LANDINGS = [
+  [16.9, 81.9, 18.6, 83.6, 2.4], [11.4, 81.9, 13.1, 83.6, 4.4], [11.4, 76.4, 13.1, 78.1, 6.8],
+  [16.9, 76.4, 18.6, 84.0, 9.0], // patamar sudeste + galeria leste até a porta da casa das máquinas
+];
+// [x0, y0, z0, x1, y1, z1]
+export const TOWER_RAILS = [
+  [16.8, 0, 77.8, 16.9, 3.5, 81.9], [13.1, 2.4, 81.8, 16.9, 5.5, 81.9], [13.1, 4.4, 78.1, 13.2, 7.9, 81.9],
+  [13.1, 6.8, 78.1, 16.9, 10.1, 78.2], [16.8, 9.0, 78.2, 16.9, 10.1, 83.6],
+];
+export const HALL = { minX: 4, maxX: 26, minZ: 84, maxZ: 100 };
+export const HALL_OBSTACLES = [[7.5, 88.5], [22.5, 88.5], [7.5, 96.5], [22.5, 96.5]];
+export const MECH = { minX: 13.5, maxX: 16.5, minZ: 92, maxZ: 95 };
+export const PENDULUM = { x: 15, z: 88.2, pivotY: 7.8, len: 6.6, r: 0.55, amp: 0.62, period: 3.6 };
+export const PASSAGE = { minX: 13.9, maxX: 16.1, minZ: 96.2, maxZ: 100, stairEnd: 101.6, drop: 3.4 };
+export const VIGIA_HATCH = { x: 15, y: GEAR_Y + 7.2, z: 90.4 };
+export const VIGIA_HALL_BOUNDS = { minX: 4.8, maxX: 25.2, minZ: 85.0, maxZ: 99.2 };
+// mostrador de acerto: as horas da manivela (só 3h07 — a hora do toque — abre a passagem)
+export const C4_HOURS = ['12h00', '1h15', '3h07', '4h50', '6h30', '9h45'];
+export const C4_RIGHT_HOUR = 2;
+
 export const CIDADE_CHECKPOINTS = {
   c4_drain: { x: 7, y: GROUND, z: 3.6, yaw: 0 },
   c4_watch: { x: 16.2, y: GROUND, z: 33, yaw: -Math.PI / 2 },
   c4_plaza: { x: 14, y: GROUND, z: 51.2, yaw: 0 },
   c4_tower: { x: 15, y: GROUND, z: 78.4, yaw: 0 },
+  c4_gears: { x: 17.75, y: GEAR_Y, z: 85.4, yaw: 0 },
+  c4_end: { x: 17.6, y: GEAR_Y, z: 97.4, yaw: Math.PI },
 };
 
 // névoa padrão: cinza parada sobre o centro antigo, esverdeada como vidro velho
@@ -32,9 +63,11 @@ export const CIDADE_ZONES = [
   { id: 'c4_farmacia', minX: -4, maxX: 4, minZ: 18, maxZ: 28, minY: -1, maxY: 4, fog: 0x0c0e0c, density: 0.065 },
   { id: 'c4_relojoaria', minX: 10, maxX: 18, minZ: 30, maxZ: 40, minY: -1, maxY: 4, fog: 0x0e0b08, density: 0.06 },
   { id: 'c4_torre', minX: 11, maxX: 19, minZ: 76, maxZ: 84, minY: -1, maxY: 20, fog: 0x08080a, density: 0.08 },
+  { id: 'c4_maquinas', minX: 4, maxX: 26, minZ: 84, maxZ: 100, minY: 8, maxY: 18, fog: 0x0c0a08, density: 0.055 },
+  { id: 'c4_passagem', minX: 13.5, maxX: 16.5, minZ: 96, maxZ: 104, minY: 4, maxY: 8, fog: 0x060a0c, density: 0.09 },
   { id: 'c4_praca', minX: 0, maxX: 30, minZ: 50, maxZ: 76, minY: -1, maxY: 20, fog: 0x171a1e, density: 0.042 },
 ];
-const INDOOR = new Set(['c4_farmacia', 'c4_relojoaria', 'c4_torre']);
+const INDOOR = new Set(['c4_farmacia', 'c4_relojoaria', 'c4_torre', 'c4_maquinas', 'c4_passagem']);
 
 export class CidadeLevel {
   constructor(game) {
@@ -55,6 +88,7 @@ export class CidadeLevel {
     this._yard();
     this._plaza();
     this._tower();
+    this._gearHall();
     this._doors();
     this._lights();
     this._ash();
@@ -248,26 +282,186 @@ export class CidadeLevel {
   }
 
   // ---------- TORRE DO RELÓGIO x11..19 z76..84 (porta ao sul, varanda e mostrador) ----------
+  // ---------- TORRE DO RELÓGIO x11..19 z76..84: escada quadrada em caracol até a galeria (y 9) ----------
   _tower() {
-    const b = this.b, H = 22;
+    const b = this.b, H = 22, GY = Y + GEAR_Y;
     b.floor(11.4, 76.4, 18.6, 83.6, Y, 'stone', 'c4_torre');
     b.wallX(76.2, 11, 19, Y, Y + H, [15], 'stone', 1.6, 2.6);
     b.box(11, Y, 76, 11.4, Y + H, 84, 'stone');
     b.box(18.6, Y, 76, 19, Y + H, 84, 'stone');
-    b.box(11, Y, 83.6, 19, Y + H, 84, 'stone');
+    // parede norte com a porta da casa das máquinas na galeria (x 17.75, y 9..11.4)
+    b.box(11, Y, 83.6, 16.95, Y + H, 84, 'stone');
+    b.box(18.55, Y, 83.6, 19, Y + H, 84, 'stone');
+    b.box(16.95, Y, 83.6, 18.55, GY, 84, 'stone');
+    b.box(16.95, GY + 2.4, 83.6, 18.55, Y + H, 84, 'stone');
     b.box(10.6, Y + H, 75.6, 19.4, Y + H + 0.5, 84.4, 'woodDark', { collide: false });
     const roof = new THREE.Mesh(new THREE.ConeGeometry(6.2, 5, 4), this.M.rust); roof.position.set(15, Y + H + 3, 80); roof.rotation.y = Math.PI / 4; b.group.add(roof);
-    // degraus da escada em caracol (só a base, a subida fica para a próxima fatia)
-    for (let i = 0; i < 6; i++) { const a = i * 0.7; b.box(15 + Math.cos(a) * 2 - 0.6, Y, 80 + Math.sin(a) * 2 - 0.6, 15 + Math.cos(a) * 2 + 0.6, Y + 0.2 + i * 0.22, 80 + Math.sin(a) * 2 + 0.6, 'stone', { collide: false }); }
+    // escada quadrada em caracol, colada às paredes: leste ↑ norte ← oeste ↓ sul → galeria leste
+    for (const f of TOWER_FLIGHTS) {
+      if (f.axis === 'z') b.stairsZ(f.minX, f.maxX, f.a, f.b, f.ya, f.yb, f.steps, 'stone');
+      else this.stairsX(f.minZ, f.maxZ, f.a, f.b, f.ya, f.yb, f.steps, 'stone');
+    }
+    for (const [x0, z0, x1, z1, y] of TOWER_LANDINGS) b.floor(x0, z0, x1, z1, Y + y, 'woodDark', 'c4_torre');
+    // alvenaria maciça sob os lances (ninguém anda por baixo da escada)
+    b.box(13.1, Y, 81.9, 16.9, Y + 2.4, 83.6, 'stone');
+    b.box(11.4, Y, 78.1, 13.1, Y + 4.4, 83.6, 'stone');
+    b.box(11.4, Y, 76.4, 13.1, Y + 6.8, 78.1, 'stone');
+    // guarda-corpos internos (só colidem na altura de cada lance)
+    for (const [x0, y0, z0, x1, y1, z1] of TOWER_RAILS) {
+      b.box(x0, Y + y0, z0, x1, Y + y1, z1, 'metal', { sight: false });
+    }
     // varanda do Vigia (y ≈ 9) e o mostrador parado às 3h07 acima dela
     b.box(12.5, Y + 9, 74.6, 17.5, Y + 9.25, 76, 'stone', { collide: false });
     b.box(12.5, Y + 9.25, 74.6, 17.5, Y + 10.2, 74.7, 'metal', { collide: false });
     this.clockFace(15, Y + 15.5, 75.94, 2.4, Math.PI);
+    this.faceHands = this.clockFace(15, Y + 15.5, 76.42, 2.2, 0); // o verso do mostrador, visto de dentro
     // campanário: abertura escura e o sino
     b.box(13.2, Y + 18.6, 75.9, 16.8, Y + 21.4, 75.98, new THREE.MeshBasicMaterial({ color: 0x050505 }), { collide: false });
     const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.1, 1.4, 10), this.M.brass || this.M.metal); bell.position.set(15, Y + 19.8, 76.8); b.group.add(bell);
     this.bell = bell;
     this.sign('VIGIA DE VÉSPERA · MDCCCXC', 15, Y + 3.4, 75.98, Math.PI, 3.2, 0.32, { bg: '#2a2622', fg: '#c8b080' });
+    // térreo: atril com o livro de rondas e o livro de registros; correntes do pêndulo descendo pelo poço
+    b.box(14.2, Y, 80.8, 15.0, Y + 1.0, 81.5, 'woodDark', { tag: 'prop-low', sight: false });
+    b.box(15.6, Y, 80.8, 16.4, Y + 0.85, 81.5, 'woodDark', { tag: 'prop-low', sight: false });
+    for (const x of [14.4, 15.6]) b.box(x - 0.02, Y + 1.2, 79.98, x + 0.02, GY - 0.3, 80.02, 'metal', { collide: false });
+    this.sign('CASA DAS MÁQUINAS ↑', 17.75, GY + 2.7, 83.58, Math.PI, 1.6, 0.26, { bg: '#2a2622', fg: '#c8b080' });
+  }
+
+  /** escada ao longo de X (a = x do topo, b = x da base) — mesma ideia de stairsZ */
+  stairsX(minZ, maxZ, xTop, xBottom, yTop, yBottom, steps, mat = 'stone') {
+    const b = this.b, dx = (xBottom - xTop) / steps, dy = (yTop - yBottom) / steps;
+    for (let i = 0; i < steps; i++) {
+      const x0 = xBottom - dx * (i + 1), x1 = xBottom - dx * i, top = yBottom + dy * (i + 1);
+      b.box(Math.min(x0, x1), yBottom - 0.3, minZ, Math.max(x0, x1), top, maxZ, mat, { collide: false, tile: 1 });
+    }
+    return this.game.col.addFloor({ minX: Math.min(xTop, xBottom), maxX: Math.max(xTop, xBottom), minZ, maxZ, ramp: { axis: 'x', a: xTop, b: xBottom, ya: yTop, yb: yBottom } });
+  }
+
+  // ---------- CASA DAS MÁQUINAS x4..26 z84..100, piso y 9: arena do segundo confronto ----------
+  _gearHall() {
+    const b = this.b, M = this.M, GY = Y + GEAR_Y, top = GY + 8, P = PASSAGE;
+    // corpo do prédio atrás da Torre (só visual até o piso)
+    b.box(4, Y, 84, 26, GY - 0.3, 96, 'stone', { collide: false });
+    b.box(4, Y, 96, 13.5, GY - 0.3, 100, 'stone', { collide: false });
+    b.box(16.5, Y, 96, 26, GY - 0.3, 100, 'stone', { collide: false });
+    b.box(13.5, Y, 96, 16.5, GY - P.drop - 0.5, 103.2, 'stone', { collide: false });
+    // piso em três peças + a chapa da passagem (que se abre depois do Vigia)
+    b.floor(4, 84, 26, P.minZ, GY, 'woodDark', 'c4_maquinas');
+    b.floor(4, P.minZ, P.minX, 100, GY, 'woodDark', 'c4_maquinas');
+    b.floor(P.maxX, P.minZ, 26, 100, GY, 'woodDark', 'c4_maquinas');
+    this.plateFloor = this.game.col.addFloor({ minX: P.minX, maxX: P.maxX, minZ: P.minZ, maxZ: P.maxZ, y: GY, name: 'c4_chapa' });
+    this.plate = b.box(P.minX, GY - 0.12, P.minZ, P.maxX, GY + 0.02, P.maxZ, 'rust', { collide: false });
+    this.plateY0 = this.plate.position.y; this.plateX0 = this.plate.position.x;
+    this.plate.matrixAutoUpdate = true;
+    // paredes (a sul é a parede norte da Torre + dois trechos fora dela)
+    b.box(3.6, GY, 84, 4, top, 100, 'brick');
+    b.box(26, GY, 84, 26.4, top, 100, 'brick');
+    b.box(3.6, GY, 100, 26.4, top, 100.4, 'brick');
+    b.box(4, GY, 83.6, 11, top, 84, 'brick');
+    b.box(19, GY, 83.6, 26, top, 84, 'brick');
+    b.ceiling(4, 84, 26, 100, top, 'woodDark');
+    for (const z of [87, 91, 95, 99]) b.box(4, top - 0.35, z - 0.18, 26, top, z + 0.18, 'woodDark', { collide: false });
+    // alçapão do campanário (por onde o Vigia desce)
+    b.box(VIGIA_HATCH.x - 0.9, top - 0.02, VIGIA_HATCH.z - 0.9, VIGIA_HATCH.x + 0.9, top - 0.01, VIGIA_HATCH.z + 0.9, new THREE.MeshBasicMaterial({ color: 0x030303 }), { collide: false });
+    // caixas de engrenagens (obstáculos: atordoam a investida) com rodas girando em cima
+    this.gears = [];
+    const gear = (x, y, z, r, axis, speed) => {
+      const g = new THREE.Group();
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.12, 14), M.brass); g.add(disc);
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, t = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.18), M.brass); t.position.set(Math.cos(a) * (r + 0.06), 0, Math.sin(a) * (r + 0.06)); g.add(t); }
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.25, r * 0.25, 0.2, 8), M.metal); g.add(hub);
+      g.position.set(x, y, z);
+      if (axis === 'x') { g.rotation.order = 'ZYX'; g.rotation.z = Math.PI / 2; } else if (axis === 'z') g.rotation.x = Math.PI / 2;
+      b.group.add(g); this.gears.push({ g, axis, speed }); return g;
+    };
+    for (const [x, z] of HALL_OBSTACLES) {
+      b.box(x - 0.8, GY, z - 0.8, x + 0.8, GY + 1.8, z + 0.8, 'metal', { tag: 'obstacle' });
+      gear(x, GY + 2.5, z, 0.75, 'z', (x < 15 ? 1 : -1) * 0.6);
+    }
+    // mecanismo central: armação, eixo que sobe ao mostrador, a trava do pêndulo e a manivela dos ponteiros
+    const MC = MECH;
+    b.box(MC.minX, GY, MC.minZ, MC.maxX, GY + 2.2, MC.maxZ, 'steelDark', { tag: 'obstacle' });
+    gear(15, GY + 2.6, 93.5, 1.1, 'y', 0.4);
+    gear(13.4, GY + 1.6, 93.5, 0.5, 'x', -1.0);
+    gear(16.6, GY + 1.6, 93.5, 0.6, 'x', 0.8);
+    b.box(14.9, GY + 2.2, 93.4, 15.1, top, 93.6, 'metal', { collide: false });
+    // encaixe vazio da roda de escape (face sul) e a roda instalada (escondida até encaixar)
+    b.box(14.5, GY + 1.0, MC.minZ - 0.06, 15.5, GY + 2.0, MC.minZ, new THREE.MeshBasicMaterial({ color: 0x0a0806 }), { collide: false });
+    this.escapeWheel = gear(15, GY + 1.5, MC.minZ - 0.12, 0.42, 'z', 2.4); this.escapeWheel.visible = false;
+    // alavanca da trava (face sul, à direita)
+    this.lockLever = new THREE.Group();
+    { const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.7, 0.08), M.rust); arm.position.y = 0.35; this.lockLever.add(arm); const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 4), M.woodDark); knob.position.y = 0.72; this.lockLever.add(knob); }
+    this.lockLever.position.set(16.2, GY + 1.0, MC.minZ - 0.12); this.lockLever.rotation.x = 0.6; b.group.add(this.lockLever);
+    // face norte: mostrador de acerto (ponteiros giram com a manivela) e o martelo do sino
+    this.setDial = this.clockFace(15, GY + 1.45, MC.maxZ + 0.02, 0.55, 0);
+    this.setHands = this.setDial.children.slice(-2);
+    this.hammer = new THREE.Group();
+    { const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.7), M.woodDark); arm.position.z = 0.35; this.hammer.add(arm); const head = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.18), M.metal); head.position.z = 0.72; this.hammer.add(head); }
+    this.hammer.position.set(16.3, GY + 1.6, MC.maxZ + 0.05); this.hammer.rotation.x = -0.9; b.group.add(this.hammer);
+    const crank = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.3), M.brass); crank.position.set(13.8, GY + 1.2, MC.maxZ + 0.15); b.group.add(crank); this.crank = crank;
+    // pêndulo: haste presa no teto, disco de latão (só balança com o mecanismo andando)
+    this.pendulum = new THREE.Group();
+    { const rod = new THREE.Mesh(new THREE.BoxGeometry(0.08, PENDULUM.len, 0.08), M.metal); rod.position.y = -PENDULUM.len / 2; this.pendulum.add(rod);
+      const bob = new THREE.Mesh(new THREE.CylinderGeometry(PENDULUM.r, PENDULUM.r, 0.22, 14), M.brass); bob.rotation.x = Math.PI / 2; bob.position.y = -PENDULUM.len; this.pendulum.add(bob); }
+    this.pendulum.position.set(PENDULUM.x, GY + PENDULUM.pivotY, PENDULUM.z);
+    b.group.add(this.pendulum);
+    this.pendAngle = 0; this.mechT = 0; this.mechRunning = false;
+    // bancada do sineiro (leste) onde fica a roda de escape; prateleiras e caixotes
+    b.box(22.2, GY, 91.4, 25.6, GY + 0.9, 92.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.box(25.4, GY, 85, 26, GY + 2.2, 89, 'woodDark', { sight: false });
+    b.box(4.4, GY, 85.2, 5.6, GY + 0.8, 86.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.box(4.0, GY, 98.6, 6.4, GY + 1.2, 100, 'woodDark', { tag: 'prop-low', sight: false });
+    // contrapeso pendurado e a corrente na parede oeste
+    b.box(4.4, GY + 3.0, 91.6, 5.2, GY + 4.4, 92.4, 'metal', { collide: false });
+    b.box(4.78, GY + 4.4, 91.98, 4.82, top, 92.02, 'metal', { collide: false });
+    // janelas de luar (estreitas)
+    for (const z of [88, 96]) { b.box(26.0, GY + 3.2, z - 0.4, 26.02, GY + 5.4, z + 0.4, M.moonGlass, { collide: false }); b.box(3.98, GY + 3.2, z - 0.4, 4.0, GY + 5.4, z + 0.4, M.moonGlass, { collide: false }); }
+    this.sign('OFICINA DO RELÓGIO · ACERTO E MARTELO', 15, GY + 3.2, 99.98, Math.PI, 3.6, 0.3, { bg: '#2a2010', fg: '#e0c070' });
+
+    // ---------- passagem do Relógio: escada sob a chapa, descendo para o norte ----------
+    b.stairsZ(P.minX, P.maxX, P.minZ, P.stairEnd, GY, GY - P.drop, 8, 'stone');
+    b.floor(P.minX, P.stairEnd, P.maxX, P.stairEnd + 1.2, GY - P.drop, 'stone', 'c4_passagem');
+    b.box(P.minX - 0.4, GY - P.drop - 0.5, P.minZ, P.minX, GY, P.stairEnd + 1.6, 'stone');
+    b.box(P.maxX, GY - P.drop - 0.5, P.minZ, P.maxX + 0.4, GY, P.stairEnd + 1.6, 'stone');
+    b.box(P.minX - 0.4, GY - P.drop - 0.5, P.stairEnd + 1.2, P.maxX + 0.4, GY + 2, P.stairEnd + 1.6, 'stone');
+    b.ceiling(P.minX, 100.4, P.maxX, P.stairEnd + 1.2, GY - 0.3, 'stone');
+    // brilho frio lá embaixo: água corrente
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(P.maxX - P.minX, 1.2), new THREE.MeshBasicMaterial({ color: 0x1a3040 }));
+    water.rotation.x = -Math.PI / 2; water.position.set(15, GY - P.drop + 0.02, P.stairEnd + 0.6); b.group.add(water);
+  }
+
+  // mecanismo: rodas, pêndulo e ponteiros andando
+  _updateMech(dt) {
+    if (!this.pendulum) return;
+    const run = this.mechRunning;
+    this.mechT += run ? dt : 0;
+    const target = run ? Math.sin(this.mechT * Math.PI * 2 / PENDULUM.period) * PENDULUM.amp : 0;
+    this.pendAngle += (target - this.pendAngle) * Math.min(1, dt * (run ? 6 : 2));
+    this.pendulum.rotation.z = this.pendAngle;
+    if (run) for (const G of this.gears) G.g.rotation.y += G.speed * dt;
+    if (this.plate) {
+      const P = this.plate.position, k = Math.min(1, dt * 1.5);
+      const ty = this.plateOpen ? this.plateY0 - 0.18 : this.plateY0;
+      P.y += (ty - P.y) * k;
+      if (this.plateOpen && P.y < this.plateY0 - 0.12) P.x += (this.plateX0 + 2.3 - P.x) * k;
+    }
+  }
+  /** posição do disco do pêndulo (mundo) */
+  pendulumBob(out = new THREE.Vector3()) {
+    const a = this.pendAngle, L = PENDULUM.len;
+    return out.set(PENDULUM.x + Math.sin(a) * L, Y + GEAR_Y + PENDULUM.pivotY - Math.cos(a) * L, PENDULUM.z);
+  }
+  /** ponteiros do mostrador de acerto: índice em HOURS */
+  setHours(i) {
+    const [hh, mm] = C4_HOURS[i].split('h').map(Number);
+    if (!this.setHands || this.setHands.length < 2) return;
+    this.setHands[0].rotation.z = -((hh % 12) + mm / 60) / 12 * Math.PI * 2;
+    this.setHands[1].rotation.z = -mm / 60 * Math.PI * 2;
+  }
+  openPlate(instant = false) {
+    this.plateOpen = true;
+    if (this.plateFloor) this.plateFloor.enabled = false;
+    if (instant && this.plate) this.plate.position.set(this.plateX0 + 2.3, this.plateY0 - 0.18, this.plate.position.z);
   }
 
   _doors() {
@@ -292,6 +486,10 @@ export class CidadeLevel {
     for (const [x, z] of [[2.5, 52.5], [27.5, 52.5], [2.5, 74], [27.5, 74]]) { const L = this.lamp(x, Y + 3.9, z, gas, 1.3, 12, { flicker: x < 10 }); L.fixture.visible = false; }
     const face = this.lamp(15, Y + 13, 72, 0xc8d8e0, 0.9, 22); face.fixture.visible = false; // luar sobre o mostrador
     this.lamp(15, Y + 3.2, 80, 0x8a7a60, 0.6, 7, { flicker: true });            // base da torre
+    this.lamp(15, Y + 8.2, 80, 0x8a7a60, 0.5, 8);                               // alto da escada
+    this.lamp(10, Y + GEAR_Y + 4.4, 90, 0xffb870, 1.0, 12, { flicker: true });   // casa das máquinas
+    this.lamp(20, Y + GEAR_Y + 4.4, 95, 0xffb870, 1.0, 12);
+    const moon2 = this.lamp(15, Y + GEAR_Y + 6, 97, 0x7088b0, 0.5, 10); moon2.fixture.visible = false;
   }
 
   // ---------- cinza caindo devagar (pontos que acompanham o jogador ao ar livre) ----------
@@ -328,6 +526,12 @@ export class CidadeLevel {
     N('p0', 14, Y, 51.4); N('p1', 9, Y, 56); N('p2', 20, Y, 59); N('p3', 9, Y, 64); N('p4', 20.5, Y, 64); N('p5', 10, Y, 71.5); N('p6', 20, Y, 72); N('p7', 15, Y, 74.6);
     N('p8', 3, Y, 62); N('p9', 27.5, Y, 62); N('p10', 15, Y, 57.4);
     N('t0', 15, Y, 77.6);
+    // escada da Torre e casa das máquinas
+    N('t1', 17.75, Y, 77.0); N('t2', 17.75, Y + 2.4, 82.7); N('t3', 12.25, Y + 4.4, 82.7); N('t4', 12.25, Y + 6.8, 77.25);
+    N('t5', 17.75, Y + 9, 77.25); N('t6', 17.75, Y + 9, 83.0);
+    const H = Y + GEAR_Y;
+    N('h0', 17.75, H, 85.2); N('h1', 11, H, 86.5); N('h2', 20.5, H, 86.5); N('h3', 10.5, H, 92.5); N('h4', 20.5, H, 92.5);
+    N('h5', 11, H, 98.5); N('h6', 19.5, H, 98.5); N('h7', 15, H, 90.2);
     const L = (a, b, door) => n.link(a, b, door);
     L('r0', 'r1'); L('r1', 'r2'); L('r2', 'r3'); L('r3', 'r4'); L('r4', 'r5'); L('r5', 'r6');
     L('r3', 'f0', d.c4_pharm); L('f0', 'f1'); L('f0', 'f2'); L('f2', 'f3'); L('f3', 'f4');
@@ -336,6 +540,8 @@ export class CidadeLevel {
     L('p0', 'p1'); L('p0', 'p2'); L('p0', 'p10'); L('p1', 'p3'); L('p2', 'p4'); L('p3', 'p5'); L('p4', 'p6'); L('p5', 'p7'); L('p6', 'p7');
     L('p1', 'p8'); L('p8', 'p3'); L('p2', 'p9'); L('p9', 'p4'); L('p10', 'p1'); L('p10', 'p2');
     L('p7', 't0', d.c4_tower);
+    L('t0', 't1'); L('t1', 't2'); L('t2', 't3'); L('t3', 't4'); L('t4', 't5'); L('t5', 't6'); L('t6', 'h0');
+    L('h0', 'h1'); L('h0', 'h2'); L('h0', 'h7'); L('h1', 'h3'); L('h2', 'h4'); L('h3', 'h5'); L('h4', 'h6'); L('h5', 'h6'); L('h1', 'h7'); L('h2', 'h7');
   }
 
   _cullLights(dt) {
@@ -357,6 +563,7 @@ export class CidadeLevel {
     for (const id in this.doors) this.doors[id].update(dt);
     // o sino balança quando toca
     if (this.bell) { this.bellT = Math.max(0, (this.bellT || 0) - dt); this.bell.rotation.z = Math.sin(t * 6) * 0.35 * Math.min(1, this.bellT); }
+    this._updateMech(dt);
     this._updateZone(dt);
     this._updateAsh(dt, t);
   }

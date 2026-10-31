@@ -1,5 +1,5 @@
 // Mapa (tecla M): desenha em canvas 2D os cômodos conhecidos do andar escolhido, portas anotadas, marcos e o jogador.
-import { MAP_MARKS, knownRooms, floorOf, doorFloor, roomAt, chapterFloors, mapChapter } from '../data/map.js';
+import { MAP_MARKS, knownRooms, floorOf, doorFloor, roomAt, chapterFloors, mapChapter, FLOORS } from '../data/map.js';
 import { lockedNotes } from './notes.js';
 
 // limites do desenho por capítulo (o Bairro Operário se estende para o norte até a casa das fornalhas)
@@ -9,7 +9,7 @@ export class MapView {
   constructor(canvas) { this.canvas = canvas; this.floor = 'up'; }
   open(game) { this.floor = floorOf(game.player.pos.y); if (!chapterFloors().some((f) => f.id === this.floor)) this.floor = chapterFloors()[0].id; }
   cycle(dir) { const F = chapterFloors(), i = F.findIndex((f) => f.id === this.floor); this.floor = F[(i + dir + F.length) % F.length].id; }
-  setFloor(i) { const F = chapterFloors(); if (F.length > 1 && F[i]) this.floor = F[i].id; }
+  setFloor(i) { const F = chapterFloors(), f = FLOORS[i]; if (F.length > 1 && f && F.some((x) => x.id === f.id)) this.floor = f.id; }
 
   /** dados do mapa (testáveis sem DOM) */
   static model(game, floor) {

@@ -7,7 +7,9 @@
 //     uma investida (telegrafada pela luz);
 //   • território: o Vigia não sai da praça (para no arco e na barricada);
 //   • retirada: abaixo de 45% da vida ele não morre — escala a fachada de volta para a varanda e some na Torre,
-//     deixando cair o molho de chaves (gancho do segundo confronto, na próxima fatia).
+//     deixando cair o molho de chaves;
+//   • segundo confronto (beginSecond): reacendido na casa das máquinas da Torre, ele desce do alçapão do
+//     campanário e luta até o fim — sem retirada, fase 3 abaixo de 35% e o pêndulo do Relógio que o atordoa.
 import * as THREE from 'three';
 import { SurgeonBoss } from './SurgeonBoss.js';
 import { createHumanoid, resetPose, poseWalk } from '../gameplay/ProceduralRig.js';
@@ -87,6 +89,41 @@ export class VigiaBoss extends SurgeonBoss {
     this._set('drop');
   }
 
+  // segundo confronto: o mesmo Vigia, reacendido, no salão das engrenagens (morte real)
+  beginSecond({ balcony, bounds, hp, floorY }) {
+    this.second = true; this.dropY = floorY ?? 0; this.retreated = true;
+    this.maxHp = hp || 520; this.hp = this.maxHp;
+    this.phase = 1; this.chargeCd = 2.5; this.lanternCd = 6; this.beamN = 0; this.weakHits = 0; this.warnedArmor = true;
+    this.balcony = balcony; this.bounds = bounds;
+    this.txt = { stunObst: 'O Vigia se chocou na engrenagem! O lampião nas costas está exposto!', stunWall: 'O Vigia bateu na parede da casa das máquinas!' };
+    this.solid = true;
+    this.pos.set(balcony.x, balcony.y, balcony.z); this.yaw = Math.PI;
+    this.vialLight.intensity = 0.8;
+    this.state = 'dormant'; this.stateT = 0;
+    this.rig.root.visible = true;
+    this._pose(0);
+    this.activate();
+  }
+
+  // o pêndulo do Relógio acerta o Vigia: atordoado, lampião exposto
+  pendulumHit() {
+    if (!this.alive || !['stalk', 'charge', 'chargeWind', 'slash', 'recover', 'beam'].includes(this.state)) return false;
+    const g = this.game;
+    this._set('stunned'); this.stunDur = 3.6;
+    g.audio.play('thud', this.pos); g.audio.play('clang', this.pos);
+    g.cameraCtl.addShake(0.6);
+    g.hud.toast('O pêndulo acerta o Vigia em cheio! O lampião está exposto!');
+    return true;
+  }
+
+  // segundo confronto resolvido (save): o corpo fica no salão
+  setDeadAt(x, y, z) {
+    this.second = true; this.retreated = true;
+    this.pos.set(x, y, z); this.rig.root.visible = true;
+    this.vialLight.intensity = 0; this.vialMat.emissiveIntensity = 0.05;
+    this.setDeadInstant();
+  }
+
   // primeiro confronto já resolvido (save): some da praça
   setGoneInstant() { this.state = 'gone'; this.solid = false; this.retreated = true; this.rig.root.visible = false; this.vialLight.intensity = 0; }
 
@@ -96,7 +133,7 @@ export class VigiaBoss extends SurgeonBoss {
     const weak = volume?.part === 'weak';
     let real = weak ? dmg * 1.1 : dmg * 0.25;
     if (this.state === 'stunned' && !weak) real = dmg * 0.5;
-    this.hp = Math.max(this.maxHp * 0.2, this.hp - real);
+    this.hp = this.second ? Math.max(0, this.hp - real) : Math.max(this.maxHp * 0.2, this.hp - real);
     this.flinch = weak ? 0.35 : 0.1;
     if (weak) {
       this.weakHits = (this.weakHits || 0) + 1;
@@ -115,6 +152,17 @@ export class VigiaBoss extends SurgeonBoss {
       if (this.state !== 'stunned') this._set('roar');
       g.audio.play('roar', this.pos, { pitch: 0.75 });
       g.hud.toast('O Vigia arranca o chapéu. O lampião arde mais forte — ele vem mais rápido.', 3.5);
+    }
+    if (this.second && this.phase === 2 && this.hp < this.maxHp * 0.35) {
+      this.phase = 3;
+      if (this.state !== 'stunned') this._set('roar');
+      g.audio.play('roar', this.pos, { pitch: 0.6 });
+      g.hud.toast('O lampião racha de ponta a ponta. O Vigia não recua mais — investe sem parar!', 3.5);
+    }
+    if (this.second) {
+      if (this.hp <= 0) { this.hp = 0; this._die(); this.vialLight.intensity = 0; return 'dead'; }
+      if (weak && this.state === 'grabHold') { g.player.releaseGrab(false); this._set('stagger'); }
+      return 'hit';
     }
     if (weak && this.state === 'grabHold') { g.player.releaseGrab(false); this._set('stagger'); }
     if (this.hp <= this.maxHp * VIGIA_RETREAT) { this._retreat(); return 'hit'; }
@@ -139,12 +187,13 @@ export class VigiaBoss extends SurgeonBoss {
     if (this.state === 'drop') {
       this.stateT += dt; this.animT += dt;
       this.vy = (this.vy || 0) - 22 * dt;
-      this.pos.y = Math.max(0, this.pos.y + this.vy * dt);
-      if (this.pos.y <= 0) {
-        this.pos.y = 0; this._set('intro');
+      const floorY = this.dropY ?? 0;
+      this.pos.y = Math.max(floorY, this.pos.y + this.vy * dt);
+      if (this.pos.y <= floorY) {
+        this.pos.y = floorY; this._set('intro');
         g.audio.play('thud', this.pos); g.audio.play('roar', this.pos, { pitch: 0.7 });
         g.cameraCtl.addShake(0.9);
-        g.combat.emit({ x: this.pos.x, y: 0.3, z: this.pos.z }, 30, 0x9a9890, 3);
+        g.combat.emit({ x: this.pos.x, y: floorY + 0.3, z: this.pos.z }, 30, 0x9a9890, 3);
       }
       this._pose(dt);
       return;
@@ -182,11 +231,11 @@ export class VigiaBoss extends SurgeonBoss {
       this.vialMat.emissiveIntensity = 0.4 + this.vialLight.intensity * 0.5;
       if (this.stateT > 1.0 && !this.beamFired) {
         this.beamFired = true; this.beamN++;
-        this.lanternCd = this.phase >= 2 ? 8 : 11;
+        this.lanternCd = this.phase >= 3 ? 6 : this.phase >= 2 ? 8 : 11;
         g.audio.play('shriek', this.pos, { pitch: 0.4 });
         g.bus.emit('VigiaBeam', this);
       }
-      if (this.stateT > 1.4) { this._set('chargeWind'); this.stateT = 0.5; }
+      if (this.stateT > 1.4) { this._set('chargeWind'); this.stateT = 0.5; if (this.phase >= 3) this.chargeCd = 0; }
       this._pose(dt);
       return;
     }
