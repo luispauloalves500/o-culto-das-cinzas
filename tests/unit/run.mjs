@@ -1207,5 +1207,99 @@ test('dados: itens e documentos sem chaves duplicadas (um capítulo não sobresc
   }
 });
 
+// ---------------- Capítulo 8 — A Última Chama (primeira fatia) ----------------
+const { makeChapter8Save, normalizeChapter8Flags, CH7_KEY_ITEMS } = await import('../../src/core/SaveManager.js');
+const { OBJECTIVES_C8, SIDE_OBJECTIVES_C8 } = await import('../../src/data/chapters.js');
+const C8L = await import('../../src/scenes/usina/UsinaLevel.js');
+const C8S = await import('../../src/scenes/usina/UsinaScript.js');
+const PC = await import('../../src/gameplay/PlayerController.js');
+test('Cap. 8: migração do fim do Cap. 7 (chaves do Cap. 7 removidas, armas e documentos mantidos), flags normalizadas e capítulo jogável', () => {
+  const end7 = migrateSave({ ...makeChapter7Save(null), checkpoint: 'c7_end', flags: { c7_chapterDone: true, c7_vigiaDead: true, hasAmulet: true },
+    inventory: { items: { bandagem: 3, municao_38: 9, chave_escada_usina: 1, pe_de_cabra: 1 }, weapons: ['machado', 'revolver'], wear: {}, loaded: { revolver: 6 } },
+    documents: ['ata_primeira_cinza'], player: { hp: 30 } });
+  const s = makeChapter8Save(end7);
+  assert.equal(s.chapter, 8); assert.equal(s.checkpoint, 'c8_yard');
+  assert.ok(s.flags.c7_chapterDone && s.flags.ch7Done && s.flags.c7_vigiaDead && s.flags.c8_started && s.flags.hasAmulet && s.flags.ch6Done);
+  for (const k of CH7_KEY_ITEMS) assert.equal(s.inventory.items[k], undefined, k);
+  assert.equal(s.inventory.items.bandagem, 3); assert.equal(s.inventory.items.municao_38, 9);
+  assert.ok(s.inventory.weapons.includes('revolver') && s.documents.includes('ata_primeira_cinza'));
+  assert.ok(s.player.hp >= 80); assert.deepEqual(s.deadEnemies, []); assert.deepEqual(s.doors, {});
+  const again = migrateSave(JSON.parse(JSON.stringify(s))); assert.equal(again.chapter, 8); assert.equal(again.checkpoint, 'c8_yard');
+  assert.equal(makeChapter8Save(null).chapter, 8);
+  // flags implícitas por checkpoint: a fatia concluída implica sabotagem, porta-pistão aberta e as três caldeiras aliviadas
+  const n = normalizeChapter8Flags({ chapter: 8, checkpoint: 'c8_slice', flags: {} }).flags;
+  for (const f of ['c8_sliceDone', 'c8_sabotage', 'c8_inTurbine', 'c8_steamDoorOpen', 'c8_vent_I', 'c8_vent_II', 'c8_vent_III', 'c8_ventedAll', 'c8_hasWheel', 'c8_climbed', 'c8_inBoiler', 'c8_started', 'c7_chapterDone'])
+    assert.equal(n[f], true, f);
+  const nb = normalizeChapter8Flags({ chapter: 8, checkpoint: 'c8_boiler', flags: {} }).flags;
+  assert.ok(nb.c8_climbed && nb.c8_inBoiler && !nb.c8_hasWheel && !nb.c8_ventedAll);
+  const partial = normalizeChapter8Flags({ chapter: 8, checkpoint: 'c8_oficina', flags: { c8_vent_I: true } }).flags;
+  assert.ok(partial.c8_hasWheel && !partial.c8_ventedAll && !partial.c8_vent_II);
+  assert.equal(normalizeChapter8Flags({ chapter: 7, checkpoint: 'c7_end', flags: {} }).flags.c8_started, undefined);
+  assert.ok(CHAPTERS.find((c) => c.id === 8)?.playable === true);
+});
+test('Cap. 8: objetivos, laterais, documentos, volante e mapa da Usina', () => {
+  assert.equal(objectivesFor(8), OBJECTIVES_C8); assert.equal(sideObjectivesFor(8), SIDE_OBJECTIVES_C8);
+  assert.deepEqual(OBJECTIVES_C8.map((o) => o.done), ['c8_climbed', 'c8_hasWheel', 'c8_ventedAll', 'c8_steamDoorOpen', 'c8_sabotage', 'c8_sliceDone', 'c8_never']);
+  const q = new QuestSystem(null, 8); assert.equal(q.current(), OBJECTIVES_C8[0].text);
+  for (const o of SIDE_OBJECTIVES_C8) assert.ok(o.when && o.done && o.text);
+  for (const id of ['boletim_usina', 'bilhete_helena', 'ordem_vernet', 'placa_caldeiras']) assert.ok(DOCUMENTS[id]?.ch === 8 && DOCUMENTS[id].title && DOCUMENTS[id].body, id);
+  assert.ok(ITEMS.volante_valvula?.name);
+  setMapChapter(8);
+  const fl = chapterFloors().map((f) => f.id); assert.deepEqual(fl.sort(), ['up', 'up2']);
+  assert.equal(roomAt({ x: 3, y: 0, z: 10 })?.id, 'c8_guarita');
+  assert.equal(roomAt({ x: -18, y: 0, z: 33 })?.id, 'c8_oficina');
+  assert.equal(roomAt({ x: 13, y: 0, z: 72 })?.id, 'c8_torre');
+  assert.equal(roomAt({ x: 25, y: 4.4, z: 30 })?.id, 'c8_galeria');
+  setMapChapter(1);
+});
+test('Cap. 8: escada de mão real — sobe sem gravidade, Shift gasta fôlego e range mais alto, Espaço solta, topo/pé desembarcam', () => {
+  const L = C8L.LADDER_C8, noise = [], ev = [];
+  const fake = { state: 'free', pos: new THREE.Vector3(L.x, 0, L.bottom.z), vel: new THREE.Vector3(), knock: { x: 0, z: 0 }, st: 100, vy: 0,
+    game: { audio: { play() {} }, perception: { noise: (p, r, k) => noise.push({ r, k }) }, bus: { emit: (n, d) => ev.push([n, d]) } },
+    _setState(s) { this.state = s; }, endClimb(h) { return PC.PlayerController.prototype.endClimb.call(this, h); } };
+  const inp = (y, run = false, dodge = false) => ({ moveAxis: () => ({ x: 0, y }), isDown: (k) => k === 'run' && run, wasPressed: (k) => k === 'dodge' && dodge });
+  assert.equal(PC.PlayerController.prototype.startClimb.call(fake, L), true); assert.equal(fake.state, 'climb'); assert.equal(fake.ladder, L);
+  assert.ok(Math.abs(fake.pos.x - L.x) < 1e-6 && Math.abs(fake.pos.z - L.z) < 1e-6 && fake.pos.y < 0.1);
+  const step = (n, i) => { for (let k = 0; k < n; k++) PC.PlayerController.prototype._updateClimb.call(fake, 1 / 60, i); };
+  step(60, inp(1)); assert.ok(Math.abs(fake.pos.y - PC.CLIMB_SPEED) < 0.05, 'sobe 1,5 m/s: ' + fake.pos.y);
+  assert.ok(noise.length >= 2 && noise.every((n) => n.k === 'ladder' && n.r === 3));
+  const st0 = fake.st, y0 = fake.pos.y; noise.length = 0; step(30, inp(1, true));
+  assert.ok(fake.st < st0 - 5 && fake.pos.y - y0 > 1.1 && noise.some((n) => n.r === 6.5));
+  step(10, inp(0)); const yStill = fake.pos.y; step(30, inp(0)); assert.equal(fake.pos.y, yStill, 'sem gravidade parado na escada');
+  step(200, inp(1)); assert.equal(fake.state, 'free'); assert.equal(fake.pos.y, L.y1); assert.equal(fake.pos.z, L.top.z);
+  assert.deepEqual(ev.at(-1), ['ClimbEnd', { id: L.id, how: 'top' }]);
+  // agarrar pelo topo começa lá em cima e desce até o pé
+  assert.ok(PC.PlayerController.prototype.startClimb.call(fake, L)); assert.ok(fake.pos.y > 3);
+  step(400, inp(-1)); assert.equal(fake.state, 'free'); assert.equal(fake.pos.y, L.y0); assert.equal(fake.pos.z, L.bottom.z);
+  // Espaço (esquiva) solta: sai da escada sem desembarcar (a gravidade faz o resto)
+  PC.PlayerController.prototype.startClimb.call(fake, L); step(40, inp(1)); PC.PlayerController.prototype._updateClimb.call(fake, 1 / 60, inp(0, false, true));
+  assert.equal(fake.state, 'free'); assert.equal(fake.ladder, null); assert.equal(fake.onGround, false); assert.equal(ev.at(-1)[1].how, 'drop');
+  fake.state = 'hit'; assert.equal(PC.PlayerController.prototype.startClimb.call(fake, L), false, 'só agarra livre');
+});
+test('Cap. 8: vapor — vazamentos com ciclo real defasado, nuvem do alívio, foguista resistente ao calor e geometria da Usina', () => {
+  // cada vazamento: 1,3 s ligado a cada 3,2 s, defasados; sempre existe uma janela em que um jato está desligado
+  for (let i = 0; i < 3; i++) {
+    let on = 0; for (let t = 0; t < C8L.LEAK.period; t += 0.01) on += C8L.leakOn(i, t) ? 1 : 0;
+    assert.ok(Math.abs(on * 0.01 - C8L.LEAK.on) < 0.03, 'duty ' + i);
+    assert.equal(C8L.leakOn(i, 5), C8L.leakOn(i, 5 + C8L.LEAK.period));
+  }
+  assert.notEqual(C8L.leakOn(0, 0), C8L.leakOn(2, 0));
+  assert.equal(C8L.leakAt({ x: -7, y: 0, z: 33 }), 1); assert.equal(C8L.leakAt({ x: -5.2, y: 0, z: 33 }), -1); assert.equal(C8L.leakAt({ x: -7, y: 4.4, z: 33 }), -1);
+  const B1 = C8L.BOILERS.find((b) => b.id === 'I');
+  assert.ok(C8L.inPlume(B1, { x: B1.plume.x + 1, y: 0, z: B1.plume.z }) && !C8L.inPlume(B1, { x: B1.plume.x + 2.5, y: 0, z: B1.plume.z }));
+  assert.ok(!C8L.inPlume(B1, { x: B1.plume.x, y: 4.4, z: B1.plume.z }), 'quem está na galeria não queima');
+  assert.equal(ENEMIES.foguista.heatproof, true); assert.ok(!ENEMIES.acolito.heatproof);
+  assert.ok(C8S.C8_PLUME_DMG.enemy * 5 >= ENEMIES.acolito.hp, 'a nuvem mata um acólito que fica ~2 s nela');
+  assert.ok(C8S.C8_PLUME_DELAY >= 1 && C8S.C8_PLUME_TIME >= 4);
+  // a III só pela passarela da galeria: válvula no alto, com a de baixo partida
+  const B3 = C8L.BOILERS.find((b) => b.id === 'III'); assert.ok(B3.top && B3.valve.y === C8L.GALLERY_Y && B3.broken);
+  // escada da torre encostada no silo; a esteira entra na galeria
+  const L = C8L.LADDER_C8; assert.ok(L.z < C8L.TOWER.minZ && L.top.z > C8L.TOWER.minZ && L.bottom.z < L.z && L.y1 === C8L.GALLERY_Y);
+  assert.ok(C8L.CATWALK.maxZ === C8L.GALLERY.minZ);
+  assert.ok(C8L.SLICE_END_Z > C8L.TOWER_BASE.minZ && C8L.SLICE_END_Z < C8L.TOWER_BASE.maxZ);
+  for (const [id, c] of Object.entries(C8L.USINA_CHECKPOINTS)) assert.ok(C8L.usinaZoneAt(c), 'checkpoint numa zona: ' + id);
+  assert.equal(C8L.usinaZoneAt({ x: 25, y: 4.4, z: 30 })?.id, 'c8_caldeiras');
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);

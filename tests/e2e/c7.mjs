@@ -304,18 +304,20 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
     out.st = g.state; out.cp = s.checkpoint; out.flags = { d: !!s.flags.c7_chapterDone, c: !!s.flags.ch7Done };
     out.endVisible = !!$('chapterEnd')?.offsetParent; out.title = $('endTitle').textContent; out.note = $('endNote').textContent;
     out.btn = { dis: $('btnEndNext').disabled, txt: $('btnEndNext').textContent }; out.stats = $('stats').innerHTML; out.rn = $('endRn0').innerHTML;
-    $('btnEndNext').click(); T.run(0.2); out.stAfter = g.state; out.chAfter = g.chapter;
+    out.raw = localStorage.getItem('ocdc_save');
+    $('btnEndNext').click(); T.run(0.2); out.stAfter = g.state; out.chAfter = g.chapter; out.sAfter = T.S(); out.sAfter = { ch: out.sAfter.chapter, cp: out.sAfter.checkpoint };
     return out;
   });
   await page.screenshot({ path: SHOTS + '46-cap7-fim.png' });
   check('Cap. 7: chave da escada no corpo do Vigia; ata da Confraria no atril; mapa da estação', m.locked === 'ok' && m.stillLocked && m.keyAtBody && m.key === 'ok' && m.hasKey && m.ata === 'ok' && m.readAta && m.map && m.map.rooms >= 9, JSON.stringify({ l: m.locked, k: m.key, kb: m.keyAtBody, a: m.ata, m: m.map }));
   check('Cap. 7: a chave abre a escada de serviço; subir encerra o capítulo (save c7_end, c7_chapterDone/ch7Done)', m.open === 'ok' && m.opened && /Usina/.test(m.obj) && m.st === 'end' && m.cp === 'c7_end' && m.flags.d && m.flags.c && m.endVisible, JSON.stringify({ o: m.open, op: m.opened, ob: m.obj, st: m.st, cp: m.cp, f: m.flags }));
-  check('Cap. 7: tela "Fim do Capítulo 7 — Sob a Pedra" com a ata, e o Capítulo 8 desabilitado (em breve)', /Fim do Capítulo 7 — Sob a Pedra/.test(m.title) && m.btn.dis && /Capítulo 8.*em breve/.test(m.btn.txt) && /Ata da Confraria: lida/.test(m.stats) && /Usina/.test(m.rn) && m.stAfter === 'end' && m.chAfter === 7, JSON.stringify({ t: m.title, b: m.btn, s: m.stats, a: m.stAfter }));
+  check('Cap. 7: tela "Fim do Capítulo 7 — Sob a Pedra" com a ata; "Seguir para o Capítulo 8" habilitado leva à Usina (capítulo 8, save c8_yard)', /Fim do Capítulo 7 — Sob a Pedra/.test(m.title) && !m.btn.dis && /Capítulo 8/.test(m.btn.txt) && /Capítulo 8/.test(m.note) && /Ata da Confraria: lida/.test(m.stats) && /Usina/.test(m.rn) && m.stAfter === 'playing' && m.chAfter === 8 && m.sAfter.ch === 8 && m.sAfter.cp === 'c8_yard', JSON.stringify({ t: m.title, b: m.btn, n: m.note, a: m.stAfter, c: m.chAfter, s: m.sAfter }));
 
-  // ---------- recarregar c7_end ----------
+  // ---------- recarregar c7_end (o mundo do Cap. 7 montado direto do save; o Continuar agora migra para o Cap. 8) ----------
+  await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), m.raw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  await page.evaluate(() => { document.getElementById('btnContinue').click(); T.run(0.4); });
+  await page.evaluate(() => { const g = __ocdc; g._buildWorld(JSON.parse(localStorage.getItem('ocdc_save'))); g._enterPlay(); T.run(0.4); });
   await ext();
   const y = await page.evaluate(() => {
     const g = __ocdc, L = g.level, D = L.doors, q = g.quest;
@@ -327,4 +329,5 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
     return out;
   });
   check('Cap. 7: recarregar c7_end restaura o Vigia morto, grades abertas, agulhas e mortos; a escada mostra o fim de novo', y.st === 'playing' && y.ch === 7 && y.pos[2] > 60 && y.dead && y.notTarget && y.port && y.wall && y.line && y.stairs && y.key && y.keyHidden && y.e6 && y.e8 && y.lev === 'R·N·R' && /Capítulo 7 concluído/.test(y.obj) && y.bar && y.again === 'end' && /Fim do Capítulo 7/.test(y.title), JSON.stringify(y));
+  return m.raw;
 }
