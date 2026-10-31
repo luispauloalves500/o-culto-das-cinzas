@@ -177,9 +177,11 @@ export const SIDE_OBJECTIVES_C6 = [
   { when: 'c6_inStorage', done: 'c6_readCartao', text: 'Um caixote aberto no depósito ainda tem o cartão de inventário pregado.' },
   { when: 'c6_collectorDead', done: 'c6_readCatalogo', text: 'Na escrivaninha da reserva técnica está o catálogo do Colecionador.' },
 ];
-// Capítulo 7 — Sob a Pedra (primeira fatia): poço da escada de serviço → galeria de pedra → ossuário (emparedados
-// cegos nos nichos: acordam com barulho; ossos no chão estalam) → cripta (jazigo do coveiro-mor: pé de cabra → chave)
-// → grade do fundo do ossuário → túnel → plataforma da Estação Sé Velha → trilhos da Linha Velha (fim da fatia)
+// Capítulo 7 — Sob a Pedra: poço da escada de serviço → galeria de pedra → ossuário (emparedados cegos nos nichos:
+// acordam com barulho; ossos no chão estalam) → cripta (jazigo do coveiro-mor: pé de cabra → chave) → grade do fundo
+// → túnel → plataforma da Estação Sé Velha → trilhos → grade acorrentada (pé de cabra) → Linha Velha (cascalho,
+// nichos) → cabine de sinalização (agulhas + sinal → grade levadiça) → Estação Sob a Pedra (chefe final: o Vigia
+// Caiado) → chave no corpo → escada de serviço para a Usina (fim do capítulo)
 export const OBJECTIVES_C7 = [
   { done: 'c7_inOssuary', text: 'O alçapão bateu lá em cima. Siga pela galeria de pedra (norte) até as catacumbas.' },
   { done: 'c7_sawGate', text: 'Atravesse o ossuário até a grade do fundo (norte). Os emparedados nos nichos não enxergam — mas ouvem: ande, não corra, e evite pisar nos ossos.' },
@@ -187,13 +189,23 @@ export const OBJECTIVES_C7 = [
   { done: 'c7_ossOpen', text: 'Volte à grade do fundo do ossuário e abra o cadeado com a chave do coveiro-mor.' },
   { done: 'c7_onPlatform', text: 'Siga pelo túnel além da grade.' },
   { done: 'c7_sliceDone', text: 'Estação Sé Velha. Desça aos trilhos (escada de manutenção no fim leste da plataforma) e siga a Linha Velha para o leste.' },
-  { done: 'c7_never', text: 'Fim da primeira parte de Sob a Pedra. A Linha Velha segue para a Estação Sob a Pedra — o resto do Capítulo 7 vem na próxima atualização.' },
+  { done: 'c7_lineOpen', text: 'Uma grade acorrentada fecha a Linha Velha. Arrebente a corrente com o pé de cabra.' },
+  { done: 'c7_sawPort', text: 'Siga os trilhos da Linha Velha para o leste. Cuidado com o cascalho solto: ele range, e há nichos nas paredes.' },
+  { done: 'c7_portOpen', text: 'Uma grade levadiça fecha a estação. Na cabine de sinalização (norte do túnel), disponha as agulhas I·II·III da quarta estação e puxe o SINAL.' },
+  { done: 'c7_vigiaWoke', text: 'A grade subiu. Entre na Estação Sob a Pedra.' },
+  { done: 'c7_vigiaDead', text: 'O Vigia voltou — cego, caçando pelo som. Fique parado quando ele gritar, atraia-o com as sinetas, faça-o investir contra os pilares de ferro e acerte o lampião nas costas.' },
+  { done: 'c7_stairsOpen', text: 'A grade da escada de serviço (norte) tem cadeado. Reviste o corpo do Vigia.' },
+  { done: 'c7_chapterDone', text: 'Suba a escada de serviço rumo à Usina.' },
+  { done: 'c7_never', text: 'Capítulo 7 concluído. Inês foi levada para a Usina de Véspera — o Capítulo 8 vem na próxima atualização.' },
 ];
 export const SIDE_OBJECTIVES_C7 = [
   { when: 'c7_inOssuary', done: 'c7_readRegistro', text: 'Há um livro aberto na estante da entrada do ossuário.' },
   { when: 'c7_triedJazigo', done: 'c7_hasCrowbar', text: 'A tampa do jazigo não se move com as mãos. O carrinho de ferramentas da galeria de pedra tinha uma alavanca.' },
   { when: 'c7_onPlatform', done: 'c7_readQuadro', text: 'O quadro de horários da Linha Velha ainda está na parede da plataforma.' },
   { when: 'c7_onPlatform', done: 'c7_shortcut', text: 'A porta de serviço no fundo leste da plataforma pode dar um caminho de volta ao poço da escada.' },
+  { when: 'c7_inCabin', done: 'c7_readGuia', text: 'Há uma guia de remoção em cima do armário da cabine de sinalização.' },
+  { when: 'c7_wrongSignal', done: 'c7_readQuadro', text: 'A coluna das agulhas está no quadro de horários da plataforma da Sé Velha.' },
+  { when: 'c7_vigiaWoke', done: 'c7_readAta', text: 'Um livro de atas está aberto no atril diante da parede de cal.' },
 ];
 export function objectivesFor(ch) { return ch === 7 ? OBJECTIVES_C7 : ch === 6 ? OBJECTIVES_C6 : ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
 export function sideObjectivesFor(ch) { return ch === 7 ? SIDE_OBJECTIVES_C7 : ch === 6 ? SIDE_OBJECTIVES_C6 : ch === 5 ? SIDE_OBJECTIVES_C5 : ch === 4 ? SIDE_OBJECTIVES_C4 : ch === 3 ? SIDE_OBJECTIVES_C3 : ch === 2 ? SIDE_OBJECTIVES_C2 : SIDE_OBJECTIVES; }

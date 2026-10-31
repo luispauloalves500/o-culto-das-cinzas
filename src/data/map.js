@@ -159,6 +159,11 @@ export const ROOMS_C7 = [
   { id: 'c7_trilhos', floor: 'up', ch: 7, name: 'Trilhos da Linha Velha', rect: [4, 50, 50, 55] },
   { id: 'c7_servico', floor: 'up', ch: 7, name: 'Corredor de serviço', rect: [22, 1.5, 39.5, 4.5] },
   { id: 'c7_servico_n', floor: 'up', ch: 7, name: 'Corredor de serviço (norte)', rect: [36.5, 4.5, 39.5, 44] },
+  { id: 'c7_linha', floor: 'up', ch: 7, name: 'Linha Velha', rect: [50, 50, 78, 55.2] },
+  { id: 'c7_refugio', floor: 'up', ch: 7, name: 'Refúgio de manutenção', rect: [66, 55.2, 67.6, 56.4] },
+  { id: 'c7_cabine', floor: 'up', ch: 7, name: 'Cabine de Sinalização 4', rect: [60, 45, 66, 50] },
+  { id: 'c7_sobapedra', floor: 'up', ch: 7, name: 'Estação Sob a Pedra', rect: [78, 42, 104, 64] },
+  { id: 'c7_saida', floor: 'up', ch: 7, name: 'Escada de serviço (Usina)', rect: [97.4, 64, 100.6, 69.5] },
 ];
 ROOMS.push(...ROOMS_C7);
 
@@ -209,6 +214,7 @@ export const MAP_MARKS = [
   { kind: 'save', ch: 6, floor: 'up', x: 30.8, z: 38.7, room: 'c6_conservacao' },
   { kind: 'save', ch: 7, floor: 'up', x: 20.6, z: 4.8, room: 'c7_poco' },
   { kind: 'save', ch: 7, floor: 'up', x: 8.5, z: 45.6, room: 'c7_plataforma' },
+  { kind: 'save', ch: 7, floor: 'up', x: 65.3, z: 48.8, room: 'c7_cabine' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1

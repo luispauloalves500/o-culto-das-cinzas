@@ -28,4 +28,5 @@ export const ITEMS = {
   // Capítulo 7 — Sob a Pedra
   pe_de_cabra: { name: 'Pé de cabra', desc: 'Barra de ferro da Companhia do Metrô, ponta chata e curva. Estava no carrinho de ferramentas da galeria de pedra. Serve de alavanca em tampas e lajes pesadas.' },
   chave_coveiro: { name: 'Chave do coveiro-mor', desc: 'Chave de bronze com a cabeça em forma de crânio, presa ao cinto de ossos do coveiro-mor dentro do jazigo. Abre o cadeado da grade do fundo do ossuário.' },
+  chave_escada_usina: { name: 'Chave da escada de serviço', desc: 'Chave de ferro presa ao gancho do Vigia por um arame, com uma etiqueta de papelão: "USINA". Abre o cadeado da grade da escada de serviço da Estação Sob a Pedra.' },
 };

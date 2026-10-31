@@ -410,7 +410,35 @@ export const DOCUMENTS = {
 <p>Estações, de oeste para leste: Mercado · <b>Sé Velha</b> · Catedral · (uma quarta, apagada com tinta preta).</p>
 <p>Colado por cima, um aviso da prefeitura, amarelado: "Por motivo do <b>desabamento de 1912</b>, a Linha Velha está fechada por tempo indeterminado. Os túneis ficam sob guarda da <b>Irmandade</b>, que se encarrega dos mortos."</p>
 <p>A lápis, sobre a estação apagada: "<b>Sob a Pedra</b> — trem das oferendas, toda lua nova. Não fechou. Nunca fechou."</p>
+<p>Embaixo, a coluna da sinalização — a posição das <b>agulhas I · II · III</b> que manda o trem para cada estação (N = normal, R = reversa):</p>
+<p>Mercado <b>N · N · N</b> &nbsp;·&nbsp; Sé Velha <b>R · N · N</b> &nbsp;·&nbsp; Catedral <b>N · R · N</b> &nbsp;·&nbsp; (apagada) — a tinta preta cobre tudo, menos um "<b>R</b>" no fim.</p>
 <p class="small">Um horário ainda legível, sublinhado várias vezes: "3h07 — último trem".</p>`,
+  },
+  guia_remocao_vigia: {
+    ch: 7,
+    title: 'Guia de remoção — Linha Velha, trem das oferendas',
+    body: `<p>Formulário da Companhia do Metrô com o timbre raspado e, por cima, o carimbo da chama. Preenchido à mão, numa letra apressada.</p>
+<p>"<b>Remessa:</b> um (1) corpo, masculino, 2,10 m, com chapéu e casaco de vigia. Recolhido na <b>casa das máquinas da Torre do Relógio</b>, na noite do incêndio. Lampião frio ainda aceso — não apagar, ordem do Tesoureiro."</p>
+<p>"<b>Destino:</b> a quarta estação. Que <b>fique de pé</b>, como os irmãos da vigília, na parede leste, diante d'Ela. Cal fresca, corda do rito. Os olhos se fecham com cal: <b>não vai precisar deles</b>. A pedra leva o som."</p>
+<p>"<b>Sinaleiro:</b> a agulha <b>I</b> está <b>reversa desde 1912</b> (ninguém mais vai à Sé Velha). A <b>II</b> fica <b>normal</b> — é a da Catedral, e a Catedral não. A terceira, conforme o quadro. Depois, o SINAL. Sinal errado toca a sineta do túnel: <b>não errar</b> — eles acordam."</p>
+<p class="small">No rodapé, a lápis: "Ele morreu de verdade. O que vai lá embaixo é o que sobrou de obediente."</p>`,
+  },
+  placa_agulhas: {
+    ch: 7,
+    title: 'Placa esmaltada — Cabine de Sinalização 4',
+    body: `<p>"<b>INSTRUÇÕES AO SINALEIRO</b>"</p>
+<p>"Cada estação da Linha 1 tem a sua posição de agulhas. <b>N</b> = normal (alavanca empurrada); <b>R</b> = reversa (alavanca puxada). Disponha as três agulhas — <b>I, II, III</b> — conforme a coluna do quadro de horários e só então puxe o <b>SINAL</b>."</p>
+<p>"Com as agulhas na posição da estação, o sinal fica verde e a grade da plataforma de destino se ergue. <b>Posição errada aciona o alarme do túnel.</b>"</p>
+<p class="small">Raspado no esmalte, com um prego: "4ª = a que não está no mapa".</p>`,
+  },
+  ata_primeira_cinza: {
+    ch: 7,
+    title: 'Ata da Confraria — Estação Sob a Pedra',
+    body: `<p>Livro de atas de capa de couro, aberto no atril diante da parede de cal. A última entrada é recente; a tinta ainda borra.</p>
+<p>"Reunidos na quarta estação, diante d'Ela. <b>A Primeira Cinza</b> dormiu aqui desde 1912, debaixo da pedra, e daqui ouviu a cidade. Agora foi <b>acordada</b> e não cabe mais na pedra."</p>
+<p>"A moça — a irmã do relojoeiro — foi levada no último trem para a <b>Usina de Véspera</b>, à <b>torre de transmissão</b>. O Tesoureiro <b>Vernet</b> a espera lá: a voz dela vai pelos fios para todas as casas, e a cidade inteira vai ouvir o que Ela diz."</p>
+<p>"O Vigia fica de guarda, de pé na cal, até o fim. Se o 'peça 32' chegar até aqui, o Vigia o ouvirá antes de vê-lo — <b>ele não precisa mais ver</b>."</p>
+<p class="small">Na margem, a lápis, numa letra que você conhece: "E. — a Usina. Sobe a escada de serviço. Eu ainda estou aqui. — I."</p>`,
   },
 };
 
