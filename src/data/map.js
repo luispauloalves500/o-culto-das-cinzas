@@ -109,6 +109,10 @@ export const ROOMS_C4 = [
   { id: 'c4_patio', floor: 'up', ch: 4, name: 'Pátio dos fundos', rect: [10, 40, 18, 50] },
   { id: 'c4_praca', floor: 'up', ch: 4, name: 'Praça do Relógio', rect: [0, 50, 30, 76] },
   { id: 'c4_torre', floor: 'up', ch: 4, name: 'Torre do Relógio', rect: [11, 76, 19, 84] },
+  { id: 'c4_torre_escada', floor: 'up2', ch: 4, name: 'Torre do Relógio · escada', rect: [11, 76, 19, 84] },
+  { id: 'c4_galeria', floor: 'roof', ch: 4, name: 'Torre do Relógio · galeria', rect: [11, 76, 19, 84] },
+  { id: 'c4_maquinas', floor: 'roof', ch: 4, name: 'Casa das máquinas do Relógio', rect: [4, 84, 26, 100] },
+  { id: 'c4_passagem', floor: 'up2', ch: 4, name: 'Passagem do Relógio', rect: [13.5, 96, 16.5, 103] },
 ];
 for (const r of ROOMS_C4) ROOMS.push(r);
 
@@ -148,6 +152,10 @@ export const MAP_MARKS = [
   { kind: 'save', ch: 3, floor: 'lo', x: 25.55, z: 66.0, room: 'c3_cripta_escada' },
   { kind: 'save', ch: 4, floor: 'up', x: 17.3, z: 33.0, room: 'c4_relojoaria' },
   { kind: 'save', ch: 4, floor: 'up', x: 14, z: 51.2, room: 'c4_praca' },
+  { kind: 'save', ch: 4, floor: 'up', x: 16.0, z: 81.15, room: 'c4_torre' },
+  { kind: 'stairs', ch: 4, floor: 'up', x: 17.75, z: 78, room: 'c4_torre' },
+  { kind: 'stairs', ch: 4, floor: 'roof', x: 17.75, z: 80, room: 'c4_galeria' },
+  { kind: 'save', ch: 4, floor: 'roof', x: 5.0, z: 85.8, room: 'c4_maquinas' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
@@ -156,7 +164,7 @@ export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4].includes(ch) ? ch : 
 export function mapChapter() { return MAP_CHAPTER; }
 const inChapter = (r) => (r.ch || 1) === MAP_CHAPTER;
 /** andares com abas no mapa para o capítulo ativo */
-export function chapterFloors() { return MAP_CHAPTER === 2 || MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
+export function chapterFloors() { return MAP_CHAPTER === 2 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
 
 /** andar a partir da altura dos pés */
 export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }

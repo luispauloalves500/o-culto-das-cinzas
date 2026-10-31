@@ -19,6 +19,7 @@ export const ITEMS = {
   dossie_elias: { name: 'Dossiê RN 0 — Elias', desc: 'Pasta de couro do fichário da Confraria, gaveta V. Fotografias, uma ficha de admissão e um carimbo vermelho: "RECIPIENTE — NÃO DESPERTAR".' },
   chave_relojoaria: { name: 'Chave da Relojoaria Ponteiro', desc: 'Chave de latão com etiqueta de papel: "PONTEIRO — deixar com o Dr. Lauro". Estava na gaveta do caixa da Farmácia Central.' },
   chave_torre: { name: 'Chave da Torre do Relógio', desc: 'A maior do molho de chaves de ferro que o Vigia deixou cair. Um relógio parado às 3h07 gravado no anel.' },
+  roda_escape: { name: 'Roda de escape do Relógio', desc: 'Roda dentada de latão, do tamanho de um prato, com dentes em gancho. Etiqueta do Ponteiro: "Escape da Torre — retirado p/ conserto. NÃO devolver ao Vigia." É a peça que falta no mecanismo.' },
   sinete_chama: { name: 'Sinete da CHAMA', desc: 'Anel de latão do arquivista, com uma chama em baixo-relevo. Encaixa no selo do sarilho que ergue a grade da cripta.' },
   fita_ines: { name: 'Fita de cabelo de Inês', desc: 'Fita vermelha presa num prego do altar da cripta. Inês esteve aqui — e foi levada para a Torre.' },
   amuleto_menino: { name: 'Amuleto do menino', desc: 'Um dente de leite numa fita vermelha. Quem o carrega respira mais fundo: fôlego máximo +25.' },

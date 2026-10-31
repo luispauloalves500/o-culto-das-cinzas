@@ -291,4 +291,21 @@ export const DOCUMENTS = {
 <p>"Todos os relógios de Véspera param às 3h07. Não é defeito: é a hora em que ele toca."</p>
 <p class="small">Na margem, um esboço da praça: o chafariz, os dois pedestais e a banca marcados com um X. "Ele corre em linha reta. Pedra não cede."</p>`,
   },
+  livro_rondas: {
+    ch: 4,
+    title: 'Livro de rondas do Vigia',
+    body: `<p>Livro grosso, de capa de couro rachada, aberto no atril do térreo da Torre. Letra miúda e regular, sempre à mesma hora.</p>
+<p><b>3h07.</b> Praça vazia. Sino: três toques. Lampião reaceso no mecanismo.<br><b>3h07.</b> Praça vazia. Sino: três toques.<br><b>3h07.</b> Dois recolhidos na Rua do Comércio. Sino: três toques.</p>
+<p><b>3h07.</b> Escolta do Véu com a amostra I. Abri a porta de ferro. Acertei os ponteiros na hora do toque e bati o martelo: <b>a chapa da casa das máquinas desceu</b>, e eles foram pela passagem do Relógio, para baixo, rumo às comportas da <b>estação de bombeamento</b>. A moça perguntou meu nome. Não lembro.</p>
+<p><b>3h07.</b> O relojoeiro levou a roda de escape "para conserto". O Relógio parou. Sem o tique-taque eu não durmo; sem o mecanismo, o lampião não reacende.</p>
+<p class="small">Última linha, em letra maior, tremida: "A passagem só abre na hora do toque. Nenhuma outra hora. Nenhuma."</p>`,
+  },
+  bilhete_ines: {
+    ch: 4,
+    title: 'Bilhete de Inês, preso no mecanismo',
+    body: `<p>Um bilhete de bonde da Linha 4 dobrado em quatro e enfiado entre dois dentes da engrenagem mais alta. No verso, a lápis, a letra de Inês.</p>
+<p>"Elias. Se você leu até aqui, o Vigia caiu — ou dormiu. Eles me levam pela passagem do Relógio, para baixo, até a água. Falam de uma <b>estação de bombeamento</b> e de alguém que eles chamam de <b>a Afogada</b>, que guarda as comportas dos <b>canais</b>."</p>
+<p>"Ouvi o V. dizer que a cinza não basta: precisa da água preta para 'levar o sinal' até a outra torre. Não sei que torre. Sei que você tem que chegar antes das 3h07."</p>
+<p class="small">Embaixo, quase apagado: "Não confie no relógio. Confie na fita."</p>`,
+  },
 };

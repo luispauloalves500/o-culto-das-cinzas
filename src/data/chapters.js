@@ -106,7 +106,8 @@ export const SIDE_OBJECTIVES_C3 = [
   { when: 'c3_bossDead', done: 'c3_hasRibbon', text: 'Algo vermelho está preso num prego do altar.' },
 ];
 
-// Capítulo 4 — Cidade Morta (primeira fatia: Rua do Comércio → Farmácia → Relojoaria → Praça do Relógio → Torre)
+// Capítulo 4 — Cidade Morta: Rua do Comércio → Farmácia → Relojoaria → Praça do Relógio (Vigia, 1º confronto) →
+// Torre do Relógio (escada) → casa das máquinas (mecanismo, Vigia, 2º confronto) → passagem do Relógio
 export const OBJECTIVES_C4 = [
   { done: 'c4_inStreet', text: 'Saia do beco do bueiro para a Rua do Comércio.' },
   { done: 'c4_sawBarricade', text: 'Siga pela Rua do Comércio até a Praça do Relógio, no fim da rua (norte).' },
@@ -116,12 +117,20 @@ export const OBJECTIVES_C4 = [
   { done: 'c4_vigiaRetreat', text: 'O Vigia guarda a praça. Faça-o investir contra as pedras e golpeie o lampião nas costas.' },
   { done: 'c4_hasTowerKey', text: 'O Vigia fugiu para a Torre. Algo caiu nas pedras, ao pé da porta.' },
   { done: 'c4_sliceDone', text: 'Abra a porta de ferro da Torre do Relógio e entre.' },
-  { done: 'c4_never', text: 'Primeira fatia do Capítulo 4 concluída. A subida da Torre continua na próxima atualização.' },
+  { done: 'c4_inGears', text: 'Suba a escada da Torre até a casa das máquinas do Relógio, no alto da galeria.' },
+  { done: 'c4_hasEscape', text: 'O mecanismo do Relógio está parado: falta a roda de escape. Procure na casa das máquinas (a bancada do sineiro fica a leste).' },
+  { done: 'c4_mechRunning', text: 'Encaixe a roda de escape no mecanismo central e solte a trava do pêndulo.' },
+  { done: 'c4_vigiaDead', text: 'O Vigia desceu do campanário. Faça-o investir contra as engrenagens (ou espere o pêndulo) e quebre o lampião nas costas.' },
+  { done: 'c4_passageOpen', text: 'Na face norte do mecanismo: acerte os ponteiros na hora do toque e acione o martelo do sino.' },
+  { done: 'c4_chapterDone', text: 'A chapa de ferro desceu. Siga pela passagem do Relógio.' },
+  { done: 'c4_never', text: 'Capítulo 4 concluído. A passagem do Relógio desce rumo aos canais — Águas Negras.' },
 ];
 export const SIDE_OBJECTIVES_C4 = [
   { when: 'c4_inStreet', done: 'c4_readEdital', text: 'Há um edital colado no bonde tombado, no fim da rua.' },
   { when: 'c4_inStreet', done: 'c4_readDiario', text: 'O diário do farmacêutico deve estar no balcão da Farmácia Central.' },
   { when: 'c4_watchOpen', done: 'c4_readCaderno', text: 'O caderno do relojoeiro está na bancada dos fundos da relojoaria.' },
+  { when: 'c4_sliceDone', done: 'c4_readRondas', text: 'Há um livro aberto no atril do térreo da Torre.' },
+  { when: 'c4_vigiaDead', done: 'c4_readBilhete', text: 'Há um papel preso entre os dentes da engrenagem mais alta do mecanismo.' },
 ];
 
 export function objectivesFor(ch) { return ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
