@@ -1,7 +1,7 @@
 # O Culto das Cinzas
 
 Survival horror em terceira pessoa feito com **Three.js + Vite**, com visual low‑poly inspirado no PS2 (verde doentio + âmbar).
-Este repositório contém o **Capítulo 1 — Hospital São Dimas** (véspera, 1934), o **Capítulo 2 — Fumaça** e o **Capítulo 3 — A Confraria**, jogáveis do início ao fim, e o **Capítulo 4 — Cidade Morta**, também jogáveis do início ao fim (beco → Rua do Comércio → relojoaria → Praça do Relógio → primeiro confronto com O Vigia → Torre do Relógio → casa das máquinas → segundo confronto com O Vigia → passagem do Relógio), e o **Capítulo 5 — Águas Negras**, também do início ao fim (canais, casa de bombas, energia, mezanino, antecâmara e **salão das turbinas** com o chefe **A Afogada**, galeria de descarga e tela de fim; o Capítulo 6 — O Acervo vem depois).
+Este repositório contém o **Capítulo 1 — Hospital São Dimas** (véspera, 1934), o **Capítulo 2 — Fumaça** e o **Capítulo 3 — A Confraria**, jogáveis do início ao fim, e o **Capítulo 4 — Cidade Morta**, também jogáveis do início ao fim (beco → Rua do Comércio → relojoaria → Praça do Relógio → primeiro confronto com O Vigia → Torre do Relógio → casa das máquinas → segundo confronto com O Vigia → passagem do Relógio), e o **Capítulo 5 — Águas Negras**, também do início ao fim (canais, casa de bombas, energia, mezanino, antecâmara e **salão das turbinas** com o chefe **A Afogada**, galeria de descarga e tela de fim), e a **primeira fatia jogável do Capítulo 6 — O Acervo** (doca do Museu → átrio → Salão de Exposição → porta-cofre → Ala de Conservação → depósito → porta trancada da Galeria do Colecionador; o chefe O Colecionador vem na próxima atualização).
 
 ▶ **Jogar no navegador:** https://luispauloalves500.github.io/o-culto-das-cinzas/
 
@@ -166,11 +166,21 @@ Tudo abaixo é sistema real, não encenação. Entre parênteses, como foi verif
   - **Cura, recarga, dano e defesa**: a cópia procedural do tronco entra e sai em fade (0,15 s) sobre o idle, em vez de estalar; a postura da água não mexe nos golpes (a lâmina segue só o clipe).
   - `?elias=0` continua forçando o boneco procedural antigo. *(unit: clipes de ação existem no GLB e os trechos cabem na duração, combo vai ao 3º golpe, pesos somam 1, Elias_Aim; smoke: combo light1→light2→light3, esquiva Basic_Jump rente ao chão, cura com máscara em fade, pesos ≈ 1, gesto da porta, vau na água, mira parada/andando)*
 
+- **Capítulo 6 — O Acervo, primeira fatia jogável (pt39u)** — Museu de Ciências Proibidas (`src/scenes/acervo/`):
+  - **Transição**: a tela "Fim do Capítulo 5" agora tem o botão **"Seguir para o Capítulo 6 — O Acervo"** ativo (`startChapter6`). **Migração de save** (`makeChapter6Save`): capítulo 6, checkpoint `c6_dock`, mantém armas/desgaste/tambor/melhorias/documentos/tempo/estatísticas, remove o fusível cerâmico do Cap. 5; *Continuar* num save `c5_end` (ou com `c5_chapterDone`) também segue para o Cap. 6.
+  - **Cenário procedural PS2** com névoa própria e ≤ 16 luzes (12 lâmpadas a gás + hemisférica, com orçamento por distância): **doca de carga** (água animada, barcaça amarrada, bandagem), **átrio** (bilheteria, balcão, bustos, portas principais acorrentadas, *Guia do visitante*, livro de registros), **Salão de Exposição** (colunas, parquet, 7 vitrines baixas e 2 de corpo inteiro, painel da porta-cofre com 3 discos e alavanca), **Ala de Conservação** (bancadas, formol, *Diário da conservadora*, livro de registros) e **depósito** (estantes, caixotes da remessa, *Cartão de inventário nº 31*, munição) até o arco de latão da **Galeria do Colecionador**. Portas reais (doca, porta dupla do salão, porta-cofre deslizante, depósito, galeria) com colisão, grafo de navegação próprio e mapa do Museu.
+  - **Vitrines quebráveis de verdade** (`Vitrine` em `AcervoScript.js`): são alvos do combate (machado, martelo, tiro), com vida (18 baixa / 30 alta), cacos, som de vidro, **ruído** que acorda espécimes num raio de 10 m e **loot** que só fica ao alcance com o vidro quebrado (bandagem, munição e a **gaveta de fundo falso do tabuleiro**: munição ×8 + bandagem — objetivo opcional). Estado persistido no save.
+  - **Inimigo novo — Espécime** (peça "viva" do acervo: corpo de cera e linho costurado, olhos de vidro; rápido, frágil, com bote longo). Dois ficam **dormentes nas vitrines altas** e estouram o vidro quando Elias encosta (ou quando a vitrine é atingida); um terceiro patrulha a conservação. Dois acólitos patrulham o átrio e o depósito.
+  - **Quebra-cabeça da porta-cofre**: o guia diz que ela abre com o **nº de inventário da peça mais antiga**. As placas de latão dão ano e nº — exceto o **Relicário da Primeira Cinza (1702)**, cujo vidro está fosco: é preciso **quebrá-lo** (o que dispara o sino de alarme e acorda o espécime da outra vitrine) para ler o nº **418** na placa interna. Discos 4-1-8 + alavanca abrem o cofre (autosave `c6_hall`); código errado faz barulho e não abre.
+  - **Fim da fatia**: a placa/porta da Galeria do Colecionador (trancada) grava o save **`c6_slice`** (flag `c6_sliceDone`) e avisa *"O Colecionador chega na próxima atualização"* — sem tela de fim. Checkpoints `c6_dock`, `c6_atrium`, `c6_hall`, `c6_conserv`, `c6_slice`; recarregar restaura vitrines quebradas, cofre aberto, loot pego e inimigos mortos.
+  - **Conteúdo**: objetivos do Cap. 6 (entrar no Museu → salão → cofre → depósito → Galeria) e opcionais (guia, gaveta falsa, diário, cartão); 3 documentos novos.
+  - *(unit: migração c5_end → Cap. 6, objetivos/opcionais, documentos, regra do cofre (peça mais antiga = vitrine fosca com nº = código), espécimes dentro das vitrines altas, arquétipo do espécime, vitrine recebe dano/quebra/acorda o espécime, salas do mapa, checkpoints por sala; smoke: botão do fim do Cap. 5, doca e espécimes dormentes, ≤ 16 luzes, porta da doca bloqueia/abre, portas principais trancadas, vitrine quebrada a machado com loot, guia + livro `c6_atrium`, autosave do salão, placas, espécime acorda e persegue, relicário dispara alarme e revela 418, gaveta falsa, cofre (bloqueia, código errado, 4-1-8), conservação/diário/livro `c6_conserv`, depósito/cartão, placa do Colecionador → `c6_slice` sem tela de fim, mapa, recarregar restaura tudo, *Continuar* num save c5_end migra — capturas `33-cap6-doca.png`, `34-cap6-salao.png`, `35-cap6-deposito.png`)*
+
 ### Sobre modelos e texturas
 
 Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, não foram usados GLB/texturas de terceiros: **o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
 
-## FALTA (Capítulos 1–5 jogáveis do início ao fim, conforme o GDD)
+## FALTA (Capítulos 1–5 jogáveis do início ao fim e a primeira fatia do 6, conforme o GDD)
 
 - Modelos/animações artesanais para inimigos, chefe e cenário (só o Elias usa GLB); clipes próprios para lança, defesa, dano, cura e recarga (hoje poses procedurais no esqueleto do GLB; esquiva, porta, mira e o 3º golpe já usam clipes do GLB), animação de nado/vau dedicada e IK de pés; o modelo dedicado `machado_coletavel_80cm.glb`.
 - Maternidade e arquivo morto já entraram; faltam mais segredos e variações de rota (hoje há quatro: câmara fria, expurgo, Quarto 7 e sala de batismo).
@@ -185,7 +195,7 @@ Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, nã
 - **Capítulo 3 — A Confraria**: jogável do largo à galeria das catacumbas (cripta, O Sacristão e tela de fim). Faltam a investigação da organização (Dr. Silas Vernet, Dra. Helena Arcos), mais mecanismos/segurança antiga além dos discos e do sarilho, cenas (só texto/toasts) e modelos próprios (acólitos, noviços e o Sacristão são bonecos procedurais).
 - **Capítulo 4 — Cidade Morta**: jogável do beco à passagem do Relógio. Faltam o resto do centro antigo (outras ruas além da do Comércio), o campanário em si (o sino só se ouve), cenas (só texto/toasts) e modelos próprios (cinzentos e o Vigia são bonecos procedurais). Nota: o GDD previa o retorno do Vigia no Cap. 7; aqui ele morre de verdade no Cap. 4, como pedido.
 - **Capítulo 5 — Águas Negras**: jogável do canal à galeria de descarga (A Afogada e tela de fim). Faltam o resto da estação de bombeamento e dos canais (outros ramais), a barcaça/rio em si (só citados), nado de verdade (Elias só anda na água rasa), cenas (só texto/toasts) e modelos próprios (afogados e a Afogada são bonecos procedurais).
-- **Capítulo 6 — O Acervo** (Museu de Ciências Proibidas): só o gancho (ficha de remessa e botão desativado na tela de fim).
+- **Capítulo 6 — O Acervo** (Museu de Ciências Proibidas): só a primeira fatia (doca → depósito). Faltam o chefe **O Colecionador** e a Galeria dele, o resto do Museu (alas superiores, reserva técnica), a tela de fim do capítulo, cenas (só texto/toasts) e modelos próprios (espécimes e acólitos são bonecos procedurais).
 - **Capítulo 7** e seguintes: não implementados.
 - Gamepad implementado mas **não testado** com controle físico; desempenho só medido em render por software no CI local.
 
@@ -197,6 +207,7 @@ src/
   world/     CollisionWorld, LevelBuilder, Doors, Interactables, Navigation (A*), Textures, Materials
   gameplay/  PlayerController, EliasModel (GLB REV6) + rev6/, CameraController, CombatSystem, ProceduralRig, Inventory, QuestSystem, Cutscene
   ai/        PerceptionSystem, EnemyController, EnemyDirector, SurgeonBoss, FurnaceBoss (Brás, Cap. 2), SacristanBoss (O Sacristão, Cap. 3), VigiaBoss (O Vigia, Cap. 4)
+  scenes/acervo/    AcervoLevel (doca, átrio, Salão de Exposição, vitrines, porta-cofre, conservação, depósito — Cap. 6), AcervoScript (vitrines quebráveis, espécimes, discos do cofre, fim da fatia)
   scenes/aguas/     AguasLevel (canal com água/correnteza, galeria, casa do comporteiro, casa de bombas, painel, mezanino, reservatório, turbinas — Cap. 5), AguasScript (energia, comporta, afogados, fim da fatia)
   scenes/cidade/    CidadeLevel (beco, Rua do Comércio, farmácia, relojoaria, pátio, Praça do Relógio, Torre, casa das máquinas — Cap. 4), CidadeScript (chaves, sino, Vigia, Torre, casa das máquinas, passagem)
   scenes/sede/      SedeLevel (Largo do Véu, portaria, salão nobre, secretaria, arquivos, cripta — Cap. 3), SedeScript (postigo, discos, dossiê, sinete/sarilho, chefe, fim),
@@ -210,8 +221,9 @@ src/
   ui/        HUD, Menus
   data/      armas, itens, inimigos, documentos, objetivos
 tests/
-  unit/run.mjs     42 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados
-  e2e/smoke.mjs    joga os Capítulos 1, 2, 3 e 4 inteiros e a primeira fatia do 5 no Chromium headless (221 verificações)
+  unit/run.mjs     48 testes: colisão, navegação, save, hitbox, raio da mira, desgaste e dados (Caps. 1–6)
+  e2e/smoke.mjs    joga os Capítulos 1 a 5 inteiros e a primeira fatia do 6 no Chromium headless (250 verificações)
+  e2e/c6.mjs       bloco do Cap. 6 (usado pelo smoke completo e por smoke-c6.mjs, que roda só o Cap. 6 a partir de um save c5_end)
 ```
 
 ## Licença
