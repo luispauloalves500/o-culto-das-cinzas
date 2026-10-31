@@ -25,4 +25,7 @@ export const ITEMS = {
   amuleto_menino: { name: 'Amuleto do menino', desc: 'Um dente de leite numa fita vermelha. Quem o carrega respira mais fundo: fôlego máximo +25.' },
   // Capítulo 5 — Águas Negras
   fusivel_ceramico: { name: 'Fusível de cerâmica', desc: 'Cartucho grosso de porcelana branca com tampas de cobre, da caixa de reserva do comporteiro. Etiqueta: "PAINEL DAS BOMBAS — 60 A". Serve no soquete vazio do painel elétrico.' },
+  // Capítulo 7 — Sob a Pedra
+  pe_de_cabra: { name: 'Pé de cabra', desc: 'Barra de ferro da Companhia do Metrô, ponta chata e curva. Estava no carrinho de ferramentas da galeria de pedra. Serve de alavanca em tampas e lajes pesadas.' },
+  chave_coveiro: { name: 'Chave do coveiro-mor', desc: 'Chave de bronze com a cabeça em forma de crânio, presa ao cinto de ossos do coveiro-mor dentro do jazigo. Abre o cadeado da grade do fundo do ossuário.' },
 };

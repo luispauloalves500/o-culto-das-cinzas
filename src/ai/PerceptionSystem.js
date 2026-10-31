@@ -1,9 +1,14 @@
 // Percepção: visão (distância + ângulo + oclusão por raycast) e audição (eventos de ruído atenuados por paredes).
 export class PerceptionSystem {
-  constructor(col) { this.col = col; this.events = []; }
+  constructor(col) { this.col = col; this.events = []; this.acoustics = null; this.last = []; }
 
+  /**
+   * acoustics(pos) → multiplicador do raio (definido pelo nível; Cap. 7: a pedra das catacumbas ecoa). Sem nível
+   * acústico, o raio é o de sempre. `last` guarda os ruídos do último passo (o roteiro lê depois do endStep).
+   */
   noise(pos, radius, kind = 'generic') {
-    this.events.push({ x: pos.x, y: pos.y, z: pos.z, radius, kind });
+    const k = this.acoustics ? this.acoustics(pos) : 1;
+    this.events.push({ x: pos.x, y: pos.y, z: pos.z, radius: radius * (k > 0 ? k : 1), base: radius, kind });
   }
 
   /** visão: enemy precisa de pos, yaw, def.sight, def.fov, height */
@@ -25,13 +30,13 @@ export class PerceptionSystem {
   }
 
   /** ruído mais relevante ouvido por enemy neste passo (ou null) */
-  hear(enemy) {
+  hear(enemy, mul = 1) {
     let best = null, bs = 0;
     const ear = { x: enemy.pos.x, y: enemy.pos.y + 1.5, z: enemy.pos.z };
     for (const e of this.events) {
       if (Math.abs(e.y - enemy.pos.y) > 2.5) continue;
       const d = Math.hypot(e.x - ear.x, e.z - ear.z);
-      let r = e.radius * enemy.def.hearing;
+      let r = e.radius * enemy.def.hearing * mul;
       if (d > r) continue;
       if (!this.col.segmentClear(ear, { x: e.x, y: e.y + 1.2, z: e.z }, (b) => b.tag === 'wall' || b.tag === 'door')) r *= 0.5;
       if (d > r) continue;
@@ -41,5 +46,5 @@ export class PerceptionSystem {
     return best;
   }
 
-  endStep() { this.events.length = 0; }
+  endStep() { this.last = this.events; this.events = []; }
 }

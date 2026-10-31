@@ -137,4 +137,24 @@ export const ENEMIES = {
     exhibit: true,
     groanPitch: 1.35,
   },
+  // Capítulo 7 — Sob a Pedra: monges emparedados vivos nos nichos do ossuário. Cegos (a argamassa tapa os olhos):
+  // só percebem Elias encostado nele; em compensação ouvem tudo — acordam com barulho, vão até o barulho e, na
+  // perseguição, seguem cada passo, golpe ou tiro. Parado e em silêncio, Elias some para eles.
+  emparedado: {
+    name: 'Emparedado',
+    hp: 80, poise: 34, radius: 0.36, height: 1.78, scale: 1.0, hunch: 0.22,
+    walk: 0.7, chase: 3.0, turn: 5.0,
+    sight: 1.6, fov: 60, hearing: 1.5,
+    attackTokens: 1,
+    attacks: [
+      { id: 'swipe', range: 1.7, windup: 0.55, active: 0.2, recover: 0.8, dmg: 14, knock: 2.6, weight: 2 },
+      { id: 'grab', range: 1.3, windup: 0.6, active: 0.25, recover: 1.1, dmg: 0, grab: true, grabDmg: 7, weight: 1 },
+    ],
+    mats: 'emparedado',
+    blind: true,
+    wakeOnNoise: true,
+    dormantHearing: 0.6,
+    walled: true,
+    groanPitch: 0.8,
+  },
 };
