@@ -1554,20 +1554,150 @@ try {
     out.title = document.getElementById('endTitle')?.textContent; out.note = document.getElementById('endNote')?.textContent;
     out.btn = document.getElementById('btnEndNext').textContent; out.dis = document.getElementById('btnEndNext').disabled;
     out.stats = document.getElementById('stats')?.textContent || ''; out.rn0 = document.getElementById('endRn0')?.textContent || '';
-    const s = JSON.parse(localStorage.getItem('ocdc_save')); out.save = { cp: s.checkpoint, ch: s.chapter, done: !!s.flags.c4_chapterDone };
+    const s = JSON.parse(localStorage.getItem('ocdc_save')); out.save = { cp: s.checkpoint, ch: s.chapter, done: !!s.flags.c4_chapterDone }; out.raw = localStorage.getItem('ocdc_save');
     return out;
   });
   await page.screenshot({ path: SHOTS + '26-cap4-fim.png' });
-  check('Cap. 4: passagem do Relógio → tela de fim do Capítulo 4 com gancho do Capítulo 5', c4e.state === 'end' && c4e.done && /Fim do Capítulo 4/.test(c4e.title) && /Águas Negras/.test(c4e.note) && c4e.dis && /Capítulo 5/.test(c4e.btn) && /Documentos: \d\/5/.test(c4e.stats) && /Afogada/.test(c4e.rn0) && c4e.save.cp === 'c4_end' && c4e.save.ch === 4 && c4e.save.done, JSON.stringify(c4e));
+  check('Cap. 4: passagem do Relógio → tela de fim do Capítulo 4 com botão para o Capítulo 5', c4e.state === 'end' && c4e.done && /Fim do Capítulo 4/.test(c4e.title) && /Águas Negras/.test(c4e.note) && !c4e.dis && /Capítulo 5/.test(c4e.btn) && /Documentos: \d\/5/.test(c4e.stats) && /Afogada/.test(c4e.rn0) && c4e.save.cp === 'c4_end' && c4e.save.ch === 4 && c4e.save.done, JSON.stringify({ ...c4e, raw: undefined }));
+  // --- Capítulo 5 — Águas Negras: botão do fim do Cap. 4
+  await page.click('#btnEndNext');
+  await new Promise((r) => setTimeout(r, 800));
+  await inject();
+  const c5s = await page.evaluate(() => {
+    const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.3);
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const afo = g.enemies.filter((e) => e.type === 'afogado');
+    return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), obj: g.quest.current(),
+      axe: g.inventory.weapons.includes('machado') && !!g.player.weapon, ribbon: g.inventory.has('fita_ines'), keys: ['chave_relojoaria', 'chave_torre', 'roda_escape'].some((k) => g.inventory.has(k)),
+      flags: { c4: !!s.flags.c4_chapterDone, st: !!s.flags.c5_started }, lights: lights(), afo: afo.length, sub: afo.filter((e) => e.submerged).length, fog: !!g.scene.fog, map: g.menus.mapChapter ?? null };
+  });
+  await page.screenshot({ path: SHOTS + '27-cap5-passagem.png' });
+  check('Cap. 5: botão do fim do Cap. 4 inicia Águas Negras (save migrado)', c5s.st === 'playing' && c5s.ch === 5 && c5s.sch === 5 && c5s.cp === 'c5_passage' && Math.abs(c5s.pos[0] - 15) < 0.8 && Math.abs(c5s.pos[2] - 1.2) < 0.8 && c5s.axe && c5s.ribbon && !c5s.keys && c5s.flags.c4 && c5s.flags.st && /canal|passagem|bomba/i.test(c5s.obj), JSON.stringify(c5s));
+  check('Cap. 5: afogados submersos no canal, névoa própria e ≤ 16 luzes', c5s.afo >= 4 && c5s.sub >= 3 && c5s.fog && c5s.lights <= 16, JSON.stringify({ a: c5s.afo, s: c5s.sub, l: c5s.lights }));
+  // save do fim do Cap. 4 continuado → migra para o Cap. 5
+  await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c4e.raw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
   const c4y = await page.evaluate(() => {
     document.getElementById('btnContinue').click();
-    const g = __ocdc; T.run(0.5);
-    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), boss: g.boss.state, active: g.script.bossActive, hudOff: g.hud.el.boss.classList.contains('hidden'),
-      run: g.level.mechRunning && g.level.escapeWheel.visible, open: !g.level.plateFloor.enabled, hour: g.script.hourI, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length };
+    const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.5);
+    return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), axe: g.inventory.weapons.includes('machado'), c4: !!s.flags.c4_chapterDone, docs: s.documents.length };
   });
-  check('Cap. 4: continuar após o fim restaura Vigia morto, mecanismo andando e passagem aberta', c4y.st === 'playing' && c4y.ch === 4 && c4y.pos[1] > 8.5 && c4y.pos[2] > 96 && c4y.boss === 'dead' && !c4y.active && c4y.hudOff && c4y.run && c4y.open && c4y.hour === 2 && c4y.dead === c4y.n, JSON.stringify(c4y));
+  check('Cap. 5: continuar um save do fim do Cap. 4 (c4_end) migra para o Cap. 5', c4y.st === 'playing' && c4y.ch === 5 && c4y.sch === 5 && c4y.cp === 'c5_passage' && Math.abs(c4y.pos[2] - 1.2) < 0.8 && c4y.axe && c4y.c4 && c4y.docs >= 5, JSON.stringify(c4y));
+  // canal: aviso, afogado emerge e ataca na margem, água (dano, correnteza, lentidão), rampa
+  const c5a = await page.evaluate(() => {
+    const g = __ocdc, out = {};
+    const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
+    const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    T.tp(14.8, 0, 8.6, -Math.PI / 2); out.aviso = T.interactAt('doc_aviso_comporta'); T.run(0.1); out.avisoF = g.quest.has('c5_readAviso');
+    // afogado do canal emerge e ataca na beira
+    E('afo_margem').setDeadInstant();
+    const a = E('afo_canal1'); g.player.hp = g.player.maxHp;
+    T.tp(12, 0, 20.6, Math.PI); out.rootY0 = +a.rig.root.position.y.toFixed(2);
+    const st = new Set(); let maxRoot = -9; out.wetMul = null;
+    for (let k = 0; k < 80; k++) { T.run(0.1); st.add(a.state); if (a.emerging > 0) st.add('emerging'); maxRoot = Math.max(maxRoot, a.rig.root.position.y); if (out.wetMul == null && a.state === 'chase') out.wetMul = +a.speedMul().toFixed(2); if (g.player.state === 'grabbed') for (let j = 0; j < 25; j++) T.press('Mouse0'); }
+    out.aStates = [...st]; out.aDmg = g.player.maxHp - g.player.hp; out.woke = g.quest.has('c5_wokeCanal1'); out.aPos = a.pos.toArray().map((v) => +v.toFixed(2));
+    a.pos.set(30, 0, 25); out.dryMul = +a.speedMul().toFixed(2); out.dryDmg = a.dmgMul(); a.pos.set(20, -1.2, 16); out.wetDmg = a.dmgMul();
+    a.setDeadInstant(); g.player.hp = g.player.maxHp;
+    // água: dano, correnteza, lentidão, rampa de saída
+    T.tp(8, -1.4, 16, 0); T.run(0.05); out.inWater = !!g.level.waterAt(g.player.pos); const x0 = g.player.pos.x, hp0 = g.player.hp;
+    T.run(2.6); out.drift = +(g.player.pos.x - x0).toFixed(2); out.waterDmg = hp0 - g.player.hp; out.wetHint = g.quest.has('c5_wetOnce');
+    T.tp(10, -1.4, 16, -Math.PI / 2); T.hold('KeyW', 1); out.wetWalk = +(10 - g.player.pos.x).toFixed(2);
+    T.tp(14, 0, 11.5, -Math.PI / 2); T.hold('KeyW', 1); out.dryWalk = +(14 - g.player.pos.x).toFixed(2);
+    T.tp(3.5, -1.4, 16.5, Math.PI); T.hold('KeyW', 3); out.exitS1 = P();
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '28-cap5-canal.png' });
+  check('Cap. 5: aviso da comporta lido no corredor de passagem', c5a.aviso === 'ok' && c5a.avisoF, c5a.aviso);
+  check('Cap. 5: afogado submerso vê Elias, emerge da água e ataca na margem', c5a.woke && c5a.rootY0 < -1.5 && c5a.aStates.includes('emerging') && c5a.aStates.includes('attack') && c5a.aDmg > 0 && c5a.aPos[1] > -0.2, JSON.stringify({ s: c5a.aStates, d: c5a.aDmg, p: c5a.aPos, y0: c5a.rootY0 }));
+  check('Cap. 5: afogado forte na água, lento em terra seca', c5a.wetMul > 1.2 && c5a.dryMul < 0.7 && c5a.wetDmg > c5a.dryDmg, JSON.stringify({ w: c5a.wetMul, d: c5a.dryMul, wd: c5a.wetDmg, dd: c5a.dryDmg }));
+  check('Cap. 5: água do canal machuca, arrasta (correnteza) e deixa Elias lento; rampa de limpeza tira da água', c5a.inWater && c5a.drift > 0.5 && c5a.waterDmg > 0 && c5a.wetHint && c5a.wetWalk < c5a.dryWalk * 0.6 && c5a.exitS1[1] > -0.1 && c5a.exitS1[2] < 13, JSON.stringify({ d: c5a.drift, h: c5a.waterDmg, w: [c5a.wetWalk, c5a.dryWalk], e: c5a.exitS1 }));
+  // passarela, galeria, antecâmara, portão sem energia, fusível e o painel
+  const c5b = await page.evaluate(() => {
+    const g = __ocdc, out = {};
+    const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
+    const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    g.player.hp = g.player.maxHp;
+    // passarela de tábuas
+    T.tp(20, 0, 11.5, 0); T.hold('KeyW', 3.2); out.bridge = P(); out.crossed = g.quest.has('c5_crossed');
+    // caixa atrás dos escombros (pela água)
+    T.tp(39.8, 0, 11.8, Math.PI); out.cache = T.interactAt('pick_c5_cache'); out.rubble = g.quest.has('c5_gotRubble');
+    // galeria → antecâmara → portão sem energia
+    E('cin_galeria').setDeadInstant();
+    T.tp(36, 0, 21.2, 0); out.ante = T.interactAt('door_c5_ante'); T.run(0.9); out.anteOpen = g.level.doors.c5_ante.open;
+    T.hold('KeyW', 1.2); out.inPumps = g.quest.has('c5_inPumps'); out.cp1 = S().checkpoint;
+    T.tp(36, 0, 26.8, 0); out.gate = T.interactAt('door_c5_gate'); out.gateLocked = g.level.doors.c5_gate.locked; T.hold('KeyW', 1); out.gateZ = +g.player.pos.z.toFixed(2);
+    T.tp(32.2, 0, 26.3, 0); out.rel = T.interactAt('doc_relatorio_bombeamento'); T.run(0.1); out.relF = g.quest.has('c5_readRelatorio');
+    out.obj1 = g.quest.current();
+    // painel sem fusível
+    T.tp(30.8, 0, 25, -Math.PI / 2); out.panelDoor = T.interactAt('door_c5_panel'); T.run(0.9); out.panelOpen = g.level.doors.c5_panel.open;
+    T.tp(25.3, 0, 24.2, -Math.PI / 2); out.sock0 = T.interactAt('c5_socket'); out.sawSock = g.quest.has('c5_sawSocket');
+    // casa do comporteiro: fusível
+    T.tp(5, 0, 21.2, 0); out.hut = T.interactAt('door_c5_hut'); T.run(0.9); out.hutOpen = g.level.doors.c5_hut.open;
+    T.hold('KeyW', 1.0); out.inHut = P();
+    T.tp(6.5, 0, 24.7, Math.PI / 2); out.fuse = T.interactAt('pick_c5_fuse'); out.hasFuse = g.inventory.has('fusivel_ceramico') && g.quest.has('c5_hasFuse');
+    T.tp(2.2, 0, 26.0, 0); out.band = T.interactAt('pick_c5_band_hut');
+    out.lightsCanal = lights();
+    // painel: fusível, curto (ordem errada), ordem certa, chave geral
+    T.tp(25.3, 0, 24.2, -Math.PI / 2); out.sock = T.interactAt('c5_socket'); out.fuseIn = g.quest.has('c5_fuseIn') && g.level.fuseInPanel.visible && !g.inventory.has('fusivel_ceramico');
+    T.tp(25.3, 0, 24.8, -Math.PI / 2); const hpS = g.player.hp; out.b0 = T.interactAt('c5_breaker0'); out.shorted = g.quest.has('c5_shorted') && g.script.panelSeq.length === 0; out.shortDmg = hpS - g.player.hp;
+    out.seq = [];
+    for (const i of [1, 0, 2]) { T.tp(25.3, 0, 24.8 + i * 0.5, -Math.PI / 2); out.seq.push(T.interactAt('c5_breaker' + i)); }
+    out.seqLen = g.script.panelSeq.length;
+    out.pocoDormant = E('afo_poco').dormant;
+    T.tp(25.3, 0, 26.0, -Math.PI / 2); out.main = T.interactAt('c5_mainLever');
+    out.power = g.quest.has('c5_power') && g.level.powered; T.run(2.5);
+    out.gateOpen = g.level.doors.c5_gate.open && !g.level.doors.c5_gate.locked; out.stairOn = g.level.stairFloor.enabled; out.pocoAwake = !E('afo_poco').dormant;
+    out.cp2 = S().checkpoint; out.savePower = !!S().flags.c5_power;
+    E('afo_poco').setDeadInstant(); g.player.hp = g.player.maxHp;
+    T.tp(36, 0, 30, 0); T.run(0.1); out.lightsHall = lights();
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '29-cap5-bombas.png' });
+  check('Cap. 5: passarela estreita atravessa o canal; caixa atrás dos escombros pela água', c5b.crossed && c5b.bridge[2] > 19 && c5b.bridge[1] > -0.1 && c5b.cache === 'ok' && c5b.rubble, JSON.stringify({ b: c5b.bridge, c: c5b.cache }));
+  check('Cap. 5: antecâmara da casa de bombas (checkpoint c5_pumps) e portão sem energia', c5b.ante === 'ok' && c5b.anteOpen && c5b.inPumps && c5b.cp1 === 'c5_pumps' && c5b.gateLocked && c5b.gateZ < 28 && c5b.relF && /fus[íi]vel/i.test(c5b.obj1), JSON.stringify({ a: c5b.ante, cp: c5b.cp1, z: c5b.gateZ, o: c5b.obj1 }));
+  check('Cap. 5: fusível na casa do comporteiro (porta real) e soquete vazio no painel', c5b.panelOpen && c5b.sawSock && c5b.hutOpen && c5b.inHut[2] > 22.5 && c5b.fuse === 'ok' && c5b.hasFuse, JSON.stringify({ h: c5b.inHut, f: c5b.fuse }));
+  check('Cap. 5: quebra-cabeça de energia (fusível, curto na ordem errada, ordem certa, chave geral)', c5b.fuseIn && c5b.shorted && c5b.shortDmg > 0 && c5b.seq.every((r) => r === 'ok') && c5b.main === 'ok' && c5b.power, JSON.stringify({ s: c5b.seq, sh: c5b.shortDmg, m: c5b.main }));
+  check('Cap. 5: energia abre o portão, liga a escada, desperta o afogado do poço e salva', c5b.gateOpen && c5b.stairOn && c5b.pocoDormant && c5b.pocoAwake && c5b.cp2 === 'c5_pumps' && c5b.savePower, JSON.stringify({ g: c5b.gateOpen, s: c5b.stairOn, cp: c5b.cp2 }));
+  check('Cap. 5: orçamento de luzes no canal e no salão das bombas (≤ 16)', c5b.lightsCanal <= 16 && c5b.lightsHall <= 16, `canal=${c5b.lightsCanal} salão=${c5b.lightsHall}`);
+  // nível superior, comporta, turbinas e fim da fatia
+  const c5c = await page.evaluate(() => {
+    const g = __ocdc, out = {};
+    const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
+    const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    // escada retrátil → mezanino
+    T.tp(44.5, 0, 32.4, 0); T.hold('KeyW', 4.5); out.stairTop = P(); out.upper = g.quest.has('c5_upper');
+    T.tp(29.3, 4.5, 44.8, 0); out.cw = T.interactAt('door_c5_catwalk'); T.run(0.9); out.cwOpen = g.level.doors.c5_catwalk.open;
+    T.hold('KeyW', 3); out.onCw = P();
+    T.tp(29.6, 4.5, 53, Math.PI / 2); out.valve = []; for (let k = 0; k < 3; k++) out.valve.push(T.interactAt('c5_valve'));
+    out.sluice = g.quest.has('c5_sluiceOpen'); out.resAwake = !E('afo_res').dormant; T.run(2.5); out.sluiceCol = g.level.sluice.userData.collider?.enabled;
+    E('afo_res').setDeadInstant(); E('aco_turb').setDeadInstant(); g.player.hp = g.player.maxHp;
+    T.tp(29.3, 4.5, 57, 0); T.hold('KeyW', 2.5); out.turb = P(); out.inTurb = g.quest.has('c5_inTurbines');
+    out.lightsTurb = lights();
+    T.tp(37.2, 4.5, 66, 0); out.diario = T.interactAt('doc_diario_comporteiro'); T.run(0.1); out.diarioF = g.quest.has('c5_readDiario');
+    T.tp(38.6, 4.5, 66, 0); out.book = T.interactAt('c5_slice_book');
+    T.tp(33, 4.5, 66.6, 0); out.tdoor = T.interactAt('door_c5_turbine'); T.run(0.2);
+    const s = S(); out.slice = { cp: s.checkpoint, ch: s.chapter, done: !!s.flags.c5_sliceDone, dead: s.deadEnemies.length, st: g.state, locked: g.level.doors.c5_turbine.locked && !g.level.doors.c5_turbine.open };
+    out.obj = g.quest.current();
+    T.key('KeyM'); out.mapState = g.state; out.map = g.menus.lastMap; out.tabs = [...document.querySelectorAll('.map-tab')].filter((e) => !e.classList.contains('hidden')).map((e) => e.textContent); g.closeOverlay();
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '30-cap5-turbinas.png' });
+  check('Cap. 5: escada até o mezanino e passarela sobre o reservatório', c5c.upper && c5c.stairTop[1] > 4 && c5c.cwOpen && c5c.onCw[2] > 50, JSON.stringify({ s: c5c.stairTop, c: c5c.onCw }));
+  check('Cap. 5: volante (3 voltas) ergue a comporta e desperta o afogado do reservatório', c5c.valve.every((r) => r === 'ok') && c5c.sluice && c5c.resAwake && c5c.sluiceCol === false, JSON.stringify({ v: c5c.valve, c: c5c.sluiceCol }));
+  check('Cap. 5: antecâmara das turbinas, diário do comporteiro e luzes (≤ 16)', c5c.inTurb && c5c.diarioF && c5c.lightsTurb <= 16, JSON.stringify({ t: c5c.turb, l: c5c.lightsTurb }));
+  check('Cap. 5: portão das turbinas fecha a fatia ("a Afogada guarda as comportas") com save c5_slice, sem tela de fim', c5c.tdoor === 'ok' && c5c.slice.cp === 'c5_slice' && c5c.slice.ch === 5 && c5c.slice.done && c5c.slice.st === 'playing' && c5c.slice.locked && c5c.slice.dead >= 5 && /Afogada/.test(c5c.obj), JSON.stringify({ s: c5c.slice, o: c5c.obj }));
+  check('Cap. 5: mapa com abas Canais e Mezanino e salas visitadas', c5c.mapState === 'map' && c5c.tabs.length === 2 && /Canais/.test(c5c.tabs[0]) && /Mezanino/.test(c5c.tabs[1]) && c5c.map.rooms >= 3, JSON.stringify({ t: c5c.tabs, m: c5c.map }));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c5r = await page.evaluate(() => {
+    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.5);
+    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), power: g.level.powered, gate: g.level.doors.c5_gate.open, stair: g.level.stairFloor.enabled, sluice: g.level.sluice.userData.collider?.enabled, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length, fuse: g.level.fuseInPanel.visible, obj: g.quest.current() };
+  });
+  check('Cap. 5: recarregar restaura energia, portão, escada, comporta, fusível e inimigos mortos', c5r.st === 'playing' && c5r.ch === 5 && c5r.pos[1] > 4 && c5r.pos[2] > 58 && c5r.power && c5r.gate && c5r.stair && c5r.sluice === false && c5r.fuse && c5r.dead >= 5 && /Afogada/.test(c5r.obj), JSON.stringify(c5r));
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));

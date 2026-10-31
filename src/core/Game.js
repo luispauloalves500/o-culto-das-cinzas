@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { EventBus } from './EventBus.js';
 import { Settings } from './Settings.js';
 import { InputManager } from './InputManager.js';
-import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save, makeChapter4Save } from './SaveManager.js';
+import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save, makeChapter4Save, makeChapter5Save } from './SaveManager.js';
 import { AudioManager } from './AudioManager.js';
 import { CollisionWorld } from '../world/CollisionWorld.js';
 import { Navigation } from '../world/Navigation.js';
@@ -25,6 +25,8 @@ import { SedeLevel, SEDE_CHECKPOINTS, SEDE_FOG } from '../scenes/sede/SedeLevel.
 import { SedeScript } from '../scenes/sede/SedeScript.js';
 import { CidadeLevel, CIDADE_CHECKPOINTS, CIDADE_FOG } from '../scenes/cidade/CidadeLevel.js';
 import { CidadeScript } from '../scenes/cidade/CidadeScript.js';
+import { AguasLevel, AGUAS_CHECKPOINTS, AGUAS_FOG } from '../scenes/aguas/AguasLevel.js';
+import { AguasScript } from '../scenes/aguas/AguasScript.js';
 import { setMapChapter } from '../data/map.js';
 
 // mundos por capítulo: geometria, roteiro, checkpoints e névoa padrão
@@ -33,6 +35,7 @@ const WORLDS = {
   2: { Level: BairroLevel, Script: BairroScript, checkpoints: BAIRRO_CHECKPOINTS, start: 'c2_gate', fog: BAIRRO_FOG },
   3: { Level: SedeLevel, Script: SedeScript, checkpoints: SEDE_CHECKPOINTS, start: 'c3_tram', fog: SEDE_FOG },
   4: { Level: CidadeLevel, Script: CidadeScript, checkpoints: CIDADE_CHECKPOINTS, start: 'c4_drain', fog: CIDADE_FOG },
+  5: { Level: AguasLevel, Script: AguasScript, checkpoints: AGUAS_CHECKPOINTS, start: 'c5_passage', fog: AGUAS_FOG },
 };
 import { HUD } from '../ui/HUD.js';
 import { Menus } from '../ui/Menus.js';
@@ -93,7 +96,7 @@ export class Game {
   _buildWorld(save) {
     this._disposeWorld();
     this.bus = new EventBus();
-    this.chapter = [2, 3, 4].includes(save.chapter) ? save.chapter : 1;
+    this.chapter = [2, 3, 4, 5].includes(save.chapter) ? save.chapter : 1;
     const W = WORLDS[this.chapter];
     setMapChapter(this.chapter);
     const scene = (this.scene = new THREE.Scene());
@@ -179,11 +182,23 @@ export class Game {
     if ((s.chapter || 1) === 1 && s.flags.chapterDone) return this.startChapter2(s);
     // save do Capítulo 3 concluído (de versões em que o Cap. 4 ainda não existia): segue para o Cap. 4
     if (s.chapter === 3 && s.flags.c3_chapterDone) return this.startChapter4(s);
+    // save do Capítulo 4 concluído (de versões em que o Cap. 5 ainda não existia): segue para o Cap. 5
+    if (s.chapter === 4 && s.flags.c4_chapterDone) return this.startChapter5(s);
     this._buildWorld(s);
     this._enterPlay();
     if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
     if (this.chapter === 3) this.hud.toast('Capítulo 3 — A Confraria · Sede do Véu', 3.5);
-    if (this.chapter === 4) this.hud.toast(s.flags.c4_chapterDone ? 'Capítulo 4 concluído · a passagem do Relógio desce rumo aos canais (Capítulo 5 em breve)' : s.flags.c4_sliceDone ? 'Capítulo 4 — Cidade Morta · Torre do Relógio' : 'Capítulo 4 — Cidade Morta · centro antigo de Véspera', 3.5);
+    if (this.chapter === 5) this.hud.toast(s.flags.c5_sliceDone ? 'Capítulo 5 — Águas Negras · antecâmara das turbinas' : s.flags.c5_power ? 'Capítulo 5 — Águas Negras · casa de bombas' : 'Capítulo 5 — Águas Negras · estação de bombeamento', 3.5);
+    if (this.chapter === 4) this.hud.toast(s.flags.c4_sliceDone ? 'Capítulo 4 — Cidade Morta · Torre do Relógio' : 'Capítulo 4 — Cidade Morta · centro antigo de Véspera', 3.5);
+  }
+  /** passagem do Capítulo 4 para o 5: a escada sob o Relógio desce até os canais da estação de bombeamento */
+  startChapter5(prev) {
+    const from = prev || (this.scene && this.chapter === 4 ? this.serialize(this.checkpoint || 'c4_end') : this.saves.load());
+    const s = makeChapter5Save(from);
+    this.saves.write(s);
+    this._buildWorld(s);
+    this._enterPlay();
+    this.script.intro?.();
   }
   /** passagem do Capítulo 3 para o 4: a galeria das catacumbas termina num bueiro do centro antigo */
   startChapter4(prev) {

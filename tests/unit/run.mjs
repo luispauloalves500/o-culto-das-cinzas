@@ -612,5 +612,67 @@ test('Cap. 4: Torre do Relógio — escada, casa das máquinas, 2º confronto e 
   assert.ok(C4S.C4_VIGIA_HP2 > 300);
 });
 
+const C5L = await import('../../src/scenes/aguas/AguasLevel.js');
+const C5S = await import('../../src/scenes/aguas/AguasScript.js');
+const { makeChapter5Save, CH4_KEY_ITEMS } = await import('../../src/core/SaveManager.js');
+const { OBJECTIVES_C5, SIDE_OBJECTIVES_C5 } = await import('../../src/data/chapters.js');
+test('Cap. 5: migração do Cap. 4 concluído, objetivos em ordem e documentos', () => {
+  const end4 = migrateSave({ ...makeChapter4Save(null), checkpoint: 'c4_end', flags: { c4_chapterDone: true, hasAmulet: true }, inventory: { items: { bandagem: 2, municao_38: 7, chave_torre: 1, roda_escape: 1 }, weapons: ['machado', 'revolver'], wear: {}, loaded: { revolver: 6 } }, documents: ['livro_rondas'], player: { hp: 30 } });
+  const s = makeChapter5Save(end4);
+  assert.equal(s.chapter, 5); assert.equal(s.checkpoint, 'c5_passage');
+  assert.ok(s.flags.c4_chapterDone && s.flags.ch4Done && s.flags.c5_started && s.flags.hasAmulet);
+  assert.equal(s.inventory.items.bandagem, 2); assert.equal(s.inventory.items.municao_38, 7);
+  for (const k of CH4_KEY_ITEMS) assert.equal(s.inventory.items[k], undefined, k);
+  assert.ok(s.inventory.weapons.includes('revolver') && s.documents.includes('livro_rondas'));
+  assert.ok(s.player.hp >= 80); assert.deepEqual(s.deadEnemies, []);
+  assert.equal(migrateSave(JSON.parse(JSON.stringify(s))).chapter, 5);
+  assert.equal(makeChapter5Save(null).chapter, 5);
+  assert.equal(objectivesFor(5), OBJECTIVES_C5); assert.equal(sideObjectivesFor(5), SIDE_OBJECTIVES_C5);
+  assert.deepEqual(OBJECTIVES_C5.map((o) => o.done), ['c5_inCanal', 'c5_crossed', 'c5_inPumps', 'c5_hasFuse', 'c5_power', 'c5_upper', 'c5_sluiceOpen', 'c5_sliceDone', 'c5_never']);
+  const q = new QuestSystem(null, 5); assert.equal(q.current(), OBJECTIVES_C5[0].text);
+  assert.ok(SIDE_OBJECTIVES_C5.length >= 1 && SIDE_OBJECTIVES_C5.length <= 3);
+  for (const o of SIDE_OBJECTIVES_C5) assert.ok(o.when && o.done && o.text);
+  for (const id of ['aviso_comporta', 'relatorio_bombeamento', 'diario_comporteiro']) assert.equal(DOCUMENTS[id]?.ch, 5, id);
+  // o relatório dá a ordem certa dos disjuntores
+  const order = C5L.BREAKER_ORDER.map((i) => C5L.BREAKERS[i]);
+  const body = DOCUMENTS.relatorio_bombeamento.body;
+  let at = -1; for (const n of order) { const k = body.indexOf(n, at + 1); assert.ok(k > at, n); at = k; }
+  assert.ok(ITEMS.fusivel_ceramico && CHAPTERS.find((c) => c.id === 5)?.playable === true);
+});
+test('Cap. 5: mapa dos canais, afogado e checkpoints', () => {
+  try {
+    setMapChapter(5);
+    assert.deepEqual(chapterFloors().map((f) => f.id), ['up', 'up2']);
+    assert.equal(roomAt({ x: 15, y: 0, z: 4 }).id, 'c5_passagem');
+    assert.equal(roomAt({ x: 20, y: -1, z: 16 }).id, 'c5_canal');
+    assert.equal(roomAt({ x: 4, y: 0, z: 25 }).id, 'c5_comporteiro');
+    assert.equal(roomAt({ x: 27, y: 0, z: 25 }).id, 'c5_painel');
+    assert.equal(roomAt({ x: 36, y: 0, z: 25 }).id, 'c5_ante');
+    assert.equal(roomAt({ x: 36, y: 0, z: 36 }).id, 'c5_bombas');
+    assert.equal(roomAt({ x: 29.3, y: 4.5, z: 53 }).id, 'c5_passarela');
+    assert.equal(roomAt({ x: 33, y: 4.5, z: 64 }).id, 'c5_turbinas');
+  } finally { setMapChapter(1); }
+  assert.equal(roomAt({ x: 36, y: 0, z: 36 })?.id?.startsWith('c5_') ?? false, false);
+  const a = ENEMIES.afogado;
+  assert.ok(a && a.aquatic && a.drySpeed < 1 && a.wetSpeed > 1 && a.wetDmg > 1 && a.emergeTime > 0);
+  assert.ok(a.attacks.length >= 2 && a.attacks.every((k) => k.windup > 0));
+  // na água ou na beira: molhado; no seco (galeria): seco
+  const L = Object.create(C5L.AguasLevel.prototype);
+  assert.equal(L.wetness({ x: 20, y: -1, z: 16 }), 1);
+  assert.ok(L.wetness({ x: 20, y: 0, z: 19.8 }) > 0.5);
+  assert.equal(L.wetness({ x: 30, y: 0, z: 25 }), 0);
+  assert.ok(L.waterAt({ x: 20, y: -1.4, z: 16 }));
+  assert.equal(L.waterAt({ x: 20, y: 0, z: 16 }), null); // na passarela
+  assert.equal(L.waterAt({ x: 20, y: 0, z: 25 }), null);
+  for (const s of C5S.AGUAS_SPAWNS) assert.ok(ENEMIES[s.type], s.id);
+  assert.ok(C5S.AGUAS_SPAWNS.filter((s) => s.type === 'afogado').length >= 3);
+  for (const s of C5S.AGUAS_SPAWNS.filter((s) => s.submerged)) assert.ok(s.dormant && s.y < 0, s.id);
+  const CP = C5L.AGUAS_CHECKPOINTS;
+  for (const id of ['c5_passage', 'c5_pumps', 'c5_slice']) assert.ok(CP[id], id);
+  assert.equal(CP.c5_passage.y, 0); assert.equal(CP.c5_slice.y, C5L.UPPER);
+  assert.equal(L.waterAt(CP.c5_passage), null); assert.equal(L.waterAt(CP.c5_pumps), null);
+  assert.deepEqual([...C5L.BREAKER_ORDER].sort(), [0, 1, 2]);
+});
+
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
 process.exit(fail ? 1 : 0);

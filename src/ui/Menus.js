@@ -24,7 +24,7 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
-    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 4) return; if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
+    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 5) return; if (g.chapter === 4) g.startChapter5(); else if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
     for (const el of document.querySelectorAll('.map-tab')) el.onclick = () => this.mapFloor(+el.dataset.floor);
@@ -81,16 +81,16 @@ export class Menus {
   drawMap() {
     const g = this.game, mv = this.mapView;
     this.lastMap = mv.draw(g);
-    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4;
+    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4, ch5 = mapChapter() === 5;
     for (const el of document.querySelectorAll('.map-tab')) {
       const fid = FLOORS[+el.dataset.floor].id;
       el.classList.toggle('active', fid === mv.floor);
-      el.classList.toggle('hidden', (ch2 && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo'));
-      el.textContent = ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
+      el.classList.toggle('hidden', (ch2 && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo') || (ch5 && fid !== 'up' && fid !== 'up2'));
+      el.textContent = ch5 ? (fid === 'up2' ? 'Mezanino · passarela' : 'Canais · casa de bombas') : ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
     }
     const r = roomAt(g.player.pos);
     $('mapWhere').textContent = 'Você está em: ' + (r ? r.name : 'lugar nenhum que conste na planta');
-    $('mapPlan').textContent = ch4 ? 'Centro antigo de Véspera: sem planta — só aparece o que você já percorreu.' : ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
+    $('mapPlan').textContent = ch5 ? 'Estação de bombeamento: sem planta — só aparece o que você já percorreu.' : ch4 ? 'Centro antigo de Véspera: sem planta — só aparece o que você já percorreu.' : ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
     const notes = collectNotes(g);
     $('mapNotes').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
   }
@@ -107,12 +107,12 @@ export class Menus {
     if (ch >= 4) {
       $('endTitle').textContent = 'Fim do Capítulo 4 — Cidade Morta';
       $('endText').textContent = 'O lampião do Vigia se parte entre as engrenagens e a luz fria se apaga de vez. Às 3h07 o martelo bate, o sino toca três vezes e a chapa de ferro da casa das máquinas desce. A passagem do Relógio afunda na pedra, úmida, rumo ao barulho de água corrente sob a cidade.';
-      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 5 — Águas Negras: os canais, a estação de bombeamento e a Afogada (em breve).';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 5 — Águas Negras: os canais e a estação de bombeamento (primeira parte jogável).';
       $('endRn0').classList.remove('hidden');
       $('endRn0').innerHTML = stats.note
         ? 'O bilhete de Inês fala de uma <b>estação de bombeamento</b>, dos <b>canais</b> e de alguém que guarda as comportas: <b>a Afogada</b>. "Não confie no relógio. Confie na fita."'
         : '<span class="small">Entre os dentes da engrenagem mais alta havia um papel dobrado. Inês passou por ali.</span>';
-      if (next) { next.disabled = true; next.textContent = 'Capítulo 5 — Águas Negras (em breve)'; }
+      if (next) { next.disabled = false; next.textContent = 'Seguir para o Capítulo 5 — Águas Negras'; }
       this.show('chapterEnd');
       return;
     }
