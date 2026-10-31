@@ -3,7 +3,7 @@ import { MAP_MARKS, knownRooms, floorOf, doorFloor, roomAt, chapterFloors, mapCh
 import { lockedNotes } from './notes.js';
 
 // limites do desenho por capítulo (o Bairro Operário se estende para o norte até a casa das fornalhas)
-const BOUNDS = { 1: [-1, 47, -4, 39.5], 2: [-1, 58, -4, 97], 3: [-1, 37, -1, 59], 5: [-1, 47, -2, 69], 6: [-1, 47, -1, 85], 7: [2, 52, -1, 57] };
+const BOUNDS = { 1: [-1, 47, -4, 39.5], 2: [-1, 58, -4, 97], 3: [-1, 37, -1, 59], 5: [-1, 47, -2, 69], 6: [-1, 47, -1, 85], 7: [2, 52, -1, 57], 8: [-23, 31, -1, 77] };
 
 export class MapView {
   constructor(canvas) { this.canvas = canvas; this.floor = 'up'; }

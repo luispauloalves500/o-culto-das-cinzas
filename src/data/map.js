@@ -167,6 +167,23 @@ export const ROOMS_C7 = [
 ];
 ROOMS.push(...ROOMS_C7);
 
+// Capítulo 8 — A Última Chama (primeira fatia): Usina de Véspera — térreo (y 0) e galeria/esteira (y 4.4)
+export const ROOMS_C8 = [
+  { id: 'c8_patio', floor: 'up', ch: 8, name: 'Pátio do carvão', rect: [0, 0, 26, 24] },
+  { id: 'c8_guarita', floor: 'up', ch: 8, name: 'Guarita', rect: [1, 8, 5, 12] },
+  { id: 'c8_torre_carvao', floor: 'up', ch: 8, name: 'Torre de carvão', rect: [20, 12, 24, 16] },
+  { id: 'c8_caldeiras', floor: 'up', ch: 8, name: 'Casa das Caldeiras', rect: [0, 24, 30, 52] },
+  { id: 'c8_tubos', floor: 'up', ch: 8, name: 'Corredor de tubos', rect: [-14, 32, 0, 34.4] },
+  { id: 'c8_oficina', floor: 'up', ch: 8, name: 'Oficina', rect: [-22, 28, -14, 38] },
+  { id: 'c8_turbina', floor: 'up', ch: 8, name: 'Sala da Turbina', rect: [0, 52, 30, 68] },
+  { id: 'c8_torre', floor: 'up', ch: 8, name: 'Base da torre de transmissão', rect: [8, 68, 18, 76] },
+  { id: 'c8_esteira', floor: 'up2', ch: 8, name: 'Esteira de carvão', rect: [20, 12, 24, 24] },
+  { id: 'c8_galeria', floor: 'up2', ch: 8, name: 'Galeria das caldeiras', rect: [20, 24, 30, 44] },
+  { id: 'c8_patamar', floor: 'up2', ch: 8, name: 'Patamar da escada', rect: [20, 44, 26, 49] },
+  { id: 'c8_passarela', floor: 'up2', ch: 8, name: 'Passarela da caldeira III', rect: [10, 47.6, 20, 49] },
+];
+ROOMS.push(...ROOMS_C8);
+
 export const MAP_MARKS = [
   { kind: 'save', floor: 'up', x: 7.1, z: -2.3, room: 'ward' },
   { kind: 'save', floor: 'up', x: 34.6, z: -2.4, room: 'isolation' },
@@ -215,15 +232,21 @@ export const MAP_MARKS = [
   { kind: 'save', ch: 7, floor: 'up', x: 20.6, z: 4.8, room: 'c7_poco' },
   { kind: 'save', ch: 7, floor: 'up', x: 8.5, z: 45.6, room: 'c7_plataforma' },
   { kind: 'save', ch: 7, floor: 'up', x: 65.3, z: 48.8, room: 'c7_cabine' },
+  { kind: 'save', ch: 8, floor: 'up', x: 1.9, z: 10.2, room: 'c8_guarita' },
+  { kind: 'save', ch: 8, floor: 'up', x: -16.6, z: 30.4, room: 'c8_oficina' },
+  { kind: 'save', ch: 8, floor: 'up', x: 2.9, z: 63.6, room: 'c8_turbina' },
+  { kind: 'stairs', ch: 8, floor: 'up', x: 22, z: 12.2, room: 'c8_torre_carvao' },
+  { kind: 'stairs', ch: 8, floor: 'up2', x: 22, z: 13.2, room: 'c8_esteira' },
+  { kind: 'fire', ch: 8, floor: 'up', x: 15, z: 38, room: 'c8_caldeiras' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
 let MAP_CHAPTER = 1;
-export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4, 5, 6, 7].includes(ch) ? ch : 1; }
+export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4, 5, 6, 7, 8].includes(ch) ? ch : 1; }
 export function mapChapter() { return MAP_CHAPTER; }
 const inChapter = (r) => (r.ch || 1) === MAP_CHAPTER;
 /** andares com abas no mapa para o capítulo ativo */
-export function chapterFloors() { return MAP_CHAPTER === 5 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 || MAP_CHAPTER === 6 || MAP_CHAPTER === 7 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
+export function chapterFloors() { return MAP_CHAPTER === 5 || MAP_CHAPTER === 8 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 || MAP_CHAPTER === 6 || MAP_CHAPTER === 7 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
 
 /** andar a partir da altura dos pés */
 export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }

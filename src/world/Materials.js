@@ -97,6 +97,13 @@ export function createMaterials() {
     mortar: L({ map: T.stone, color: 0x9a9488 }),
     cantaria: L({ map: T.stone, color: 0x6e665a }),
     stationTile: L({ map: T.tile, color: 0xb8b090 }),
+    // Capítulo 8 — A Última Chama: ferro das caldeiras, mostrador de manômetro, vapor, couro chamuscado do foguista
+    boilerIron: L({ map: T.metal, color: 0x5a4a40 }),
+    gauge: new THREE.MeshBasicMaterial({ color: 0xd8ccb0 }),
+    needle: new THREE.MeshBasicMaterial({ color: 0x8a1810 }),
+    steam: new THREE.MeshBasicMaterial({ color: 0xd8dcd8, transparent: true, opacity: 0.45, depthWrite: false }),
+    scorched: L({ map: T.wood, color: 0x3a2a20 }),
+    belt: L({ map: T.concrete, color: 0x2a2624 }),
   };
   M.textures = T;
   return M;

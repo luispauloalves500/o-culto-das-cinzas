@@ -113,6 +113,8 @@ export class AudioManager {
       // Capítulo 7: ossos estalando sob o pé (estalos secos em rajada) e pedra pesada arrastando sobre pedra
       case 'bones': if ((d = o(26, opts.vol ?? 0.7))) { for (let i = 0; i < 4; i++) this._noise(d, t + i * 0.035 + Math.random() * 0.02, 0.04, { type: 'bandpass', f0: 1600 + Math.random() * 1400, q: 3, vol: 0.9 }); this._tone(d, t, 0.08, { type: 'square', f0: 260, f1: 120, vol: 0.06 }); } break;
       case 'stone': if ((d = o(36, opts.vol ?? 0.9))) { this._noise(d, t, opts.dur || 1.4, { type: 'lowpass', f0: 420, f1: 160, vol: 0.9, attack: 0.15 }); this._tone(d, t, opts.dur || 1.4, { type: 'sawtooth', f0: 38, f1: 30, vol: 0.18, attack: 0.2 }); } break;
+      // Capítulo 8: vapor escapando da válvula de alívio (chiado agudo longo + ronco grave da caldeira)
+      case 'steam': if ((d = o(44, opts.vol ?? 0.9))) { this._noise(d, t, opts.dur || 2.2, { type: 'highpass', f0: 2600, f1: 1800, vol: 0.9, attack: 0.08 }); this._noise(d, t, opts.dur || 2.2, { type: 'lowpass', f0: 260, f1: 120, vol: 0.5, attack: 0.2 }); } break;
       default: break;
     }
   }
