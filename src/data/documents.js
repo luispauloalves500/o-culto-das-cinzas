@@ -385,5 +385,32 @@ export const DOCUMENTS = {
 <p>No verso, um carimbo vermelho da Ordem: <b>PRIMEIRA CINZA — ESTAÇÃO SOB A PEDRA</b>. E uma chave de ferro pequena, com a tag "reserva técnica".</p>
 <p class="small">Inês está viva. E alguém lá embaixo quer que você chegue.</p>`,
   },
+  // ---------- Capítulo 7 — Sob a Pedra ----------
+  registro_coveiro: {
+    ch: 7,
+    title: 'Livro do coveiro-mor — ossuário da Confraria',
+    body: `<p>Livro grosso, aberto numa estante de ferro na entrada do ossuário. As primeiras páginas são listas de ossadas trasladadas do cemitério velho; as últimas, outra coisa.</p>
+<p>"Os irmãos da vigília pediram o nicho. Entram em pé, com o hábito e a corda, e o pedreiro fecha a frente com cal. <b>Não precisam de olhos</b> para guardar a passagem: a pedra leva o som até eles. Cada passo no ossuário chega aos nichos <b>como se fosse dentro deles</b>."</p>
+<p>"Regra para quem desce com as oferendas: <b>não correr</b>. <b>Não pisar nos ossos</b> espalhados — estalam, e os da vigília acordam. Andar pelo meio, devagar. Se um deles sair do nicho, <b>ficar parado</b>: ele vai até onde ouviu, não até onde você está."</p>
+<p class="small">Na margem, a lápis: "A chave da grade fica comigo, no cinto. Quando eu morrer, fica comigo também. — o coveiro-mor".</p>`,
+  },
+  recado_ines_pedra: {
+    ch: 7,
+    title: 'Riscado por dentro da tampa do jazigo',
+    body: `<p>Do lado de dentro da tampa de pedra, letras arranhadas com alguma coisa pontuda — um grampo de cabelo, talvez. A letra é de Inês.</p>
+<p>"E. — eles me trouxeram por aqui de olhos vendados, mas eu contei os passos. <b>Não corre</b>. Eles não veem, eles <b>escutam</b>. Quando um sair da parede, para e respira devagar."</p>
+<p>"Me escondi neste jazigo uma noite inteira antes de me acharem. O coveiro ainda tinha a chave no cinto. Deixei pra você."</p>
+<p>"Vão me levar pelos trilhos até a estação que não está no mapa. <b>Sob a Pedra</b>. Dizem que é lá que a Primeira Cinza dorme — e que ela está <b>com fome</b>."</p>
+<p class="small">Embaixo, uma fita vermelha amarrada no ferro da tampa. Igual à outra.</p>`,
+  },
+  quadro_linha_velha: {
+    ch: 7,
+    title: 'Quadro de horários — Linha Velha (1911)',
+    body: `<p>Placa esmaltada na parede da plataforma, rachada no meio. "<b>COMPANHIA DO METROPOLITANO DE VÉSPERA — LINHA 1 (VELHA)</b>".</p>
+<p>Estações, de oeste para leste: Mercado · <b>Sé Velha</b> · Catedral · (uma quarta, apagada com tinta preta).</p>
+<p>Colado por cima, um aviso da prefeitura, amarelado: "Por motivo do <b>desabamento de 1912</b>, a Linha Velha está fechada por tempo indeterminado. Os túneis ficam sob guarda da <b>Irmandade</b>, que se encarrega dos mortos."</p>
+<p>A lápis, sobre a estação apagada: "<b>Sob a Pedra</b> — trem das oferendas, toda lua nova. Não fechou. Nunca fechou."</p>
+<p class="small">Um horário ainda legível, sublinhado várias vezes: "3h07 — último trem".</p>`,
+  },
 };
 

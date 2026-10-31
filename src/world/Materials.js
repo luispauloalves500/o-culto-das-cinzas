@@ -89,6 +89,14 @@ export function createMaterials() {
     shards: new THREE.MeshLambertMaterial({ color: 0xb8d0c8, transparent: true, opacity: 0.55, depthWrite: false }),
     parquet: L({ map: T.wood, color: 0x7a5434 }),
     museumWall: L({ map: T.wall, color: 0x8a6e5a }),
+    // Capítulo 7 — Sob a Pedra: ossos do ossuário, cal da pele dos emparedados, hábito de estamenha, argamassa; pedra
+    // de cantaria das galerias e o azulejo esmaltado da estação velha
+    bone: L({ map: T.stone, color: 0xc8bc9a }),
+    lime: L({ map: T.deadSkin, color: 0xd0ccbc }),
+    habit: L({ map: T.gown, color: 0x4a3c2c }),
+    mortar: L({ map: T.stone, color: 0x9a9488 }),
+    cantaria: L({ map: T.stone, color: 0x6e665a }),
+    stationTile: L({ map: T.tile, color: 0xb8b090 }),
   };
   M.textures = T;
   return M;

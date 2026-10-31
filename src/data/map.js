@@ -148,6 +148,20 @@ export const ROOMS_C6 = [
 ];
 ROOMS.push(...ROOMS_C6);
 
+// Capítulo 7 — Sob a Pedra (primeira fatia): catacumbas e a estação velha, um único piso (trilhos 1 m abaixo)
+export const ROOMS_C7 = [
+  { id: 'c7_poco', floor: 'up', ch: 7, name: 'Poço da escada de serviço', rect: [14, 0, 22, 6] },
+  { id: 'c7_galeria', floor: 'up', ch: 7, name: 'Galeria de pedra', rect: [16, 6, 20, 16] },
+  { id: 'c7_ossuario', floor: 'up', ch: 7, name: 'Ossuário', rect: [12, 16, 24, 36] },
+  { id: 'c7_cripta', floor: 'up', ch: 7, name: 'Cripta do coveiro-mor', rect: [4, 30, 12, 38] },
+  { id: 'c7_tunel', floor: 'up', ch: 7, name: 'Túnel de serviço', rect: [16, 36, 20, 44] },
+  { id: 'c7_plataforma', floor: 'up', ch: 7, name: 'Plataforma — Estação Sé Velha', rect: [4, 44, 44, 50] },
+  { id: 'c7_trilhos', floor: 'up', ch: 7, name: 'Trilhos da Linha Velha', rect: [4, 50, 50, 55] },
+  { id: 'c7_servico', floor: 'up', ch: 7, name: 'Corredor de serviço', rect: [22, 1.5, 39.5, 4.5] },
+  { id: 'c7_servico_n', floor: 'up', ch: 7, name: 'Corredor de serviço (norte)', rect: [36.5, 4.5, 39.5, 44] },
+];
+ROOMS.push(...ROOMS_C7);
+
 export const MAP_MARKS = [
   { kind: 'save', floor: 'up', x: 7.1, z: -2.3, room: 'ward' },
   { kind: 'save', floor: 'up', x: 34.6, z: -2.4, room: 'isolation' },
@@ -193,15 +207,17 @@ export const MAP_MARKS = [
   { kind: 'save', ch: 5, floor: 'up2', x: 38.6, z: 66.6, room: 'c5_turbinas' },
   { kind: 'save', ch: 6, floor: 'up', x: 13.2, z: 14.6, room: 'c6_atrio' },
   { kind: 'save', ch: 6, floor: 'up', x: 30.8, z: 38.7, room: 'c6_conservacao' },
+  { kind: 'save', ch: 7, floor: 'up', x: 20.6, z: 4.8, room: 'c7_poco' },
+  { kind: 'save', ch: 7, floor: 'up', x: 8.5, z: 45.6, room: 'c7_plataforma' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
 let MAP_CHAPTER = 1;
-export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4, 5, 6].includes(ch) ? ch : 1; }
+export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4, 5, 6, 7].includes(ch) ? ch : 1; }
 export function mapChapter() { return MAP_CHAPTER; }
 const inChapter = (r) => (r.ch || 1) === MAP_CHAPTER;
 /** andares com abas no mapa para o capítulo ativo */
-export function chapterFloors() { return MAP_CHAPTER === 5 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 || MAP_CHAPTER === 6 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
+export function chapterFloors() { return MAP_CHAPTER === 5 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 || MAP_CHAPTER === 6 || MAP_CHAPTER === 7 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
 
 /** andar a partir da altura dos pés */
 export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }

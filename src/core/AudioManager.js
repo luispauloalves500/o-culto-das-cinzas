@@ -110,6 +110,9 @@ export class AudioManager {
       case 'chime': if ((d = o(24, 0.5))) { const f = opts.f || 880; this._tone(d, t, 0.9, { type: 'sine', f0: f, vol: 0.22 }); this._tone(d, t, 0.6, { type: 'triangle', f0: f * 2.01, vol: 0.06 }); } break;
       // vidro de vitrine estilhaçando: estalo agudo + cacos tilintando no chão
       case 'glass': if ((d = o(34, opts.vol ?? 0.9))) { this._noise(d, t, 0.12, { type: 'highpass', f0: 4200, vol: 1.0 }); this._noise(d, t + 0.02, 0.4, { type: 'bandpass', f0: 5200, f1: 2600, q: 2, vol: 0.5 }); for (let i = 0; i < 7; i++) this._tone(d, t + 0.08 + i * 0.06 + Math.random() * 0.05, 0.25, { type: 'triangle', f0: 2400 + Math.random() * 2600, f1: 2000, vol: 0.07 }); } break;
+      // Capítulo 7: ossos estalando sob o pé (estalos secos em rajada) e pedra pesada arrastando sobre pedra
+      case 'bones': if ((d = o(26, opts.vol ?? 0.7))) { for (let i = 0; i < 4; i++) this._noise(d, t + i * 0.035 + Math.random() * 0.02, 0.04, { type: 'bandpass', f0: 1600 + Math.random() * 1400, q: 3, vol: 0.9 }); this._tone(d, t, 0.08, { type: 'square', f0: 260, f1: 120, vol: 0.06 }); } break;
+      case 'stone': if ((d = o(36, opts.vol ?? 0.9))) { this._noise(d, t, opts.dur || 1.4, { type: 'lowpass', f0: 420, f1: 160, vol: 0.9, attack: 0.15 }); this._tone(d, t, opts.dur || 1.4, { type: 'sawtooth', f0: 38, f1: 30, vol: 0.18, attack: 0.2 }); } break;
       default: break;
     }
   }
