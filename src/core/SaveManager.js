@@ -30,6 +30,21 @@ export function normalizeChapter5Flags(s) {
   return { ...s, flags: f };
 }
 
+/**
+ * Capítulo 6: saves da primeira fatia (c6_slice, sem Galeria) continuam válidos — a porta segue trancada até o
+ * cordão da sineta. Checkpoints da luta/fim implicam o chefe morto; conclusão espelha c6_chapterDone ↔ ch6Done.
+ */
+export function normalizeChapter6Flags(s) {
+  if (s.chapter !== 6 || !s.flags) return s;
+  const f = { ...s.flags };
+  if (s.checkpoint === 'c6_slice') { f.c6_sliceDone = true; f.c6_vaultOpen = true; }
+  if (f.c6_galleryOpen) f.c6_sliceDone = true;
+  if (s.checkpoint === 'c6_boss' || s.checkpoint === 'c6_end') f.c6_collectorDead = true;
+  if (f.c6_chapterDone || f.ch6Done) { f.c6_chapterDone = true; f.ch6Done = true; f.c6_collectorDead = true; }
+  if (f.c6_collectorDead) { f.c6_galleryOpen = true; f.c6_sliceDone = true; f.c6_vaultOpen = true; }
+  return { ...s, flags: f };
+}
+
 /** Migra saves antigos para a versão atual; retorna null se inválido. */
 export function migrateSave(data) {
   if (!data || typeof data !== 'object') return null;
@@ -51,6 +66,7 @@ export function migrateSave(data) {
   }
   if (s.version > SAVE_VERSION) return null; // save de versão futura
   s = normalizeChapter5Flags(s);
+  s = normalizeChapter6Flags(s);
   const base = createEmptySave();
   return { ...base, ...s, player: { ...base.player, ...s.player }, inventory: { ...base.inventory, ...s.inventory } };
 }

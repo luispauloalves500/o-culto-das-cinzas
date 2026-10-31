@@ -4,12 +4,16 @@
 // porta-cofre da Ala de Conservação (três discos: o nº de inventário da peça mais antiga — o Relicário, cuja placa
 // interna só se lê quebrando o vidro fosco, e quebrá-lo dispara o "alarme" que acorda o segundo espécime) →
 // conservação (diário da conservadora; espécime solto) → depósito (cartão da remessa 31; acólito) → porta trancada
-// da Galeria do Colecionador: save c6_slice e aviso de que o chefe vem na próxima atualização. Sem tela de fim.
+// da Galeria do Colecionador (save c6_slice) → cordão da sineta de entregas abre a Galeria → chefe: O Colecionador
+// (bustos arremessados, trilho do teto, guinchos com alavanca, vitrines blindadas; fases 2–3; save c6_boss ao morrer)
+// → relicário (gancho do Cap. 7) → reserva técnica (catálogo; alçapão) → save c6_end e tela "Fim do Capítulo 6".
 import * as THREE from 'three';
 import { HospitalScript } from '../hospital/HospitalScript.js';
 import { Enemy } from '../../ai/EnemyController.js';
 import { ammoMesh } from '../hospital/HospitalPedsScript.js';
-import { GROUND, VITRINES, VITRINE_HP, VAULT_CODE, DIAL, COLLECTOR_DOOR, COLLECTOR_PLAQUE, HALL, CONSERV, STORAGE, ATRIUM } from './AcervoLevel.js';
+import { GROUND, VITRINES, VITRINE_HP, VAULT_CODE, DIAL, COLLECTOR_DOOR, COLLECTOR_PLAQUE, HALL, CONSERV, STORAGE, ATRIUM,
+  BELL_PULL, GALLERY, GALLERY_BOUNDS, RESERVE, COLLECTOR_PLINTH, COLLECTOR_BODY, CRANES, CRANE_RADIUS, RAIL_ROWS, RAIL_X, GALLERY_CASES } from './AcervoLevel.js';
+import { CollectorBoss } from '../../ai/CollectorBoss.js';
 import { roomAt } from '../../data/map.js';
 
 const Y = GROUND;
@@ -26,8 +30,13 @@ export const ACERVO_SPAWNS = [
   // depósito: acólito conferindo as remessas
   { id: 'c6_aco2', type: 'acolito', x: 32, y: Y, z: 43, yaw: Math.PI / 2,
     patrol: [{ x: 32, y: Y, z: 43 }, { x: 41.8, y: Y, z: 43 }, { x: 41.8, y: Y, z: 51 }, { x: 32.2, y: Y, z: 51.6 }] },
+  // Galeria: dois espécimes nas vitrines de corpo inteiro do fundo (o Colecionador os acorda na fase 3)
+  { id: 'c6_gal1', type: 'especime', x: GALLERY_CASES[0].x, y: Y + 0.12, z: GALLERY_CASES[0].z, yaw: Math.PI, dormant: true, gallery: 'gc_w' },
+  { id: 'c6_gal2', type: 'especime', x: GALLERY_CASES[1].x, y: Y + 0.12, z: GALLERY_CASES[1].z, yaw: Math.PI, dormant: true, gallery: 'gc_e' },
 ];
-const C6_DOORS = ['c6_dock', 'c6_main', 'c6_hall', 'c6_vault', 'c6_storage', 'c6_collector'];
+const C6_DOORS = ['c6_dock', 'c6_main', 'c6_hall', 'c6_vault', 'c6_storage', 'c6_collector', 'c6_exit'];
+// a Galeria abre 2,5 s depois de puxar o cordão da sineta de entregas
+export const C6_BELL_DELAY = 2.5;
 // espécimes nas vitrines: acordam com Elias a esta distância, ou com vidro quebrando a até C6_GLASS_WAKE metros
 export const C6_SPECIMEN_WAKE = 2.6;
 export const C6_GLASS_WAKE = 10;
@@ -68,6 +77,9 @@ export class AcervoScript extends HospitalScript {
     super(game, level);
     this.props = [];
     this.dial = [0, 0, 0];
+    this.arenaDoorId = 'c6_collector';
+    this.bossActive = false;
+    this.bellT = -1;
   }
 
   setup(save) {
@@ -127,6 +139,30 @@ export class AcervoScript extends HospitalScript {
     }, () => ammoMesh(M, 40.2, 1.22, 47.8, 6));
     g.interact.add({ id: 'c6_collectorPlaque', pos: { x: COLLECTOR_PLAQUE.x, y: 1.2, z: COLLECTOR_PLAQUE.z - 0.7 }, radius: 1.0,
       prompt: 'Ler a placa de latão da Galeria', onInteract: () => this._endSlice('plaque') });
+    // cordão da sineta de entregas ("TOQUE E AGUARDE"): o Colecionador abre a porta para receber a "peça"
+    g.interact.add({ id: 'c6_bellPull', pos: { x: BELL_PULL.x, y: 1.2, z: BELL_PULL.z - 0.5 }, radius: 1.1,
+      enabled: () => !this.q.has('c6_galleryOpen') && this.bellT < 0,
+      prompt: 'Puxar o cordão da sineta de entregas', onInteract: () => this._pullBell() });
+
+    // ---------- Galeria do Colecionador: chefe, guinchos, relicário ----------
+    this.boss = new CollectorBoss(g, { x: COLLECTOR_PLINTH.x, y: COLLECTOR_BODY.y, z: COLLECTOR_PLINTH.z, yaw: Math.PI,
+      bounds: GALLERY_BOUNDS, level: L, rows: RAIL_ROWS, railX: RAIL_X, onWake: () => this._wakeGallery() });
+    g.boss = this.boss;
+    if (save.flags.c6_collectorDead) this.boss.setDeadAt(COLLECTOR_BODY.x, COLLECTOR_BODY.y, COLLECTOR_BODY.z);
+    for (const c of CRANES) {
+      g.interact.add({ id: 'c6_drop_' + c.id, pos: { x: c.lever.x + (c.lever.x < 37 ? 0.5 : -0.5), y: 1.2, z: c.lever.z }, radius: 1.2,
+        enabled: () => this.bossActive && L.cranes[c.id]?.state === 'hung',
+        prompt: 'Puxar a alavanca do guincho (' + c.name + ')', onInteract: () => this._dropCrane(c.id) });
+    }
+    L.onCraneLand = (c) => this._craneLanded(c);
+    this._heartPos = { x: COLLECTOR_BODY.x, y: 0.8, z: COLLECTOR_BODY.z - 0.9 };
+    this._pickup('c6_heart', this._heartPos, 'Arrancar o relicário do peito do Colecionador', () => {
+      this.q.set('c6_gotRelic');
+      g.inventory.addDocument('relicario_colecionador'); g.openDocument('relicario_colecionador');
+    }, () => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.01), M.brass || M.paper); m.position.set(COLLECTOR_BODY.x, 0.5, COLLECTOR_BODY.z); m.visible = false; return m; },
+    () => this.q.has('c6_collectorDead'));
+    // reserva técnica: o catálogo na escrivaninha
+    this._doc('catalogo_colecionador', { x: 37.9, y: 1.2, z: 75.7 }, 39.1, 0.92, 75.7);
 
     // ---------- portas ----------
     for (const id of C6_DOORS) {
@@ -135,7 +171,7 @@ export class AcervoScript extends HospitalScript {
         id: 'door_' + id, radius: id === 'c6_hall' || id === 'c6_main' || id === 'c6_collector' ? 2.0 : 1.7,
         pos: { x: d.x, y: d.y + 1, z: d.z },
         enabled: () => !(id === 'c6_vault' && d.open),
-        prompt: () => (id === 'c6_collector' ? 'Examinar a porta da Galeria do Colecionador' : d.locked ? 'Abrir ' + d.label : d.open ? 'Fechar ' + d.label : 'Abrir ' + d.label),
+        prompt: () => (id === 'c6_collector' && !this.q.has('c6_galleryOpen') ? 'Examinar a porta da Galeria do Colecionador' : d.locked ? 'Abrir ' + d.label : d.open ? 'Fechar ' + d.label : 'Abrir ' + d.label),
         onInteract: () => this._useDoor(d),
       });
     }
@@ -239,7 +275,12 @@ export class AcervoScript extends HospitalScript {
 
   _useDoor(d) {
     const g = this.game;
-    if (d.id === 'c6_collector') return this._endSlice('door');
+    if (this.bossActive && (d.id === 'c6_collector' || d.id === 'c6_exit')) {
+      g.audio.play('locked', d);
+      g.hud.toast(d.id === 'c6_exit' ? 'A porta da reserva técnica está trancada. A chave fica com quem cataloga.' : 'A porta de ferro da Galeria bateu e travou atrás de você. Enquanto o Colecionador estiver de pé, não abre.', 3.5);
+      return;
+    }
+    if (d.id === 'c6_collector' && !this.q.has('c6_galleryOpen')) return this._endSlice('door');
     if (d.locked) { this.q.set('note_' + d.id); g.audio.play('locked', d); g.hud.toast(d.lockMsg, d.id === 'c6_main' ? 5 : 4); return; }
     d.setOpen(!d.open);
     g.perception.noise(d, 5, 'door');
@@ -249,13 +290,94 @@ export class AcervoScript extends HospitalScript {
     const g = this.game, d = this.level.doors.c6_collector;
     g.audio.play('locked', d);
     if (this.q.has('c6_sliceDone')) {
-      g.hud.toast('Galeria do Colecionador — trancada por dentro. O Colecionador chega na próxima atualização.', 4);
+      g.hud.toast('Galeria do Colecionador — trancada por dentro. Ao lado da porta, um cordão de sineta: "ENTREGAS — TOQUE E AGUARDE".', 4);
       return;
     }
     this.q.set('c6_sliceDone'); this.q.set('note_c6_collector');
     g.saveGame('c6_slice');
     g.hud.toast((from === 'plaque' ? 'Placa: "GALERIA DO COLECIONADOR — ACERVO PARTICULAR. Peças recebidas em vida." ' : 'A porta de ferro não cede; do outro lado, um pêndulo e alguém contando peças em voz baixa. ')
-      + 'Fim da primeira parte do Capítulo 6 · progresso salvo. O Colecionador chega na próxima atualização.', 7);
+      + 'Ao lado, um cordão de sineta: "ENTREGAS — TOQUE E AGUARDE". · progresso salvo', 7);
+    this.hint('c6_bell', 'A Galeria está trancada por dentro. Puxe o <b>cordão da sineta de entregas</b> (à esquerda da porta) — alguém lá dentro espera uma peça.', 8);
+  }
+
+  // ---------- sineta de entregas → Galeria ----------
+  _pullBell() {
+    const g = this.game, L = this.level;
+    if (this.q.has('c6_galleryOpen') || this.bellT >= 0) return;
+    if (!this.q.has('c6_sliceDone')) { this.q.set('c6_sliceDone'); this.q.set('note_c6_collector'); }
+    this.q.set('c6_bellPulled');
+    if (L.bellCord) L.bellCord.pull = 0.6;
+    g.audio.play('chime', BELL_PULL, { vol: 0.9 });
+    g.perception.noise(BELL_PULL, 8, 'metal');
+    g.hud.toast('Uma sineta toca do outro lado do ferro. Passos lentos, um pêndulo, e uma voz educada: "Ah. A peça trinta e dois. Pontual."', 5);
+    this.bellT = C6_BELL_DELAY;
+  }
+  _openGallery(instant = false) {
+    const g = this.game, d = this.level.doors.c6_collector;
+    this.q.set('c6_galleryOpen'); this.q.set('c6_sliceDone');
+    d.locked = false; d.setOpen(true, instant);
+    if (instant) return;
+    g.audio.play('elevator', d);
+    g.perception.noise(d, 10, 'door');
+    g.saveGame('c6_slice');
+    g.hud.toast('Os ferrolhos correm por dentro e a porta da Galeria se abre sozinha. · progresso salvo', 4);
+  }
+
+  // ---------- chefe: O Colecionador ----------
+  _startBoss() {
+    const g = this.game, d = this.level.doors.c6_collector;
+    this.bossActive = true;
+    d.setOpen(false); d.locked = true;
+    g.hud.showBoss(true, 'O COLECIONADOR');
+    g.audio.setIntensity(2);
+    this.boss.activate();
+    g.hud.toast('No pedestal, a "peça" de sobrecasaca abre o monóculo e desce. "Bem-vindo à Galeria. Fique parado — vou catalogá-lo." A porta bate atrás de você.', 6);
+    this.hint('c6_boss', 'O <b>relicário</b> no peito é o ponto fraco, mas a <b>gaiola de latão</b> o protege. Faça-o <b>investir contra uma vitrine blindada</b> ou solte nele a peça de um <b>guincho</b> (alavancas nas paredes, círculo de latão no chão): a gaiola abre.', 12);
+  }
+  _dropCrane(id) {
+    const g = this.game, L = this.level, cr = L.cranes[id];
+    if (!this.bossActive || !L.dropCrane(id)) return;
+    this.q.set('c6_usedCrane');
+    g.audio.play('switch', cr.c.lever); g.audio.play('clang', { x: cr.c.x, y: 5, z: cr.c.z });
+    g.hud.toast('A alavanca desce e a trava do guincho estala: o ' + cr.c.name + ' despenca!', 2.5);
+  }
+  _craneLanded(c) {
+    const g = this.game, b = this.boss, p = g.player;
+    g.audio.play('thud', { x: c.x, y: 0.5, z: c.z }); g.cameraCtl.addShake(0.6);
+    g.combat.emit({ x: c.x, y: 0.3, z: c.z }, 24, 0x9a8a70, 3.5);
+    g.perception.noise(c, 14, 'metal');
+    if (b.alive && Math.hypot(b.pos.x - c.x, b.pos.z - c.z) <= CRANE_RADIUS) { b.crush(); this.q.set('c6_crushed'); }
+    else if (this.bossActive) g.hud.toast('A peça afunda no parquet — longe dele. Agora é só mais um obstáculo para ele se chocar.', 3.5);
+    if (p.alive && Math.hypot(p.pos.x - c.x, p.pos.z - c.z) <= 1.1) p.takeHit({ dmg: 30, from: { x: c.x, y: p.pos.y, z: c.z }, knock: 5, blockable: false, source: null });
+  }
+  /** fase 3: a sineta abre as vitrines de corpo inteiro do fundo e os espécimes descem */
+  _wakeGallery(instant = false) {
+    const g = this.game, L = this.level;
+    this.q.set('c6_galleryWoke');
+    for (const s of ACERVO_SPAWNS) {
+      if (!s.gallery) continue;
+      L.breakGalleryCase(s.gallery);
+      const e = this._enemy(s.id);
+      if (instant || !e || !e.alive) continue;
+      if (e.dormant) e.wake();
+      g.audio.play('glass', e.pos, { vol: 1 }); g.audio.play('groan', e.pos, { pitch: 1.2 });
+    }
+    if (!instant) g.hud.toast('As vitrines do fundo estouram: dois espécimes descem dos pedestais ao som da sineta.', 4);
+  }
+  _bossDefeated() {
+    const g = this.game, L = this.level;
+    this.q.set('c6_collectorDead'); this.bossActive = false;
+    g.hud.showBoss(false); g.audio.setIntensity(0);
+    const d = L.doors.c6_collector; d.locked = false; d.setOpen(true);
+    const ex = L.doors.c6_exit; ex.locked = false; ex.setOpen(true);
+    g.audio.play('clang', ex);
+    // os espécimes da Galeria eram dele: caem junto
+    for (const s of ACERVO_SPAWNS) { if (!s.gallery) continue; const e = this._enemy(s.id); if (e && e.alive) e._die(); }
+    // o relicário fica onde ele caiu (o interagível acompanha o corpo)
+    if (this.boss?.pos) { this._heartPos.x = this.boss.pos.x; this._heartPos.z = this.boss.pos.z; }
+    g.saveGame('c6_boss');
+    g.hud.toast('O Colecionador cai de joelhos sobre o próprio pedestal e fica ali, em pose, como uma peça. Uma chave de ferro rola do relicário e a porta da reserva técnica destrava. · progresso salvo', 7);
+    this.hint('c6_relic', 'Arranque o <b>relicário</b> do peito dele — e siga pela <b>reserva técnica</b> (norte). Inês não está no acervo.', 8);
   }
 
   _applyState(save) {
@@ -267,7 +389,16 @@ export class AcervoScript extends HospitalScript {
     if (f.c6_vaultOpen) { vault.locked = false; this.dial = [...VAULT_CODE]; VAULT_CODE.forEach((d, i) => L.setDial(i, d)); }
     else { vault.locked = true; vault.setOpen(false, true); }
     L.doors.c6_main.locked = true; L.doors.c6_main.setOpen(false, true);
-    L.doors.c6_collector.locked = true; L.doors.c6_collector.setOpen(false, true);
+    // Galeria: aberta pela sineta; durante a luta salva-se a porta aberta e destravada (o save nunca prende Elias lá)
+    const col = L.doors.c6_collector, ex = L.doors.c6_exit;
+    if (f.c6_galleryOpen) col.locked = false;
+    else { col.locked = true; col.setOpen(false, true); }
+    if (f.c6_collectorDead) {
+      col.locked = false; col.setOpen(true, true);
+      ex.locked = false; ex.setOpen(true, true);
+      for (const c of CRANES) if (f['c6_dropped_' + c.id]) L.dropCrane(c.id, true);
+      this._wakeGallery(true);
+    } else { ex.locked = true; ex.setOpen(false, true); }
     // espécime que já acordou não volta ao pedestal
     for (const s of ACERVO_SPAWNS) if (s.dormant && f['c6_woke_' + s.id]) { const e = this._enemy(s.id); if (e && e.alive) e.dormant = false; }
     this._applyMaxHp();
@@ -278,6 +409,22 @@ export class AcervoScript extends HospitalScript {
 
   update(dt) {
     const g = this.game, p = g.player.pos, q = this.q;
+    if (this.bellT >= 0) { this.bellT -= dt; if (this.bellT < 0) this._openGallery(); }
+    if (!q.has('c6_readCatalogo') && g.inventory.documents.includes('catalogo_colecionador')) q.set('c6_readCatalogo');
+    for (const c of CRANES) if (!q.has('c6_dropped_' + c.id) && this.level.cranes[c.id]?.state !== 'hung') q.set('c6_dropped_' + c.id);
+    const inGallery = p.x > GALLERY.minX && p.x < GALLERY.maxX && p.z > GALLERY.minZ + 1.6 && p.z < GALLERY.maxZ;
+    if (!this.bossActive && q.has('c6_galleryOpen') && !q.has('c6_collectorDead') && inGallery) this._startBoss();
+    if (this.bossActive && this.boss.phase >= 2 && !this.tut.shown.c6_rail) this.hint('c6_rail', 'Ao som da sineta, uma <b>faixa vermelha</b> acende no chão: o <b>braço do trilho</b> vai varrer aquela fileira. Saia da faixa — e, se puder, deixe <b>ele</b> dentro dela.', 8);
+    if (this.bossActive && this.boss.phase >= 3 && !this.tut.shown.c6_p3) this.hint('c6_p3', 'Ele investe sem parar: fique atrás das <b>vitrines blindadas</b>. Cada choque abre a gaiola do relicário.', 7);
+    if (this.bossActive && this.boss.state === 'dead' && !q.has('c6_collectorDead')) this._bossDefeated();
+    // fim do Capítulo 6: o alçapão da reserva técnica
+    if (!this._ended && q.has('c6_collectorDead') && p.z > RESERVE.endZ && p.x > RESERVE.minX && p.x < RESERVE.maxX) {
+      this._ended = true;
+      q.set('c6_chapterDone'); q.set('ch6Done');
+      g.saveGame('c6_end');
+      g.endChapter();
+      return;
+    }
     if (!this.tut.shown.move) this.hint('move', '<b>WASD</b>: mover · <b>Mouse</b>: câmera · <b>Shift</b>: correr (faz barulho)', 6);
     { const r = roomAt(p); if (r && !q.has('seen_' + r.id)) q.set('seen_' + r.id); }
     const docs = g.inventory.documents;
@@ -304,11 +451,15 @@ export class AcervoScript extends HospitalScript {
       q.set('c6_inConserv');
       g.hud.toast('Ala de Conservação. Mesas de restauro, tanques de formol — e uma maca vazia ainda com as correias abertas.', 4.5);
     }
-    if (!q.has('c6_inStorage') && p.x > STORAGE.minX && p.z > STORAGE.minZ + 0.5) {
+    if (!q.has('c6_inStorage') && p.x > STORAGE.minX && p.z > STORAGE.minZ + 0.5 && p.z < STORAGE.maxZ) {
       q.set('c6_inStorage');
       g.hud.toast('Depósito das remessas. Caixotes numerados até o teto. Ao fundo, uma porta de ferro sob um arco de latão.', 4.5);
     }
     // perto da porta do Colecionador: a fatia termina sozinha se Elias encostar
+    if (!q.has('c6_inReserve') && q.has('c6_collectorDead') && p.z > RESERVE.minZ + 0.4 && p.x > RESERVE.minX && p.x < RESERVE.maxX) {
+      q.set('c6_inReserve');
+      g.hud.toast('Reserva técnica. Estantes de peças "a catalogar", uma escrivaninha — e, no fundo, um alçapão aberto para a escuridão.', 4.5);
+    }
     if (!q.has('c6_sliceDone') && Math.hypot(p.x - COLLECTOR_DOOR.x, p.z - COLLECTOR_DOOR.z) < 1.6) this._endSlice('door');
   }
 }

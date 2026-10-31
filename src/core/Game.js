@@ -194,7 +194,7 @@ export class Game {
     if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
     if (this.chapter === 3) this.hud.toast('Capítulo 3 — A Confraria · Sede do Véu', 3.5);
     if (this.chapter === 5) this.hud.toast(s.flags.c5_chapterDone ? 'Capítulo 5 — Águas Negras · galeria de descarga (capítulo concluído)' : s.flags.c5_afogadaDead ? 'Capítulo 5 — Águas Negras · salão das turbinas' : s.flags.c5_sliceDone ? 'Capítulo 5 — Águas Negras · antecâmara das turbinas' : s.flags.c5_power ? 'Capítulo 5 — Águas Negras · casa de bombas' : 'Capítulo 5 — Águas Negras · estação de bombeamento', 3.5);
-    if (this.chapter === 6) this.hud.toast(s.flags.c6_sliceDone ? 'Capítulo 6 — O Acervo · porta da Galeria do Colecionador' : s.flags.c6_vaultOpen ? 'Capítulo 6 — O Acervo · ala de conservação' : 'Capítulo 6 — O Acervo · Museu de Ciências Proibidas', 3.5);
+    if (this.chapter === 6) this.hud.toast(s.flags.c6_chapterDone ? 'Capítulo 6 — O Acervo · reserva técnica (capítulo concluído)' : s.flags.c6_collectorDead ? 'Capítulo 6 — O Acervo · Galeria do Colecionador' : s.flags.c6_galleryOpen ? 'Capítulo 6 — O Acervo · Galeria do Colecionador (aberta)' : s.flags.c6_sliceDone ? 'Capítulo 6 — O Acervo · porta da Galeria do Colecionador' : s.flags.c6_vaultOpen ? 'Capítulo 6 — O Acervo · ala de conservação' : 'Capítulo 6 — O Acervo · Museu de Ciências Proibidas', 3.5);
     if (this.chapter === 4) this.hud.toast(s.flags.c4_sliceDone ? 'Capítulo 4 — Cidade Morta · Torre do Relógio' : 'Capítulo 4 — Cidade Morta · centro antigo de Véspera', 3.5);
   }
   /** passagem do Capítulo 5 para o 6: a barcaça da galeria de descarga atraca na doca do Museu de Ciências Proibidas */
@@ -284,7 +284,8 @@ export class Game {
     this.menus.showChapterEnd({ chapter: this.chapter || 1, time: this.playTime, kills: this.player.stats.kills, damageTaken: this.player.stats.damageTaken, docs: this.inventory.documents.length, docsList: this.inventory.documents.slice(), pass: this.inventory.has('passe_bonde') || this.quest.has('c2_hasPass'), rn0: this.quest.has('rn0Revealed'),
       ribbon: this.inventory.has('fita_ines') || this.quest.has('c3_hasRibbon'), order: this.inventory.documents.includes('ordem_transferencia'),
       note: this.inventory.documents.includes('bilhete_ines'), rounds: this.inventory.documents.includes('livro_rondas'),
-      ficha: this.inventory.documents.includes('ficha_remessa'), diario: this.inventory.documents.includes('diario_comporteiro') });
+      ficha: this.inventory.documents.includes('ficha_remessa'), diario: this.inventory.documents.includes('diario_comporteiro'),
+      catalogo: this.inventory.documents.includes('catalogo_colecionador'), relic: this.inventory.documents.includes('relicario_colecionador') });
   }
 
   // ---------- interação ----------
