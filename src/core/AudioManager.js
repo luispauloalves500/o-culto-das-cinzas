@@ -1,3 +1,4 @@
+import { MusicDirector } from '../audio/MusicDirector.js';
 // Áudio procedural via Web Audio API (sem arquivos externos). Inicia apenas após gesto do usuário.
 export class AudioManager {
   constructor() {
@@ -6,6 +7,8 @@ export class AudioManager {
     this.volume = 0.8;
     this.voices = 0;
     this.maxVoices = 24;
+    this.musicVolume = 0.6;
+    this.intensity = 0;
   }
 
   init() {
@@ -142,24 +145,16 @@ export class AudioManager {
   }
   setAmbience(on) { if (this.amb) this.amb.gain.setTargetAtTime(on ? 0.9 : 0, this.ctx.currentTime, 0.6); }
 
-  // Música dinâmica mínima: pulso grave que cresce com a intensidade de combate/chefe
+  // Trilha adaptativa (src/audio): partitura procedural por capítulo/chefe/final, regida pelo MusicDirector
   _startMusic() {
-    const c = this.ctx;
-    this.musicOsc = c.createOscillator(); this.musicOsc.type = 'sawtooth'; this.musicOsc.frequency.value = 41;
-    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 220;
-    this.musicLfo = c.createOscillator(); this.musicLfo.frequency.value = 1.6;
-    const lfoGain = c.createGain(); lfoGain.gain.value = 0.5;
-    const pulse = c.createGain(); pulse.gain.value = 0.5;
-    this.musicLfo.connect(lfoGain); lfoGain.connect(pulse.gain);
-    this.musicOsc.connect(f); f.connect(pulse); pulse.connect(this.music);
-    this.musicOsc.start(); this.musicLfo.start();
+    this.music.gain.value = this.musicVolume;
+    this.director = new MusicDirector(this);
+    if (this._pendingMusic) this.director.update(this._pendingMusic);
   }
-  /** 0 = exploração, 1 = combate, 2 = chefe */
-  setIntensity(level) {
-    if (!this.ctx) return;
-    const t = this.ctx.currentTime;
-    this.music.gain.setTargetAtTime([0, 0.18, 0.3][level] ?? 0, t, 0.8);
-    this.musicLfo.frequency.setTargetAtTime([1.2, 2.2, 3.2][level] ?? 1.2, t, 0.5);
-    this.musicOsc.frequency.setTargetAtTime(level === 2 ? 36.7 : 41.2, t, 0.5);
-  }
+  setMusicVolume(v) { this.musicVolume = v; if (this.music) this.music.gain.setTargetAtTime(v, this.ctx.currentTime, 0.1); }
+  /** estado do jogo → cue musical (chamado a cada quadro; só age quando muda) */
+  syncMusic(gs) { this._pendingMusic = gs; return this.director ? this.director.update(gs) : null; }
+  /** 0 = exploração, 1 = combate, 2 = chefe — lido pelo syncMusic do jogo */
+  setIntensity(level) { this.intensity = level; }
+  musicDebug() { return this.director ? this.director.debug() : null; }
 }

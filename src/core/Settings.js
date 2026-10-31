@@ -4,6 +4,7 @@ export const DEFAULT_SETTINGS = {
   sensitivity: 1.0,
   invertY: false,
   volume: 0.8,
+  musicVolume: 0.6,
   renderScale: 0.75,
   fov: 65,
   shake: true,
