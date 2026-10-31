@@ -40,6 +40,12 @@ export class Menus {
     sens.oninput = () => { s.set('sensitivity', +sens.value); $('optSensV').textContent = (+sens.value).toFixed(1); };
     inv.onchange = () => s.set('invertY', inv.checked);
     vol.oninput = () => { s.set('volume', +vol.value); g.audio.setVolume(+vol.value); };
+    const mus = $('optMusic');
+    if (mus) {
+      const mv = () => { $('optMusicV').textContent = Math.round(+mus.value * 100) + '%'; };
+      mus.value = s.get('musicVolume'); mv();
+      mus.oninput = () => { s.set('musicVolume', +mus.value); g.audio.setMusicVolume(+mus.value); mv(); };
+    }
     scale.onchange = () => { s.set('renderScale', +scale.value); g.resize(); };
     fov.oninput = () => { s.set('fov', +fov.value); $('optFovV').textContent = fov.value; g.camera.fov = +fov.value; g.camera.updateProjectionMatrix(); };
     shake.onchange = () => s.set('shake', shake.checked);

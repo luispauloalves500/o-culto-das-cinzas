@@ -61,6 +61,7 @@ export class Game {
     this.input = new InputManager(canvas);
     this.audio = new AudioManager();
     this.audio.volume = this.settings.get('volume');
+    this.audio.musicVolume = this.settings.get('musicVolume') ?? 0.6;
     this.saves = new SaveManager();
     this.materials = createMaterials();
     this.camera = new THREE.PerspectiveCamera(this.settings.get('fov'), 1, 0.05, 90);
@@ -82,6 +83,10 @@ export class Game {
     });
     canvas.addEventListener('click', () => { if (this.state === 'playing' && this.requireLock && !this.input.locked) this.input.requestLock(); });
     this.menus.show('menu');
+    // o primeiro gesto (clique ou tecla) libera o Web Audio: o tema do menu já toca antes de "Novo jogo"
+    const unlock = () => { this.audio.init(); this.syncMusic(); };
+    window.addEventListener('pointerdown', unlock, { capture: true });
+    window.addEventListener('keydown', unlock, { capture: true });
     requestAnimationFrame((t) => this._frame(t));
   }
 
@@ -360,10 +365,26 @@ export class Game {
         this.hud.setFps(this.settings.get('showFps'), this.fps);
         this.renderer.render(this.scene, this.camera);
       }
+      this.syncMusic();
     } catch (e) {
       this.fatal(e);
     }
   }
+
+  /** estado do jogo que a trilha adaptativa lê (src/audio/Score.js → cueFor) */
+  musicState() {
+    const credits = !document.getElementById('credits')?.classList.contains('hidden');
+    const b = this.scene ? this.boss : null;
+    const bossActive = !!this.script?.bossActive;
+    return {
+      state: credits ? 'credits' : this.scene ? this.state : 'menu',
+      chapter: this.chapter || 1,
+      intensity: bossActive ? 2 : (this.audio.intensity || 0),
+      boss: b ? { id: b.id, phase: b.phase || 1, alive: b.alive !== false && b.state !== 'dead' && b.state !== 'gone', engaged: bossActive && b.state !== 'dormant' } : null,
+      ending: this.quest?.flags?.c8_ending || null,
+    };
+  }
+  syncMusic() { return this.audio.syncMusic(this.musicState()); }
 
   fatal(e) {
     console.error(e);
