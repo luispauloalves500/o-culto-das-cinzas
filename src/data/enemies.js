@@ -101,4 +101,23 @@ export const ENEMIES = {
     mats: 'cinzento',
     groanPitch: 0.9,
   },
+  // Capítulo 5 — Águas Negras: quem caiu nos canais e voltou. Forte perto da água (sai dela rápido, golpeia mais
+  // pesado com o corpo encharcado), lento e pesado no seco. Espera submerso e emerge quando Elias passa.
+  afogado: {
+    name: 'Afogado',
+    hp: 95, poise: 45, radius: 0.38, height: 1.8, scale: 1.02, hunch: 0.42,
+    walk: 0.75, chase: 2.6, turn: 4.0,
+    sight: 8, fov: 75, hearing: 1.5,
+    attackTokens: 1,
+    attacks: [
+      { id: 'claw', range: 1.7, windup: 0.6, active: 0.2, recover: 0.8, dmg: 15, knock: 3, weight: 2 },
+      { id: 'grab', range: 1.25, windup: 0.55, active: 0.2, recover: 1.1, dmg: 0, grab: true, grabDmg: 7, weight: 1 },
+    ],
+    mats: 'afogado',
+    aquatic: true,
+    // multiplicadores conforme o terreno (o nível informa via wetness(pos): 0 seco … 1 dentro d'água)
+    drySpeed: 0.55, wetSpeed: 1.35, wetDmg: 1.3,
+    emergeTime: 1.1,
+    groanPitch: 0.6,
+  },
 };

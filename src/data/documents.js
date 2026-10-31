@@ -308,4 +308,30 @@ export const DOCUMENTS = {
 <p>"Ouvi o V. dizer que a cinza não basta: precisa da água preta para 'levar o sinal' até a outra torre. Não sei que torre. Sei que você tem que chegar antes das 3h07."</p>
 <p class="small">Embaixo, quase apagado: "Não confie no relógio. Confie na fita."</p>`,
   },
+  // ---------- Capítulo 5 — Águas Negras ----------
+  aviso_comporta: {
+    ch: 5,
+    title: 'Aviso da Companhia de Águas — Canal 3',
+    body: `<p>Chapa esmaltada, aparafusada na parede do canal, com a tinta descascando em escamas. Alguém riscou partes com prego.</p>
+<p>"COMPANHIA MUNICIPAL DE ÁGUAS DE VÉSPERA — CANAL 3. É PROIBIDO DESCER AO LEITO DO CANAL COM AS BOMBAS PARADAS. Em caso de queda, use as <b>escadas de limpeza</b> nas margens. Não permaneça na água: a correnteza corre para a casa de bombas."</p>
+<p>Por baixo, a prego: "QUEM CAIU NÃO SAIU. ELES FICAM DEITADOS NO FUNDO E LEVANTAM QUANDO A GENTE PASSA. FIQUE LONGE DA BEIRA."</p>
+<p class="small">Mais abaixo, outra letra: "Na margem eles são rápidos. No seco, arrastam os pés."</p>`,
+  },
+  relatorio_bombeamento: {
+    ch: 5,
+    title: 'Relatório do turno — Estação de Bombeamento',
+    body: `<p>Folha de turno presa na prancheta da antecâmara. A última anotação é de 19 de novembro, 2h40.</p>
+<p>"Painel geral desligado para a <b>visita da Confraria</b>. Fusível principal retirado (o de reserva está na caixa da <b>casa do comporteiro</b>, fim da margem norte)."</p>
+<p>"PARTIDA, NESTA ORDEM, SEMPRE: fusível no soquete → <b>BOMBA 2</b> → <b>BOMBA 1</b> → <b>COMPORTA</b> → chave geral. Fora de ordem, o painel entra em curto e desarma tudo. (Lembrar o Toninho, que perdeu dois dedos assim.)"</p>
+<p>"Com energia: o portão do salão abre sozinho e a escada retrátil desce para o mezanino. A válvula da comporta fica na passarela do reservatório."</p>
+<p class="small">Na margem, a lápis: "Eles mandaram abrir a comporta para ela. Ninguém da turma da noite voltou do reservatório."</p>`,
+  },
+  diario_comporteiro: {
+    ch: 5,
+    title: 'Caderno do comporteiro Anselmo',
+    body: `<p>Caderno de capa de oleado, inchado de umidade, largado sobre o cofre das turbinas. Muitas páginas grudaram.</p>
+<p>"Levaram a moça da fita vermelha pela passarela, de mãos amarradas, e o homem de branco falou com a água como quem fala com uma pessoa. A água respondeu."</p>
+<p>"É a minha <b>Lurdes</b>. Caiu na comporta na enchente de 29 e nunca acharam o corpo. Agora a Confraria a chama de <b>a Afogada</b> e diz que ela guarda as comportas das turbinas até a hora do sinal. Ela não me reconhece mais."</p>
+<p class="small">Última linha, tremida: "Se alguém vier atrás da moça: não lute com ela dentro d'água. Lá ela é a correnteza."</p>`,
+  },
 };

@@ -117,6 +117,22 @@ export const ROOMS_C4 = [
 for (const r of ROOMS_C4) ROOMS.push(r);
 
 // pontos de interesse desenhados no mapa quando o cômodo é conhecido
+// Capítulo 5 — Águas Negras: canal (y 0 nas margens, leito −1.4), casa de bombas; mezanino/passarela em y 4.5 ('up2')
+export const ROOMS_C5 = [
+  { id: 'c5_passagem', floor: 'up', ch: 5, name: 'Passagem do Relógio', rect: [13.6, -1, 16.4, 10] },
+  { id: 'c5_canal', floor: 'up', ch: 5, name: 'Canal principal', rect: [0, 10, 40, 22] },
+  { id: 'c5_galeria', floor: 'up', ch: 5, name: 'Galeria de serviço', rect: [20, 19, 40, 22] },
+  { id: 'c5_comporteiro', floor: 'up', ch: 5, name: 'Casa do comporteiro', rect: [1, 22, 8, 28] },
+  { id: 'c5_painel', floor: 'up', ch: 5, name: 'Sala do painel elétrico', rect: [24, 22, 30, 28] },
+  { id: 'c5_ante', floor: 'up', ch: 5, name: 'Antecâmara das bombas', rect: [30, 22, 42, 28] },
+  { id: 'c5_bombas', floor: 'up', ch: 5, name: 'Salão das bombas', rect: [26, 28, 46, 46] },
+  { id: 'c5_reservatorio', floor: 'up', ch: 5, name: 'Reservatório', rect: [26, 46, 40, 60] },
+  { id: 'c5_mezanino', floor: 'up2', ch: 5, name: 'Mezanino das bombas', rect: [26, 40, 46, 46] },
+  { id: 'c5_passarela', floor: 'up2', ch: 5, name: 'Passarela do reservatório', rect: [26, 46, 40, 60] },
+  { id: 'c5_turbinas', floor: 'up2', ch: 5, name: 'Antecâmara das turbinas', rect: [26, 60, 40, 68] },
+];
+ROOMS.push(...ROOMS_C5);
+
 export const MAP_MARKS = [
   { kind: 'save', floor: 'up', x: 7.1, z: -2.3, room: 'ward' },
   { kind: 'save', floor: 'up', x: 34.6, z: -2.4, room: 'isolation' },
@@ -156,15 +172,19 @@ export const MAP_MARKS = [
   { kind: 'stairs', ch: 4, floor: 'up', x: 17.75, z: 78, room: 'c4_torre' },
   { kind: 'stairs', ch: 4, floor: 'roof', x: 17.75, z: 80, room: 'c4_galeria' },
   { kind: 'save', ch: 4, floor: 'roof', x: 5.0, z: 85.8, room: 'c4_maquinas' },
+  { kind: 'save', ch: 5, floor: 'up', x: 40.6, z: 26.6, room: 'c5_ante' },
+  { kind: 'stairs', ch: 5, floor: 'up', x: 44.5, z: 34, room: 'c5_bombas' },
+  { kind: 'stairs', ch: 5, floor: 'up2', x: 44.5, z: 41, room: 'c5_mezanino' },
+  { kind: 'save', ch: 5, floor: 'up2', x: 38.6, z: 66.6, room: 'c5_turbinas' },
 ];
 
 // capítulo cujo mapa está ativo (o Game define ao montar o mundo); cômodos sem `ch` são do Capítulo 1
 let MAP_CHAPTER = 1;
-export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4].includes(ch) ? ch : 1; }
+export function setMapChapter(ch) { MAP_CHAPTER = [2, 3, 4, 5].includes(ch) ? ch : 1; }
 export function mapChapter() { return MAP_CHAPTER; }
 const inChapter = (r) => (r.ch || 1) === MAP_CHAPTER;
 /** andares com abas no mapa para o capítulo ativo */
-export function chapterFloors() { return MAP_CHAPTER === 2 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
+export function chapterFloors() { return MAP_CHAPTER === 5 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'up2') : MAP_CHAPTER === 2 ? FLOORS.filter((f) => f.id === 'up') : MAP_CHAPTER === 4 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'roof') : MAP_CHAPTER === 3 ? FLOORS.filter((f) => f.id === 'up' || f.id === 'lo') : FLOORS; }
 
 /** andar a partir da altura dos pés */
 export function floorOf(y) { return y < -2.5 ? 'lo' : y < 3.0 ? 'up' : y < 6.6 ? 'up2' : 'roof'; }

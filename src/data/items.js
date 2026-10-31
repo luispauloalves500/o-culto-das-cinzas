@@ -23,4 +23,6 @@ export const ITEMS = {
   sinete_chama: { name: 'Sinete da CHAMA', desc: 'Anel de latão do arquivista, com uma chama em baixo-relevo. Encaixa no selo do sarilho que ergue a grade da cripta.' },
   fita_ines: { name: 'Fita de cabelo de Inês', desc: 'Fita vermelha presa num prego do altar da cripta. Inês esteve aqui — e foi levada para a Torre.' },
   amuleto_menino: { name: 'Amuleto do menino', desc: 'Um dente de leite numa fita vermelha. Quem o carrega respira mais fundo: fôlego máximo +25.' },
+  // Capítulo 5 — Águas Negras
+  fusivel_ceramico: { name: 'Fusível de cerâmica', desc: 'Cartucho grosso de porcelana branca com tampas de cobre, da caixa de reserva do comporteiro. Etiqueta: "PAINEL DAS BOMBAS — 60 A". Serve no soquete vazio do painel elétrico.' },
 };
