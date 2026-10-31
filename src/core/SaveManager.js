@@ -45,6 +45,22 @@ export function normalizeChapter6Flags(s) {
   return { ...s, flags: f };
 }
 
+/**
+ * Capítulo 7: checkpoints implicam os marcos anteriores (save do fim da fatia já passou pela grade do ossuário e
+ * chegou à plataforma; save da plataforma já abriu a grade). A chave/pé de cabra seguem no inventário.
+ */
+export function normalizeChapter7Flags(s) {
+  if (s.chapter !== 7 || !s.flags) return s;
+  const f = { ...s.flags };
+  if (s.checkpoint === 'c7_slice') f.c7_sliceDone = true;
+  if (f.c7_sliceDone) f.c7_onPlatform = true;
+  if (s.checkpoint === 'c7_platform') f.c7_onPlatform = true;
+  if (f.c7_onPlatform) { f.c7_cryptOpen = true; f.c7_ossOpen = true; f.c7_inOssuary = true; f.c7_sawGate = true; f.c7_hasKey = true; }
+  if (s.checkpoint === 'c7_ossuary') f.c7_inOssuary = true;
+  f.c6_chapterDone = true; f.ch6Done = true; f.c6_collectorDead = true;
+  return { ...s, flags: f };
+}
+
 /** Migra saves antigos para a versão atual; retorna null se inválido. */
 export function migrateSave(data) {
   if (!data || typeof data !== 'object') return null;
@@ -67,6 +83,7 @@ export function migrateSave(data) {
   if (s.version > SAVE_VERSION) return null; // save de versão futura
   s = normalizeChapter5Flags(s);
   s = normalizeChapter6Flags(s);
+  s = normalizeChapter7Flags(s);
   const base = createEmptySave();
   return { ...base, ...s, player: { ...base.player, ...s.player }, inventory: { ...base.inventory, ...s.inventory } };
 }
@@ -196,6 +213,36 @@ export function makeChapter6Save(prev) {
     player: { hp: Math.max(80, Math.min(125, p.player?.hp ?? 100)) },
     inventory: { ...(p.inventory || base.inventory), items },
     flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_chapterDone: true, ch2Done: true, c3_chapterDone: true, ch3Done: true, c4_chapterDone: true, ch4Done: true, c5_chapterDone: true, ch5Done: true, c5_afogadaDead: true, c6_started: true },
+    doors: {},
+    deadEnemies: [],
+    documents: [...(p.documents || [])],
+    elevatorLevel: 'upper',
+    playTime: p.playTime || 0,
+    stats: { ...(p.stats || {}) },
+  };
+}
+
+// o Cap. 6 não tem itens-chave próprios (a Galeria abre pela sineta; o relicário é documento)
+export const CH6_KEY_ITEMS = [];
+
+/**
+ * Save inicial do Capítulo 7 — Sob a Pedra a partir do fim do Cap. 6 (c6_end / c6_chapterDone): Elias desce pelo
+ * alçapão da reserva técnica até o poço de serviço das catacumbas. Mantém armas, munição, desgaste, documentos (o
+ * catálogo e o relicário do Colecionador), a fita, estatísticas e melhorias.
+ */
+export function makeChapter7Save(prev) {
+  const base = createEmptySave();
+  const p = (prev && migrateSave({ version: SAVE_VERSION, ...prev })) || base;
+  const items = { ...(p.inventory?.items || {}) };
+  for (const k of [...CH1_KEY_ITEMS, ...CH2_KEY_ITEMS, ...CH3_KEY_ITEMS, ...CH4_KEY_ITEMS, ...CH5_KEY_ITEMS, ...CH6_KEY_ITEMS]) delete items[k];
+  return {
+    ...base,
+    chapter: 7,
+    checkpoint: 'c7_ladder',
+    player: { hp: Math.max(80, Math.min(125, p.player?.hp ?? 100)) },
+    inventory: { ...(p.inventory || base.inventory), items },
+    flags: { ...(p.flags || {}), chapterDone: true, ch1Done: true, c2_chapterDone: true, ch2Done: true, c3_chapterDone: true, ch3Done: true, c4_chapterDone: true, ch4Done: true, c5_chapterDone: true, ch5Done: true, c5_afogadaDead: true,
+      c6_chapterDone: true, ch6Done: true, c6_collectorDead: true, c6_galleryOpen: true, c7_started: true },
     doors: {},
     deadEnemies: [],
     documents: [...(p.documents || [])],

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { EventBus } from './EventBus.js';
 import { Settings } from './Settings.js';
 import { InputManager } from './InputManager.js';
-import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save, makeChapter4Save, makeChapter5Save, makeChapter6Save } from './SaveManager.js';
+import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save, makeChapter4Save, makeChapter5Save, makeChapter6Save, makeChapter7Save } from './SaveManager.js';
 import { AudioManager } from './AudioManager.js';
 import { CollisionWorld } from '../world/CollisionWorld.js';
 import { Navigation } from '../world/Navigation.js';
@@ -29,6 +29,8 @@ import { AguasLevel, AGUAS_CHECKPOINTS, AGUAS_FOG } from '../scenes/aguas/AguasL
 import { AguasScript } from '../scenes/aguas/AguasScript.js';
 import { AcervoLevel, ACERVO_CHECKPOINTS, ACERVO_FOG } from '../scenes/acervo/AcervoLevel.js';
 import { AcervoScript } from '../scenes/acervo/AcervoScript.js';
+import { PedraLevel, PEDRA_CHECKPOINTS, PEDRA_FOG } from '../scenes/pedra/PedraLevel.js';
+import { PedraScript } from '../scenes/pedra/PedraScript.js';
 import { setMapChapter } from '../data/map.js';
 
 // mundos por capítulo: geometria, roteiro, checkpoints e névoa padrão
@@ -39,6 +41,7 @@ const WORLDS = {
   4: { Level: CidadeLevel, Script: CidadeScript, checkpoints: CIDADE_CHECKPOINTS, start: 'c4_drain', fog: CIDADE_FOG },
   5: { Level: AguasLevel, Script: AguasScript, checkpoints: AGUAS_CHECKPOINTS, start: 'c5_passage', fog: AGUAS_FOG },
   6: { Level: AcervoLevel, Script: AcervoScript, checkpoints: ACERVO_CHECKPOINTS, start: 'c6_dock', fog: ACERVO_FOG },
+  7: { Level: PedraLevel, Script: PedraScript, checkpoints: PEDRA_CHECKPOINTS, start: 'c7_ladder', fog: PEDRA_FOG },
 };
 import { HUD } from '../ui/HUD.js';
 import { Menus } from '../ui/Menus.js';
@@ -99,7 +102,7 @@ export class Game {
   _buildWorld(save) {
     this._disposeWorld();
     this.bus = new EventBus();
-    this.chapter = [2, 3, 4, 5, 6].includes(save.chapter) ? save.chapter : 1;
+    this.chapter = [2, 3, 4, 5, 6, 7].includes(save.chapter) ? save.chapter : 1;
     const W = WORLDS[this.chapter];
     setMapChapter(this.chapter);
     const scene = (this.scene = new THREE.Scene());
@@ -189,13 +192,25 @@ export class Game {
     if (s.chapter === 4 && s.flags.c4_chapterDone) return this.startChapter5(s);
     // save do Capítulo 5 concluído (de versões em que o Cap. 6 ainda não existia): segue para o Cap. 6
     if (s.chapter === 5 && (s.flags.c5_chapterDone || s.checkpoint === 'c5_end')) return this.startChapter6(s);
+    // save do Capítulo 6 concluído (de versões em que o Cap. 7 ainda não existia): segue para o Cap. 7
+    if (s.chapter === 6 && (s.flags.c6_chapterDone || s.checkpoint === 'c6_end')) return this.startChapter7(s);
     this._buildWorld(s);
     this._enterPlay();
+    if (this.chapter === 7) this.hud.toast(s.flags.c7_sliceDone ? 'Capítulo 7 — Sob a Pedra · trilhos da Linha Velha' : s.flags.c7_onPlatform ? 'Capítulo 7 — Sob a Pedra · Estação Sé Velha' : s.flags.c7_inOssuary ? 'Capítulo 7 — Sob a Pedra · ossuário' : 'Capítulo 7 — Sob a Pedra · catacumbas', 3.5);
     if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
     if (this.chapter === 3) this.hud.toast('Capítulo 3 — A Confraria · Sede do Véu', 3.5);
     if (this.chapter === 5) this.hud.toast(s.flags.c5_chapterDone ? 'Capítulo 5 — Águas Negras · galeria de descarga (capítulo concluído)' : s.flags.c5_afogadaDead ? 'Capítulo 5 — Águas Negras · salão das turbinas' : s.flags.c5_sliceDone ? 'Capítulo 5 — Águas Negras · antecâmara das turbinas' : s.flags.c5_power ? 'Capítulo 5 — Águas Negras · casa de bombas' : 'Capítulo 5 — Águas Negras · estação de bombeamento', 3.5);
     if (this.chapter === 6) this.hud.toast(s.flags.c6_chapterDone ? 'Capítulo 6 — O Acervo · reserva técnica (capítulo concluído)' : s.flags.c6_collectorDead ? 'Capítulo 6 — O Acervo · Galeria do Colecionador' : s.flags.c6_galleryOpen ? 'Capítulo 6 — O Acervo · Galeria do Colecionador (aberta)' : s.flags.c6_sliceDone ? 'Capítulo 6 — O Acervo · porta da Galeria do Colecionador' : s.flags.c6_vaultOpen ? 'Capítulo 6 — O Acervo · ala de conservação' : 'Capítulo 6 — O Acervo · Museu de Ciências Proibidas', 3.5);
     if (this.chapter === 4) this.hud.toast(s.flags.c4_sliceDone ? 'Capítulo 4 — Cidade Morta · Torre do Relógio' : 'Capítulo 4 — Cidade Morta · centro antigo de Véspera', 3.5);
+  }
+  /** passagem do Capítulo 6 para o 7: o alçapão da reserva técnica desce ao poço de serviço das catacumbas */
+  startChapter7(prev) {
+    const from = prev || (this.scene && this.chapter === 6 ? this.serialize(this.checkpoint || 'c6_end') : this.saves.load());
+    const s = makeChapter7Save(from);
+    this.saves.write(s);
+    this._buildWorld(s);
+    this._enterPlay();
+    this.script.intro?.();
   }
   /** passagem do Capítulo 5 para o 6: a barcaça da galeria de descarga atraca na doca do Museu de Ciências Proibidas */
   startChapter6(prev) {

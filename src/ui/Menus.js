@@ -24,7 +24,7 @@ export class Menus {
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
     $('btnEndMenu').onclick = () => g.toMenu();
-    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 6) return; if (g.chapter === 5) g.startChapter6(); else if (g.chapter === 4) g.startChapter5(); else if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
+    $('btnEndNext').onclick = () => { g.audio.init(); if (g.chapter >= 7) return; if (g.chapter === 6) g.startChapter7(); else if (g.chapter === 5) g.startChapter6(); else if (g.chapter === 4) g.startChapter5(); else if (g.chapter === 3) g.startChapter4(); else if (g.chapter === 2) g.startChapter3(); else g.startChapter2(); };
     $('clickToPlay').onclick = () => g.resume();
     this.mapView = new MapView($('mapCanvas'));
     for (const el of document.querySelectorAll('.map-tab')) el.onclick = () => this.mapFloor(+el.dataset.floor);
@@ -81,16 +81,16 @@ export class Menus {
   drawMap() {
     const g = this.game, mv = this.mapView;
     this.lastMap = mv.draw(g);
-    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4, ch5 = mapChapter() === 5, ch6 = mapChapter() === 6;
+    const ch2 = mapChapter() === 2, ch3 = mapChapter() === 3, ch4 = mapChapter() === 4, ch5 = mapChapter() === 5, ch6 = mapChapter() === 6, ch7 = mapChapter() === 7;
     for (const el of document.querySelectorAll('.map-tab')) {
       const fid = FLOORS[+el.dataset.floor].id;
       el.classList.toggle('active', fid === mv.floor);
-      el.classList.toggle('hidden', ((ch2 || ch6) && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo') || (ch5 && fid !== 'up' && fid !== 'up2'));
-      el.textContent = ch6 ? 'Museu — O Acervo' : ch5 ? (fid === 'up2' ? 'Mezanino · passarela' : 'Canais · casa de bombas') : ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
+      el.classList.toggle('hidden', ((ch2 || ch6 || ch7) && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo') || (ch5 && fid !== 'up' && fid !== 'up2'));
+      el.textContent = ch7 ? 'Catacumbas · Linha Velha' : ch6 ? 'Museu — O Acervo' : ch5 ? (fid === 'up2' ? 'Mezanino · passarela' : 'Canais · casa de bombas') : ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
     }
     const r = roomAt(g.player.pos);
     $('mapWhere').textContent = 'Você está em: ' + (r ? r.name : 'lugar nenhum que conste na planta');
-    $('mapPlan').textContent = ch6 ? 'Museu de Ciências Proibidas: sem planta — só aparece o que você já percorreu.' : ch5 ? 'Estação de bombeamento: sem planta — só aparece o que você já percorreu.' : ch4 ? 'Centro antigo de Véspera: sem planta — só aparece o que você já percorreu.' : ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
+    $('mapPlan').textContent = mapChapter() === 7 ? 'Catacumbas e Linha Velha: sem planta — só aparece o que você já percorreu.' : ch6 ? 'Museu de Ciências Proibidas: sem planta — só aparece o que você já percorreu.' : ch5 ? 'Estação de bombeamento: sem planta — só aparece o que você já percorreu.' : ch4 ? 'Centro antigo de Véspera: sem planta — só aparece o que você já percorreu.' : ch2 ? 'Bairro Operário: sem planta — só aparece o que você já percorreu.' : ch3 ? 'Sede da Confraria: sem planta — só aparece o que você já percorreu.' : g.quest.has('hasMapPlan') ? 'Planta do hospital: alas não visitadas em tracejado.' : 'Sem a planta: só aparece o que você já percorreu.';
     const notes = collectNotes(g);
     $('mapNotes').innerHTML = notes.length ? notes.map((t) => `<div class="inv-item small">• ${t}</div>`).join('') : '<div class="inv-item small">Nada anotado</div>';
   }
@@ -110,12 +110,12 @@ export class Menus {
         + `<br>Relicário do Colecionador: ${stats.relic ? 'aberto' : 'ficou no peito dele'} · Catálogo do Colecionador: ${stats.catalogo ? 'lido' : 'não lido'}`;
       $('endTitle').textContent = 'Fim do Capítulo 6 — O Acervo';
       $('endText').textContent = 'O Colecionador fica de joelhos no próprio pedestal, em pose, como a última peça da Galeria. Na reserva técnica, atrás das estantes de "peças a catalogar", o alçapão de serviço desce para as galerias de pedra sob o Museu — rumo às catacumbas e à linha antiga do metrô, onde levaram Inês.';
-      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 7 — Sob a Pedra: catacumbas e metrô antigo (em breve).';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 7 — Sob a Pedra: as catacumbas sob o Museu e a linha antiga do metrô (primeira parte jogável).';
       $('endRn0').classList.remove('hidden');
       $('endRn0').innerHTML = stats.relic || stats.catalogo
         ? 'Inês, a <b>peça 31</b>, está <b>viva</b>: "não é peça de exposição, é <b>oferenda</b>" — levada para baixo, <b>onde a Primeira Cinza foi enterrada</b>. Elias é a <b>peça 32</b>. A estação riscada no mapa: <b>Sob a Pedra</b>.'
         : '<span class="small">No peito do Colecionador havia um relicário, e na reserva técnica, um catálogo aberto. Alguém anotou para onde Inês foi.</span>';
-      if (next) { next.disabled = true; next.textContent = 'Capítulo 7 — Sob a Pedra (em breve)'; }
+      if (next) { next.disabled = false; next.textContent = 'Seguir para o Capítulo 7 — Sob a Pedra'; }
       this.show('chapterEnd');
       return;
     }
