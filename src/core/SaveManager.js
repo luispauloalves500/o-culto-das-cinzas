@@ -19,6 +19,17 @@ export function createEmptySave() {
   };
 }
 
+/** Capítulo 5: saves da primeira fatia (comportas travadas) e marcos do chefe/fim coerentes entre si */
+export function normalizeChapter5Flags(s) {
+  if (s.chapter !== 5 || !s.flags) return s;
+  const f = { ...s.flags };
+  if (f.c5_sliceDone) f.c5_gatesOpen = true;
+  if (s.checkpoint === 'c5_boss' || s.checkpoint === 'c5_end') f.c5_afogadaDead = true;
+  if (f.c5_chapterDone || f.ch5Done) { f.c5_chapterDone = true; f.ch5Done = true; f.c5_afogadaDead = true; }
+  if (f.c5_afogadaDead) { f.c5_gatesOpen = true; f.c5_sliceDone = true; f.c5_sluiceOpen = true; f.c5_power = true; }
+  return { ...s, flags: f };
+}
+
 /** Migra saves antigos para a versão atual; retorna null se inválido. */
 export function migrateSave(data) {
   if (!data || typeof data !== 'object') return null;
@@ -39,6 +50,7 @@ export function migrateSave(data) {
     s = { ...s, inventory: { ...inv, weapons, possuiMachado: has, machadoEquipado: inv.weapon === 'machado' }, version: 2 };
   }
   if (s.version > SAVE_VERSION) return null; // save de versão futura
+  s = normalizeChapter5Flags(s);
   const base = createEmptySave();
   return { ...base, ...s, player: { ...base.player, ...s.player }, inventory: { ...base.inventory, ...s.inventory } };
 }

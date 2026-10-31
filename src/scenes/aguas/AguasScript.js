@@ -2,13 +2,15 @@
 // margens estreitas, passarela de tábuas; escombros fecham a margem sul) → galeria de serviço → casa de bombas
 // (portão sem energia) → casa do comporteiro (fusível de cerâmica) → painel: fusível, disjuntores na ordem do
 // relatório (BOMBA 2 → BOMBA 1 → COMPORTA) e chave geral → salão das bombas (escada retrátil) → mezanino →
-// passarela do reservatório (válvula da comporta) → antecâmara das turbinas: a Afogada guarda as comportas.
-// Fim da fatia: o chefe chega na próxima atualização. Reaproveita os helpers do roteiro do hospital.
+// passarela do reservatório (válvula da comporta) → antecâmara das turbinas → comportas → SALÃO DAS TURBINAS:
+// chefe A Afogada (poço d'água no meio; turbina, ralo de drenagem e grades de ferro a tiram da água) → galeria de
+// descarga → fim do Capítulo 5. Reaproveita os helpers do roteiro do hospital.
 import * as THREE from 'three';
 import { HospitalScript } from '../hospital/HospitalScript.js';
 import { Enemy } from '../../ai/EnemyController.js';
 import { ammoMesh } from '../hospital/HospitalPedsScript.js';
-import { GROUND, UPPER, PANEL_POS, VALVE, BREAKERS, BREAKER_ORDER, ANTE, TURBINES } from './AguasLevel.js';
+import { GROUND, UPPER, PANEL_POS, VALVE, BREAKERS, BREAKER_ORDER, ANTE, TURBINES, ARENA, ARENA_BOUNDS, POOL, INTAKE, TURBINE_LEVER, DRAIN_VALVE, DISCHARGE } from './AguasLevel.js';
+import { AfogadaBoss } from '../../ai/AfogadaBoss.js';
 import { roomAt } from '../../data/map.js';
 
 const Y = GROUND, U = UPPER;
@@ -26,8 +28,14 @@ export const AGUAS_SPAWNS = [
   { id: 'afo_res', type: 'afogado', x: 33, y: -1.2, z: 55, yaw: Math.PI, dormant: true, submerged: true },
   // antecâmara das turbinas: um acólito montando guarda diante das comportas
   { id: 'aco_turb', type: 'acolito', x: 35.5, y: U, z: 64.5, yaw: 0, patrol: [{ x: 31, y: U, z: 64.5 }, { x: 37.5, y: U, z: 63.5 }] },
+  // galeria de descarga: encolhido junto à grade do rio — acorda quando Elias entra na galeria
+  { id: 'afo_descarga', type: 'afogado', x: 32.6, y: U, z: 98.2, yaw: Math.PI, dormant: true },
 ];
-const C5_DOORS = ['c5_hut', 'c5_ante', 'c5_panel', 'c5_gate', 'c5_catwalk', 'c5_turbine'];
+const C5_DOORS = ['c5_hut', 'c5_ante', 'c5_panel', 'c5_gate', 'c5_catwalk', 'c5_turbine', 'c5_exit'];
+// máquinas do salão: recarga da turbina (s) e voltas do volante do ralo
+export const C5_TURBINE_CD = 14;
+export const C5_DRAIN_TURNS = 2;
+export const AFOGADA_BODY = { x: 26.5, y: U, z: 71 };
 // afogados submersos: acordam quando Elias chega a esta distância (xz) com a cabeça acima da linha da margem
 export const C5_WAKE_RADIUS = 5.5;
 export const C5_WATER_DPS = { dmg: 4, every: 1.2 };
@@ -36,7 +44,9 @@ export class AguasScript extends HospitalScript {
   constructor(game, level) {
     super(game, level);
     this.props = [];
-    this.arenaDoorId = 'c5_arena';
+    this.arenaDoorId = 'c5_turbine';
+    this.bossActive = false;
+    this.turbineCd = 0; this.drainN = 0;
     this.panelSeq = [];
     this.valveN = 0;
     this.waterT = 0;
@@ -96,6 +106,24 @@ export class AguasScript extends HospitalScript {
     this._doc('diario_comporteiro', { x: 37.2, y: U + 1.0, z: 67.0 }, 37.2, U + 0.96, 67.0);
     this._pickup('c5_band_turb', { x: 27.0, y: U + 0.4, z: 61.2 }, 'Pegar bandagem', () => this._giveItem('bandagem'), () => this._bandMesh(27.0, U + 0.05, 61.2));
 
+    // ---------- salão das turbinas: A Afogada ----------
+    this.boss = new AfogadaBoss(g, { x: (POOL.minX + POOL.maxX) / 2, y: POOL.bed, z: (POOL.minZ + POOL.maxZ) / 2, pool: POOL, bounds: ARENA_BOUNDS, intake: { x: INTAKE.x, y: POOL.bed, z: INTAKE.z } });
+    g.boss = this.boss;
+    if (save.flags.c5_afogadaDead) this.boss.setDeadAt(AFOGADA_BODY.x, AFOGADA_BODY.y, AFOGADA_BODY.z);
+    g.interact.add({ id: 'c5_turbineLever', pos: { x: TURBINE_LEVER.x + 0.4, y: TURBINE_LEVER.y, z: TURBINE_LEVER.z }, radius: 1.6,
+      enabled: () => this.bossActive && !L.poolDrained,
+      prompt: () => (this.turbineCd > 0 ? 'Alavanca da turbina (recarregando…)' : 'Puxar a alavanca da turbina'),
+      onInteract: () => this._useTurbine() });
+    g.interact.add({ id: 'c5_drainValve', pos: { x: DRAIN_VALVE.x + 0.8, y: DRAIN_VALVE.y, z: DRAIN_VALVE.z }, radius: 1.5,
+      enabled: () => this.bossActive && !L.poolDrained,
+      prompt: () => `Girar o volante do ralo de drenagem (${this.drainN}/${C5_DRAIN_TURNS})`,
+      onInteract: () => this._useDrain() });
+    // galeria de descarga: ficha de remessa (gancho do Capítulo 6) e munição
+    this._doc('ficha_remessa', { x: 34.0, y: U + 0.9, z: 95.9 }, 34.0, U + 0.72, 95.9);
+    this._pickup('c5_ammo_desc', { x: 31.95, y: U + 0.5, z: 94.2 }, 'Pegar munição .38', () => {
+      g.inventory.add('municao_38', 6); g.hud.toast(`Munição .38 ×6 (total ${g.inventory.count('municao_38')})`, 2.5);
+    }, () => ammoMesh(M, 31.95, U + 0.02, 94.2, 6));
+
     // ---------- portas ----------
     for (const id of C5_DOORS) {
       const d = L.doors[id];
@@ -103,7 +131,7 @@ export class AguasScript extends HospitalScript {
         id: 'door_' + id, radius: id === 'c5_gate' || id === 'c5_turbine' ? 2.0 : 1.7,
         pos: { x: d.x, y: d.y + 1, z: d.z },
         enabled: () => !(id === 'c5_gate' && d.open),
-        prompt: () => (id === 'c5_turbine' ? 'Abrir as comportas das turbinas'
+        prompt: () => (id === 'c5_turbine' && !this.q.has('c5_gatesOpen') ? 'Abrir as comportas das turbinas'
           : d.locked ? 'Abrir ' + d.label : d.open ? 'Fechar ' + d.label : 'Abrir ' + d.label),
         onInteract: () => this._useDoor(d),
       });
@@ -210,7 +238,10 @@ export class AguasScript extends HospitalScript {
   // ---------- portas ----------
   _useDoor(d) {
     const g = this.game;
-    if (d.id === 'c5_turbine') return this._sliceEnd();
+    if (d.id === 'c5_turbine') {
+      if (this.bossActive) { g.audio.play('locked', d); g.hud.toast('As comportas desceram e travaram. Enquanto a Afogada estiver viva, não sobem.', 3.5); return; }
+      if (!this.q.has('c5_gatesOpen')) return this._openGates();
+    }
     if (d.locked && d.id === 'c5_gate') {
       this.q.set('note_' + d.id); this.q.set('c5_sawGate');
       g.audio.play('locked', d); g.hud.toast(d.lockMsg, 5); return;
@@ -219,16 +250,75 @@ export class AguasScript extends HospitalScript {
     d.setOpen(!d.open);
     g.perception.noise(d, 5, 'door');
   }
-  // fim da primeira fatia: a Afogada guarda as comportas (o confronto vem na próxima atualização)
-  _sliceEnd() {
+  // as comportas sobem: o salão das turbinas (a Afogada) fica aberto
+  _openGates() {
     const g = this.game, d = this.level.doors.c5_turbine;
-    g.audio.play('locked', d); g.audio.play('splash', { x: 33, y: U, z: 69 });
-    if (!this.q.has('c5_sliceDone')) {
-      this.q.set('c5_sliceDone');
-      g.cameraCtl.addShake(0.2);
-      g.saveGame('c5_slice');
-      g.hud.toast('As comportas não cedem. Do outro lado, a água bate em compasso, como um coração — a Afogada guarda as comportas. (O confronto chega na próxima atualização.) · progresso salvo', 8);
-    } else g.hud.toast(d.lockMsg + ' (O confronto chega na próxima atualização.)', 5);
+    this.q.set('c5_gatesOpen'); this.q.set('c5_sliceDone');
+    d.locked = false; d.setOpen(true);
+    g.audio.play('elevator', d); g.audio.play('splash', { x: 33, y: U, z: 72 });
+    g.cameraCtl.addShake(0.25);
+    g.saveGame('c5_slice');
+    g.hud.toast('As comportas sobem rangendo. Do outro lado, um salão alagado: no meio, o poço das turbinas, e a água bate em compasso, como um coração. · progresso salvo', 6);
+  }
+
+  // ---------- chefe: A Afogada ----------
+  _startBoss() {
+    const g = this.game, d = this.level.doors.c5_turbine;
+    this.bossActive = true;
+    d.setOpen(false); d.locked = true;
+    g.hud.showBoss(true, 'A AFOGADA');
+    g.audio.setIntensity(2);
+    this.boss.activate();
+    g.hud.toast('A água do poço se abre e uma mulher de cabelos compridos sobe, de vestido em farrapos. Lurdes — a Afogada. As comportas descem atrás de você.', 5);
+    this.hint('c5_boss', 'Na água a Afogada é <b>a correnteza</b>: submersa é imune e quase não sente golpes. <b>Afaste-se da beira</b> para atraí-la ao seco, ou puxe a <b>alavanca da turbina</b> (leste) para prendê-la na grade. As <b>guelras</b> no pescoço são o ponto fraco.', 11);
+  }
+  _useTurbine() {
+    const g = this.game, L = this.level;
+    if (!this.bossActive || L.poolDrained) return;
+    if (this.turbineCd > 0) { g.audio.play('locked', TURBINE_LEVER); g.hud.toast(`O motor da turbina ainda está se recuperando (${Math.ceil(this.turbineCd)} s).`, 2); return; }
+    this.turbineCd = C5_TURBINE_CD;
+    this.q.set('c5_usedTurbine');
+    L.spinTurbine(3.5);
+    g.audio.play('power', { x: INTAKE.x, y: U, z: 86 }); g.audio.play('switch', TURBINE_LEVER);
+    g.perception.noise({ x: 33, y: U, z: 84 }, 14, 'metal');
+    g.cameraCtl.addShake(0.3);
+    const caught = this.boss.turbinePull();
+    if (!caught) g.hud.toast('A turbina ronca e a água do poço gira em redemoinho — mas a Afogada não está dentro d\'água.', 3.5);
+    else this.q.set('c5_pinnedOnce');
+    // Elias dentro do poço também é puxado
+    const p = g.player.pos;
+    if (L.waterAt(p)) { g.player.envDamage?.(8); p.z = Math.min(p.z + 0.8, POOL.maxZ - 0.6); }
+  }
+  _useDrain() {
+    const g = this.game, L = this.level, b = this.boss;
+    if (!this.bossActive || L.poolDrained) return;
+    if (b.phase < 2) {
+      g.audio.play('locked', DRAIN_VALVE);
+      g.hud.toast('O volante do ralo não se mexe: o lodo do fundo trava o registro. Quando a água se agitar de verdade, talvez ceda.', 4);
+      this.q.set('c5_triedDrain');
+      return;
+    }
+    this.drainN++;
+    L.drainWheel.rotation.x += Math.PI * 0.7;
+    g.audio.play('clang', DRAIN_VALVE); g.perception.noise(DRAIN_VALVE, 10, 'metal');
+    if (this.drainN < C5_DRAIN_TURNS) { g.hud.toast(`O volante range e cede (${this.drainN}/${C5_DRAIN_TURNS}).`, 2.5); return; }
+    this.q.set('c5_drained');
+    L.drainPool();
+    b.drain();
+    g.audio.play('splash', { x: 28.5, y: POOL.bed, z: 78 }); g.audio.play('elevator', { x: 28.5, y: POOL.bed, z: 78 }, { dur: 4 });
+    g.cameraCtl.addShake(0.35);
+    if (b.state !== 'beached') g.hud.toast('O ralo se abre com um ronco e a água do poço escoa. Sem água, a Afogada não tem onde se esconder.', 4.5);
+  }
+  _bossDefeated() {
+    const g = this.game, L = this.level;
+    this.q.set('c5_afogadaDead'); this.bossActive = false;
+    g.hud.showBoss(false); g.audio.setIntensity(0);
+    const d = L.doors.c5_turbine; d.locked = false; d.setOpen(true);
+    const ex = L.doors.c5_exit; ex.locked = false; ex.setOpen(true);
+    g.audio.play('clang', ex);
+    g.saveGame('c5_boss');
+    g.hud.toast('A Afogada solta um último borbulhar e desaba. Por um instante, o rosto é só o de uma moça cansada. A corrente da portinhola norte cai na água. · progresso salvo', 7);
+    this.hint('c5_exit', 'A <b>portinhola da descarga</b> (norte, atrás da turbina) abriu. A galeria segue para o rio — e para onde levaram Inês.', 8);
   }
 
   _applyState(save) {
@@ -242,13 +332,20 @@ export class AguasScript extends HospitalScript {
       L.doors.c5_gate.locked = false; L.doors.c5_gate.setOpen(true, true);
     } else { L.doors.c5_gate.locked = true; L.doors.c5_gate.setOpen(false, true); }
     if (f.c5_sluiceOpen) { L.raiseSluice(true); this.valveN = 3; }
-    L.doors.c5_turbine.locked = true; L.doors.c5_turbine.setOpen(false, true);
+    // comportas das turbinas: abertas desde a fatia (saves antigos com c5_sliceDone entram destravados)
+    const gates = L.doors.c5_turbine;
+    if (f.c5_gatesOpen || f.c5_sliceDone) gates.locked = false;
+    else { gates.locked = true; gates.setOpen(false, true); }
+    const ex = L.doors.c5_exit;
+    if (f.c5_afogadaDead) { ex.locked = false; ex.setOpen(true, true); gates.setOpen(true, true); }
+    else { ex.locked = true; ex.setOpen(false, true); }
     // quem já acordou não volta a deitar no fundo
     const up = (id) => { const e = this._enemy(id); if (e && e.alive) { e.dormant = false; e.submerged = false; e.emerging = 0; } };
     if (f.c5_wokeCanal1) up('afo_canal1');
     if (f.c5_wokeCanal2) up('afo_canal2');
     if (f.c5_power) up('afo_poco');
     if (f.c5_sluiceOpen) up('afo_res');
+    if (f.c5_wokeDescarga) up('afo_descarga');
     this._applyMaxHp();
     pl.maxSt = f.hasAmulet ? 125 : 100; pl.st = Math.min(pl.st, pl.maxSt);
     pl.healAmount = f.hasBracelet ? 65 : 45;
@@ -263,6 +360,8 @@ export class AguasScript extends HospitalScript {
     if (!this.q.has('c5_readAviso') && docs.includes('aviso_comporta')) this.q.set('c5_readAviso');
     if (!this.q.has('c5_readRelatorio') && docs.includes('relatorio_bombeamento')) this.q.set('c5_readRelatorio');
     if (!this.q.has('c5_readDiario') && docs.includes('diario_comporteiro')) this.q.set('c5_readDiario');
+    if (!this.q.has('c5_readFicha') && docs.includes('ficha_remessa')) this.q.set('c5_readFicha');
+    this.turbineCd = Math.max(0, this.turbineCd - dt);
     // saiu da passagem
     if (!this.q.has('c5_inCanal') && p.z > 10.3) {
       this.q.set('c5_inCanal');
@@ -304,6 +403,24 @@ export class AguasScript extends HospitalScript {
     if (!this.q.has('c5_inTurbines') && p.y > U - 0.5 && p.z > TURBINES.minZ + 0.3) {
       this.q.set('c5_inTurbines');
       g.hud.toast('Antecâmara das turbinas. O chão treme com cada golpe de água do outro lado das comportas.', 4);
+    }
+    // salão das turbinas: a Afogada sobe do poço
+    if (!this.bossActive && !this.q.has('c5_afogadaDead') && p.z > ARENA.minZ + 1.2 && p.z < ARENA.maxZ && p.y > U - 1 && p.x > ARENA.minX && p.x < ARENA.maxX) this._startBoss();
+    if (this.bossActive && this.boss.phase >= 2 && !this.tut.shown.c5_drain) this.hint('c5_drain', 'O volante do <b>ralo de drenagem</b> (parede oeste) rangeu. <b>Esvazie o poço</b>: sem água, a Afogada encalha e não mergulha mais.', 8);
+    if (this.bossActive && this.boss.phase >= 3 && !this.tut.shown.c5_grates) this.hint('c5_grates', 'Ela investe sem parar: fique atrás das <b>grades de ferro</b> ou da <b>carcaça da turbina</b> — o choque a atordoa e abre as guelras.', 8);
+    // morte real da Afogada
+    if (this.bossActive && this.boss.state === 'dead' && !this.q.has('c5_afogadaDead')) this._bossDefeated();
+    // galeria de descarga
+    if (!this.q.has('c5_wokeDescarga') && p.z > DISCHARGE.minZ + 1.5 && p.y > U - 1) {
+      this.q.set('c5_wokeDescarga');
+      if (this._wake('afo_descarga')) g.hud.toast('Galeria de descarga. Junto à grade do rio, um vulto encharcado se levanta.', 4);
+    }
+    // fim do Capítulo 5: a descarga para o rio
+    if (!this._ended && this.q.has('c5_afogadaDead') && p.z > DISCHARGE.endZ && p.y > U - 1 && p.x > DISCHARGE.minX - 0.5 && p.x < DISCHARGE.maxX + 0.5) {
+      this._ended = true;
+      this.q.set('c5_chapterDone'); this.q.set('ch5Done');
+      g.saveGame('c5_end');
+      g.endChapter();
     }
   }
 }

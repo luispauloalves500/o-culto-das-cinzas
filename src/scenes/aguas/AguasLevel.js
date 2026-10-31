@@ -17,7 +17,10 @@ export const UPPER = 4.5;
 export const WATERS = [
   { id: 'canal', minX: 0, maxX: 42, minZ: 13, maxZ: 19, bed: -1.4, level: -0.45, cx: 0.45, cz: 0 },
   { id: 'reservatorio', minX: 26, maxX: 40, minZ: 46, maxZ: 60, bed: -1.2, level: -0.3, cx: 0, cz: 0 },
+  // poço das turbinas (salão da Afogada): margens no mezanino (top = 4.5); o ralo de drenagem o esvazia
+  { id: 'turbinas', minX: 28, maxX: 38, minZ: 72, maxZ: 84, bed: UPPER - 1.4, level: UPPER - 0.45, top: UPPER, cx: 0, cz: 0 },
 ];
+export const POOL = WATERS[2];
 // rampas de limpeza (saída da água): eixo z, a = borda da margem (y 0) → b = leito
 export const CANAL_RAMPS = [
   { id: 'S1', minX: 2, maxX: 5, a: 13, b: 15.2 }, { id: 'S2', minX: 35, maxX: 38, a: 13, b: 15.2 },
@@ -32,6 +35,17 @@ export const HALL = { minX: 26, maxX: 46, minZ: 28, maxZ: 46 };
 export const STAIR = { minX: 43.6, maxX: 45.4, zBottom: 33, zTop: 40 };
 export const CATWALK = { minX: 28.6, maxX: 30, minZ: 46, maxZ: 60 };
 export const TURBINES = { minX: 26, maxX: 40, minZ: 60, maxZ: 68 };
+// salão das turbinas (arena da Afogada) e galeria de descarga (saída do capítulo)
+export const ARENA = { minX: 24, maxX: 42, minZ: 68, maxZ: 90 };
+export const ARENA_BOUNDS = { minX: 24.7, maxX: 41.3, minZ: 68.8, maxZ: 89.3 };
+export const DISCHARGE = { minX: 31.6, maxX: 34.4, minZ: 90, maxZ: 101, endZ: 99.4 };
+export const POOL_RAMPS = [{ id: 'PS', minX: 29, maxX: 31, a: 72, b: 74.4 }, { id: 'PN', minX: 35.8, maxX: 37.8, a: 84, b: 81.6 }];
+export const TURBINE_HOUSING = { minX: 30.5, maxX: 35.5, minZ: 84.9, maxZ: 87.5 };
+export const INTAKE = { x: 33, z: 83.0 };
+export const TURBINE_LEVER = { x: 36.2, y: UPPER + 1.1, z: 86.2 };
+export const DRAIN_VALVE = { x: 24.25, y: UPPER + 1.0, z: 78 };
+// grades de contenção (obstáculos de ferro): a investida da Afogada para nelas
+export const GRATES = [{ minX: 26, maxX: 27.6, minZ: 74, maxZ: 74.35 }, { minX: 38.4, maxX: 40, minZ: 81.4, maxZ: 81.75 }];
 export const VALVE = { x: 30.25, y: UPPER + 1.0, z: 53 };
 export const PANEL_POS = { x: 24.25, y: 1.2, z: 25 };
 export const BREAKERS = ['BOMBA 1', 'BOMBA 2', 'COMPORTA'];
@@ -41,6 +55,8 @@ export const AGUAS_CHECKPOINTS = {
   c5_passage: { x: 15, y: GROUND, z: 1.2, yaw: 0 },
   c5_pumps: { x: 36, y: GROUND, z: 23.4, yaw: 0 },
   c5_slice: { x: 33, y: UPPER, z: 61.5, yaw: 0 },
+  c5_boss: { x: 33, y: UPPER, z: 70.2, yaw: 0 },
+  c5_end: { x: 33, y: UPPER, z: 93, yaw: 0 },
 };
 
 // névoa padrão: vapor verde-escuro que sobe da água parada
@@ -53,6 +69,8 @@ export const AGUAS_ZONES = [
   { id: 'c5_bombas', minX: 26, maxX: 46, minZ: 28, maxZ: 46, minY: -1, maxY: 10, fog: 0x0a0e10, density: 0.05 },
   { id: 'c5_reservatorio', minX: 26, maxX: 40, minZ: 46, maxZ: 60, minY: -2, maxY: 10, fog: 0x081214, density: 0.07 },
   { id: 'c5_turbinas', minX: 26, maxX: 40, minZ: 60, maxZ: 68, minY: 3, maxY: 10, fog: 0x0a0a10, density: 0.06 },
+  { id: 'c5_salaoTurbinas', minX: 24, maxX: 42, minZ: 68, maxZ: 90, minY: 2, maxY: 12, fog: 0x08100f, density: 0.055 },
+  { id: 'c5_descarga', minX: 31, maxX: 35, minZ: 90, maxZ: 101, minY: 3, maxY: 8, fog: 0x060808, density: 0.08 },
 ];
 
 export class AguasLevel {
@@ -70,6 +88,7 @@ export class AguasLevel {
     // portas "virtuais" do grafo de navegação (escada retrátil, comporta da passarela)
     this.navStair = { open: false };
     this.navSluice = { open: false };
+    this.poolDrained = false; this.drainT = 0; this.turbineT = 0;
   }
 
   build() {
@@ -80,6 +99,7 @@ export class AguasLevel {
     this._hall();
     this._reservoir();
     this._turbines();
+    this._arena();
     this._doors();
     this._lights();
     this._nav();
@@ -91,7 +111,10 @@ export class AguasLevel {
 
   // ---------- água: lentidão + correnteza para o PlayerController; "molhado" para os Afogados ----------
   waterRect(p) {
-    for (const w of WATERS) if (p.x > w.minX && p.x < w.maxX && p.z > w.minZ && p.z < w.maxZ) return w;
+    for (const w of WATERS) {
+      if (w.id === 'turbinas' && this.poolDrained) continue;
+      if (p.x > w.minX && p.x < w.maxX && p.z > w.minZ && p.z < w.maxZ) return w;
+    }
     return null;
   }
   /** dentro d'água (com a lâmina acima da canela): { slow, cx, cz, id } ou null */
@@ -103,7 +126,8 @@ export class AguasLevel {
   /** 0 seco … 1 água ou beira (até 1.6 m da borda, no nível das margens) */
   wetness(p) {
     for (const w of WATERS) {
-      if (p.y > 0.6) continue;
+      if (p.y > (w.top ?? 0) + 0.6) continue;
+      if (w.id === 'turbinas' && this.poolDrained) continue;
       const dx = Math.max(w.minX - p.x, 0, p.x - w.maxX), dz = Math.max(w.minZ - p.z, 0, p.z - w.maxZ);
       const d = Math.hypot(dx, dz);
       if (d <= 0) return 1;
@@ -123,7 +147,7 @@ export class AguasLevel {
     // espuma junto às paredes
     const foam = new THREE.Mesh(new THREE.PlaneGeometry(w.maxX - w.minX, 0.35).rotateX(-Math.PI / 2), this.M.waterFoam);
     foam.position.set(m.position.x, w.level + 0.01, w.minZ + 0.2); this.b.group.add(foam);
-    this.waterMeshes.push({ m, w, base: geo.attributes.position.array.slice() });
+    this.waterMeshes.push({ m, w, foam, base: geo.attributes.position.array.slice() });
     return m;
   }
 
@@ -347,6 +371,96 @@ export class AguasLevel {
     this.sign('TURBINAS — ACESSO RESTRITO', 33, U + 3.3, 67.88, Math.PI, 2.6, 0.3, { bg: '#2a1010', fg: '#e8c0a0' });
   }
 
+  // ---------- SALÃO DAS TURBINAS x24..42 z68..90 (margens em y 4.5) + GALERIA DE DESCARGA ----------
+  _arena() {
+    const b = this.b, A = ARENA, P = POOL, U = UPPER, H = U + 7;
+    // margens secas em volta do poço (o leito e a lâmina d'água vêm do laço de WATERS em _canal)
+    b.floor(A.minX, A.minZ, A.maxX, P.minZ, U, 'concrete', 'c5_arenaSul');
+    b.floor(A.minX, P.maxZ, A.maxX, A.maxZ, U, 'concrete', 'c5_arenaNorte');
+    b.floor(A.minX, P.minZ, P.minX, P.maxZ, U, 'concrete', 'c5_arenaOeste');
+    b.floor(P.maxX, P.minZ, A.maxX, P.maxZ, U, 'concrete', 'c5_arenaLeste');
+    b.ceiling(A.minX, A.minZ, A.maxX, A.maxZ, H, 'concrete');
+    // paredes externas
+    b.box(A.minX - 0.2, P.bed - 0.4, A.minZ, A.minX, H, A.maxZ, 'brick');
+    b.box(A.maxX, P.bed - 0.4, A.minZ, A.maxX + 0.2, H, A.maxZ, 'brick');
+    b.box(A.minX, U - 0.5, 67.85, 26, H, 68.15, 'brick');
+    b.box(40, U - 0.5, 67.85, A.maxX, H, 68.15, 'brick');
+    b.box(26, U + 4, 67.85, 40, H, 68.15, 'brick', { sight: false });
+    b.wallX(A.maxZ, A.minX, A.maxX, U, H, [33], 'concrete', 1.8, 2.6);
+    // muros de arrimo do poço (topo nas margens): só seguram quem está dentro d'água; vãos nas rampas
+    const R = { sight: false, tag: 'retain' }, y0 = P.bed - 0.3;
+    b.box(P.minX - 1, y0, P.minZ - 1, POOL_RAMPS[0].minX, U, P.minZ, 'concrete', R);
+    b.box(POOL_RAMPS[0].maxX, y0, P.minZ - 1, P.maxX + 1, U, P.minZ, 'concrete', R);
+    b.box(P.minX - 1, y0, P.maxZ, POOL_RAMPS[1].minX, U, P.maxZ + 1, 'concrete', R);
+    b.box(POOL_RAMPS[1].maxX, y0, P.maxZ, P.maxX + 1, U, P.maxZ + 1, 'concrete', R);
+    b.box(P.minX - 1, y0, P.minZ, P.minX, U, P.maxZ, 'concrete', R);
+    b.box(P.maxX, y0, P.minZ, P.maxX + 1, U, P.maxZ, 'concrete', R);
+    for (const r of POOL_RAMPS) {
+      const f = this.game.col.addFloor({ minX: r.minX, maxX: r.maxX, minZ: Math.min(r.a, r.b), maxZ: Math.max(r.a, r.b), ramp: { axis: 'z', a: r.a, b: r.b, ya: U, yb: P.bed } });
+      f.name = 'rampa_' + r.id;
+      const n = 5, dz = (r.b - r.a) / n;
+      for (let i = 0; i < n; i++) {
+        const za = r.a + dz * i, zb = r.a + dz * (i + 1), top = U + (P.bed - U) * ((i + 1) / n);
+        b.box(r.minX, y0, Math.min(za, zb), r.maxX, top + 0.05, Math.max(za, zb), 'concrete', { collide: false, tile: 1 });
+      }
+    }
+    // turbina: carcaça de aço (obstáculo: a investida para nela), rotor exposto e a grade da tomada d'água
+    const T = TURBINE_HOUSING;
+    b.box(T.minX, U, T.minZ, T.maxX, U + 1.4, T.maxZ, 'steelDark', { tag: 'obstacle' });
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, T.maxX - T.minX - 0.4, 14), this.M.rust);
+    drum.rotation.z = Math.PI / 2; drum.position.set((T.minX + T.maxX) / 2, U + 1.9, (T.minZ + T.maxZ) / 2); b.group.add(drum);
+    this.rotor = new THREE.Group(); this.rotor.position.set(INTAKE.x, P.bed + 0.75, P.maxZ + 0.3); b.group.add(this.rotor);
+    for (let i = 0; i < 6; i++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.05), this.M.metal || this.M.rust); bl.position.y = 0.32; const g = new THREE.Group(); g.rotation.z = i * Math.PI / 3; g.add(bl); this.rotor.add(g); }
+    for (let x = 31; x <= 35; x += 0.35) b.box(x, P.bed, P.maxZ - 0.06, x + 0.06, U - 0.05, P.maxZ - 0.01, 'rust', { collide: false });
+    b.box(31, U - 0.12, P.maxZ - 0.08, 35.06, U - 0.04, P.maxZ, 'rust', { collide: false });
+    // alavanca da turbina (no posto de comando, à direita da carcaça)
+    const L = TURBINE_LEVER;
+    b.box(L.x - 0.3, U, L.z - 0.4, L.x + 0.1, U + 1.0, L.z + 0.4, 'steelDark', { tag: 'prop-low', sight: false });
+    this.turbineLever = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.6, 0.06), this.M.rust);
+    this.turbineLever.geometry.translate(0, 0.3, 0); this.turbineLever.position.set(L.x - 0.1, U + 1.0, L.z); this.turbineLever.rotation.x = 0.6; b.group.add(this.turbineLever);
+    this.turbineLamp = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x40ff60 })); this.turbineLamp.position.set(L.x - 0.1, U + 1.05, L.z - 0.3); b.group.add(this.turbineLamp);
+    // volante do ralo de drenagem (parede oeste) e o cano que desce até o fundo do poço
+    const V = DRAIN_VALVE;
+    this.drainWheel = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.04, 5, 12), this.M.rust);
+    this.drainWheel.rotation.y = Math.PI / 2; this.drainWheel.position.set(V.x + 0.12, V.y, V.z); b.group.add(this.drainWheel);
+    for (const a of [0, Math.PI / 2]) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.66, 0.03), this.M.rust); sp.rotation.x = a; this.drainWheel.add(sp); }
+    b.box(A.minX, P.bed, V.z - 0.12, A.minX + 0.2, V.y - 0.2, V.z + 0.12, 'rust', { collide: false });
+    b.box(P.minX + 0.02, P.bed + 0.01, 77.4, P.minX + 1.0, P.bed + 0.05, 78.6, 'rust', { collide: false }); // ralo no fundo
+    // grades de contenção
+    for (const G of GRATES) {
+      b.box(G.minX, U, G.minZ, G.maxX, U + 2.2, G.maxZ, 'rust', { tag: 'obstacle', sight: false });
+    }
+    this.sign('TURBINA 1 — CIA. MUNICIPAL DE ÁGUAS', 33, U + 3.6, 89.85, Math.PI, 3.4, 0.34, { bg: '#1c2a2a', fg: '#b8d0c8' });
+    this.sign('RALO DE DRENAGEM', 24.03, U + 1.7, 78, Math.PI / 2, 1.6, 0.24, { bg: '#2a1a14', fg: '#e0b090' });
+    // galeria de descarga (saída do capítulo)
+    const D = DISCHARGE;
+    b.floor(D.minX, D.minZ, D.maxX, D.maxZ, U, 'concrete', 'c5_descarga');
+    b.ceiling(D.minX, D.minZ, D.maxX, D.maxZ, U + 3);
+    b.box(D.minX - 0.2, U - 0.5, D.minZ, D.minX, U + 3, D.maxZ, 'brick');
+    b.box(D.maxX, U - 0.5, D.minZ, D.maxX + 0.2, U + 3, D.maxZ, 'brick');
+    b.box(D.minX - 0.2, U - 0.5, D.maxZ, D.maxX + 0.2, U + 3, D.maxZ + 0.2, 'brick');
+    for (let x = D.minX + 0.3; x < D.maxX - 0.2; x += 0.3) b.box(x, U, D.maxZ - 0.15, x + 0.05, U + 2.6, D.maxZ - 0.1, 'rust', { collide: false });
+    b.box(33.6, U, 95.5, 34.38, U + 0.7, 96.3, 'woodDark', { tag: 'prop-low', sight: false }); // caixote da remessa
+    this.sign('DESCARGA — RIO DAS CINZAS', 33, U + 2.6, 90.15, 0, 2.4, 0.3, { bg: '#1c1c14', fg: '#d8c890' });
+  }
+
+  /** abre o ralo: a água do poço escoa em ~4 s (uma vez só) */
+  drainPool(instant = false) {
+    if (this.poolDrained) return false;
+    this.poolDrained = true; this.drainT = instant ? 1 : 0;
+    if (this.drainWheel) this.drainWheel.userData.spin = 3;
+    if (instant) this._setPoolLevel(POOL.bed + 0.02);
+    return true;
+  }
+  _setPoolLevel(y) {
+    for (const W of this.waterMeshes) if (W.w.id === 'turbinas') { W.m.position.y = y; W.m.visible = y > POOL.bed + 0.05; if (W.foam) W.foam.visible = y > POOL.level - 0.1; }
+  }
+  /** liga a turbina por alguns segundos (rotor girando, sucção na grade) */
+  spinTurbine(dur = 4) {
+    this.turbineT = dur;
+    if (this.turbineLever) this.turbineLever.rotation.x = -0.6;
+  }
+
   _doors() {
     const ctx = { materials: this.M, group: this.b.group, col: this.game.col, audio: this.game.audio, bus: this.game.bus };
     const D = (o) => (this.doors[o.id] = new Door({ mat: this.M.door, ...o }, ctx));
@@ -358,6 +472,8 @@ export class AguasLevel {
     D({ id: 'c5_catwalk', axis: 'x', x: 29.3, y: UPPER, z: 46, width: 1.2, height: 2.3, swing: 1, mat: this.M.doorMetal || this.M.rust, label: 'porta da passarela' });
     D({ id: 'c5_turbine', axis: 'x', x: 33, y: UPPER, z: 68, width: 2.1, height: 2.95, kind: 'sliding', mat: this.M.steelDark || this.M.rust, locked: true,
       lockMsg: 'As comportas das turbinas. Do outro lado, algo bate na água em compasso — a Afogada guarda as comportas.', label: 'comportas das turbinas' });
+    D({ id: 'c5_exit', axis: 'x', x: 33, y: UPPER, z: ARENA.maxZ, width: 1.7, height: 2.55, kind: 'sliding', mat: this.M.steelDark || this.M.rust, locked: true,
+      lockMsg: 'Portinhola de aço da galeria de descarga, travada por dentro do salão por uma corrente grossa. Enquanto a Afogada estiver na água, ninguém sai daqui.', label: 'portinhola da descarga' });
   }
 
   _lights() {
@@ -376,6 +492,9 @@ export class AguasLevel {
     this.lamp(36, Y + 8.6, 43, 0xe0f0e8, 1.0, 10, { power: true });                     // mezanino
     this.lamp(29.3, Y + 8.4, 54, cold, 0.9, 12, { power: true });                       // passarela
     this.lamp(33, UPPER + 3.8, 64, 0xc8d0e0, 0.9, 10, { flicker: true });               // turbinas
+    this.lamp(33, UPPER + 6.6, 75, cold, 1.3, 16);                                       // salão das turbinas
+    this.lamp(33, UPPER + 6.2, 86.5, red, 0.8, 11, { flicker: true });                 // turbina (emergência)
+    this.lamp(33, UPPER + 2.7, 96, sodium, 0.8, 8, { flicker: true });                  // descarga
     this.setPower(false);
   }
 
@@ -421,6 +540,8 @@ export class AguasLevel {
     N('m0', 40, U, 43); N('m1', 29.3, U, 44.6);
     N('w0', 29.3, U, 47.4); N('w1', 29.3, U, 53); N('w2', 29.3, U, 58.8);
     N('t0', 29.3, U, 61.4); N('t1', 33, U, 63); N('t2', 37.5, U, 63.5); N('t3', 30, U, 66.4);
+    N('v0', 33, U, 69.6); N('vW', 25, U, 70); N('vW2', 25, U, 88.6); N('vE', 41, U, 70); N('vE2', 41, U, 88.6); N('vN', 33, U, 88.8);
+    N('x0', 33, U, 91.2); N('x1', 33, U, 97.5);
     N('r0', 37, -1.2, 50.5); N('r1', 32, -1.2, 53); N('r2', 33, -1.2, 57.5);
     const L = (a, b, door) => n.link(a, b, door);
     L('p0', 'p1'); L('p1', 's0'); L('s0', 'sW'); L('s0', 'sB'); L('sE', 'sE2');
@@ -434,6 +555,8 @@ export class AguasLevel {
     L('st0', 'st1', this.navStair); L('st1', 'm0'); L('m0', 'm1');
     L('m1', 'w0', d.c5_catwalk); L('w0', 'w1'); L('w1', 'w2'); L('w2', 't0', this.navSluice);
     L('t0', 't1'); L('t1', 't2'); L('t1', 't3');
+    L('t1', 'v0', d.c5_turbine); L('v0', 'vW'); L('v0', 'vE'); L('vW', 'vW2'); L('vE', 'vE2'); L('vW2', 'vN'); L('vE2', 'vN');
+    L('vN', 'x0', d.c5_exit); L('x0', 'x1');
     L('g6', 'r0'); L('r0', 'r1'); L('r1', 'r2');
   }
 
@@ -461,6 +584,18 @@ export class AguasLevel {
       const a = W.m.geometry.attributes.position, arr = a.array, b0 = W.base;
       for (let i = 0; i < arr.length; i += 3) arr[i + 1] = b0[i + 1] + Math.sin(t * 1.3 + b0[i] * 0.7 + b0[i + 2] * 0.4) * 0.03;
       a.needsUpdate = true;
+    }
+    // drenagem do poço das turbinas
+    if (this.poolDrained && this.drainT < 1) {
+      this.drainT = Math.min(1, this.drainT + dt / 4);
+      this._setPoolLevel(POOL.level + (POOL.bed + 0.02 - POOL.level) * this.drainT);
+    }
+    if (this.drainWheel?.userData.spin > 0) { this.drainWheel.userData.spin -= dt; this.drainWheel.rotation.x += dt * 5; }
+    // turbina ligada: rotor girando
+    if (this.turbineT > 0) {
+      this.turbineT -= dt;
+      if (this.rotor) this.rotor.rotation.z += dt * 18;
+      if (this.turbineT <= 0 && this.turbineLever) this.turbineLever.rotation.x = 0.6;
     }
     // escada retrátil descendo
     if (this.stairDown && this.stairT < 1) {

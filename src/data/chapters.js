@@ -135,7 +135,7 @@ export const SIDE_OBJECTIVES_C4 = [
 
 // Capítulo 5 — Águas Negras (primeira fatia): passagem do Relógio → canal principal (Afogados) → casa de bombas →
 // energia no painel (fusível do comporteiro + disjuntores na ordem do relatório) → mezanino → válvula da comporta →
-// antecâmara das turbinas, onde a Afogada guarda as comportas (o chefe vem na próxima atualização)
+// antecâmara das turbinas → comportas → salão das turbinas (chefe: A Afogada) → galeria de descarga (fim)
 export const OBJECTIVES_C5 = [
   { done: 'c5_inCanal', text: 'Desça a passagem do Relógio até os canais.' },
   { done: 'c5_crossed', text: 'Escombros fecham a margem sul do canal. Atravesse para a margem norte pela passarela de tábuas — e fique longe da água.' },
@@ -144,13 +144,16 @@ export const OBJECTIVES_C5 = [
   { done: 'c5_power', text: 'Na sala do painel (oeste da antecâmara): fusível no soquete, disjuntores na ordem do relatório e a chave geral.' },
   { done: 'c5_upper', text: 'O portão abriu e a escada retrátil desceu (leste do salão). Suba ao mezanino das bombas.' },
   { done: 'c5_sluiceOpen', text: 'Pela porta do mezanino, siga a passarela do reservatório e gire a válvula da comporta.' },
-  { done: 'c5_sliceDone', text: 'A comporta subiu. Atravesse até a antecâmara das turbinas.' },
-  { done: 'c5_never', text: 'A Afogada guarda as comportas das turbinas. (O confronto chega na próxima atualização.)' },
+  { done: 'c5_sliceDone', text: 'A comporta subiu. Atravesse a antecâmara das turbinas e abra as comportas ao fundo.' },
+  { done: 'c5_afogadaDead', text: 'A Afogada guarda o salão das turbinas. Tire-a da água: alavanca da turbina (leste), ralo de drenagem (oeste) e as grades de ferro. Golpeie as guelras.' },
+  { done: 'c5_chapterDone', text: 'A portinhola norte abriu. Saia pela galeria de descarga, atrás da turbina.' },
+  { done: 'c5_never', text: 'Capítulo 5 concluído. Capítulo 6 — O Acervo chega em breve.' },
 ];
 export const SIDE_OBJECTIVES_C5 = [
   { when: 'c5_inCanal', done: 'c5_readAviso', text: 'Há uma chapa de aviso aparafusada na parede, na boca da passagem.' },
   { when: 'c5_crossed', done: 'c5_gotRubble', text: 'Atrás dos escombros da margem sul há uma caixa de ferramentas — só se chega pelo canal.' },
   { when: 'c5_sluiceOpen', done: 'c5_readDiario', text: 'Há um caderno sobre o cofre das turbinas, na antecâmara.' },
+  { when: 'c5_afogadaDead', done: 'c5_readFicha', text: 'Na galeria de descarga há uma ficha sobre um caixote de remessa.' },
 ];
 
 export function objectivesFor(ch) { return ch === 5 ? OBJECTIVES_C5 : ch === 4 ? OBJECTIVES_C4 : ch === 3 ? OBJECTIVES_C3 : ch === 2 ? OBJECTIVES_C2 : OBJECTIVES; }
