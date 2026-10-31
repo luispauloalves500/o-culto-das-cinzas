@@ -1239,13 +1239,18 @@ test('Cap. 8: migração do fim do Cap. 7 (chaves do Cap. 7 removidas, armas e d
 });
 test('Cap. 8: objetivos, laterais, documentos, volante e mapa da Usina', () => {
   assert.equal(objectivesFor(8), OBJECTIVES_C8); assert.equal(sideObjectivesFor(8), SIDE_OBJECTIVES_C8);
-  assert.deepEqual(OBJECTIVES_C8.map((o) => o.done), ['c8_climbed', 'c8_hasWheel', 'c8_ventedAll', 'c8_steamDoorOpen', 'c8_sabotage', 'c8_sliceDone', 'c8_never']);
+  assert.deepEqual(OBJECTIVES_C8.map((o) => o.done), ['c8_climbed', 'c8_hasWheel', 'c8_ventedAll', 'c8_steamDoorOpen', 'c8_sabotage', 'c8_sliceDone',
+    'c8_inMachine', 'c8_metHelena', 'c8_liftPower', 'c8_atTop', 'c8_vernetDown', 'c8_cinzaDead', 'c8_inesFree', 'c8_choice', 'c8_ending', 'c8_never']);
+  assert.ok(!OBJECTIVES_C8.some((o) => /próxima atualização/i.test(o.text)), 'sem promessa de atualização');
   const q = new QuestSystem(null, 8); assert.equal(q.current(), OBJECTIVES_C8[0].text);
   for (const o of SIDE_OBJECTIVES_C8) assert.ok(o.when && o.done && o.text);
-  for (const id of ['boletim_usina', 'bilhete_helena', 'ordem_vernet', 'placa_caldeiras']) assert.ok(DOCUMENTS[id]?.ch === 8 && DOCUMENTS[id].title && DOCUMENTS[id].body, id);
-  assert.ok(ITEMS.volante_valvula?.name);
+  for (const id of ['boletim_usina', 'bilhete_helena', 'ordem_vernet', 'placa_caldeiras', 'diario_helena', 'relatorio_transmissao']) assert.ok(DOCUMENTS[id]?.ch === 8 && DOCUMENTS[id].title && DOCUMENTS[id].body, id);
+  assert.ok(ITEMS.volante_valvula?.name && ITEMS.manete_monta_cargas?.name);
   setMapChapter(8);
-  const fl = chapterFloors().map((f) => f.id); assert.deepEqual(fl.sort(), ['up', 'up2']);
+  const fl = chapterFloors().map((f) => f.id); assert.deepEqual(fl, ['up', 'up2', 'roof', 'lo']);
+  assert.equal(roomAt({ x: 12, y: 7, z: 70 })?.id, 'c8_maquinas');
+  assert.equal(roomAt({ x: 6, y: 13.5, z: 78 })?.id, 'c8_transmissores');
+  assert.equal(roomAt({ x: 13, y: 13.5, z: 85 })?.id, 'c8_cadeira');
   assert.equal(roomAt({ x: 3, y: 0, z: 10 })?.id, 'c8_guarita');
   assert.equal(roomAt({ x: -18, y: 0, z: 33 })?.id, 'c8_oficina');
   assert.equal(roomAt({ x: 13, y: 0, z: 72 })?.id, 'c8_torre');
@@ -1299,6 +1304,101 @@ test('Cap. 8: vapor — vazamentos com ciclo real defasado, nuvem do alívio, fo
   assert.ok(C8L.SLICE_END_Z > C8L.TOWER_BASE.minZ && C8L.SLICE_END_Z < C8L.TOWER_BASE.maxZ);
   for (const [id, c] of Object.entries(C8L.USINA_CHECKPOINTS)) assert.ok(C8L.usinaZoneAt(c), 'checkpoint numa zona: ' + id);
   assert.equal(C8L.usinaZoneAt({ x: 25, y: 4.4, z: 30 })?.id, 'c8_caldeiras');
+});
+
+// ---------- Cap. 8 completo: torre, monta-cargas, chefes, finais ----------
+const C8T = await import('../../src/scenes/usina/UsinaTower.js');
+const C8TS = await import('../../src/scenes/usina/UsinaTowerScript.js');
+const END = await import('../../src/data/endings.js');
+const VB = await import('../../src/ai/VernetBoss.js');
+const MB = await import('../../src/ai/ManifestacaoBoss.js');
+test('Cap. 8: monta-cargas — estado puro com paradas, aceleração, viagens e cabine', () => {
+  const L = new C8T.Lift('base');
+  assert.equal(L.stop, 'base'); assert.equal(L.next(1), 'maq'); assert.equal(L.next(-1), null);
+  assert.equal(L.go('base'), false, 'já está na base'); assert.equal(L.go('nada'), false);
+  assert.ok(L.go('topo')); assert.equal(L.stop, null); assert.equal(L.go('maq'), false, 'não muda de destino andando');
+  let arrived = null, t = 0; while (!arrived && t < 30) { arrived = L.update(1 / 60); t += 1 / 60; }
+  assert.equal(arrived, 'topo'); assert.equal(L.y, C8T.ARENA_Y); assert.equal(L.trips, 1);
+  assert.ok(t > C8T.ARENA_Y / C8T.LIFT_SPEED * 0.95 && t < C8T.ARENA_Y / C8T.LIFT_SPEED * 2.2, 'leva tempo real: ' + t.toFixed(2));
+  assert.ok(Math.abs(L.dist - C8T.ARENA_Y) < 1e-6);
+  assert.equal(L.next(-1), 'maq'); L.place('maq'); assert.equal(L.stop, 'maq'); assert.equal(L.update(1), null);
+  assert.equal(C8T.liftStopFor('c8_slice', {}), 'maq'); assert.equal(C8T.liftStopFor('c8_machine', {}), 'maq');
+  for (const cp of ['c8_top', 'c8_arena', 'c8_free', 'c8_end']) assert.equal(C8T.liftStopFor(cp), 'topo');
+  assert.equal(C8T.liftStopFor('c8_machine', { c8_atTop: true }), 'topo');
+  assert.ok(C8T.inCabin({ x: 13, y: 7, z: 74 }, 7)); assert.ok(!C8T.inCabin({ x: 13, y: 0, z: 74 }, 7)); assert.ok(!C8T.inCabin({ x: 10, y: 7, z: 74 }, 7));
+  // a escada de marinheiro liga a base à casa de máquinas; o alçapão fica sobre ela
+  const LT = C8T.LADDER_T1; assert.equal(LT.y0, 0); assert.equal(LT.y1, C8T.MACH_Y);
+  assert.ok(LT.x > C8T.HATCH.minX && LT.x < C8T.HATCH.maxX && LT.z > C8T.HATCH.minZ && LT.z < C8T.HATCH.maxZ);
+  for (const [id, c] of Object.entries(C8T.TOWER_CHECKPOINTS)) assert.ok(C8L.usinaZoneAt(c), 'checkpoint numa zona: ' + id);
+  assert.equal(C8L.usinaZoneAt({ x: 12, y: 7, z: 70 })?.id, 'c8_maquinas'); assert.equal(C8L.usinaZoneAt({ x: 6, y: 13.5, z: 80 })?.id, 'c8_transmissores');
+});
+test('Cap. 8: acumuladores de vapor e disjuntores da Sala dos Transmissores', () => {
+  assert.equal(C8T.ARENA_STEAM.length, 2); assert.equal(C8T.ARENA_COILS.length, 3);
+  for (const V of C8T.ARENA_STEAM) {
+    assert.ok(C8T.inSteamPlume(V, { x: V.plume.x, y: C8T.ARENA_Y, z: V.plume.z }));
+    assert.ok(!C8T.inSteamPlume(V, { x: V.plume.x + C8T.STEAM.r + 0.2, y: C8T.ARENA_Y, z: V.plume.z }));
+    assert.ok(!C8T.inSteamPlume(V, { x: V.plume.x, y: C8T.MACH_Y, z: V.plume.z }), 'só no andar da arena');
+    assert.ok(Math.hypot(V.use.x - V.plume.x, V.use.z - V.plume.z) > C8T.STEAM.r, 'o registro fica fora do jato');
+    assert.ok(V.plume.z >= C8T.ARENA_EXIT_Z && V.plume.x > C8T.ARENA.minX && V.plume.x < C8T.ARENA.maxX);
+  }
+  assert.ok(C8T.STEAM.recharge > C8T.STEAM.dur && C8T.STEAM.delay > 0.3);
+  for (const c of C8T.ARENA_COILS) assert.ok(Math.hypot(c.use.x - c.x, c.use.z - c.z) > C8T.COIL_R + 0.5, 'disjuntor afastado da bobina ' + c.id);
+  // vapor e corte de bobina contam mais que golpes no casaco: a mecânica do capítulo vale a pena
+  assert.ok(VB.VERNET_STEAM.dmg >= 20 && VB.VERNET_STEAM.stun >= 2.5);
+  assert.ok(MB.MANIF_CUT.dmg > MB.MANIF_STEAM.dmg && MB.MANIF_CUT.stun > MB.MANIF_STEAM.stun);
+  assert.ok(C8TS.C8_HOLD_RANGE > 0.8 && C8TS.C8_FLAME_HOLD > C8TS.C8_INES_HOLD);
+  assert.ok(C8TS.C8_FLAME_DRAIN.min > 0 && C8TS.C8_FLAME_DRAIN.dmg > 0, 'segurar a chama dói, mas não mata');
+});
+test('Cap. 8: Manifestação — piso de vida pelas bobinas, fases e núcleo exposto', () => {
+  assert.equal(MB.manifPhase(3), 1); assert.equal(MB.manifPhase(2), 2); assert.equal(MB.manifPhase(1), 2); assert.equal(MB.manifPhase(0), 3);
+  assert.equal(MB.manifFloor(MB.MANIF_HP, 0), 0);
+  assert.ok(MB.manifFloor(MB.MANIF_HP, 3) > MB.manifFloor(MB.MANIF_HP, 2) && MB.manifFloor(MB.MANIF_HP, 3) < MB.MANIF_HP);
+  const ev = [], mat = new THREE.MeshStandardMaterial();
+  const g = { materials: new Proxy({}, { get: () => mat }), scene: new THREE.Scene(), audio: { play() {} }, cameraCtl: { addShake() {} },
+    bus: { emit: (n, d) => ev.push(n) }, hud: { toast() {} }, combat: { emit() {}, sparks() {}, blood() {} }, perception: { noise() {} } };
+  let M;
+  try { M = new MB.ManifestacaoBoss(g, { x: 13, y: 13.5, z: 81, coils: C8T.ARENA_COILS.map((c) => ({ id: c.id, x: c.x, z: c.z, top: 16 })) }); }
+  catch (e) { console.log('   (Manifestação não constrói em Node: ' + e.message + ' — só lógica pura)'); return; }
+  assert.equal(M.takeHit({ dmg: 50 }), 'immune', 'dormente é imune');
+  M.state = 'idle';
+  const hp0 = M.hp; M.takeHit({ dmg: 100, volume: { part: 'body' } }); assert.ok(hp0 - M.hp <= 100 * 0.12 + 1e-6, 'fechada, a cinza absorve');
+  M.takeHit({ dmg: 100, volume: { part: 'weak' } }); assert.ok(hp0 - M.hp < 30, 'núcleo fechado também absorve');
+  // martelar não passa do piso enquanto há bobinas
+  M.state = 'stunned'; for (let i = 0; i < 60; i++) M.takeHit({ dmg: 100, volume: { part: 'weak' } });
+  assert.ok(Math.abs(M.hp - MB.manifFloor(M.maxHp, 3)) < 1e-6 && M.alive, 'segurada no piso das 3 bobinas');
+  M.state = 'idle';
+  assert.equal(M.cutCoil('W'), true); assert.equal(M.cutCoil('W'), false, 'disjuntor já cortado'); assert.equal(M.state, 'stunned'); assert.equal(M.phase, 2);
+  assert.ok(M.hp <= MB.manifFloor(M.maxHp, 3) - MB.MANIF_CUT.dmg + 1e-6 || M.hp <= MB.manifFloor(M.maxHp, 2) + 1e-6);
+  assert.equal(M.steamHit(), false, 'atordoada não leva outro jato'); M.state = 'idle'; assert.equal(M.steamHit(), true); M.state = 'idle';
+  M.cutCoil('E'); M.state = 'idle'; M.cutCoil('N'); assert.equal(M.phase, 3); assert.ok(M.blind && M.exposed);
+  for (let i = 0; i < 80 && M.alive; i++) M.takeHit({ dmg: 40, volume: { part: 'weak' } });
+  assert.ok(!M.alive && M.hp === 0, 'sem bobinas, o núcleo cai'); assert.ok(ev.includes('BossPhase'));
+});
+test('Cap. 8: finais — três escolhas reais, epílogos com documentos lidos e créditos', () => {
+  assert.deepEqual(END.C8_ENDING_IDS.sort(), ['cinzas', 'guardiao', 'herdeira']);
+  for (const id of END.C8_ENDING_IDS) {
+    const e = END.endingEpilogue(id); assert.ok(e.title && e.choice && e.lines.length >= 2, id);
+    assert.equal(e.id, id);
+  }
+  assert.equal(END.endingEpilogue('nada'), null);
+  const h0 = END.endingEpilogue('herdeira'), h1 = END.endingEpilogue('herdeira', { docs: ['diario_helena'] });
+  assert.ok(h1.lines.join(' ').includes('Protocolo II') && !h0.lines.join(' ').includes('Protocolo II'));
+  const c0 = END.endingEpilogue('cinzas'), c1 = END.endingEpilogue('cinzas', { flags: { c8_readRelatorio: true } });
+  assert.notDeepEqual(c1.lines, c0.lines);
+  assert.ok(END.CREDITS.length >= 4 && END.CREDITS.every(([a, b]) => a && b));
+  const q = new QuestSystem(null, 8); q.set('c8_ending', 'guardiao'); assert.equal(q.flags.c8_ending, 'guardiao');
+});
+test('Cap. 8: save — cadeia de checkpoints da torre até o fim', () => {
+  const N = (cp, flags = {}) => normalizeChapter8Flags({ chapter: 8, checkpoint: cp, flags }).flags;
+  const m = N('c8_machine'); assert.ok(m.c8_inMachine && m.c8_sliceDone && m.c8_sabotage && !m.c8_metHelena && !m.c8_liftPower);
+  const t = N('c8_top'); assert.ok(t.c8_atTop && t.c8_liftPower && t.c8_metHelena && t.c8_hasCrank && !t.c8_vernetDown);
+  const a = N('c8_arena'); assert.ok(a.c8_vernetDown && a.c8_vernetIntro && a.c8_atTop && !a.c8_cinzaDead);
+  const f = N('c8_free'); assert.ok(f.c8_cinzaDead && f.c8_vernetDown && !f.c8_inesFree && !f.c8_choice);
+  const f2 = N('c8_free', { c8_inesFree: true, c8_helenaUp: true }); assert.ok(f2.c8_inesFree && !f2.c8_choice);
+  const e = N('c8_end', { c8_ending: 'herdeira' }); assert.ok(e.c8_chapterDone && e.ch8Done && e.c8_choice && e.c8_inesFree && e.c8_cinzaDead && e.c8_atTop);
+  assert.equal(e.c8_ending, 'herdeira');
+  assert.equal(N('c8_end').c8_ending, 'cinzas', 'save editado sem final escolhe um válido');
+  assert.ok(!N('c8_slice').c8_inMachine);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

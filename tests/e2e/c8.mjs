@@ -1,5 +1,7 @@
-// Bloco do smoke para o Capítulo 8 — A Última Chama (primeira fatia). Usado pelo smoke completo (depois do fim do Cap. 7)
+// Bloco do smoke para o Capítulo 8 — A Última Chama (capítulo completo: Usina, torre, chefes e os três finais). Usado pelo smoke completo (depois do fim do Cap. 7)
 // e pelo smoke-c8.mjs (só este capítulo, a partir de um save c7_end). Tudo pelos sistemas reais via window.__ocdc.
+import { runC8Tower } from './c8tower.mjs';
+
 export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c7endRaw);
   await page.reload({ waitUntil: 'networkidle0' });
@@ -42,7 +44,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   });
   await page.screenshot({ path: SHOTS + '47-cap8-patio.png' });
   check('Cap. 8: "Seguir" do Cap. 7 → A Última Chama no pátio de carvão (capítulo 8, save c8_yard, chaves do Cap. 7 removidas, armas mantidas, névoa e acústica)', a.st === 'playing' && a.ch === 8 && a.sch === 8 && a.cp === 'c8_yard' && Math.abs(a.pos[0] - 3.2) < 0.6 && a.axe && a.rev && !a.oldKey && a.started && a.fog && a.ac && a.zone === 'c8_patio' && /torre de carvão/.test(a.obj) && /Última Chama/.test(a.toast), JSON.stringify(a));
-  check('Cap. 8: 6 inimigos (acólitos, carvoeiro e foguistas resistentes ao calor) e ≤ 16 luzes', a.n === 6 && a.types === 'acolito,acolito,acolito,carvoeiro,foguista,foguista' && a.heat && a.lights <= 16, JSON.stringify({ n: a.n, t: a.types, h: a.heat, l: a.lights }));
+  check('Cap. 8: 7 inimigos (acólitos — um guarda a casa de máquinas da torre —, carvoeiro e foguistas resistentes ao calor) e ≤ 16 luzes', a.n === 7 && a.types === 'acolito,acolito,acolito,acolito,carvoeiro,foguista,foguista' && a.heat && a.lights <= 16, JSON.stringify({ n: a.n, t: a.types, h: a.heat, l: a.lights }));
   check('Cap. 8: guarita — escada de volta recusada, livro (save c8_yard), boletim e bandagem', a.stair === 'ok' && /Inês/.test(a.stairT) && a.stillCh === 8 && a.hutDoor === 'ok' && a.hutOpen && a.book === 'ok' && a.bookCp === 'c8_yard' && a.bol === 'ok' && a.readBol && a.band === 'ok' && a.bandN === 1, JSON.stringify(a));
   check('Cap. 8: portão de carga da Casa das Caldeiras trancado por dentro e sólido', a.gate === 'ok' && a.gateLocked && a.gateBlock < 24 && /torre de carvão|esteira|dentro/.test(a.gateT + a.obj2), JSON.stringify({ g: a.gate, t: a.gateT, l: a.gateLocked, b: a.gateBlock }));
 
@@ -209,7 +211,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   check('Cap. 8: sem pressão a porta-pistão desliza; Sala da Turbina (save c8_turbine), ordem de Vernet e livro', f.sd === 'ok' && f.sdOpen && f.inT && f.cp === 'c8_turbine' && f.zone === 'c8_turbina' && f.ord === 'ok' && f.readOrd && f.book === 'ok', JSON.stringify(f));
   check('Cap. 8: porta da torre com fechadura elétrica (sólida); acumuladores seguram ~110 V com a turbina parada', f.td === 'ok' && f.tdLocked && /elétric|corrente|fechadura/.test(f.tdT) && f.tdBlock < 68 && f.v0 >= 100 && f.v0 <= 140, JSON.stringify(f));
   check('Cap. 8: sabotagem real — chave geral desarmada (ruído), voltagem a 0, porta da torre destrancada; munição', f.board === 'ok' && f.sab && f.sabNoise && f.v1 <= 5 && f.tdUnlocked && f.ammo === 'ok' && f.ammoN === 4 && /base da torre/.test(f.obj), JSON.stringify(f));
-  check('Cap. 8: base da torre de transmissão — fim da primeira fatia (save c8_slice, sem tela de fim), monta-cargas lá no alto, mapa da Usina', f.td2 === 'ok' && f.tdOpen && f.slice && f.cp2 === 'c8_slice' && /próxima atualização/.test(f.endT) && f.zone2 === 'c8_torre' && f.st === 'playing' && f.lift === 'ok' && /monta-cargas|cabine/.test(f.liftT) && /próxima atualização/.test(f.obj2) && f.map && f.map.rooms >= 6 && !f.endScreen && f.alive && f.lights <= 16, JSON.stringify(f));
+  check('Cap. 8: base da torre de transmissão (save c8_slice, sem tela de fim) — monta-cargas sem força lá no alto, objetivo da escada de marinheiro, mapa da Usina', f.td2 === 'ok' && f.tdOpen && f.slice && f.cp2 === 'c8_slice' && /Base da torre/.test(f.endT) && !/próxima atualização/.test(f.endT + f.obj2) && f.zone2 === 'c8_torre' && f.st === 'playing' && f.lift === 'ok' && /monta-cargas|cabine/.test(f.liftT) && /escada de marinheiro/.test(f.obj2) && f.map && f.map.rooms >= 6 && !f.endScreen && f.alive && f.lights <= 16, JSON.stringify(f));
 
   // ---------- recarregar c8_slice ----------
   await page.reload({ waitUntil: 'networkidle0' });
@@ -225,5 +227,8 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
       wheel: g.inventory.has('volante_valvula'), wheelHidden: !L.pickupMeshes.c8_wheel.visible, dead: ['c8_aco1', 'c8_carv1', 'c8_aco2', 'c8_aco3', 'c8_fog1', 'c8_fog2'].every((id) => !T.E(id).alive),
       obj: q.current(), slice: q.has('c8_sliceDone'), plumes: Object.keys(g.script.plumes).length };
   });
-  check('Cap. 8: recarregar c8_slice restaura caldeiras aliviadas, portas, sabotagem, registro fechado, volante e mortos (na base da torre)', y.st === 'playing' && y.ch === 8 && y.pos[2] > 69 && /base da torre/.test(y.toast) && y.press === 0 && y.vented && y.sd && y.cargo && y.td && y.sab && y.volt === 0 && y.leaks && y.wheel && y.wheelHidden && y.dead && y.slice && /próxima atualização/.test(y.obj) && y.plumes === 0, JSON.stringify(y));
+  check('Cap. 8: recarregar c8_slice restaura caldeiras aliviadas, portas, sabotagem, registro fechado, volante e mortos (na base da torre)', y.st === 'playing' && y.ch === 8 && y.pos[2] > 69 && /base da torre/.test(y.toast) && y.press === 0 && y.vented && y.sd && y.cargo && y.td && y.sab && y.volt === 0 && y.leaks && y.wheel && y.wheelHidden && y.dead && y.slice && /escada de marinheiro/.test(y.obj) && y.plumes === 0, JSON.stringify(y));
+
+  // ---------- a torre: casa de máquinas, chefes, Inês e Helena, finais, créditos ----------
+  await runC8Tower(page, check, inject, ext, SHOTS);
 }

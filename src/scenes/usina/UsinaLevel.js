@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { buildTower, towerLights, towerNav, updateTower, TOWER_ZONES, TOWER_CHECKPOINTS } from './UsinaTower.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -75,6 +76,7 @@ export const USINA_CHECKPOINTS = {
   c8_oficina: { x: -16.6, y: GROUND, z: 33.2, yaw: Math.PI / 2 },
   c8_turbine: { x: 13, y: GROUND, z: 54, yaw: 0 },
   c8_slice: { x: 13, y: GROUND, z: 70.4, yaw: 0 },
+  ...TOWER_CHECKPOINTS,
 };
 
 export const USINA_FOG = { fog: 0x14100c, density: 0.04 };
@@ -86,6 +88,7 @@ export const USINA_ZONES = [
   { id: 'c8_oficina', minX: -22, maxX: -14, minZ: 28, maxZ: 38, minY: -1, maxY: 4, fog: 0x100d0a, density: 0.05, acoustic: 1.0 },
   { id: 'c8_turbina', minX: 0, maxX: 30, minZ: 52, maxZ: 68, minY: -1, maxY: 9, fog: 0x0e1012, density: 0.035, acoustic: 0.7 },
   { id: 'c8_torre', minX: 8, maxX: 18, minZ: 68, maxZ: 76, minY: -1, maxY: 7, fog: 0x0c0a0a, density: 0.05, acoustic: 1.2 },
+  ...TOWER_ZONES,
 ];
 export function usinaZoneAt(p) {
   for (const z of USINA_ZONES) if (p.x > z.minX && p.x < z.maxX && p.z > z.minZ && p.z < z.maxZ && p.y > z.minY && p.y < z.maxY) return z;
@@ -412,21 +415,8 @@ export class UsinaLevel {
     this.sign('TORRE DE TRANSMISSÃO ↑', 13, Y + 2.9, H.maxZ - 0.12, Math.PI, 2.2, 0.22, { bg: '#1a1712', fg: '#cbbf98' });
   }
 
-  // ---------- BASE DA TORRE x8..18 z68..76: o monta-cargas (fim da fatia) ----------
-  _towerBase() {
-    const b = this.b, T = TOWER_BASE, M = this.M;
-    b.floor(T.minX, T.minZ, T.maxX, T.maxZ, Y, 'concrete', 'c8_torre');
-    b.ceiling(T.minX, T.minZ, T.maxX, T.maxZ, Y + 6.5, 'soot');
-    b.wallZ(T.minX, T.minZ, T.maxZ, Y, Y + 6.5, [], 'brick');
-    b.wallZ(T.maxX, T.minZ, T.maxZ, Y, Y + 6.5, [], 'brick');
-    b.wallX(T.maxZ, T.minX, T.maxX, Y, Y + 6.5, [], 'brick');
-    // gaiola do monta-cargas (fechada: a cabine está lá em cima)
-    b.box(11, Y, 72.4, 15, Y + 6.5, 75.8, M.rust, { tag: 'wall' }).visible = false;
-    for (let x = 11; x <= 15.01; x += 0.4) b.box(x - 0.03, Y, 72.37, x + 0.03, Y + 6.5, 72.43, 'rust', { collide: false });
-    for (const y of [0.1, 2.4, 4.8]) b.box(11, Y + y, 72.35, 15, Y + y + 0.08, 72.45, 'rust', { collide: false });
-    for (const x of [11.6, 14.4]) b.box(x - 0.03, Y, 75, x + 0.03, Y + 6.5, 75.1, 'steel', { collide: false });
-    this.sign('MONTA-CARGAS — TORRE DE TRANSMISSÃO', 13, Y + 2.9, 72.3, Math.PI, 2.8, 0.24, { bg: '#2a1a0c', fg: '#f0c070' });
-  }
+  // ---------- TORRE DE TRANSMISSÃO x8..18 z68..76 (base, casa de máquinas, sala dos transmissores): UsinaTower.js ----------
+  _towerBase() { buildTower(this); }
 
   _doors() {
     const ctx = { materials: this.M, group: this.b.group, col: this.game.col, audio: this.game.audio, bus: this.game.bus };
@@ -457,6 +447,7 @@ export class UsinaLevel {
     this.turbineLights = [this.lamp(8, Y + 8.4, 55, cold, 0.9, 16, { power: true }), this.lamp(22, Y + 8.4, 65, cold, 0.9, 16, { power: true })];
     this.boardLamp = this.lamp(28.6, Y + 3.2, 56, red, 0.0, 7, { emergency: true });
     this.lamp(13, Y + 5.8, 70.5, red, 0.7, 9, { flicker: true });            // base da torre
+    towerLights(this);
   }
 
   _nav() {
@@ -488,6 +479,7 @@ export class UsinaLevel {
     L('bW2', 'p0', d.c8_pipes); L('p0', 'p1'); L('p1', 'p2'); L('p2', 'o0'); L('o0', 'o1'); L('o0', 'o2');
     L('bD', 'tS', d.c8_steamDoor); L('tS', 'tW'); L('tS', 'tE'); L('tW', 'tNW'); L('tE', 'tNE'); L('tNW', 'tN'); L('tNE', 'tN');
     L('tN', 'tb0', d.c8_towerDoor);
+    towerNav(this);
   }
 
   _cullLights(dt) {
@@ -532,6 +524,7 @@ export class UsinaLevel {
       for (let i = 0; i < arr.length; i += 3) { arr[i + 1] -= dt * 0.5; arr[i] += Math.sin(t + i) * dt * 0.15; if (arr[i + 1] < 0) arr[i + 1] += 10; }
       a.needsUpdate = true;
     }
+    updateTower(this, dt, t);
     this._updateZone(dt);
   }
   zoneAt(p) { return usinaZoneAt(p); }
@@ -543,7 +536,7 @@ export class UsinaLevel {
     this._fogC = this._fogC || new THREE.Color();
     this._fogC.set(tgt.fog);
     fog.color.lerp(this._fogC, k);
-    fog.density += (tgt.density - fog.density) * k;
+    fog.density += (tgt.density + (this.ashStorm || 0) + (this.smokeBoost || 0) - fog.density) * k;
     if (this.game.scene.background?.isColor) this.game.scene.background.copy(fog.color).multiplyScalar(0.8);
   }
 }
