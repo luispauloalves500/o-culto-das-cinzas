@@ -121,6 +121,24 @@ try {
     return { clip, state: P.state, dy: Math.max(...tips) - Math.min(...tips) };
   });
   check('REV6: golpe usa clipe de ataque _Machado e move a lâmina (hitbox real)', /Attack_Machado$/.test(swing.clip || '') && swing.dy > 0.3, JSON.stringify(swing));
+  // animações do Elias: combo de 3 golpes (Triple_Combo_Attack), esquiva (Basic_Jump), cura com máscara em fade, pesos do mixer ≈ 1
+  const anim = await page.evaluate(() => {
+    const g = __ocdc, P = g.player, M = P.model, out = { w: [9, 0] };
+    const W = () => { const v = M.sistema.pesoTotal(); out.w[0] = Math.min(out.w[0], v); out.w[1] = Math.max(out.w[1], v); };
+    T.run(1); P.st = P.maxSt ?? 100; const anims = [];
+    for (let i = 0; i < 150; i++) { if (i % 9 === 0) T.press('Mouse0'); else T.run(1 / 60); W(); const a = P.attack?.def?.anim; if (a && anims[anims.length - 1] !== a) anims.push(a); }
+    out.anims = anims; T.run(1.2);
+    P.st = P.maxSt ?? 100; T.press('Space'); const hips = []; let dodgeSeen = false;
+    for (let i = 0; i < 30; i++) { T.run(1 / 60); W(); if (M.action === 'dodge') dodgeSeen = true; hips.push(M.b.hips.position.y); }
+    out.dodge = dodgeSeen && M.used.has('Basic_Jump'); out.hipRise = +(Math.max(...hips) - M.restHipY).toFixed(3); T.run(1);
+    P.hp = Math.max(10, P.maxHp - 40); g.inventory.add('bandagem', 1); T.press('KeyH'); const mw = [];
+    for (let i = 0; i < 40; i++) { T.run(1 / 60); W(); mw.push(+M.maskW.toFixed(2)); }
+    out.heal = P.state === 'heal' || mw.some((v) => v >= 1); out.maskRamp = mw[0] < 1 && Math.max(...mw) === 1; out.mw0 = mw.slice(0, 6);
+    T.run(3); out.w = out.w.map((v) => +v.toFixed(3));
+    return out;
+  });
+  check('Elias: combo do machado vai ao 3º golpe (Triple_Combo_Attack) e esquiva usa Basic_Jump rente ao chão', anim.anims.slice(0, 3).join() === 'light1,light2,light3' && anim.dodge && anim.hipRise < 0.45, JSON.stringify(anim));
+  check('Elias: cura com máscara procedural em fade e pesos do mixer somando ≈ 1 (sem T-pose)', anim.heal && anim.maskRamp && anim.w[0] > 0.98 && anim.w[1] < 1.02, JSON.stringify({ m: anim.mw0, w: anim.w }));
   // --- Combate: matar o Interno do corredor com golpes reais (hitbox varrida)
   const fight = await page.evaluate(() => {
     const g = __ocdc; const e = g.enemies.find((x) => x.id === 'int_cor');
@@ -1611,6 +1629,19 @@ try {
   await page.screenshot({ path: SHOTS + '28-cap5-canal.png' });
   check('Cap. 5: aviso da comporta lido no corredor de passagem', c5a.aviso === 'ok' && c5a.avisoF, c5a.aviso);
   check('Cap. 5: afogado submerso vê Elias, emerge da água e ataca na margem', c5a.woke && c5a.rootY0 < -1.5 && c5a.aStates.includes('emerging') && c5a.aStates.includes('attack') && c5a.aDmg > 0 && c5a.aPos[1] > -0.2, JSON.stringify({ s: c5a.aStates, d: c5a.aDmg, p: c5a.aPos, y0: c5a.rootY0 }));
+  const c5w = await page.evaluate(() => {
+    const g = __ocdc, P = g.player, M = P.model, out = {};
+    P.hp = P.maxHp; T.tp(20, -1.4, 16, 0); T.run(1.2); out.wade = +M.wade.toFixed(2); out.wading = M.wading;
+    T.hold('KeyW', 0.5); out.wadeClip = M.sistema.atual?.getClip().name; out.hipLow = M.b.hips.position.y < M.restHipY;
+    T.tp(30, 0, 25, 0); T.run(1.5); out.dry = M.wade < 0.05;
+    for (let i = 0; i < 3 && P.weapon?.id !== 'revolver'; i++) { T.press('KeyR'); T.run(0.6); }
+    out.weapon = P.weapon?.id; g.input.down.add('KeyQ'); T.run(0.5); out.aim = M.action; out.aimClip = M.sistema.atual?.getClip().name;
+    g.input.down.add('KeyW'); T.run(0.6); out.aimMove = M.sistema.atual?.getClip().name; g.input.down.delete('KeyW'); g.input.down.delete('KeyQ'); T.run(0.5);
+    for (let i = 0; i < 3 && P.weapon?.id !== 'machado'; i++) { T.press('KeyR'); T.run(0.6); }
+    return out;
+  });
+  check('Elias: água pela cintura (vau: quadril baixo, passada lenta) e sai da postura no seco', c5w.wade > 0.8 && c5w.wading && /Walking/.test(c5w.wadeClip || '') && c5w.hipLow && c5w.dry, JSON.stringify(c5w));
+  check('Elias: mira do revólver parado (Elias_Aim) e andando (Run_and_Shoot)', c5w.weapon !== 'revolver' || (c5w.aim === 'aim' && /^Elias_Aim/.test(c5w.aimClip || '') && /^Run_and_Shoot/.test(c5w.aimMove || '')), JSON.stringify(c5w));
   check('Cap. 5: afogado forte na água, lento em terra seca', c5a.wetMul > 1.2 && c5a.dryMul < 0.7 && c5a.wetDmg > c5a.dryDmg, JSON.stringify({ w: c5a.wetMul, d: c5a.dryMul, wd: c5a.wetDmg, dd: c5a.dryDmg }));
   check('Cap. 5: água do canal machuca, arrasta (correnteza) e deixa Elias lento; rampa de limpeza tira da água', c5a.inWater && c5a.drift > 0.5 && c5a.waterDmg > 0 && c5a.wetHint && c5a.wetWalk < c5a.dryWalk * 0.6 && c5a.exitS1[1] > -0.1 && c5a.exitS1[2] < 13, JSON.stringify({ d: c5a.drift, h: c5a.waterDmg, w: [c5a.wetWalk, c5a.dryWalk], e: c5a.exitS1 }));
   // passarela, galeria, antecâmara, portão sem energia, fusível e o painel
@@ -1679,8 +1710,9 @@ try {
     out.lightsTurb = lights();
     T.tp(37.2, 4.5, 66, 0); out.diario = T.interactAt('doc_diario_comporteiro'); T.run(0.1); out.diarioF = g.quest.has('c5_readDiario');
     T.tp(38.6, 4.5, 66, 0); out.book = T.interactAt('c5_slice_book');
-    T.tp(33, 4.5, 66.6, 0); out.tdoor = T.interactAt('door_c5_turbine'); T.run(0.2);
-    const s = S(); out.slice = { cp: s.checkpoint, ch: s.chapter, done: !!s.flags.c5_sliceDone, dead: s.deadEnemies.length, st: g.state, locked: g.level.doors.c5_turbine.locked && !g.level.doors.c5_turbine.open };
+    T.tp(33, 4.5, 66.6, 0); g.step(1 / 60); out.tfocus = g.currentInteractable?.id; T.press('KeyE'); out.gesture = g.player.lastGesture; T.run(0.1); out.gAction = g.player.model.action; out.usedDoor = g.player.model.used.has('open_door_4'); T.run(0.3);
+    out.tdoor = out.tfocus === 'door_c5_turbine' ? 'ok' : out.tfocus;
+    const s = S(); out.slice = { cp: s.checkpoint, ch: s.chapter, done: !!s.flags.c5_sliceDone, gatesF: !!s.flags.c5_gatesOpen, dead: s.deadEnemies.length, st: g.state, open: g.level.doors.c5_turbine.open && !g.level.doors.c5_turbine.locked };
     out.obj = g.quest.current();
     T.key('KeyM'); out.mapState = g.state; out.map = g.menus.lastMap; out.tabs = [...document.querySelectorAll('.map-tab')].filter((e) => !e.classList.contains('hidden')).map((e) => e.textContent); g.closeOverlay();
     return out;
@@ -1689,7 +1721,8 @@ try {
   check('Cap. 5: escada até o mezanino e passarela sobre o reservatório', c5c.upper && c5c.stairTop[1] > 4 && c5c.cwOpen && c5c.onCw[2] > 50, JSON.stringify({ s: c5c.stairTop, c: c5c.onCw }));
   check('Cap. 5: volante (3 voltas) ergue a comporta e desperta o afogado do reservatório', c5c.valve.every((r) => r === 'ok') && c5c.sluice && c5c.resAwake && c5c.sluiceCol === false, JSON.stringify({ v: c5c.valve, c: c5c.sluiceCol }));
   check('Cap. 5: antecâmara das turbinas, diário do comporteiro e luzes (≤ 16)', c5c.inTurb && c5c.diarioF && c5c.lightsTurb <= 16, JSON.stringify({ t: c5c.turb, l: c5c.lightsTurb }));
-  check('Cap. 5: portão das turbinas fecha a fatia ("a Afogada guarda as comportas") com save c5_slice, sem tela de fim', c5c.tdoor === 'ok' && c5c.slice.cp === 'c5_slice' && c5c.slice.ch === 5 && c5c.slice.done && c5c.slice.st === 'playing' && c5c.slice.locked && c5c.slice.dead >= 5 && /Afogada/.test(c5c.obj), JSON.stringify({ s: c5c.slice, o: c5c.obj }));
+  check('Cap. 5: comportas das turbinas abrem (gesto open_door_4) com save c5_slice e objetivo da Afogada', c5c.tdoor === 'ok' && c5c.slice.cp === 'c5_slice' && c5c.slice.ch === 5 && c5c.slice.done && c5c.slice.gatesF && c5c.slice.st === 'playing' && c5c.slice.open && c5c.slice.dead >= 5 && /Afogada/.test(c5c.obj), JSON.stringify({ s: c5c.slice, o: c5c.obj }));
+  check('Elias: E numa porta faz o gesto open_door_4 virado para ela', c5c.gesture === 'door' && c5c.gAction === 'door' && c5c.usedDoor, JSON.stringify({ g: c5c.gesture, a: c5c.gAction }));
   check('Cap. 5: mapa com abas Canais e Mezanino e salas visitadas', c5c.mapState === 'map' && c5c.tabs.length === 2 && /Canais/.test(c5c.tabs[0]) && /Mezanino/.test(c5c.tabs[1]) && c5c.map.rooms >= 3, JSON.stringify({ t: c5c.tabs, m: c5c.map }));
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
@@ -1698,6 +1731,72 @@ try {
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), power: g.level.powered, gate: g.level.doors.c5_gate.open, stair: g.level.stairFloor.enabled, sluice: g.level.sluice.userData.collider?.enabled, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length, fuse: g.level.fuseInPanel.visible, obj: g.quest.current() };
   });
   check('Cap. 5: recarregar restaura energia, portão, escada, comporta, fusível e inimigos mortos', c5r.st === 'playing' && c5r.ch === 5 && c5r.pos[1] > 4 && c5r.pos[2] > 58 && c5r.power && c5r.gate && c5r.stair && c5r.sluice === false && c5r.fuse && c5r.dead >= 5 && /Afogada/.test(c5r.obj), JSON.stringify(c5r));
+  // --- Cap. 5: chefe A Afogada no salão das turbinas
+  const c5x = await page.evaluate(() => {
+    const g = __ocdc, P = g.player, b = g.boss, out = {};
+    const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
+    g.enemies.forEach((e) => { if (e.id !== 'afo_descarga' && e.alive && !e.dormant) e.setDeadInstant(); });
+    P.hp = P.maxHp; T.tp(33, 4.5, 66.6, 0); T.run(0.6); out.gateOpen0 = g.level.doors.c5_turbine.open;
+    T.hold('KeyW', 1.6); out.active = g.script.bossActive; out.bst0 = b.state; out.gateShut = g.level.doors.c5_turbine.locked && !g.level.doors.c5_turbine.open;
+    out.bossBar = !document.getElementById('boss')?.classList.contains('hidden');
+    // ela sobe do poço e ataca da água (bote na margem)
+    const states = new Set(); const hp0 = P.hp;
+    for (let i = 0; i < 16 * 60 && P.hp > 20; i++) { T.run(1 / 60); states.add(b.state); if (P.hp < hp0 && states.has('lunge')) break; }
+    out.states = [...states]; out.dmg = hp0 - P.hp; P.hp = P.maxHp;
+    // submersa: imune
+    b._set('swim'); b.pos.set(33, 3.1, 78); out.immune = b.takeHit({ dmg: 30, volume: { part: 'weak' } }) === 'immune' && b.hp === b.maxHp;
+    // alavanca da turbina: suga e prende na grade da tomada (guelras expostas, dano alto)
+    T.tp(36.2, 4.5, 85.2, 0); out.lever = T.interactAt('c5_turbineLever'); T.run(0.2); out.pinned = b.state === 'pinned'; out.used = g.quest.has('c5_usedTurbine');
+    const hv = b.hurtVolumes().find((v) => v.part === 'weak'); const h1 = b.hp; b.takeHit({ dmg: 20, volume: hv }); out.pinDmg = +(h1 - b.hp).toFixed(1);
+    out.cd = T.interactAt('c5_turbineLever'); out.cdBlocked = g.script.turbineCd > 0 && b.state === 'pinned';
+    // ralo: bloqueado na fase 1
+    T.tp(24.9, 4.5, 78, -Math.PI / 2); out.drain1 = T.interactAt('c5_drainValve'); out.tried = g.quest.has('c5_triedDrain') && !g.level.poolDrained;
+    // fase 2 → ralo em 2 voltas esvazia o poço; ela encalha
+    b.hp = b.maxHp * 0.62; b._set('pinned'); b.stunT = 2; b.takeHit({ dmg: 1, volume: { part: 'body' } }); out.phase2 = b.phase;
+    out.dr = [T.interactAt('c5_drainValve'), (T.run(0.3), T.interactAt('c5_drainValve'))]; T.run(4.5);
+    out.drained = g.level.poolDrained && g.quest.has('c5_drained') && b.drained; out.waterGone = !g.level.waterAt({ x: 33, y: 3.2, z: 78 });
+    // fase 3: investe; choque com a grade de ferro atordoa
+    b.hp = b.maxHp * 0.28; b.takeHit({ dmg: 1, volume: { part: 'body' } }); out.phase3 = b.phase;
+    // morte real
+    b.hp = 2; b._set('stunned'); b.stunT = 3; b.takeHit({ dmg: 40, volume: { part: 'weak' } }); T.run(2.5);
+    out.dead = b.state === 'dead' && !b.alive; out.flag = g.quest.has('c5_afogadaDead'); out.cp = S().checkpoint; out.saveDead = !!S().flags.c5_afogadaDead;
+    out.exit = g.level.doors.c5_exit.open && !g.level.doors.c5_exit.locked; out.gate = g.level.doors.c5_turbine.open && !g.level.doors.c5_turbine.locked;
+    out.obj = g.quest.current(); out.music = g.audio?.intensity ?? null;
+    let l = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) l++; }); out.lights = l;
+    T.key('KeyM'); out.map = g.menus.lastMap; g.closeOverlay();
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '31-cap5-afogada.png' });
+  check('Cap. 5: entrar no salão das turbinas fecha as comportas e acorda A Afogada (barra de chefe)', c5x.gateOpen0 && c5x.active && c5x.gateShut && ['emerge', 'swim'].includes(c5x.bst0) && c5x.bossBar, JSON.stringify(c5x));
+  check('Cap. 5: A Afogada sobe do poço, nada e dá o bote na margem (dano real); submersa é imune', c5x.states.includes('swim') && c5x.states.includes('lunge') && c5x.dmg > 0 && c5x.immune, JSON.stringify({ s: c5x.states, d: c5x.dmg }));
+  check('Cap. 5: alavanca da turbina prende A Afogada na grade (guelras expostas, dano alto) com recarga', c5x.lever === 'ok' && c5x.pinned && c5x.used && c5x.pinDmg >= 30 && c5x.cdBlocked, JSON.stringify({ l: c5x.lever, d: c5x.pinDmg, c: c5x.cd }));
+  check('Cap. 5: ralo de drenagem só cede na fase 2 e esvazia o poço em 2 voltas', c5x.drain1 === 'ok' && c5x.tried && c5x.phase2 === 2 && c5x.dr.every((r) => r === 'ok') && c5x.drained && c5x.waterGone && c5x.phase3 === 3, JSON.stringify({ d: c5x.dr, p: [c5x.phase2, c5x.phase3] }));
+  check('Cap. 5: morte real da Afogada abre comportas e a portinhola da descarga, save c5_boss e ≤ 16 luzes', c5x.dead && c5x.flag && c5x.cp === 'c5_boss' && c5x.saveDead && c5x.exit && c5x.gate && /descarga/i.test(c5x.obj) && c5x.lights <= 16, JSON.stringify({ cp: c5x.cp, o: c5x.obj, l: c5x.lights }));
+  check('Cap. 5: mapa mostra o salão das turbinas', c5x.map && c5x.map.rooms >= 4, JSON.stringify(c5x.map));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c5y = await page.evaluate(() => {
+    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.5);
+    const b = g.boss;
+    return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), dead: b && !b.alive, bstate: b?.state, active: g.script.bossActive,
+      exit: g.level.doors.c5_exit.open, gate: g.level.doors.c5_turbine.open && !g.level.doors.c5_turbine.locked, deadN: g.enemies.filter((e) => !e.alive).length, obj: g.quest.current() };
+  });
+  check('Cap. 5: recarregar c5_boss: Afogada morta, comportas e saída abertas, sem reiniciar a luta', c5y.st === 'playing' && c5y.ch === 5 && c5y.dead && !c5y.active && c5y.exit && c5y.gate && c5y.deadN >= 5 && c5y.pos[2] > 68 && /descarga/i.test(c5y.obj), JSON.stringify(c5y));
+  const c5z = await page.evaluate(() => {
+    const g = __ocdc, out = {};
+    g.player.hp = g.player.maxHp; T.tp(33, 4.5, 88.6, 0); T.hold('KeyW', 2.2); out.p = g.player.pos.toArray().map((v) => +v.toFixed(2));
+    const a = g.enemies.find((e) => e.id === 'afo_descarga'); out.woke = !a.dormant; a.setDeadInstant();
+    T.tp(33.2, 4.5, 95.2, Math.PI / 2); out.ficha = T.interactAt('doc_ficha_remessa'); T.run(0.2); out.readF = g.quest.has('c5_readFicha');
+    T.tp(33, 4.5, 97.6, 0); T.hold('KeyW', 2.5); T.run(0.3);
+    const nb = document.getElementById('btnEndNext');
+    out.st = g.state; out.title = document.getElementById('endTitle').textContent; out.next = nb.disabled; out.nextT = nb.textContent;
+    const s = JSON.parse(localStorage.getItem('ocdc_save')); out.cp = s.checkpoint; out.done = !!s.flags.c5_chapterDone && !!s.flags.ch5Done;
+    nb.click(); out.st2 = g.state;
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '32-cap5-fim.png' });
+  check('Cap. 5: galeria de descarga (afogado de guarda) e ficha de remessa (gancho do Acervo)', c5z.p[2] > 89.5 && c5z.woke && c5z.ficha === 'ok' && c5z.readF, JSON.stringify(c5z));
+  check('Cap. 5: fim do capítulo com save c5_end e botão "Capítulo 6 — O Acervo (em breve)" desativado', c5z.st === 'end' && /Capítulo 5/.test(c5z.title) && c5z.next && /Acervo/.test(c5z.nextT) && c5z.cp === 'c5_end' && c5z.done && c5z.st2 === 'end', JSON.stringify(c5z));
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));

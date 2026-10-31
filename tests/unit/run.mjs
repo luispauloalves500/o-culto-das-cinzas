@@ -13,9 +13,10 @@ import { SIDE_OBJECTIVES, OBJECTIVES_C2, SIDE_OBJECTIVES_C2, CHAPTERS } from '..
 import { roomAt, knownRooms, floorOf, ROOMS, setMapChapter, chapterFloors } from '../../src/data/map.js';
 import { QuestSystem } from '../../src/gameplay/QuestSystem.js';
 import * as THREE from 'three';
-import { attackClipTime, ATTACK_CLIPS, CONFIG_MACHADO, CLIP } from '../../src/gameplay/rev6/configMachado.js';
+import { attackClipTime, ATTACK_CLIPS, ACTION_CLIPS, CONFIG_MACHADO, CLIP } from '../../src/gameplay/rev6/configMachado.js';
+import { readFileSync } from 'node:fs';
 import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
-import { prepareClips } from '../../src/gameplay/EliasModel.js';
+import { prepareClips, makeIdleClips } from '../../src/gameplay/EliasModel.js';
 
 let ok = 0, fail = 0;
 function test(name, fn) {
@@ -379,6 +380,52 @@ test('REV6: coleta exige o machado do cenário a ≤ 1,5 m, esconde-o e mostra o
   S.tocar('Walking'); assert.equal(S.atual.getClip().name, CONFIG_MACHADO.clipMap.Walking, 'clipe _Machado com o machado');
 });
 
+test('REV6: clipes de ação/golpe existem no GLB e os trechos cabem na duração; combo do machado vai ao 3º golpe', () => {
+  const f = readFileSync(new URL('../../public/models/elias_rev6.glb', import.meta.url));
+  const j = JSON.parse(f.subarray(20, 20 + f.readUInt32LE(12)).toString());
+  const dur = {};
+  for (const a of j.animations) dur[a.name] = Math.max(...a.samplers.map((s) => j.accessors[s.input].max[0]));
+  for (const [k, m] of [...Object.entries(ATTACK_CLIPS), ...Object.entries(ACTION_CLIPS).filter(([, m]) => m.seg)]) {
+    for (const n of [m.clip, CONFIG_MACHADO.clipMap[m.clip]]) {
+      assert.ok(dur[n] > 0, k + ': clipe ausente ' + n);
+      assert.ok(m.seg[0] >= 0 && m.seg[1] <= dur[n] + 1e-3 && m.seg[0] < m.seg[1], k + ': trecho fora do clipe');
+    }
+  }
+  assert.ok(dur[ACTION_CLIPS.aim.src] >= ACTION_CLIPS.aim.t && dur[ACTION_CLIPS.aimMove.clip] > 0, 'Run_and_Shoot');
+  assert.equal(ATTACK_CLIPS.light3.clip, 'Triple_Combo_Attack'); assert.equal(ACTION_CLIPS.dodge.clip, 'Basic_Jump'); assert.equal(ACTION_CLIPS.door.clip, 'open_door_4');
+  const m = WEAPONS.machado.attacks;
+  assert.equal(m.light1.next, 'light2'); assert.equal(m.light2.next, 'light3'); assert.equal(m.light3.next, 'light1');
+  assert.ok(m.light3.active[0] < m.light3.active[1] && m.light3.active[1] < 1 && m.light3.dmg > m.light2.dmg);
+  const L = ATTACK_CLIPS.light3, a = m.light3.active;
+  assert.ok(Math.abs(attackClipTime(L, a, a[0]) - L.strike[0]) < 1e-6 && Math.abs(attackClipTime(L, a, a[1]) - L.strike[1]) < 1e-6, 'janela active = 3º corte do clipe');
+});
+
+test('REV6: transições do mixer somam peso 1 (sem pisca de T-pose) e Elias_Aim usa o tronco do Run_and_Shoot', () => {
+  const pers = new THREE.Group(); const arma = new THREE.Object3D(); arma.name = 'Machado_Equipado'; pers.add(arma);
+  const names = [...new Set([...Object.keys(CONFIG_MACHADO.clipMap), ...Object.values(CONFIG_MACHADO.clipMap)])];
+  const clipes = names.map((n) => new THREE.AnimationClip(n, 1, []));
+  const S = criarSistemaMachado({ THREE, personagem: pers, mixer: new THREE.AnimationMixer(pers), clipes, config: CONFIG_MACHADO });
+  S.tocar('Elias_Idle', { fade: 0 });
+  assert.ok(Math.abs(S.pesoTotal() - 1) < 1e-6);
+  const seq = ['Walking', 'Running', 'Elias_Idle', 'Walking', 'Basic_Jump', 'Elias_Idle', 'Run_and_Shoot', 'Elias_Aim'];
+  for (const n of seq) {
+    S.tocar(n, { fade: 0.2, repetir: n !== 'Basic_Jump' });
+    for (let i = 0; i < 3; i++) { S.atualizar(1 / 60); assert.ok(Math.abs(S.pesoTotal() - 1) < 1e-6, n + ' soma ' + S.pesoTotal()); }
+  }
+  for (let i = 0; i < 30; i++) S.atualizar(1 / 60);
+  assert.equal(S.atual.getEffectiveWeight(), 1); assert.equal(S.nomeBase, 'Elias_Aim');
+  // makeIdleClips: Elias_Aim = pernas do idle + braço do Run_and_Shoot no instante AIM.t
+  const q = (x) => new THREE.QuaternionKeyframeTrack(x[0], [0, 1], [...x[1], ...x[1]]);
+  const qa = [0, 0, 0, 1], qb = [0, 0.7071, 0, 0.7071];
+  const mk = (n, arm, leg) => new THREE.AnimationClip(n, 1, [q(['mixamorigRightArm.quaternion', arm]), q(['mixamorigLeftUpLeg.quaternion', leg])]);
+  const cl = makeIdleClips([mk(CLIP.idleSrc, qa, qa), mk(CLIP.walk, qa, qa), mk('Run_and_Shoot', qb, qb), mk('Run_and_Shoot_Machado', qb, qb)]);
+  const aim = cl.find((c) => c.name === 'Elias_Aim'), aimM = cl.find((c) => c.name === 'Elias_Aim_Machado');
+  assert.ok(aim && aimM, 'Elias_Aim gerado (e variante _Machado)');
+  const v = (c, n) => Array.from(c.tracks.find((t) => t.name === n).values.slice(0, 4)).map((x) => +x.toFixed(3));
+  assert.deepEqual(v(aim, 'mixamorigRightArm.quaternion'), qb.map((x) => +x.toFixed(3)), 'braço do Run_and_Shoot');
+  assert.deepEqual(v(aim, 'mixamorigLeftUpLeg.quaternion'), qa, 'perna do idle');
+});
+
 test('Cap. 2: save inicial mantém armas/melhorias e remove itens-chave do hospital', () => {
   const prev = { ...createEmptySave(), checkpoint: 'yard', player: { hp: 40 },
     inventory: { items: { bandagem: 2, fusivel: 1, chave_escada: 1, manivela: 1, municao_38: 5, kit_reparo: 1, amuleto_menino: 1 }, weapon: 'machado', weapons: ['machado', 'revolver'], wear: { machado: 30 }, loaded: { revolver: 3 }, possuiMachado: true, machadoEquipado: true },
@@ -628,11 +675,11 @@ test('Cap. 5: migração do Cap. 4 concluído, objetivos em ordem e documentos',
   assert.equal(migrateSave(JSON.parse(JSON.stringify(s))).chapter, 5);
   assert.equal(makeChapter5Save(null).chapter, 5);
   assert.equal(objectivesFor(5), OBJECTIVES_C5); assert.equal(sideObjectivesFor(5), SIDE_OBJECTIVES_C5);
-  assert.deepEqual(OBJECTIVES_C5.map((o) => o.done), ['c5_inCanal', 'c5_crossed', 'c5_inPumps', 'c5_hasFuse', 'c5_power', 'c5_upper', 'c5_sluiceOpen', 'c5_sliceDone', 'c5_never']);
+  assert.deepEqual(OBJECTIVES_C5.map((o) => o.done), ['c5_inCanal', 'c5_crossed', 'c5_inPumps', 'c5_hasFuse', 'c5_power', 'c5_upper', 'c5_sluiceOpen', 'c5_sliceDone', 'c5_afogadaDead', 'c5_chapterDone', 'c5_never']);
   const q = new QuestSystem(null, 5); assert.equal(q.current(), OBJECTIVES_C5[0].text);
-  assert.ok(SIDE_OBJECTIVES_C5.length >= 1 && SIDE_OBJECTIVES_C5.length <= 3);
+  assert.ok(SIDE_OBJECTIVES_C5.length >= 1 && SIDE_OBJECTIVES_C5.length <= 4);
   for (const o of SIDE_OBJECTIVES_C5) assert.ok(o.when && o.done && o.text);
-  for (const id of ['aviso_comporta', 'relatorio_bombeamento', 'diario_comporteiro']) assert.equal(DOCUMENTS[id]?.ch, 5, id);
+  for (const id of ['aviso_comporta', 'relatorio_bombeamento', 'diario_comporteiro', 'ficha_remessa']) assert.equal(DOCUMENTS[id]?.ch, 5, id);
   // o relatório dá a ordem certa dos disjuntores
   const order = C5L.BREAKER_ORDER.map((i) => C5L.BREAKERS[i]);
   const body = DOCUMENTS.relatorio_bombeamento.body;
@@ -672,6 +719,81 @@ test('Cap. 5: mapa dos canais, afogado e checkpoints', () => {
   assert.equal(CP.c5_passage.y, 0); assert.equal(CP.c5_slice.y, C5L.UPPER);
   assert.equal(L.waterAt(CP.c5_passage), null); assert.equal(L.waterAt(CP.c5_pumps), null);
   assert.deepEqual([...C5L.BREAKER_ORDER].sort(), [0, 1, 2]);
+});
+
+const { AfogadaBoss, AFOGADA_DMG, AFOGADA_PHASES } = await import('../../src/ai/AfogadaBoss.js');
+const { normalizeChapter5Flags } = await import('../../src/core/SaveManager.js');
+function afogadaGame() {
+  const col = new CollisionWorld();
+  const noop = () => {};
+  const mats = new Proxy({}, { get: (t, k) => (t[k] ||= new THREE.MeshLambertMaterial({ color: 0x777777 })) });
+  const pl = { pos: new THREE.Vector3(33, C5L.UPPER, 70), radius: 0.32, alive: true, hp: 100, hits: 0, takeHit() { this.hits++; return 'hit'; }, releaseGrab: noop, grabbedBy: null, grab: noop };
+  return { col, materials: mats, scene: new THREE.Scene(), audio: { play: noop }, hud: { toast: noop }, cameraCtl: { addShake: noop },
+    combat: { emit: noop, blood: noop, sparks: noop, splash: noop }, bus: { emit: noop }, player: pl, perception: { noise: noop } };
+}
+test('Cap. 5: A Afogada — imune submersa, guelras fortes no seco, turbina/ralo/fases e morte', () => {
+  const P = C5L.POOL, U = C5L.UPPER, A = C5L.ARENA;
+  // geometria: poço dentro do salão, margens secas dos dois lados, máquinas e grades nas margens
+  assert.ok(P.minX > A.minX + 2 && P.maxX < A.maxX - 2 && P.minZ > A.minZ + 2 && P.maxZ < A.maxZ - 4 && P.top === U && P.bed < P.level && P.level < U);
+  const L = Object.create(C5L.AguasLevel.prototype);
+  assert.ok(L.waterAt({ x: 33, y: P.bed, z: 78 })?.id === 'turbinas');
+  assert.equal(L.waterAt({ x: 26, y: U, z: 78 }), null);
+  assert.ok(L.wetness({ x: 33, y: P.bed, z: 78 }) === 1 && L.wetness({ x: 26, y: U, z: 70 }) < 0.5);
+  L.poolDrained = true; assert.equal(L.waterAt({ x: 33, y: P.bed, z: 78 }), null); assert.equal(L.wetness({ x: 33, y: P.bed, z: 78 }), 0);
+  const inPool = (o) => o.x > P.minX && o.x < P.maxX && o.z > P.minZ && o.z < P.maxZ;
+  for (const g of C5L.GRATES) assert.ok(!inPool({ x: (g.minX + g.maxX) / 2, z: (g.minZ + g.maxZ) / 2 }) && g.minX >= A.minX && g.maxX <= A.maxX);
+  assert.ok(!inPool(C5L.TURBINE_LEVER) && !inPool(C5L.DRAIN_VALVE) && C5L.TURBINE_HOUSING.minZ > P.maxZ);
+  const CP = C5L.AGUAS_CHECKPOINTS;
+  assert.ok(CP.c5_boss.z > A.minZ && CP.c5_boss.z < P.minZ && CP.c5_end.z > A.maxZ && CP.c5_end.z < C5L.DISCHARGE.endZ);
+  // chefe
+  const g = afogadaGame();
+  for (const w of C5L.WATERS) g.col.addFloor({ minX: w.minX, maxX: w.maxX, minZ: w.minZ, maxZ: w.maxZ, y: w.bed });
+  g.col.addFloor({ minX: A.minX, maxX: A.maxX, minZ: A.minZ, maxZ: P.minZ, y: U });
+  const b = new AfogadaBoss(g, { x: 33, y: P.bed, z: 78, pool: P, bounds: C5L.ARENA_BOUNDS, intake: { x: 33, y: P.bed, z: 83 } });
+  assert.equal(b.state, 'dormant'); assert.equal(b.takeHit({ dmg: 50, volume: { part: 'weak' } }), 'immune');
+  b.activate(); assert.equal(b.state, 'emerge'); assert.deepEqual(b.hurtVolumes(), []);
+  for (let i = 0; i < 30; i++) b.update(0.1);
+  assert.equal(b.state, 'swim'); assert.ok(b.wet);
+  assert.equal(b.takeHit({ dmg: 50, volume: { part: 'weak' } }), 'immune');
+  // à tona (bote), dentro d'água: golpes quase não entram
+  b._set('lunge'); const h0 = b.hp;
+  b.takeHit({ dmg: 100, volume: { part: 'body' } }); assert.ok(Math.abs(h0 - b.hp - 100 * AFOGADA_DMG.wet.body) < 1e-6);
+  // turbina: só pega se ela estiver na água
+  assert.equal(b.turbinePull(), true); assert.equal(b.state, 'pinned');
+  const vols = b.hurtVolumes(); assert.ok(vols.find((v) => v.part === 'weak') && vols.find((v) => v.part === 'body'));
+  const h1 = b.hp; b.takeHit({ dmg: 40, volume: { part: 'weak' } }); assert.ok(Math.abs(h1 - b.hp - 40 * AFOGADA_DMG.exposed.weak) < 1e-6);
+  assert.ok(AFOGADA_DMG.exposed.weak > AFOGADA_DMG.dry.weak && AFOGADA_DMG.dry.weak > AFOGADA_DMG.wet.weak * 2 && AFOGADA_DMG.dry.body > AFOGADA_DMG.wet.body);
+  // no seco (margem): turbina não pega; dano de guelra seco
+  b.pos.set(26, U, 70); b._set('stalk');
+  assert.equal(b.wet, false); assert.equal(b.turbinePull(), false);
+  // fase 2 e 3 pelos limiares
+  b.hp = b.maxHp * AFOGADA_PHASES.p2 + 1; b.takeHit({ dmg: 10, volume: { part: 'weak' } }); assert.equal(b.phase, 2);
+  b.hp = b.maxHp * AFOGADA_PHASES.p3 + 1; b._set('stalk'); b.takeHit({ dmg: 10, volume: { part: 'weak' } }); assert.equal(b.phase, 3);
+  // ralo: no fundo do poço ela encalha; depois disso não há mais água
+  b.pos.set(33, P.bed, 78); b._set('swim');
+  assert.equal(b.drain(), true); assert.equal(b.state, 'beached'); assert.equal(b.wet, false); assert.equal(b.drain(), false);
+  // morte real
+  b.hp = 1; assert.equal(b.takeHit({ dmg: 50, volume: { part: 'weak' } }), 'dead'); assert.equal(b.state, 'dead'); assert.equal(b.alive, false);
+  const b2 = new AfogadaBoss(afogadaGame(), { x: 33, y: P.bed, z: 78, pool: P, bounds: C5L.ARENA_BOUNDS });
+  b2.setDeadAt(C5S.AFOGADA_BODY.x, C5S.AFOGADA_BODY.y, C5S.AFOGADA_BODY.z); assert.equal(b2.alive, false); assert.equal(b2.rig.root.visible, true);
+  assert.ok(C5S.C5_TURBINE_CD >= 8 && C5S.C5_DRAIN_TURNS >= 1);
+  assert.ok(C5S.AGUAS_SPAWNS.find((s) => s.id === 'afo_descarga' && s.dormant && s.z > C5L.DISCHARGE.minZ));
+});
+test('Cap. 5: migração das flags (fatia antiga, chefe, fim) e mapa do salão', () => {
+  const slice = migrateSave({ ...makeChapter5Save(null), checkpoint: 'c5_slice', flags: { c5_sliceDone: true, c5_sluiceOpen: true, c5_power: true } });
+  assert.ok(slice.flags.c5_gatesOpen && !slice.flags.c5_afogadaDead);
+  const boss = migrateSave({ ...makeChapter5Save(null), checkpoint: 'c5_boss', flags: {} });
+  assert.ok(boss.flags.c5_afogadaDead && boss.flags.c5_gatesOpen && boss.flags.c5_sluiceOpen);
+  const end = migrateSave({ ...makeChapter5Save(null), checkpoint: 'c5_end', flags: { ch5Done: true } });
+  assert.ok(end.flags.c5_chapterDone && end.flags.ch5Done && end.flags.c5_afogadaDead);
+  assert.equal(normalizeChapter5Flags({ chapter: 4, flags: { ch5Done: true } }).flags.c5_afogadaDead, undefined);
+  try {
+    setMapChapter(5);
+    assert.equal(roomAt({ x: 26, y: 4.5, z: 78 }).id, 'c5_salao');
+    assert.equal(roomAt({ x: 33, y: 3.1, z: 78 }).id, 'c5_poco');
+    assert.equal(roomAt({ x: 33, y: 4.5, z: 96 }).id, 'c5_descarga');
+  } finally { setMapChapter(1); }
+  assert.ok(CHAPTERS.find((c) => c.id === 6 && !c.playable));
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

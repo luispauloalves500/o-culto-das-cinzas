@@ -100,10 +100,23 @@ export class Menus {
     const docsHave = stats.docsList ? stats.docsList.filter((id) => (DOCUMENTS[id]?.ch || 1) === ch).length : stats.docs;
     $('stats').innerHTML = `Tempo: ${Math.floor(t / 60)}min ${t % 60}s · Inimigos abatidos: ${stats.kills} · Dano recebido: ${Math.round(stats.damageTaken)} · Documentos: ${Math.min(docsHave, docsCh)}/${docsCh}`
       + (ch === 1 ? `<br>Revelação RN 0: ${stats.rn0 ? 'vista' : 'não encontrada'}`
+        : ch >= 5 ? `<br>Caderno do comporteiro: ${stats.diario ? 'lido' : 'não lido'} · Ficha de remessa: ${stats.ficha ? 'lida' : 'não lida'}`
         : ch >= 4 ? `<br>Bilhete de Inês: ${stats.note ? 'lido' : 'ficou preso na engrenagem'} · Livro de rondas: ${stats.rounds ? 'lido' : 'não lido'}`
         : ch === 3 ? `<br>Fita de Inês: ${stats.ribbon ? 'com Elias' : 'ficou no altar da cripta'} · Ordem de transferência: ${stats.order ? 'lida' : 'não lida'}`
           : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
     const next = $('btnEndNext');
+    if (ch >= 5) {
+      $('endTitle').textContent = 'Fim do Capítulo 5 — Águas Negras';
+      $('endText').textContent = 'A Afogada afunda pela última vez no poço das turbinas e a água fica parada. Pela galeria de descarga, Elias chega à grade do rio: lá embaixo, a esteira de uma barcaça ainda balança na água preta, rio abaixo, rumo ao Museu.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 6 — O Acervo (Museu de Ciências Proibidas) chega em breve.';
+      $('endRn0').classList.remove('hidden');
+      $('endRn0').innerHTML = stats.ficha
+        ? 'A ficha da <b>remessa nº 31</b> não deixa dúvida: "peça viva, fita vermelha", rio abaixo, para <b>O Acervo</b>. ' + (stats.diario ? 'E a guardiã da comporta tinha nome: <b>Lurdes</b>, a mulher do comporteiro Anselmo.' : 'Alguém deu nome à guardiã da comporta.')
+        : '<span class="small">Sobre um caixote na galeria de descarga havia uma ficha com o lacre da Confraria.</span>';
+      if (next) { next.disabled = true; next.textContent = 'Capítulo 6 — O Acervo (em breve)'; }
+      this.show('chapterEnd');
+      return;
+    }
     if (ch >= 4) {
       $('endTitle').textContent = 'Fim do Capítulo 4 — Cidade Morta';
       $('endText').textContent = 'O lampião do Vigia se parte entre as engrenagens e a luz fria se apaga de vez. Às 3h07 o martelo bate, o sino toca três vezes e a chapa de ferro da casa das máquinas desce. A passagem do Relógio afunda na pedra, úmida, rumo ao barulho de água corrente sob a cidade.';
