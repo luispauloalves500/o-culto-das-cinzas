@@ -1,4 +1,4 @@
-// Bloco do smoke para o Capítulo 6 — O Acervo (primeira fatia). Usado pelo smoke completo (depois do fim do Cap. 5)
+// Bloco do smoke para o Capítulo 6 — O Acervo (fatia + Galeria do Colecionador + fim do capítulo). Usado pelo smoke completo (depois do fim do Cap. 5)
 // e pelo smoke-c6.mjs (só este capítulo, a partir de um save c5_end). Tudo pelos sistemas reais via window.__ocdc.
 export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   await inject();
@@ -18,7 +18,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   });
   await page.screenshot({ path: SHOTS + '33-cap6-doca.png' });
   check('Cap. 6: botão do fim do Cap. 5 inicia O Acervo na doca do Museu (save migrado, itens-chave do Cap. 5 removidos)', c6s.st === 'playing' && c6s.ch === 6 && c6s.sch === 6 && c6s.cp === 'c6_dock' && Math.abs(c6s.pos[0] - 15) < 0.8 && Math.abs(c6s.pos[2] - 2) < 0.8 && c6s.axe && !c6s.fuse && c6s.docs > 0 && c6s.flags.c5 && c6s.flags.st && c6s.flags.af && /Museu|doca/i.test(c6s.obj), JSON.stringify(c6s));
-  check('Cap. 6: espécimes dormentes nas vitrines, vitrines como alvos reais, névoa própria e ≤ 16 luzes', c6s.n === 5 && c6s.esp === 3 && c6s.dorm === 2 && c6s.props === 9 && c6s.targets === 9 && c6s.fog && c6s.lights <= 16, JSON.stringify(c6s));
+  check('Cap. 6: espécimes dormentes nas vitrines, vitrines como alvos reais, névoa própria e ≤ 16 luzes', c6s.n === 7 && c6s.esp === 5 && c6s.dorm === 4 && c6s.props === 9 && c6s.targets === 9 && c6s.fog && c6s.lights <= 16, JSON.stringify(c6s));
 
   // doca → átrio: porta real, portas principais acorrentadas, vitrine de lembranças quebrada a machado
   const c6a = await page.evaluate(() => {
@@ -100,7 +100,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
     out.objBefore = g.quest.current();
     T.tp(38.6, 0, 52.4, 0); out.plaque = T.interact('c6_collectorPlaque'); T.run(0.3);
     const s = S(); out.end = { cp: s.checkpoint, ch: s.chapter, done: !!s.flags.c6_sliceDone, st: g.state, locked: D.c6_collector.locked && !D.c6_collector.open };
-    out.toast = window.__toasts.find((t) => /Colecionador chega/.test(t)) || '';
+    out.toast = window.__toasts.find((t) => /TOQUE E AGUARDE/.test(t)) || '';
     out.endScreen = !document.getElementById('chapterEnd')?.classList.contains('hidden') && !!document.getElementById('chapterEnd')?.offsetParent;
     out.obj = g.quest.current();
     T.tp(37, 0, 52.4, 0); out.door = T.interactAt('door_c6_collector'); out.stillLocked = D.c6_collector.locked;
@@ -110,7 +110,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   await page.screenshot({ path: SHOTS + '35-cap6-deposito.png' });
   check('Cap. 6: porta-cofre bloqueia, código errado não abre, discos 4-1-8 + alavanca abrem e salvam', c6c.vaultBlock < 29.85 && c6c.wrong === 'ok' && c6c.tried && c6c.turns && c6c.dial === '418' && c6c.right === 'ok' && c6c.open && c6c.cp1 === 'c6_hall' && c6c.saveOpen, JSON.stringify({ b: c6c.vaultBlock, d: c6c.dial, cp: c6c.cp1, w: c6c.wrong, t: c6c.tried, tl: c6c.tl, r: c6c.right }));
   check('Cap. 6: Ala de Conservação (espécime solto, diário, livro c6_conserv) e depósito (cartão da remessa 31)', c6c.inConserv && c6c.px > 30.5 && c6c.esp3 && c6c.diario === 'ok' && c6c.readD && c6c.book === 'ok' && c6c.cp2 === 'c6_conserv' && c6c.sdoor === 'ok' && c6c.inStorage && c6c.cartao === 'ok' && c6c.readC && c6c.lights <= 16 && /Colecionador/.test(c6c.objBefore), JSON.stringify({ cp: c6c.cp2, o: c6c.objBefore, l: c6c.lights, ic: c6c.inConserv, px: c6c.px, e3: c6c.esp3, di: c6c.diario, rd: c6c.readD, bk: c6c.book, sd: c6c.sdoor, is: c6c.inStorage, ca: c6c.cartao, rc: c6c.readC }));
-  check('Cap. 6: placa da Galeria do Colecionador encerra a fatia (save c6_slice, aviso do chefe, sem tela de fim)', c6c.plaque === 'ok' && c6c.end.cp === 'c6_slice' && c6c.end.ch === 6 && c6c.end.done && c6c.end.st === 'playing' && c6c.end.locked && c6c.toast && !c6c.endScreen && /próxima atualização/.test(c6c.obj) && c6c.door === 'ok' && c6c.stillLocked, JSON.stringify({ e: c6c.end, t: c6c.toast, o: c6c.obj }));
+  check('Cap. 6: placa da Galeria do Colecionador (save c6_slice, porta trancada, aponta o cordão da sineta, sem tela de fim)', c6c.plaque === 'ok' && c6c.end.cp === 'c6_slice' && c6c.end.ch === 6 && c6c.end.done && c6c.end.st === 'playing' && c6c.end.locked && c6c.toast && !c6c.endScreen && /cordão/.test(c6c.obj) && c6c.door === 'ok' && c6c.stillLocked, JSON.stringify({ e: c6c.end, t: c6c.toast, o: c6c.obj }));
   check('Cap. 6: mapa do Museu (uma aba) com as salas percorridas', c6c.mapState === 'map' && c6c.map && c6c.map.rooms >= 5 && c6c.tabs.length <= 1, JSON.stringify({ m: c6c.map, t: c6c.tabs }));
 
   // recarregar c6_slice: estado restaurado
@@ -124,7 +124,142 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
       intact: g.script.vit.v_cranio.alive && L.vitrines.v_cranio.glass.visible, dead: g.enemies.filter((e) => !e.alive).length, dial: g.script.dial.join(''),
       picked: g.level.pickupMeshes.c6_loot_v_tabuleiro.visible === false, collector: D.c6_collector.locked, obj: g.quest.current() };
   });
-  check('Cap. 6: recarregar c6_slice restaura cofre aberto, vitrines quebradas, inimigos mortos e o fim da fatia', c6r.st === 'playing' && c6r.ch === 6 && c6r.pos[2] > 50 && c6r.done && c6r.vault && c6r.broken && c6r.intact && c6r.dead === 5 && c6r.dial === '418' && c6r.picked && c6r.collector && /próxima atualização/.test(c6r.obj), JSON.stringify(c6r));
+  check('Cap. 6: recarregar c6_slice restaura cofre aberto, vitrines quebradas, inimigos mortos e o fim da fatia', c6r.st === 'playing' && c6r.ch === 6 && c6r.pos[2] > 50 && c6r.done && c6r.vault && c6r.broken && c6r.intact && c6r.dead === 5 && c6r.dial === '418' && c6r.picked && c6r.collector && /cordão/.test(c6r.obj), JSON.stringify(c6r));
+
+
+  // ---------- Galeria do Colecionador: sineta → porta abre → chefe ----------
+  await hook();
+  const c6g = await page.evaluate(() => {
+    const g = __ocdc, out = {}, D = g.level.doors, S = () => JSON.parse(localStorage.getItem('ocdc_save')), b = g.boss;
+    g.player.hp = g.player.maxHp;
+    out.bossId = b?.id; out.dorm = b?.state; out.notTarget = !g.targets().includes(b);
+    T.tp(35.4, 0, 52.6, 0); out.bell = T.interactAt('c6_bellPull'); out.t1 = window.__toasts.at(-1);
+    out.lockedAfterPull = D.c6_collector.locked; T.run(3.0);
+    out.open = g.quest.has('c6_galleryOpen') && !D.c6_collector.locked && D.c6_collector.open; out.cp = S().checkpoint; out.saveOpen = !!S().flags.c6_galleryOpen;
+    out.bellGone = !g.interact.list.find((i) => i.id === 'c6_bellPull').enabled();
+    T.tp(37, 0, 53.0, 0); T.hold('KeyW', 2.2); out.z = +g.player.pos.z.toFixed(2);
+    out.active = g.script.bossActive && b.state !== 'dormant'; out.doorShut = D.c6_collector.locked && !D.c6_collector.open;
+    out.bar = !document.getElementById('boss')?.classList.contains('hidden');
+    out.obj = g.quest.current();
+    T.run(4.2); out.state = b.state; out.target = g.targets().includes(b);
+    T.tp(37, 0, 55.4, Math.PI); out.tryDoor = T.interactAt('door_c6_collector'); out.stillShut = D.c6_collector.locked && !D.c6_collector.open;
+    out.lockToast = window.__toasts.at(-1);
+    // save no meio da luta: a porta da arena é gravada aberta/destravada (sem softlock)
+    g.saveGame('c6_slice'); const s = S(); out.midDoor = s.doors.c6_collector; out.midDead = !!s.flags.c6_collectorDead;
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '36-cap6-galeria.png' });
+  check('Cap. 6: cordão da sineta abre a Galeria do Colecionador (porta real, save c6_slice)', c6g.bossId === 'colecionador' && c6g.dorm === 'dormant' && c6g.notTarget && c6g.bell === 'ok' && c6g.lockedAfterPull && c6g.open && c6g.cp === 'c6_slice' && c6g.saveOpen && c6g.bellGone, JSON.stringify(c6g));
+  check('Cap. 6: entrar na Galeria acorda O Colecionador (barra de chefe, porta trava atrás, objetivo do chefe)', c6g.active && c6g.doorShut && c6g.bar && /relicário/.test(c6g.obj) && c6g.target && c6g.tryDoor === 'ok' && c6g.stillShut && /Colecionador/.test(c6g.lockToast), JSON.stringify({ a: c6g.active, d: c6g.doorShut, b: c6g.bar, o: c6g.obj, st: c6g.state, t: c6g.tryDoor, lt: c6g.lockToast }));
+  check('Cap. 6: save no meio da luta grava a porta da Galeria destravada (sem softlock)', c6g.midDoor && c6g.midDoor.locked === false && !c6g.midDead, JSON.stringify(c6g.midDoor));
+
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject(); await hook();
+  const c6h = await page.evaluate(() => {
+    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.5);
+    const out = {}, D = g.level.doors, b = g.boss;
+    out.st = g.state; out.pos = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.boss = b.state; out.hp = b.hp === b.maxHp;
+    out.unlocked = !D.c6_collector.locked; out.active = g.script.bossActive;
+    T.tp(37, 0, 52.6, 0); out.door = T.interactAt('door_c6_collector'); T.run(0.8); out.opened = D.c6_collector.open;
+    T.tp(37, 0, 53.4, 0); T.hold('KeyW', 2.0); out.restart = g.script.bossActive && b.state !== 'dormant';
+    return out;
+  });
+  check('Cap. 6: recarregar o save do meio da luta: porta destravada, chefe reinicia ao entrar de novo', c6h.st === 'playing' && c6h.pos[2] < 54 && c6h.boss === 'dormant' && c6h.hp && c6h.unlocked && !c6h.active && c6h.door === 'ok' && c6h.opened && c6h.restart, JSON.stringify(c6h));
+
+  const c6f = await page.evaluate(() => {
+    const g = __ocdc, out = {}, b = g.boss, L = g.level, p = g.player;
+    const heal = () => { p.hp = p.maxHp; };
+    T.run(4.0); heal();
+    // 1) guincho oeste: o chefe dentro do círculo de latão, Elias puxa a alavanca na parede
+    b.pos.set(31.6, 0, 62.4); b._set('stalk'); b.throwCd = 99; b.railCd = 99; b.chargeCd = 99;
+    const h0 = b.hp; T.tp(28.9, 0, 61.0, -Math.PI / 2); out.lever = T.interactAt('c6_drop_w');
+    for (let i = 0; i < 6; i++) { if (b.state !== 'crushed') b.pos.set(31.6, 0, 62.4); T.run(0.1); }
+    out.crushed = b.state === 'crushed'; out.crushDmg = +(h0 - b.hp).toFixed(1); out.craneDown = L.cranes.w.state === 'down' && !!L.cranes.w.collider;
+    out.cageOpen = b.exposed;
+    // golpes reais de machado no relicário com a gaiola aberta
+    const h1 = b.hp; let weakHits = 0;
+    for (let i = 0; i < 4 && b.state === 'crushed'; i++) {
+      const yaw = b.yaw; T.tp(b.pos.x + Math.sin(yaw) * 1.25, 0, b.pos.z + Math.cos(yaw) * 1.25, yaw + Math.PI);
+      p.yaw = yaw + Math.PI; T.press('Mouse0'); T.run(0.8); if (b.lastHit?.weak && b.lastHit.exposed) weakHits++;
+    }
+    out.axeDmg = +(h1 - b.hp).toFixed(1); out.weakHits = weakHits; out.lastHit = b.lastHit; heal();
+    // 2) investida contra a vitrine blindada (sudeste): atordoa, racha o vidro e abre a gaiola
+    T.run(6); heal();
+    const A = L.armored.rc_se; const hits0 = A.hits;
+    b.pos.set(42, 0, 62.6); b.yaw = Math.PI; T.tp(42, 0, 56.4, 0); b._set('charge');
+    let tt = 0; while (b.state === 'charge' && tt < 3) { T.run(0.05); tt += 0.05; }
+    out.stunned = b.state === 'stunned'; out.cracked = A.hits > hits0; out.stunCage = b.exposed; heal();
+    // 3) busto arremessado (projétil real) — Elias longe
+    T.run(5); b._set('stalk'); b.throwCd = 0; b.railCd = 99; b.chargeCd = 99; T.tp(37, 0, 70.5, Math.PI);
+    const free0 = L.freeBusts().length; let th = 0; for (let i = 0; i < 80 && b.seen.throw === 0; i++) T.run(0.1);
+    out.thrown = b.seen.throw > 0; out.bustTaken = L.freeBusts().length < free0;
+    T.run(1.5); out.projDone = b.projectiles.length === 0; heal();
+    // 4) fases 2 e 3: sineta, faixa vermelha do trilho e a Galeria acordando
+    b._set('stalk');
+    if (b.hp > b.maxHp * 0.64) b.takeHit({ dmg: (b.hp - b.maxHp * 0.6) / 0.22, volume: { part: 'body' } });
+    out.phase2 = b.phase >= 2; b.railCd = 0; b.chargeCd = 99; b.throwCd = 99;
+    T.tp(36.8, 0, 61.4, Math.PI); b.pos.set(37, 0, 68); let sw = 0;
+    for (let i = 0; i < 40 && !b.sweeps.length; i++) { T.run(0.1); }
+    out.sweep = b.sweeps.length > 0 || b.seen.sweep > 0; out.stripe = L.rails.some((r) => r.stripe.visible);
+    const hp0 = p.hp; T.tp(36.8, 0, L.rails[b.sweeps[0]?.i ?? 1].z, Math.PI); T.run(2.4); out.sweptPlayer = p.hp < hp0; heal();
+    b._set('stalk'); b.takeHit({ dmg: (b.hp - b.maxHp * 0.25) / 0.22, volume: { part: 'body' } });
+    out.phase3 = b.phase === 3;
+    T.tp(37, 0, 58, Math.PI); for (let i = 0; i < 40 && !g.quest.has('c6_galleryWoke'); i++) { heal(); T.run(0.1); }
+    const g1 = g.enemies.find((e) => e.id === 'c6_gal1'), g2 = g.enemies.find((e) => e.id === 'c6_gal2');
+    out.galWoke = g.quest.has('c6_galleryWoke') && !g1.dormant && !g2.dormant && L.galleryCases.gc_w.broken; heal();
+    out.seen = b.seen; out.chargeCd = b.chargeCd;
+    // 5) golpe final no relicário (gaiola aberta)
+    b._set('stunned'); b.stunDur = 4; b.hp = 3;
+    for (let i = 0; i < 4 && b.alive; i++) { const yaw = b.yaw; T.tp(b.pos.x + Math.sin(yaw) * 1.2, 0, b.pos.z + Math.cos(yaw) * 1.2, yaw + Math.PI); p.yaw = yaw + Math.PI; T.press('Mouse0'); T.run(0.8); heal(); }
+    if (b.alive) { out.finisherFallback = true; b.takeHit({ dmg: 50, volume: { part: 'weak' } }); }
+    T.run(0.5);
+    const s = JSON.parse(localStorage.getItem('ocdc_save')), D = L.doors;
+    out.dead = !b.alive && g.quest.has('c6_collectorDead') && !g.script.bossActive;
+    out.cp = s.checkpoint; out.sDead = !!s.flags.c6_collectorDead; out.exitOpen = !D.c6_exit.locked && D.c6_exit.open && !D.c6_collector.locked && D.c6_collector.open;
+    out.galDead = !g1.alive && !g2.alive; out.barHidden = document.getElementById('boss')?.classList.contains('hidden');
+    out.obj = g.quest.current(); out.toast = window.__toasts.find((t) => /reserva técnica destrava/.test(t)) || '';
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '37-cap6-colecionador.png' });
+  check('Cap. 6: guincho do teto esmaga o Colecionador (dano real, gaiola aberta, peça vira obstáculo)', c6f.lever === 'ok' && c6f.crushed && c6f.crushDmg >= 69 && c6f.craneDown && c6f.cageOpen, JSON.stringify({ l: c6f.lever, c: c6f.crushed, d: c6f.crushDmg, cd: c6f.craneDown }));
+  check('Cap. 6: machado no relicário com a gaiola aberta causa dano cheio', c6f.axeDmg > 20 && c6f.weakHits >= 1, JSON.stringify({ d: c6f.axeDmg, w: c6f.weakHits, h: c6f.lastHit }));
+  check('Cap. 6: investida contra a vitrine blindada atordoa (vidro racha, gaiola abre)', c6f.stunned && c6f.cracked && c6f.stunCage, JSON.stringify({ s: c6f.stunned, c: c6f.cracked }));
+  check('Cap. 6: ele arranca um busto do pedestal e arremessa (projétil real)', c6f.thrown && c6f.bustTaken && c6f.projDone, JSON.stringify({ t: c6f.thrown, b: c6f.bustTaken }));
+  check('Cap. 6: fase 2 — sineta e trilho do teto (faixa vermelha, braço varre e acerta Elias)', c6f.phase2 && c6f.sweep && c6f.stripe && c6f.sweptPlayer, JSON.stringify({ p: c6f.phase2, s: c6f.sweep, st: c6f.stripe, h: c6f.sweptPlayer }));
+  check('Cap. 6: fase 3 — a sineta acorda os espécimes das vitrines do fundo; investidas sem pausa', c6f.phase3 && c6f.galWoke && c6f.chargeCd <= 1.2, JSON.stringify({ p: c6f.phase3, w: c6f.galWoke, s: c6f.seen, cd: c6f.chargeCd }));
+  check('Cap. 6: morte real do Colecionador (save c6_boss, reserva técnica aberta, espécimes caem, barra some)', c6f.dead && c6f.cp === 'c6_boss' && c6f.sDead && c6f.exitOpen && c6f.galDead && c6f.barHidden && /reserva/.test(c6f.obj) && c6f.toast, JSON.stringify({ d: c6f.dead, cp: c6f.cp, e: c6f.exitOpen, g: c6f.galDead, o: c6f.obj, fb: c6f.finisherFallback }));
+
+  const c6e = await page.evaluate(() => {
+    const g = __ocdc, out = {}, p = g.player, B = g.boss;
+    out.relicAtBody = Math.hypot(g.interact.list.find((i) => i.id === 'pick_c6_heart').pos.x - B.pos.x, g.interact.list.find((i) => i.id === 'pick_c6_heart').pos.z - B.pos.z) < 0.1; out.relic = T.interact('pick_c6_heart'); out.reading = g.state; g.closeOverlay(); T.run(0.1);
+    out.hasRelic = g.inventory.documents.includes('relicario_colecionador');
+    T.tp(37, 0, 72.6, 0); T.hold('KeyW', 1.6); out.inReserve = g.quest.has('c6_inReserve'); out.z = +p.pos.z.toFixed(2);
+    T.tp(37.4, 0, 75.7, Math.PI / 2); out.cat = T.interactAt('doc_catalogo_colecionador'); g.closeOverlay(); T.run(0.1); out.readCat = g.quest.has('c6_readCatalogo');
+    out.objEnd = g.quest.current();
+    T.key('KeyM'); out.map = g.menus.lastMap; g.closeOverlay();
+    T.tp(37, 0, 80.2, 0); T.hold('KeyW', 1.2);
+    const s = JSON.parse(localStorage.getItem('ocdc_save')), $ = (id) => document.getElementById(id);
+    out.st = g.state; out.cp = s.checkpoint; out.flags = { d: !!s.flags.c6_chapterDone, c: !!s.flags.ch6Done };
+    out.endVisible = !!$('chapterEnd')?.offsetParent; out.title = $('endTitle').textContent; out.note = $('endNote').textContent;
+    out.btn = { dis: $('btnEndNext').disabled, txt: $('btnEndNext').textContent }; out.stats = $('stats').innerHTML; out.rn = $('endRn0').innerHTML;
+    $('btnEndNext').click(); out.stAfter = g.state;
+    return out;
+  });
+  await page.screenshot({ path: SHOTS + '38-cap6-fim.png' });
+  check('Cap. 6: relicário do Colecionador (drop real, documento com o gancho do Cap. 7) e catálogo na reserva técnica', c6e.relic === 'ok' && c6e.relicAtBody && c6e.reading === 'reading' && c6e.hasRelic && c6e.inReserve && c6e.cat === 'ok' && c6e.readCat && /alçapão/.test(c6e.objEnd), JSON.stringify({ r: c6e.relic, rd: c6e.reading, i: c6e.inReserve, z: c6e.z, c: c6e.cat, o: c6e.objEnd }));
+  check('Cap. 6: alçapão da reserva encerra o capítulo (save c6_end, c6_chapterDone/ch6Done)', c6e.st === 'end' && c6e.cp === 'c6_end' && c6e.flags.d && c6e.flags.c && c6e.endVisible, JSON.stringify({ st: c6e.st, cp: c6e.cp, f: c6e.flags }));
+  check('Cap. 6: tela "Fim do Capítulo 6" com "Capítulo 7 — Sob a Pedra (em breve)" desabilitado', /Fim do Capítulo 6/.test(c6e.title) && c6e.btn.dis && /Capítulo 7 — Sob a Pedra \(em breve\)/.test(c6e.btn.txt) && /Relicário/.test(c6e.stats) && /Sob a Pedra/.test(c6e.rn) && c6e.stAfter === 'end' && c6e.map && c6e.map.rooms >= 7, JSON.stringify({ t: c6e.title, b: c6e.btn, s: c6e.stats, m: c6e.map }));
+
+  // recarregar c6_end: capítulo concluído, chefe morto no pedestal, saídas abertas
+  await page.reload({ waitUntil: 'networkidle0' });
+  await inject();
+  const c6z = await page.evaluate(() => {
+    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.4);
+    const D = g.level.doors;
+    return { st: g.state, ch: g.chapter, z: +g.player.pos.z.toFixed(2), dead: !g.boss.alive, doors: !D.c6_exit.locked && D.c6_exit.open && D.c6_collector.open,
+      gal: g.level.galleryCases.gc_w.broken, done: g.quest.has('c6_chapterDone'), obj: g.quest.current() };
+  });
+  check('Cap. 6: recarregar c6_end restaura chefe morto, portas abertas e capítulo concluído', c6z.st === 'playing' && c6z.ch === 6 && c6z.z > 74 && c6z.dead && c6z.doors && c6z.gal && c6z.done && /Sob a Pedra/.test(c6z.obj), JSON.stringify(c6z));
 
   // save antigo do fim do Cap. 5 (c5_end) → Continuar migra para o Cap. 6
   if (c5endRaw) {

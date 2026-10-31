@@ -814,10 +814,11 @@ test('Cap. 6: migração do Cap. 5 concluído, objetivos, documentos e capítulo
   assert.equal(migrateSave(JSON.parse(JSON.stringify(s))).checkpoint, 'c6_dock');
   assert.equal(makeChapter6Save(null).chapter, 6);
   assert.equal(objectivesFor(6), OBJECTIVES_C6); assert.equal(sideObjectivesFor(6), SIDE_OBJECTIVES_C6);
-  assert.deepEqual(OBJECTIVES_C6.map((o) => o.done), ['c6_inAtrium', 'c6_inHall', 'c6_vaultOpen', 'c6_inStorage', 'c6_sliceDone', 'c6_never']);
+  assert.deepEqual(OBJECTIVES_C6.map((o) => o.done), ['c6_inAtrium', 'c6_inHall', 'c6_vaultOpen', 'c6_inStorage', 'c6_sliceDone', 'c6_galleryOpen', 'c6_collectorDead', 'c6_chapterDone', 'c6_never']);
   const q = new QuestSystem(null, 6); assert.equal(q.current(), OBJECTIVES_C6[0].text);
-  assert.ok(SIDE_OBJECTIVES_C6.length >= 2 && SIDE_OBJECTIVES_C6.length <= 4);
+  assert.ok(SIDE_OBJECTIVES_C6.length >= 2 && SIDE_OBJECTIVES_C6.length <= 5);
   for (const o of SIDE_OBJECTIVES_C6) assert.ok(o.when && o.done && o.text);
+  assert.ok(/Sob a Pedra/.test(OBJECTIVES_C6.at(-1).text) && /em breve/.test(OBJECTIVES_C6.at(-1).text));
   for (const id of ['guia_visitante', 'diario_conservadora', 'cartao_inventario_31']) assert.equal(DOCUMENTS[id]?.ch, 6, id);
   // o guia dá a regra do cofre; o Cap. 5 aponta para o Cap. 6
   assert.ok(/peça mais antiga/.test(DOCUMENTS.guia_visitante.body));
@@ -875,6 +876,120 @@ test('Cap. 6: vitrines, código do cofre, espécime, mapa e checkpoints', () => 
   }
   assert.ok(CP.c6_slice.z < C6L.COLLECTOR_DOOR.z && CP.c6_slice.z > C6L.STORAGE.minZ);
   assert.ok(C6L.DIAL.zs.length === 3 && C6L.DIAL.x < C6L.HALL.maxX);
+});
+
+const { CollectorBoss, COLLECTOR_HP, COLLECTOR_PHASES, COLLECTOR_DMG, COLLECTOR_CRUSH_DMG, COLLECTOR_RAIL } = await import('../../src/ai/CollectorBoss.js');
+const { normalizeChapter6Flags } = await import('../../src/core/SaveManager.js');
+function collectorLevel() {
+  const busts = {};
+  for (const u of C6L.BUSTS) busts[u.id] = { u, mesh: new THREE.Group(), taken: false };
+  const L = Object.create(C6L.AcervoLevel.prototype);
+  Object.assign(L, { busts, armored: {}, rails: [], railLog: [] });
+  for (const c of C6L.ARMORED_CASES) L.armored[c.id] = { c, hits: 0, cracks: { children: [] } };
+  L.setRail = (i, w, k) => L.railLog.push([i, w, k]);
+  return L;
+}
+function collectorGame() {
+  const g = afogadaGame();
+  const G = C6L.GALLERY;
+  g.col.addFloor({ minX: G.minX, maxX: G.maxX, minZ: G.minZ, maxZ: G.maxZ, y: 0 });
+  g.player.pos.set(37, 0, 57);
+  g.player.hurtVolumes = function () { return [{ type: 'capsule', x: this.pos.x, z: this.pos.z, y0: this.pos.y + 0.3, y1: this.pos.y + 1.5, r: 0.32 }]; };
+  const hits = []; g.player.takeHit = (h) => { hits.push(h); return 'hit'; }; g.player.hitsLog = hits;
+  g.emitted = []; g.bus = { emit: (n, x) => g.emitted.push([n, x]) };
+  return g;
+}
+test('Cap. 6: O Colecionador — gaiola, choque na vitrine blindada, guincho, bustos, trilho, fases e morte', () => {
+  const g = collectorGame(), L = collectorLevel(), C = C6L.COLLECTOR_BODY;
+  let woke = 0;
+  const b = new CollectorBoss(g, { x: C.x, y: C.y, z: C.z, bounds: C6L.GALLERY_BOUNDS, level: L, rows: C6L.RAIL_ROWS, railX: C6L.RAIL_X, onWake: () => woke++ });
+  assert.equal(b.id, 'colecionador'); assert.equal(b.maxHp, COLLECTOR_HP); assert.equal(b.state, 'dormant');
+  assert.equal(b.takeHit({ dmg: 50, volume: { part: 'weak' } }), 'immune'); assert.equal(b.crush(), false);
+  b.activate(); assert.equal(b.state, 'intro');
+  // gaiola fechada: coração quase não sente
+  b._set('stalk');
+  const h0 = b.hp; b.takeHit({ dmg: 100, volume: { part: 'weak' } });
+  assert.ok(Math.abs(h0 - b.hp - 100 * COLLECTOR_DMG.guarded.weak) < 1e-6 && b.lastHit.exposed === false);
+  const v0 = b.hurtVolumes(); assert.ok(v0.find((v) => v.part === 'weak').r < 0.3 && v0.find((v) => v.part === 'body'));
+  // investida contra a vitrine blindada: atordoa, racha o vidro e abre a gaiola
+  const rc = C6L.ARMORED_CASES[0];
+  g.col.addBox(rc.x - 0.65, 0, rc.z - 0.65, rc.x + 0.65, 2.3, rc.z + 0.65, { tag: 'obstacle' });
+  b.pos.set(rc.x, 0, rc.z + 2.6); b.yaw = Math.PI; g.player.pos.set(rc.x, 0, rc.z - 2.4);
+  b._set('charge');
+  for (let i = 0; i < 20 && b.state === 'charge'; i++) b.update(0.05);
+  assert.equal(b.state, 'stunned'); assert.equal(L.armored[rc.id].hits, 1); assert.ok(b.stunDur >= 4.2);
+  assert.ok(b.exposed && b.hurtVolumes().find((v) => v.part === 'weak').r > 0.4);
+  const h1 = b.hp; b.takeHit({ dmg: 40, volume: { part: 'weak' } });
+  assert.ok(Math.abs(h1 - b.hp - 40 * COLLECTOR_DMG.exposed.weak) < 1e-6);
+  assert.ok(COLLECTOR_DMG.exposed.weak > COLLECTOR_DMG.guarded.weak * 4 && COLLECTOR_DMG.exposed.body > COLLECTOR_DMG.guarded.body);
+  // guincho: dano real e estado esmagado (gaiola aberta)
+  b._set('stalk'); const h2 = b.hp;
+  assert.equal(b.crush(), true); assert.equal(b.state, 'crushed'); assert.ok(b.exposed);
+  assert.ok(Math.abs(h2 - b.hp - COLLECTOR_CRUSH_DMG) < 1e-6);
+  for (let i = 0; i < 60; i++) b.update(0.1);
+  assert.notEqual(b.state, 'crushed');
+  // fases pelos limiares (com eventos); fase 3 acorda a Galeria pela sineta
+  b._set('stalk'); b.hp = b.maxHp * COLLECTOR_PHASES.p2 + 1; b.takeHit({ dmg: 100, volume: { part: 'body' } }); assert.equal(b.phase, 2);
+  b._set('stalk'); b.hp = b.maxHp * COLLECTOR_PHASES.p3 + 1; b.takeHit({ dmg: 100, volume: { part: 'body' } }); assert.equal(b.phase, 3);
+  assert.ok(g.emitted.find((e) => e[0] === 'CollectorPhase' && e[1] === 2) && g.emitted.find((e) => e[0] === 'CollectorPhase' && e[1] === 3));
+  b._set('stalk'); b.pos.set(37, 0, 63); g.player.pos.set(37, 0, 61.4);
+  for (let i = 0; i < 20; i++) b.update(0.1);
+  assert.equal(woke, 1); assert.ok(b.seen.cue >= 1 && b.seen.sweep >= 1);
+  // trilho: a faixa de Elias pisca, o braço varre e acerta quem estiver na faixa (inimigo incluso)
+  b.sweeps = []; b._set('stalk'); b.railCd = 99; b.throwCd = 99;
+  g.player.hitsLog.length = 0; g.player.pos.set(36.9, 0, C6L.RAIL_ROWS[1]);
+  assert.equal(b.startSweep(1), true); assert.equal(b.startSweep(1), false);
+  for (let i = 0; i < 30; i++) b._updateSweeps(0.1);
+  assert.ok(g.player.hitsLog.find((h) => h.dmg === COLLECTOR_RAIL.dmg && h.blockable === false));
+  assert.equal(b.sweeps.length, 0);
+  // bustos: vai buscar o mais próximo, arranca do pedestal e arremessa (projétil real)
+  b._set('stalk'); b.railCd = 99; b.throwCd = 0; b.wakePending = false;
+  b.pos.set(30.6, 0, 57); g.player.pos.set(37, 0, 63);
+  let thrown = false;
+  for (let i = 0; i < 60 && !thrown; i++) { b.update(0.05); thrown = b.seen.throw > 0; }
+  assert.ok(L.busts.b0.taken && thrown && b.seen.fetch >= 1);
+  assert.ok(b.projectiles.length >= 0);
+  // território: só a Galeria
+  b.pos.set(20, 0, 40); b._clamp(); assert.ok(b.pos.x >= C6L.GALLERY_BOUNDS.minX && b.pos.z >= C6L.GALLERY_BOUNDS.minZ);
+  // morte real: limpa projéteis e estaciona os carrinhos
+  b._set('stalk'); b.hp = 1; assert.equal(b.takeHit({ dmg: 50, volume: { part: 'weak' } }), 'dead');
+  assert.equal(b.alive, false); assert.equal(b.projectiles.length, 0); assert.equal(b.sweeps.length, 0);
+  assert.ok(g.emitted.find((e) => e[0] === 'BossDefeated'));
+  const b2 = new CollectorBoss(collectorGame(), { x: C.x, y: C.y, z: C.z, bounds: C6L.GALLERY_BOUNDS, level: collectorLevel(), rows: C6L.RAIL_ROWS });
+  b2.setDeadAt(C.x, C.y, C.z); assert.equal(b2.alive, false); assert.equal(b2.rig.root.visible, true);
+});
+test('Cap. 6: Galeria, reserva, guinchos, checkpoints c6_boss/c6_end e migração de saves da fatia', () => {
+  const G = C6L.GALLERY, B = C6L.GALLERY_BOUNDS, R = C6L.RESERVE;
+  assert.ok(G.minZ >= C6L.STORAGE.maxZ && B.minX > G.minX && B.maxX < G.maxX && B.maxZ < G.maxZ);
+  for (const c of C6L.CRANES) {
+    assert.ok(c.x - C6L.CRANE_RADIUS > G.minX && c.x + C6L.CRANE_RADIUS < G.maxX);
+    // a alavanca fica fora do círculo de queda
+    assert.ok(Math.hypot(c.lever.x - c.x, c.lever.z - c.z) > C6L.CRANE_RADIUS + 1);
+  }
+  // o atordoamento numa vitrine blindada próxima de um guincho deixa o chefe dentro do círculo (combo possível)
+  assert.ok(C6L.ARMORED_CASES.some((a) => C6L.CRANES.some((c) => Math.hypot(a.x - c.x, a.z + 1.3 - c.z) < C6L.CRANE_RADIUS)));
+  assert.ok(C6L.BUSTS.length >= 6 && C6L.RAIL_ROWS.every((z) => z > B.minZ && z < B.maxZ));
+  for (const s of C6S.ACERVO_SPAWNS.filter((o) => o.gallery)) assert.ok(s.dormant && s.z > G.minZ && s.z < G.maxZ && C6L.GALLERY_CASES.find((c) => c.id === s.gallery));
+  assert.ok(R.minZ === G.maxZ && R.endZ > R.minZ && R.endZ < R.maxZ && C6L.EXIT_DOOR.z === G.maxZ);
+  const CP = C6L.ACERVO_CHECKPOINTS, L = Object.create(C6L.AcervoLevel.prototype);
+  assert.equal(L.zoneAt({ ...CP.c6_boss, y: 1 })?.id, 'c6_galeria'); assert.equal(L.zoneAt({ ...CP.c6_end, y: 1 })?.id, 'c6_reserva');
+  assert.ok(CP.c6_end.z < R.endZ);
+  try {
+    setMapChapter(6);
+    assert.equal(roomAt({ x: 37, y: 0, z: 64 }).id, 'c6_galeria');
+    assert.equal(roomAt({ x: 37, y: 0, z: 79 }).id, 'c6_reserva');
+  } finally { setMapChapter(1); }
+  for (const id of ['catalogo_colecionador', 'relicario_colecionador']) assert.equal(DOCUMENTS[id]?.ch, 6, id);
+  assert.ok(/Sob a Pedra/.test(DOCUMENTS.catalogo_colecionador.body) && /Peça 32/.test(DOCUMENTS.relicario_colecionador.body));
+  // saves: a fatia antiga continua (Galeria fechada até a sineta); boss/fim implicam o chefe morto
+  const slice = migrateSave({ ...makeChapter6Save(null), checkpoint: 'c6_slice', flags: { c6_sliceDone: true } });
+  assert.ok(slice.flags.c6_sliceDone && slice.flags.c6_vaultOpen && !slice.flags.c6_galleryOpen && !slice.flags.c6_collectorDead);
+  const boss = migrateSave({ ...makeChapter6Save(null), checkpoint: 'c6_boss', flags: {} });
+  assert.ok(boss.flags.c6_collectorDead && boss.flags.c6_galleryOpen && boss.flags.c6_sliceDone);
+  const end = migrateSave({ ...makeChapter6Save(null), checkpoint: 'c6_end', flags: { ch6Done: true } });
+  assert.ok(end.flags.c6_chapterDone && end.flags.ch6Done && end.flags.c6_collectorDead);
+  assert.equal(normalizeChapter6Flags({ chapter: 5, flags: { ch6Done: true } }).flags.c6_collectorDead, undefined);
+  assert.ok(C6S.C6_BELL_DELAY > 0 && C6S.C6_BELL_DELAY < 5);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

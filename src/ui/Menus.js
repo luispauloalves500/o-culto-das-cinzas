@@ -105,10 +105,24 @@ export class Menus {
         : ch === 3 ? `<br>Fita de Inês: ${stats.ribbon ? 'com Elias' : 'ficou no altar da cripta'} · Ordem de transferência: ${stats.order ? 'lida' : 'não lida'}`
           : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
     const next = $('btnEndNext');
+    if (ch >= 6) {
+      $('stats').innerHTML = $('stats').innerHTML.replace(/<br>Caderno do comporteiro.*$/, '')
+        + `<br>Relicário do Colecionador: ${stats.relic ? 'aberto' : 'ficou no peito dele'} · Catálogo do Colecionador: ${stats.catalogo ? 'lido' : 'não lido'}`;
+      $('endTitle').textContent = 'Fim do Capítulo 6 — O Acervo';
+      $('endText').textContent = 'O Colecionador fica de joelhos no próprio pedestal, em pose, como a última peça da Galeria. Na reserva técnica, atrás das estantes de "peças a catalogar", o alçapão de serviço desce para as galerias de pedra sob o Museu — rumo às catacumbas e à linha antiga do metrô, onde levaram Inês.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 7 — Sob a Pedra: catacumbas e metrô antigo (em breve).';
+      $('endRn0').classList.remove('hidden');
+      $('endRn0').innerHTML = stats.relic || stats.catalogo
+        ? 'Inês, a <b>peça 31</b>, está <b>viva</b>: "não é peça de exposição, é <b>oferenda</b>" — levada para baixo, <b>onde a Primeira Cinza foi enterrada</b>. Elias é a <b>peça 32</b>. A estação riscada no mapa: <b>Sob a Pedra</b>.'
+        : '<span class="small">No peito do Colecionador havia um relicário, e na reserva técnica, um catálogo aberto. Alguém anotou para onde Inês foi.</span>';
+      if (next) { next.disabled = true; next.textContent = 'Capítulo 7 — Sob a Pedra (em breve)'; }
+      this.show('chapterEnd');
+      return;
+    }
     if (ch >= 5) {
       $('endTitle').textContent = 'Fim do Capítulo 5 — Águas Negras';
       $('endText').textContent = 'A Afogada afunda pela última vez no poço das turbinas e a água fica parada. Pela galeria de descarga, Elias chega à grade do rio: lá embaixo, a esteira de uma barcaça ainda balança na água preta, rio abaixo, rumo ao Museu.';
-      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 6 — O Acervo: o Museu de Ciências Proibidas (primeira parte jogável).';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 6 — O Acervo: o Museu de Ciências Proibidas e a Galeria do Colecionador.';
       $('endRn0').classList.remove('hidden');
       $('endRn0').innerHTML = stats.ficha
         ? 'A ficha da <b>remessa nº 31</b> não deixa dúvida: "peça viva, fita vermelha", rio abaixo, para <b>O Acervo</b>. ' + (stats.diario ? 'E a guardiã da comporta tinha nome: <b>Lurdes</b>, a mulher do comporteiro Anselmo.' : 'Alguém deu nome à guardiã da comporta.')
