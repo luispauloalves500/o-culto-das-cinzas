@@ -46,12 +46,19 @@ export function normalizeChapter6Flags(s) {
 }
 
 /**
- * Capítulo 7: checkpoints implicam os marcos anteriores (save do fim da fatia já passou pela grade do ossuário e
- * chegou à plataforma; save da plataforma já abriu a grade). A chave/pé de cabra seguem no inventário.
+ * Capítulo 7: checkpoints implicam os marcos anteriores (fim do capítulo → Vigia morto → grade levadiça erguida →
+ * corrente da Linha Velha arrebentada → fim da fatia → plataforma → grade do ossuário). A chave/pé de cabra seguem no inventário.
  */
 export function normalizeChapter7Flags(s) {
   if (s.chapter !== 7 || !s.flags) return s;
   const f = { ...s.flags };
+  if (s.checkpoint === 'c7_end') { f.c7_chapterDone = true; f.ch7Done = true; f.c7_stairsOpen = true; }
+  if (s.checkpoint === 'c7_end' || s.checkpoint === 'c7_boss') { f.c7_vigiaDead = true; f.c7_vigiaWoke = true; }
+  if (f.c7_vigiaDead) { f.c7_portOpen = true; f.c7_inStation = true; f.c7_atStation = true; }
+  if (s.checkpoint === 'c7_station') f.c7_portOpen = true;
+  if (f.c7_portOpen) { f.c7_lineOpen = true; f.c7_sawPort = true; f.c7_inLine = true; }
+  if (s.checkpoint === 'c7_line') { f.c7_lineOpen = true; f.c7_inLine = true; f.c7_inCabin = true; }
+  if (f.c7_lineOpen) f.c7_sliceDone = true;
   if (s.checkpoint === 'c7_slice') f.c7_sliceDone = true;
   if (f.c7_sliceDone) f.c7_onPlatform = true;
   if (s.checkpoint === 'c7_platform') f.c7_onPlatform = true;

@@ -196,7 +196,7 @@ export class Game {
     if (s.chapter === 6 && (s.flags.c6_chapterDone || s.checkpoint === 'c6_end')) return this.startChapter7(s);
     this._buildWorld(s);
     this._enterPlay();
-    if (this.chapter === 7) this.hud.toast(s.flags.c7_sliceDone ? 'Capítulo 7 — Sob a Pedra · trilhos da Linha Velha' : s.flags.c7_onPlatform ? 'Capítulo 7 — Sob a Pedra · Estação Sé Velha' : s.flags.c7_inOssuary ? 'Capítulo 7 — Sob a Pedra · ossuário' : 'Capítulo 7 — Sob a Pedra · catacumbas', 3.5);
+    if (this.chapter === 7) this.hud.toast(s.flags.c7_chapterDone ? 'Capítulo 7 — Sob a Pedra · escada de serviço (capítulo concluído)' : s.flags.c7_vigiaDead ? 'Capítulo 7 — Sob a Pedra · Estação Sob a Pedra (o Vigia caiu)' : s.flags.c7_portOpen ? 'Capítulo 7 — Sob a Pedra · boca da Estação Sob a Pedra' : s.flags.c7_lineOpen ? 'Capítulo 7 — Sob a Pedra · Linha Velha' : s.flags.c7_sliceDone ? 'Capítulo 7 — Sob a Pedra · trilhos da Linha Velha' : s.flags.c7_onPlatform ? 'Capítulo 7 — Sob a Pedra · Estação Sé Velha' : s.flags.c7_inOssuary ? 'Capítulo 7 — Sob a Pedra · ossuário' : 'Capítulo 7 — Sob a Pedra · catacumbas', 3.5);
     if (this.chapter === 2) this.hud.toast('Capítulo 2 — Fumaça · Bairro Operário', 3);
     if (this.chapter === 3) this.hud.toast('Capítulo 3 — A Confraria · Sede do Véu', 3.5);
     if (this.chapter === 5) this.hud.toast(s.flags.c5_chapterDone ? 'Capítulo 5 — Águas Negras · galeria de descarga (capítulo concluído)' : s.flags.c5_afogadaDead ? 'Capítulo 5 — Águas Negras · salão das turbinas' : s.flags.c5_sliceDone ? 'Capítulo 5 — Águas Negras · antecâmara das turbinas' : s.flags.c5_power ? 'Capítulo 5 — Águas Negras · casa de bombas' : 'Capítulo 5 — Águas Negras · estação de bombeamento', 3.5);
@@ -300,7 +300,8 @@ export class Game {
       ribbon: this.inventory.has('fita_ines') || this.quest.has('c3_hasRibbon'), order: this.inventory.documents.includes('ordem_transferencia'),
       note: this.inventory.documents.includes('bilhete_ines'), rounds: this.inventory.documents.includes('livro_rondas'),
       ficha: this.inventory.documents.includes('ficha_remessa'), diario: this.inventory.documents.includes('diario_comporteiro'),
-      catalogo: this.inventory.documents.includes('catalogo_colecionador'), relic: this.inventory.documents.includes('relicario_colecionador') });
+      catalogo: this.inventory.documents.includes('catalogo_colecionador'), relic: this.inventory.documents.includes('relicario_colecionador'),
+      ata: this.inventory.documents.includes('ata_primeira_cinza'), guia: this.inventory.documents.includes('guia_remocao_vigia') });
   }
 
   // ---------- interação ----------

@@ -86,7 +86,7 @@ export class Menus {
       const fid = FLOORS[+el.dataset.floor].id;
       el.classList.toggle('active', fid === mv.floor);
       el.classList.toggle('hidden', ((ch2 || ch6 || ch7) && fid !== 'up') || (ch4 && fid !== 'up' && fid !== 'roof') || (ch3 && fid !== 'up' && fid !== 'lo') || (ch5 && fid !== 'up' && fid !== 'up2'));
-      el.textContent = ch7 ? 'Catacumbas · Linha Velha' : ch6 ? 'Museu — O Acervo' : ch5 ? (fid === 'up2' ? 'Mezanino · passarela' : 'Canais · casa de bombas') : ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
+      el.textContent = ch7 ? 'Catacumbas · Linha Velha · Sob a Pedra' : ch6 ? 'Museu — O Acervo' : ch5 ? (fid === 'up2' ? 'Mezanino · passarela' : 'Canais · casa de bombas') : ch4 ? (fid === 'roof' ? 'Torre — casa das máquinas' : 'Centro antigo') : ch2 ? 'Bairro Operário' : ch3 ? (fid === 'lo' ? 'Arquivos' : 'Sede — térreo') : FLOORS[+el.dataset.floor].name;
     }
     const r = roomAt(g.player.pos);
     $('mapWhere').textContent = 'Você está em: ' + (r ? r.name : 'lugar nenhum que conste na planta');
@@ -105,12 +105,26 @@ export class Menus {
         : ch === 3 ? `<br>Fita de Inês: ${stats.ribbon ? 'com Elias' : 'ficou no altar da cripta'} · Ordem de transferência: ${stats.order ? 'lida' : 'não lida'}`
           : `<br>Passe da Linha 4: ${stats.pass ? 'com Elias' : 'ficou na grelha da fornalha'}`);
     const next = $('btnEndNext');
+    if (ch >= 7) {
+      $('stats').innerHTML = $('stats').innerHTML.replace(/<br>Caderno do comporteiro.*$/, '')
+        + `<br>Ata da Confraria: ${stats.ata ? 'lida' : 'ficou no atril'} · Guia de remoção: ${stats.guia ? 'lida' : 'não lida'}`;
+      $('endTitle').textContent = 'Fim do Capítulo 7 — Sob a Pedra';
+      $('endText').textContent = 'O Vigia Caiado cai de joelhos diante da parede de onde saiu, e a cal do corpo se esfarela até sobrar só o chapéu e o gancho. O lampião frio apaga — de vez, agora. A escada de serviço sobe para fora da pedra: lá em cima, o zumbido dos fios da Usina de Véspera.';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 8 — A Última Chama: a Usina de Véspera e a torre de transmissão (em breve).';
+      $('endRn0').classList.remove('hidden');
+      $('endRn0').innerHTML = stats.ata
+        ? 'A <b>Primeira Cinza</b> dormia Sob a Pedra desde 1912 — e foi <b>acordada</b>. Inês foi levada no último trem para a <b>torre de transmissão da Usina</b>, onde <b>Vernet</b> espera: "a voz dela vai pelos fios para todas as casas". Na margem, a letra dela: <b>"Eu ainda estou aqui."</b>'
+        : '<span class="small">No atril diante da parede de cal havia um livro de atas aberto. A tinta da última página ainda borrava.</span>';
+      if (next) { next.disabled = true; next.textContent = 'Capítulo 8 — A Última Chama (em breve)'; }
+      this.show('chapterEnd');
+      return;
+    }
     if (ch >= 6) {
       $('stats').innerHTML = $('stats').innerHTML.replace(/<br>Caderno do comporteiro.*$/, '')
         + `<br>Relicário do Colecionador: ${stats.relic ? 'aberto' : 'ficou no peito dele'} · Catálogo do Colecionador: ${stats.catalogo ? 'lido' : 'não lido'}`;
       $('endTitle').textContent = 'Fim do Capítulo 6 — O Acervo';
       $('endText').textContent = 'O Colecionador fica de joelhos no próprio pedestal, em pose, como a última peça da Galeria. Na reserva técnica, atrás das estantes de "peças a catalogar", o alçapão de serviço desce para as galerias de pedra sob o Museu — rumo às catacumbas e à linha antiga do metrô, onde levaram Inês.';
-      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 7 — Sob a Pedra: as catacumbas sob o Museu e a linha antiga do metrô (primeira parte jogável).';
+      $('endNote').textContent = 'Seu progresso foi salvo. Capítulo 7 — Sob a Pedra: as catacumbas sob o Museu, a linha antiga do metrô e a estação que não está no mapa.';
       $('endRn0').classList.remove('hidden');
       $('endRn0').innerHTML = stats.relic || stats.catalogo
         ? 'Inês, a <b>peça 31</b>, está <b>viva</b>: "não é peça de exposição, é <b>oferenda</b>" — levada para baixo, <b>onde a Primeira Cinza foi enterrada</b>. Elias é a <b>peça 32</b>. A estação riscada no mapa: <b>Sob a Pedra</b>.'
