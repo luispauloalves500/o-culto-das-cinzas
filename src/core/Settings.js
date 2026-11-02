@@ -5,15 +5,15 @@ export const DEFAULT_SETTINGS = {
   invertY: false,
   volume: 0.8,
   musicVolume: 0.6,
-  renderScale: 0.7,
+  renderScale: 0.75,
   fov: 65,
   shake: true,
   showFps: false,
-  // gráficos (src/render/Graphics.js): padrão agora mais leve (menos consumo, texturas preservadas)
-  shadows: 'off',
-  particles: 'baixa',
-  bloom: false,
-  postfx: false,
+  // gráficos (src/render/Graphics.js): preset Média equilibrado (bom visual + desempenho)
+  shadows: 'baixa',
+  particles: 'media',
+  bloom: true,
+  postfx: true,
   antialias: false,
   // corpos de inimigos somem depois de N segundos (0 = nunca)
   corpseTime: 20,
