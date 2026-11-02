@@ -57,11 +57,23 @@ export const ACHIEVEMENTS = {
     desc: 'Complete o Capítulo 8 — A Última Chama.',
     icon: '🔥',
   },
+  docs_1: {
+    id: 'docs_1',
+    name: 'Primeira Pista',
+    desc: 'Colete seu primeiro documento.',
+    icon: '📝',
+  },
   docs_5: {
     id: 'docs_5',
     name: 'Arquivista',
     desc: 'Colete 5 documentos.',
     icon: '📄',
+  },
+  docs_10: {
+    id: 'docs_10',
+    name: 'Investigador',
+    desc: 'Colete 10 documentos.',
+    icon: '🔍',
   },
   docs_15: {
     id: 'docs_15',
@@ -69,11 +81,59 @@ export const ACHIEVEMENTS = {
     desc: 'Colete 15 documentos.',
     icon: '📚',
   },
+  docs_25: {
+    id: 'docs_25',
+    name: 'Arquivo Completo',
+    desc: 'Colete 25 documentos.',
+    icon: '🗂️',
+  },
   boss_surgeon: {
     id: 'boss_surgeon',
     name: 'O Cirurgião Cai',
     desc: 'Derrote o Cirurgião no Hospital São Dimas.',
     icon: '🔪',
+  },
+  boss_vigia: {
+    id: 'boss_vigia',
+    name: 'O Vigia Caiado',
+    desc: 'Derrote o Vigia Caiado.',
+    icon: '👁️',
+  },
+  boss_afogada: {
+    id: 'boss_afogada',
+    name: 'A Afogada',
+    desc: 'Derrote a Afogada.',
+    icon: '💧',
+  },
+  boss_collector: {
+    id: 'boss_collector',
+    name: 'O Colecionador',
+    desc: 'Derrote o Colecionador.',
+    icon: '🏺',
+  },
+  boss_cinza: {
+    id: 'boss_cinza',
+    name: 'A Primeira Cinza',
+    desc: 'Derrote a Primeira Cinza.',
+    icon: '🌫️',
+  },
+  secrets_1: {
+    id: 'secrets_1',
+    name: 'Olho Atento',
+    desc: 'Descubra seu primeiro segredo.',
+    icon: '🔎',
+  },
+  secrets_5: {
+    id: 'secrets_5',
+    name: 'Caçador de Segredos',
+    desc: 'Descubra 5 segredos.',
+    icon: '🔑',
+  },
+  secrets_10: {
+    id: 'secrets_10',
+    name: 'Mestre dos Segredos',
+    desc: 'Descubra 10 segredos.',
+    icon: '🔐',
   },
   explorer: {
     id: 'explorer',
@@ -105,7 +165,7 @@ export class Achievements {
   constructor(game) {
     this.game = game;
     this.unlocked = new Set();
-    this.stats = { rooms: new Set(), playTime: 0, healsUsed: 0, chapterHeals: 0 };
+    this.stats = { rooms: new Set(), playTime: 0, healsUsed: 0, chapterHeals: 0, secrets: 0 };
     this._load();
   }
 
@@ -117,6 +177,7 @@ export class Achievements {
       this.unlocked = new Set(data.unlocked || []);
       this.stats.playTime = data.playTime || 0;
       this.stats.healsUsed = data.healsUsed || 0;
+      this.stats.secrets = data.secrets || 0;
       if (data.rooms) this.stats.rooms = new Set(data.rooms);
     } catch (e) { console.warn('[Achievements] load failed', e); }
   }
@@ -127,6 +188,7 @@ export class Achievements {
         unlocked: [...this.unlocked],
         playTime: this.stats.playTime,
         healsUsed: this.stats.healsUsed,
+        secrets: this.stats.secrets,
         rooms: [...this.stats.rooms],
       }));
     } catch (e) { /* ignore */ }
@@ -152,15 +214,42 @@ export class Achievements {
 
   onEnemyDied(enemy) {
     if (!this.isUnlocked('first_kill')) this.unlock('first_kill');
-    if (enemy?.id?.includes?.('cirurgiao') || enemy?.name?.includes?.('Cirurgião')) {
+
+    const id = (enemy?.id || '').toLowerCase();
+    const name = (enemy?.name || '').toLowerCase();
+
+    if (id.includes('cirurgiao') || name.includes('cirurgião') || name.includes('cirurgiao')) {
       this.unlock('boss_surgeon');
+    }
+    if (id.includes('vigia') || name.includes('vigia')) {
+      this.unlock('boss_vigia');
+    }
+    if (id.includes('afogada') || name.includes('afogada')) {
+      this.unlock('boss_afogada');
+    }
+    if (id.includes('colecionador') || name.includes('colecionador') || id.includes('collector')) {
+      this.unlock('boss_collector');
+    }
+    if (id.includes('cinza') || name.includes('cinza') || name.includes('primeira')) {
+      this.unlock('boss_cinza');
     }
   }
 
   onDocumentCollected() {
     const n = this.game.inventory?.documents?.length || 0;
+    if (n >= 1) this.unlock('docs_1');
     if (n >= 5) this.unlock('docs_5');
+    if (n >= 10) this.unlock('docs_10');
     if (n >= 15) this.unlock('docs_15');
+    if (n >= 25) this.unlock('docs_25');
+  }
+
+  onSecretFound() {
+    this.stats.secrets++;
+    this._save();
+    if (this.stats.secrets >= 1) this.unlock('secrets_1');
+    if (this.stats.secrets >= 5) this.unlock('secrets_5');
+    if (this.stats.secrets >= 10) this.unlock('secrets_10');
   }
 
   onChapterComplete(chapter) {
