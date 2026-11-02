@@ -50,6 +50,7 @@ import { HUD } from '../ui/HUD.js';
 import { Menus } from '../ui/Menus.js';
 import { playChapterIntro } from '../gameplay/ChapterIntro.js';
 import { Graphics } from '../render/Graphics.js';
+import { Achievements } from './Achievements.js';
 
 const STEP = 1 / 60;
 
@@ -70,6 +71,7 @@ export class Game {
     this.gfx = new Graphics(this);
     this.hud = new HUD();
     this.menus = new Menus(this);
+    this.achievements = new Achievements(this);
     // em automação (testes) o pointer lock não está disponível; o jogo roda sem ele
     this.requireLock = !navigator.webdriver;
     this.state = 'menu';
@@ -154,7 +156,7 @@ export class Game {
     this.hud.reset();
     this.combatT = 0;
     this.bus.on('EnemyAlerted', () => { if (!this.script.bossActive) this.audio.setIntensity(1); this.combatT = 8; if (!this.script.tut.shown.noise) this.script.hint('noise', 'Inimigos <b>ouvem</b> passos de corrida, golpes e portas. Ande devagar para não chamar atenção.', 7); });
-    this.bus.on('EnemyDied', (e) => { this.combat.blood({ x: e.pos.x, y: e.pos.y + 1, z: e.pos.z }, 20); });
+    this.bus.on('EnemyDied', (e) => { this.combat.blood({ x: e.pos.x, y: e.pos.y + 1, z: e.pos.z }, 20); this.achievements?.onEnemyDied(e); });
   }
 
   serialize(checkpoint) {
@@ -312,6 +314,7 @@ export class Game {
     this.readerBack = back;
     this.state = 'reading'; this.input.clear(); this.input.exitLock();
     this.menus.showDocument(id);
+    this.achievements?.onDocumentCollected();
     this.audio.play('pickup', null);
   }
   openInventory() {
@@ -327,11 +330,11 @@ export class Game {
     this.resume();
   }
   onPlayerDeath() {
-    this.dyingT = 2.4;
-    this.audio.setIntensity(0);
+    this.dyingT = 2.2; this.state = 'dying'; this.input.exitLock(); this.hud.show(false);
   }
   onPlayerFellOut() { this.continueGame(); }
   endChapter() {
+    this.achievements?.onChapterComplete(this.chapter);
     this.state = 'end'; this.input.exitLock(); this.hud.show(false); this.audio.setIntensity(0);
     this.menus.showChapterEnd({ chapter: this.chapter || 1, time: this.playTime, kills: this.player.stats.kills, damageTaken: this.player.stats.damageTaken, docs: this.inventory.documents.length, docsList: this.inventory.documents.slice(), pass: this.inventory.has('passe_bonde') || this.quest.has('c2_hasPass'), rn0: this.quest.has('rn0Revealed'),
       ribbon: this.inventory.has('fita_ines') || this.quest.has('c3_hasRibbon'), order: this.inventory.documents.includes('ordem_transferencia'),
@@ -378,6 +381,7 @@ export class Game {
       } else this.input.endFrame();
       if (this.scene) {
         this.hud.update(dt, this);
+        this.achievements?.update(dt);
         this.hud.setFps(this.settings.get('showFps'), this.fps);
         this.gfx.update(dt);
         this.gfx.render(this.scene, this.camera);
@@ -388,16 +392,15 @@ export class Game {
     }
   }
 
-  /** estado do jogo que a trilha adaptativa lê (src/audio/Score.js → cueFor) */
+  /** estado do jogo que a trilha adapta */
   musicState() {
-    const credits = !document.getElementById('credits')?.classList.contains('hidden');
-    const b = this.scene ? this.boss : null;
     const bossActive = !!this.script?.bossActive;
+    const b = this.boss;
     return {
-      state: credits ? 'credits' : this.scene ? this.state : 'menu',
+      state: this.state,
       chapter: this.chapter || 1,
-      intensity: bossActive ? 2 : (this.audio.intensity || 0),
-      boss: b ? { id: b.id, phase: b.phase || 1, alive: b.alive !== false && b.state !== 'dead' && b.state !== 'gone', engaged: bossActive && b.state !== 'dormant' } : null,
+      intensity: this.audio.intensity,
+      boss: bossActive && b ? { alive: b.alive && b.state !== 'gone', engaged: bossActive && b.state !== 'dormant' } : null,
       ending: this.quest?.flags?.c8_ending || null,
     };
   }
@@ -457,25 +460,5 @@ export class Game {
     this.combat.update(dt);
     this.script.update(dt);
     this.level.update(dt, this.time);
-    if (this.combat.debug) this.combat.debugVolumes([p, ...this.targets()]);
-    this.currentInteractable = p.state === 'free' && this.state === 'playing' ? this.interact.findBest(p.pos, p.facing()) : null;
-    this.fill.position.set(p.pos.x, p.pos.y + 2.2, p.pos.z);
-    // música de combate decai quando ninguém está perseguindo
-    if (this.combatT > 0) {
-      const chasing = this.enemies.some((e) => e.alive && (e.state === 'chase' || e.state === 'attack' || e.state === 'grabbing'));
-      if (chasing) this.combatT = 8; else if ((this.combatT -= dt) <= 0 && !this.script.bossActive) this.audio.setIntensity(0);
-    }
-    if (this.dyingT !== undefined && this.state === 'playing' && !p.alive) this.state = 'dying';
-    if (this.state === 'dying' && (this.dyingT -= dt) <= 0) {
-      this.dyingT = undefined; this.state = 'dead'; this.input.exitLock(); this.hud.show(false); this.menus.show('dead');
-    }
-  }
-
-  _updateCamera(dt) {
-    if (this.state === 'cutscene') return;
-    const p = this.player;
-    const inCombat = this.combatT > 0 || this.script.bossActive;
-    this.cameraCtl.update(dt, this.input, p.pos, inCombat);
-    this.audio.setListener(p.pos.x, p.pos.y, p.pos.z, this.cameraCtl.yaw);
   }
 }
