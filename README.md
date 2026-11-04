@@ -301,6 +301,27 @@ Primeira fatia da lista FALTA: a trilha antiga (um pulso de serra) deu lugar a u
   - **Manifestação**: coroa de espinhos de cinza, esporões nos ombros, garras e **veias de brasa** que pulsam com o núcleo (mais fortes quando ela fica exposta). Ela solta um rastro de cinza e fagulhas.
 - *(unit: 77 testes, 6 novos: predefinições, resolveGfx, persistência, qualidade de partículas, fade e aberturas seguras contra paredes. smoke: Média/Ultra/Baixa/Personalizada aplicadas de verdade no renderer e salvas; despawn de corpo com poça; cinemática do Cap. 1 com cartela, fade, legenda e pular; abertura do Cap. 2 e desligar a opção; modelos de Helena, Inês, Vernet e Manifestação no Cap. 8)*
 
+### Desempenho sem piorar texturas (pt48u/pt49u)
+
+Todos os truques ficam em `src/render/Perf.js`. **Nenhum mexe em textura**: os mapas, a resolução, a filtragem e o anisotrópico continuam os mesmos, e o smoke confere isso em todas as trocas de opção.
+
+- **Cenário fundido**:
+  - Paredes, pisos, tetos e escadas fixos são fundidos em malhas por material e por célula de 16 m. Mantêm os mesmos vértices, as mesmas UVs e o mesmo material.
+  - No Cap. 1 são cerca de 790 malhas em 134 lotes: muito menos chamadas de desenho, e o corte do que está fora da tela continua valendo por célula.
+  - Portas, vidro e objetos móveis ficam de fora.
+- **Orçamento de luzes**:
+  - As luzes do cenário viram "fontes", que o renderer ignora. Um conjunto fixo de N luzes (4, 6, 8, 12 ou 16) copia a cada quadro as fontes que alcançam a tela, priorizando as que fazem sombra e depois as mais próximas.
+  - Uma luz cujo alcance não toca a tela não ilumina nada visível, então ignorá-la não muda a imagem.
+  - Como o número de luzes é sempre o mesmo, nenhum shader é recompilado. As trocas têm fade de 0,25 s e histerese, para não piscar.
+- **Distância de desenho pela névoa**: no modo automático, o plano distante acompanha a névoa (35–90 m), onde ela já cobre mais de 99,9 % da imagem. O modo máximo desenha até 90 m.
+- **Sombras a 30 Hz**: em Baixa e Alta o mapa de sombra é refeito no máximo 30 vezes por segundo; no Ultra, todo quadro.
+- **Animação dos inimigos**:
+  - Inimigos a mais de 28 m e fora da tela animam a 1/4 da taxa.
+  - Corpos caídos e inimigos dormentes congelam o esqueleto.
+- **Menus e pausa**: redesenham a 10 Hz quando nada se mexe (opção). Há também um **limite de FPS** (sem limite, 60 ou 30).
+- **Opções → Gráficos**: novos ajustes "Luzes dinâmicas por quadro" e "Distância de desenho" (entram nas predefinições), "Limite de FPS" e "Economizar em menus e pausa". Tudo é salvo e aplicado na hora.
+- *(unit: 81 testes, 4 novos: névoa e plano distante, sombras a 30 Hz, seleção de luzes com corte fora da tela, prioridade de sombra, orçamento e histerese, fusão do cenário com mesmo material e mesmas UVs, e esqueleto congelado. smoke: fusão e luzes no Chrome, opções salvas e texturas idênticas antes e depois.)*
+
 ### Decisão narrativa — o Vigia (GDD × morte no Cap. 4)
 
 O GDD previa o **"Retorno do Vigia"** como chefe do Cap. 7, mas neste jogo o Vigia **morre de verdade no Cap. 4** (como foi pedido). A solução mantém as duas coisas sem desfazer a morte: **ele continua morto** — e é isso que a Confraria usou. A *Guia de remoção* e a *Ata da Primeira Cinza* contam que os acólitos desceram o corpo pela Linha Velha até a Estação Sob a Pedra e o **emparedaram em cal**, como fazem com os "guardas" das catacumbas (os emparedados). O que volta não é o Vigia vivo, e sim **O Vigia Caiado**: o mesmo sobretudo, chapéu, gancho e lampião frio, mas coberto de cal, **cego** (os olhos foram selados) e guiado só pelo som — por isso a luta é sobre ruído, sinetas e investidas às cegas, e não repete o Vigia da praça. Quando ele cai, "o lampião frio apaga — de vez, agora". O GDD continua respeitado (o Vigia é o chefe do Cap. 7) e a morte do Cap. 4 não é anulada.

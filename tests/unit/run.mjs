@@ -13,6 +13,7 @@ import { SIDE_OBJECTIVES, OBJECTIVES_C2, SIDE_OBJECTIVES_C2, CHAPTERS } from '..
 import { roomAt, knownRooms, floorOf, ROOMS, setMapChapter, chapterFloors } from '../../src/data/map.js';
 import { QuestSystem } from '../../src/gameplay/QuestSystem.js';
 import * as THREE from 'three';
+import { fogFar, shadowInterval, selectLights, batchKey, Perf, freezeRig, LIGHT_BUDGETS, BATCH_CELL } from '../../src/render/Perf.js';
 import { attackClipTime, ATTACK_CLIPS, ACTION_CLIPS, CONFIG_MACHADO, CLIP } from '../../src/gameplay/rev6/configMachado.js';
 import { readFileSync } from 'node:fs';
 import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
@@ -1532,6 +1533,62 @@ test('Aberturas de capítulo: os 8 capítulos têm cartela e 2 falas; planos nã
   assert.equal(shots[1].cut, 'fade'); assert.equal(shots[2].caption, CHAPTER_INTROS[3].lines[1]);
   for (const s of shots) for (const q of [s.from, s.to]) assert.ok(q.z < 1.0, 'câmera não entra na parede: ' + JSON.stringify(q));
   assert.equal(buildIntroShots(g, 99), null);
+});
+
+test('Desempenho: distância de desenho pela névoa (auto/máx), sombras a 30 Hz e predefinições com orçamento de luzes', () => {
+  assert.equal(fogFar(null), 90); assert.equal(fogFar({ density: 0.08 }, 'max'), 90);
+  assert.ok(Math.abs(fogFar({ density: 0.05 }) - 56) < 1e-9); assert.equal(fogFar({ density: 0.5 }), 35); assert.equal(fogFar({ density: 0.001 }), 90);
+  assert.ok(Math.exp(-((0.05 * fogFar({ density: 0.05 })) ** 2)) < 0.001, 'além do plano distante a névoa cobre > 99,9 %');
+  assert.equal(shadowInterval('ultra'), 0); assert.equal(shadowInterval('baixa'), 1 / 30);
+  for (const k of ['baixa', 'media', 'alta', 'ultra']) assert.ok(LIGHT_BUDGETS.includes(GFX.GFX_PRESETS[k].lightBudget), k);
+  assert.ok(GFX.GFX_PRESETS.baixa.lightBudget < GFX.GFX_PRESETS.ultra.lightBudget);
+});
+test('Desempenho: seleção de luzes — fora da tela some sem perda, sombra tem prioridade, orçamento e histerese', () => {
+  const cam = { x: 0, y: 0, z: 0 };
+  const L = (id, x, o = {}) => ({ id, x, y: 0, z: 0, r: 8, i: 1, shadow: false, cur: false, ...o });
+  const inView = (c) => c.x >= 0; // "tela" = x ≥ 0
+  const cands = [L('atras', -5), L('perto', 2), L('meio', 6), L('longe', 20), L('apagada', 1, { i: 0 }), L('sombra', 30, { shadow: true }), L('sombraAtras', -30, { shadow: true })];
+  const s = selectLights(cands, 3, cam, inView);
+  assert.deepEqual(s.pick.slice(0, 2).sort(), ['sombra', 'sombraAtras'], 'luzes com sombra primeiro (sombra não muda de número)');
+  assert.equal(s.pick[2], 'perto'); assert.equal(s.culledView, 1); assert.equal(s.culledBudget, 2);
+  assert.ok(!s.pick.includes('apagada') && !s.pick.includes('atras'));
+  // histerese: quem já tem proxy fica entre duas equidistantes
+  const a = selectLights([L('a', 5), L('b', 5.5, { cur: true })], 1, cam, () => true);
+  assert.deepEqual(a.pick, ['b']);
+});
+test('Desempenho: agrupamento estático funde por material/célula sem mudar vértices nem material; móveis/transparentes ficam', () => {
+  assert.equal(batchKey('m', true, true, 1, 0, 1), batchKey('m', true, true, 15, 9, 15));
+  assert.notEqual(batchKey('m', true, true, 1, 0, 1), batchKey('m', true, true, 17, 0, 1));
+  assert.notEqual(batchKey('m', true, true, 1, 0, 1), batchKey('n', true, true, 1, 0, 1));
+  const scene = new THREE.Scene(), tex = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+  const mat = new THREE.MeshStandardMaterial({ map: tex }), glass = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.4 });
+  const box = (m, x, z, batch = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), m); o.position.set(x, 1, z); o.userData.batchable = batch; scene.add(o); return o; };
+  for (let i = 0; i < 4; i++) box(mat, i * 2 + 1, 1);
+  box(mat, 40, 40); box(glass, 2, 2); box(glass, 3, 3); const door = box(mat, 5, 5, false);
+  const verts0 = 4 * new THREE.BoxGeometry(1, 2, 1).attributes.position.count;
+  const p = new Perf({ scene, settings: { get: () => true } });
+  const merged = p.batchStatic(scene);
+  assert.equal(merged, 4); assert.equal(p.stats.batches, 1);
+  const b = scene.children.find((o) => o.name === 'staticBatch');
+  assert.equal(b.material, mat, 'mesmo material (mesma textura)'); assert.equal(b.material.map, tex);
+  assert.equal(b.geometry.attributes.position.count, verts0); assert.ok(b.geometry.attributes.uv, 'UVs preservadas');
+  const bb = new THREE.Box3().setFromBufferAttribute(b.geometry.attributes.position);
+  assert.ok(Math.abs(bb.min.x - 0.5) < 1e-6 && Math.abs(bb.max.x - 7.5) < 1e-6 && Math.abs(bb.max.y - 2) < 1e-6, 'posições em mundo idênticas');
+  assert.ok(door.parent === scene, 'porta (não agrupável) continua solta');
+  assert.equal(scene.children.filter((o) => o.material === glass).length, 2, 'transparentes não são fundidos');
+  assert.equal(p.batchStatic(scene), 0, 'idempotente');
+  const off = new Perf({ scene: new THREE.Scene(), settings: { get: (k) => k !== 'staticBatch' } });
+  assert.equal(off.batchStatic(), 0);
+});
+test('Desempenho: esqueleto congelado mantém a pose e segue a raiz', () => {
+  const root = new THREE.Group(), arm = new THREE.Group(), hand = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1));
+  root.add(arm); arm.add(hand); arm.position.set(0, 1, 0); arm.rotation.z = 0.5; hand.position.set(0, -0.5, 0);
+  freezeRig(root, true); const w0 = new THREE.Vector3().setFromMatrixPosition(hand.matrixWorld);
+  assert.equal(arm.matrixAutoUpdate, false);
+  arm.rotation.z = 2; root.position.y = -1; root.updateMatrixWorld(true);
+  const w1 = new THREE.Vector3().setFromMatrixPosition(hand.matrixWorld);
+  assert.ok(Math.abs(w1.y - (w0.y - 1)) < 1e-6 && Math.abs(w1.x - w0.x) < 1e-6, 'pose congelada, raiz livre');
+  freezeRig(root, false); assert.equal(arm.matrixAutoUpdate, true);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
