@@ -18,6 +18,7 @@ import { attackClipTime, ATTACK_CLIPS, ACTION_CLIPS, CONFIG_MACHADO, CLIP } from
 import { readFileSync } from 'node:fs';
 import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
 import { prepareClips, makeIdleClips } from '../../src/gameplay/EliasModel.js';
+import { ENEMY_MODELS, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
 
 let ok = 0, fail = 0;
 function test(name, fn) {
@@ -1589,6 +1590,33 @@ test('Desempenho: esqueleto congelado mantém a pose e segue a raiz', () => {
   const w1 = new THREE.Vector3().setFromMatrixPosition(hand.matrixWorld);
   assert.ok(Math.abs(w1.y - (w0.y - 1)) < 1e-6 && Math.abs(w1.x - w0.x) < 1e-6, 'pose congelada, raiz livre');
   freezeRig(root, false); assert.equal(arm.matrixAutoUpdate, true);
+});
+
+const glbJson = (path) => { const f = readFileSync(path), cl = f.readUInt32LE(12); return { magic: f.readUInt32LE(0), size: f.length, json: JSON.parse(f.subarray(20, 20 + cl).toString()) }; };
+test('Modelos de inimigo: enfermeiro=Hornbeard (Draco local), interno=infectado (pele + Walking/Running), caminhos relativos e manifesto', () => {
+  assert.equal(ENEMY_MODELS.enfermeiro.url, './models/hornbeard.glb');
+  assert.equal(ENEMY_MODELS.interno.url, './models/infectado.glb');
+  const man = JSON.parse(readFileSync('assets-src/manifest.json', 'utf8'));
+  for (const f of ['hornbeard.glb', 'infectado.glb']) assert.ok(man.assets.some((a) => a.out === 'public/models/' + f), 'manifesto ' + f);
+  const h = glbJson('public/models/hornbeard.glb'), i = glbJson('public/models/infectado.glb');
+  assert.equal(h.magic, 0x46546C67); assert.equal(i.magic, 0x46546C67);
+  assert.ok(h.json.extensionsUsed.includes('KHR_draco_mesh_compression'));
+  assert.ok(readFileSync('public/draco/draco_decoder.js').length > 100000, 'decodificador Draco JS local');
+  assert.equal(i.json.skins.length, 1);
+  assert.deepEqual(i.json.animations.map((a) => a.name).sort(), ['Running', 'Walking']);
+  assert.ok(i.size < 3e6, 'infectado otimizado < 3 MB');
+  assert.ok(i.json.images.every((im) => im.mimeType === 'image/jpeg'));
+});
+test('Modelos de inimigo: clipe pela velocidade, escala pela altura e fallback procedural fora do navegador', async () => {
+  const n = ['Walking', 'Running'];
+  assert.equal(pickClip(n, 3, 'chase').name, 'Running');
+  assert.equal(pickClip(n, 0.9, 'patrol').name, 'Walking');
+  assert.ok(pickClip(n, 0, 'idle').scale < 0.3);
+  assert.equal(pickClip(n, 2, 'dead'), null); assert.equal(pickClip([], 2, 'chase'), null);
+  const f = fitScale(new THREE.Box3(new THREE.Vector3(-1, -0.95, -0.2), new THREE.Vector3(1, 0.95, 0.2)), ENEMIES.enfermeiro.height);
+  assert.ok(Math.abs(f.s * 1.9 - 1.95) < 1e-6 && Math.abs(f.y - 0.95 * f.s) < 1e-6);
+  assert.equal(enemyModelsEnabled(), false);
+  assert.equal(await attachEnemyModel({ def: ENEMIES.interno }), false);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

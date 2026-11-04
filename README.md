@@ -301,6 +301,12 @@ Primeira fatia da lista FALTA: a trilha antiga (um pulso de serra) deu lugar a u
   - **Manifestação**: coroa de espinhos de cinza, esporões nos ombros, garras e **veias de brasa** que pulsam com o núcleo (mais fortes quando ela fica exposta). Ela solta um rastro de cinza e fagulhas.
 - *(unit: 77 testes, 6 novos: predefinições, resolveGfx, persistência, qualidade de partículas, fade e aberturas seguras contra paredes. smoke: Média/Ultra/Baixa/Personalizada aplicadas de verdade no renderer e salvas; despawn de corpo com poça; cinemática do Cap. 1 com cartela, fade, legenda e pular; abertura do Cap. 2 e desligar a opção; modelos de Helena, Inês, Vernet e Manifestação no Cap. 8)*
 
+### Inimigos com modelo GLB (pt50u)
+- **Enfermeiro Corrompido** usa `public/models/hornbeard.glb` (Hornbeard, Draco + WebP, 1,4 MB). O decodificador Draco é servido localmente (`public/draco/`, versão JS), sem CDN.
+- **Interno** (o primeiro inimigo do Cap.1) usa `public/models/infectado.glb`: o modelo enviado tinha 15,3 MB e foi reempacotado para 2,1 MB (texturas 2048→1024 JPEG q88, mesma malha, ossos e clipes) com `scripts/optimize_glb.py`. Os clipes `Walking`/`Running` são escolhidos pela velocidade, sem root motion.
+- `src/models/EnemyModels.js` carrega cada modelo uma vez (cache) e clona por inimigo (SkeletonUtils para os que têm pele). O GLB fica preso ao corpo do rig procedural, que continua invisível e cuida da IA, das hitboxes e da queda na morte. Ataque, agarrão e atordoamento inclinam o corpo do modelo. Se o arquivo falhar (ou com `?enemyglb=0`), o inimigo volta ao visual procedural. O Rastejador segue procedural.
+- Os binários ficam em `assets-src/*.b64.part*` e são remontados por `scripts/assets.mjs` antes do build.
+
 ### Desempenho sem piorar texturas (pt48u/pt49u)
 
 Todos os truques ficam em `src/render/Perf.js`. **Nenhum mexe em textura**: os mapas, a resolução, a filtragem e o anisotrópico continuam os mesmos, e o smoke confere isso em todas as trocas de opção.

@@ -112,6 +112,28 @@ try {
   check('Gráficos: "Ultra" liga sombras suaves em até 3 luzes, cenário projetando sombra, FXAA e escala 1,25', gfx.ultra.preset === 'ultra' && gfx.ultra.soft && gfx.ultra.shadowCasters >= 1 && gfx.ultra.shadowCasters <= 3 && gfx.ultra.worldCasters > 0 && gfx.ultra.fxaa && gfx.ultra.scale === 1.25 && gfx.ultra.pool === 360 && gfx.ultra.composerRenders > gfx.def.composerRenders, JSON.stringify(gfx.ultra));
   check('Gráficos: "Baixa" desliga sombras, pós-processamento e poeira, reduz partículas e é salva', gfx.baixa.preset === 'baixa' && !gfx.baixa.shadowMap && !gfx.baixa.composer && gfx.baixa.shadowCasters === 0 && gfx.baixa.worldCasters === 0 && gfx.baixa.dust === 0 && gfx.baixa.pool === 120 && gfx.pool === 120 && gfx.saved.shadows === 'off' && gfx.saved.renderScale === 0.5, JSON.stringify({ b: gfx.baixa, s: gfx.saved }));
   check('Gráficos: mexer num ajuste vira "Personalizada" e aplica (bloom liga o composer)', gfx.custom.preset === 'custom' && gfx.custom.d.bloom && gfx.custom.d.composer && /Baixa/.test(gfx.info), JSON.stringify(gfx.custom));
+  // pt50u: enfermeiro (Hornbeard) e interno (infectado) com modelo GLB por cima do rig procedural
+  const eglb = await page.evaluate(async () => {
+    const g = __ocdc, out = { kinds: {} };
+    await Promise.all(g.enemies.map((e) => e.glbReady));
+    for (const e of g.enemies) {
+      const k = e.def.mats; if ((k !== 'interno' && k !== 'enfermeiro') || e.despawned || e.def.crawler) continue;
+      const o = out.kinds[k] || (out.kinds[k] = { n: 0, glb: 0, hiddenOk: 0, inBody: 0, height: 0, mixer: 0 });
+      o.n++; if (!e.glb) continue; o.glb++;
+      if (e.glb.hidden.length > 0 && e.glb.hidden.every((m) => !m.visible)) o.hiddenOk++;
+      if (e.glb.holder.parent === e.rig.body) o.inBody++;
+      if (e.glb.mixer) o.mixer++;
+      o.height = Math.max(o.height, +e.glb.height.toFixed(2));
+    }
+    const inf = g.enemies.find((e) => e.glb?.mixer && e.alive);
+    if (inf) { inf.speed = 1; const bone = inf.glb.model.getObjectByProperty('isBone', true); const q0 = bone.quaternion.clone(); for (let i = 0; i < 20; i++) inf._animate(1 / 30, 1.0); out.clip = inf.glb.cur?.getClip().name; out.boneMoved = bone.quaternion.angleTo(q0) > 1e-3; }
+    out.vol = g.enemies.filter((e) => e.glb).every((e) => Array.isArray(e.hurtVolumes() ?? []));
+    return out;
+  }).catch((e) => ({ err: String(e) }));
+  check('Inimigos GLB: interno do Cap.1 com o infectado (pele + clipe Walking animando os ossos) e procedural escondido; IA/hitboxes iguais',
+    eglb.kinds?.interno?.n > 0 && eglb.kinds.interno.glb === eglb.kinds.interno.n && eglb.kinds.interno.hiddenOk === eglb.kinds.interno.n && eglb.kinds.interno.mixer === eglb.kinds.interno.n && eglb.clip === 'Walking' && eglb.boneMoved && eglb.vol, JSON.stringify(eglb));
+  check('Inimigos GLB: enfermeiro com o Hornbeard (Draco local), preso ao corpo do rig e na altura do arquétipo',
+    eglb.kinds?.enfermeiro?.n > 0 && eglb.kinds.enfermeiro.glb === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.inBody === eglb.kinds.enfermeiro.n && Math.abs(eglb.kinds.enfermeiro.height - 1.95) < 0.15, JSON.stringify(eglb));
   // pt48u: otimizações que não mexem nas texturas
   const perf = await page.evaluate(() => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
