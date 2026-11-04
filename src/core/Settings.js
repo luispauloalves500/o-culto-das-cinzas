@@ -9,12 +9,19 @@ export const DEFAULT_SETTINGS = {
   fov: 65,
   shake: true,
   showFps: false,
-  // gráficos (src/render/Graphics.js): preset Média equilibrado (bom visual + desempenho)
+  // gráficos (src/render/Graphics.js): o padrão é a predefinição "Média"
   shadows: 'baixa',
   particles: 'media',
   bloom: true,
   postfx: true,
   antialias: false,
+  // pt48u (src/render/Perf.js): luzes dinâmicas por quadro e distância de desenho (entram nas predefinições);
+  // limite de FPS, economia em menus e agrupamento do cenário estático (fora das predefinições)
+  lightBudget: 8,
+  drawDist: 'auto',
+  fpsCap: 0,
+  ecoMenus: true,
+  staticBatch: true,
   // corpos de inimigos somem depois de N segundos (0 = nunca)
   corpseTime: 20,
   cinematics: true,
