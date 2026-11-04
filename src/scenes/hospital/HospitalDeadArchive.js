@@ -54,20 +54,20 @@ function rooms(L) {
   const b = L.b, M = L.M;
   // estantes altas (bloqueiam a visão) com caixas de prontuários
   for (const x of [38.0, 40.6, 43.2]) {
-    b.box(x, LO, -0.8, x + 0.6, LO + 2.5, 6.0, 'metal', P);
+    b.sbox(x, LO, -0.8, x + 0.6, LO + 2.5, 6.0, 'metal', P);
     for (let i = 0; i < 18; i++) {
       const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.26, 0.38), (i % 3) ? M.paper : M.wood);
       m.position.set(x + 0.3, LO + 0.4 + (i % 3) * 0.8, -0.4 + Math.floor(i / 3) * 1.15); m.rotation.y = (i % 5 - 2) * 0.05; b.group.add(m);
     }
   }
   // caixas caídas, papéis no chão
-  b.box(44.6, LO, 4.2, 45.4, LO + 0.45, 5.0, 'wood', PL);
+  b.sbox(44.6, LO, 4.2, 45.4, LO + 0.45, 5.0, 'wood', PL);
   for (let i = 0; i < 16; i++) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.3), M.paper); m.rotation.x = -Math.PI / 2; m.rotation.z = i * 0.7;
     m.position.set(36.6 + ((i * 37) % 90) / 10, LO + 0.012, -1.8 + ((i * 53) % 110) / 10); b.group.add(m);
   }
   // mesa de consulta (frente)
-  b.box(44.2, LO, 8.6, 45.8, LO + 0.8, 9.7, 'woodDark', PL);
+  b.sbox(44.2, LO, 8.6, 45.8, LO + 0.8, 9.7, 'woodDark', PL);
   // arquivo deslizante (móvel) com volante quebrado e encaixe quadrado de manivela
   const R = ROLLING, gr = new THREE.Group();
   const body = new THREE.Mesh(new THREE.BoxGeometry(R.x1 - R.x0, 2.4, R.z1 - R.z0), M.steelDark); body.position.y = 1.2; body.castShadow = true; gr.add(body);
@@ -82,14 +82,14 @@ function rooms(L) {
   const col = L.game.col.addBox(R.x0, LO, R.z0, R.x1, LO + 2.4, R.z1, { tag: 'prop', blocksSight: true });
   L.rolling = { group: gr, collider: col, handle, x: gr.position.x };
   // trilhos no chão
-  for (const z of [-2.85, -2.35]) b.box(36.6, LO, z - 0.02, 42.6, LO + 0.03, z + 0.02, 'steel', NC);
+  for (const z of [-2.85, -2.35]) b.sbox(36.6, LO, z - 0.02, 42.6, LO + 0.03, z + 0.02, 'steel', NC);
   // SALA DE BATISMO: pia batismal de pedra cheia de cinza, velas, pequenas pulseiras penduradas
-  b.box(FONT.x - 0.6, LO, FONT.z - 0.6, FONT.x + 0.6, LO + 0.9, FONT.z + 0.6, 'stone', PL);
+  b.sbox(FONT.x - 0.6, LO, FONT.z - 0.6, FONT.x + 0.6, LO + 0.9, FONT.z + 0.6, 'stone', PL);
   const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.04, 14), M.ash); ash.position.set(FONT.x, LO + 0.88, FONT.z); b.group.add(ash);
   L.fontAsh = ash; // escurece depois da revelação RN 0
-  b.box(38.2, LO, -6.4, 39.4, LO + 0.9, -5.6, 'woodDark', PL);                       // altar lateral (recompensa)
+  b.sbox(38.2, LO, -6.4, 39.4, LO + 0.9, -5.6, 'woodDark', PL);                       // altar lateral (recompensa)
   for (const [x, z] of [[38.4, -6.2], [39.2, -6.2], [42.8, -6.3], [43.6, -3.4]]) {
-    b.box(x - 0.03, LO + (x < 40 ? 0.9 : 0), z - 0.03, x + 0.03, LO + (x < 40 ? 1.08 : 0.2), z + 0.03, 'candle', NC);
+    b.sbox(x - 0.03, LO + (x < 40 ? 0.9 : 0), z - 0.03, x + 0.03, LO + (x < 40 ? 1.08 : 0.2), z + 0.03, 'candle', NC);
   }
   for (let i = 0; i < 12; i++) {
     const m = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.006, 4, 10), M.paper);

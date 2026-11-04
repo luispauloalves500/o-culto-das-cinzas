@@ -123,8 +123,8 @@ export class CidadeLevel {
   // porta de enrolar arriada numa fachada (decoração) + letreiro
   _shutter(x, z0, z1, side, name) {
     const b = this.b, d = side > 0 ? 0.04 : -0.04;
-    b.box(Math.min(x, x + d), Y, z0, Math.max(x, x + d), Y + 2.6, z1, 'rust', { collide: false });
-    for (let y = 0.3; y < 2.6; y += 0.3) b.box(Math.min(x, x + d * 1.5), Y + y, z0, Math.max(x, x + d * 1.5), Y + y + 0.03, z1, 'metal', { collide: false });
+    b.sbox(Math.min(x, x + d), Y, z0, Math.max(x, x + d), Y + 2.6, z1, 'rust', { collide: false });
+    for (let y = 0.3; y < 2.6; y += 0.3) b.sbox(Math.min(x, x + d * 1.5), Y + y, z0, Math.max(x, x + d * 1.5), Y + y + 0.03, z1, 'metal', { collide: false });
     if (name) this.sign(name, x + d * 2, Y + 3.0, (z0 + z1) / 2, side > 0 ? Math.PI / 2 : -Math.PI / 2, Math.min(2.4, z1 - z0), 0.34, { bg: '#2a2620', fg: '#b8a888' });
   }
 
@@ -134,21 +134,21 @@ export class CidadeLevel {
     b.floor(4, 0, 10, 10, Y, 'concrete', 'c4_beco');
     b.floor(4, 10, 10, 50, Y, 'stone', 'c4_rua');
     // fundo do beco: prédio desabado (paredão de tijolo e entulho)
-    b.box(4, Y, -0.6, 10, Y + 6, 0, 'brick');
-    b.box(4.2, Y, 0, 6.4, Y + 1.0, 1.4, 'concrete', { tag: 'prop-low', sight: false });
-    b.box(8.8, Y, 0, 10, Y + 0.6, 1.0, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(4, Y, -0.6, 10, Y + 6, 0, 'brick');
+    b.sbox(4.2, Y, 0, 6.4, Y + 1.0, 1.4, 'concrete', { tag: 'prop-low', sight: false });
+    b.sbox(8.8, Y, 0, 10, Y + 0.6, 1.0, 'woodDark', { tag: 'prop-low', sight: false });
     // bueiro aberto por onde Elias saiu das catacumbas (tampa de ferro ao lado)
     const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.04, 12), this.M.coal); ring.position.set(7, Y + 0.02, 2.2); b.group.add(ring);
     const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.05, 12), new THREE.MeshBasicMaterial({ color: 0x030303 })); hole.position.set(7, Y + 0.03, 2.2); b.group.add(hole);
     const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.05, 12), this.M.rust); lid.position.set(5.9, Y + 0.03, 2.9); b.group.add(lid);
     // fachadas a oeste (x = 4): sobrados com portas de enrolar; a farmácia no meio (porta em z 23)
-    b.box(3.6, Y, 0, 4, Y + 7, 18, 'wall');
+    b.sbox(3.6, Y, 0, 4, Y + 7, 18, 'wall');
     b.wallZ(4, 18, 28, Y, Y + 6.5, [23], 'wallLower', 1.4, 2.3);
-    b.box(3.6, Y, 28, 4, Y + 7.5, 50, 'brick');
+    b.sbox(3.6, Y, 28, 4, Y + 7.5, 50, 'brick');
     // fachadas a leste (x = 10): a relojoaria entre z 30 e 40 (porta em z 35), o muro do pátio depois
-    b.box(10, Y, 0, 10.4, Y + 6.5, 30, 'wallLower');
+    b.sbox(10, Y, 0, 10.4, Y + 6.5, 30, 'wallLower');
     b.wallZ(10, 30, 40, Y, Y + 6, [35], 'wall', 1.4, 2.3);
-    b.box(10, Y, 40, 10.4, Y + 4, 50, 'brick');
+    b.sbox(10, Y, 40, 10.4, Y + 4, 50, 'brick');
     // vitrines e letreiros
     this._shutter(4.0, 4, 8, 1, 'ARMARINHO SÃO JOSÉ');
     this._shutter(4.0, 11, 16, 1, 'BARBEARIA');
@@ -158,31 +158,31 @@ export class CidadeLevel {
     this._shutter(10.0, 12, 18, -1, 'ALFAIATARIA MODELO');
     this._shutter(10.0, 21, 27, -1, 'BAZAR');
     this.sign('FARMÁCIA CENTRAL', 4.06, Y + 2.9, 23, Math.PI / 2, 2.6, 0.4, { bg: '#1e3020', fg: '#c8e0b0' });
-    b.box(4.0, Y + 0.9, 19.0, 4.06, Y + 2.2, 21.8, 'glass', { collide: false });
-    b.box(4.0, Y + 0.9, 24.2, 4.06, Y + 2.2, 27.0, 'glass', { collide: false });
+    b.sbox(4.0, Y + 0.9, 19.0, 4.06, Y + 2.2, 21.8, 'glass', { collide: false });
+    b.sbox(4.0, Y + 0.9, 24.2, 4.06, Y + 2.2, 27.0, 'glass', { collide: false });
     this.sign('RELOJOARIA PONTEIRO', 9.94, Y + 2.9, 35, -Math.PI / 2, 2.6, 0.4, { bg: '#2a2010', fg: '#e0c070' });
-    b.box(9.94, Y + 0.9, 31.0, 10.0, Y + 2.2, 33.8, 'glass', { collide: false });
-    b.box(9.94, Y + 0.9, 36.2, 10.0, Y + 2.2, 39.0, 'glass', { collide: false });
+    b.sbox(9.94, Y + 0.9, 31.0, 10.0, Y + 2.2, 33.8, 'glass', { collide: false });
+    b.sbox(9.94, Y + 0.9, 36.2, 10.0, Y + 2.2, 39.0, 'glass', { collide: false });
     // relógio de rua pendurado na fachada da relojoaria — parado, como todos
     this.clockFace(9.6, Y + 4.4, 35, 0.55, -Math.PI / 2);
     this.sign('RUA DO COMÉRCIO', 4.06, Y + 3.4, 9.5, Math.PI / 2, 1.8, 0.26, { bg: '#20304a', fg: '#e0e0d0' });
     // calçadas e meio-fio
-    b.box(4, Y, 10, 5.0, Y + 0.12, 50, 'concrete', { collide: false });
-    b.box(9.0, Y, 10, 10, Y + 0.12, 50, 'concrete', { collide: false });
+    b.sbox(4, Y, 10, 5.0, Y + 0.12, 50, 'concrete', { collide: false });
+    b.sbox(9.0, Y, 10, 10, Y + 0.12, 50, 'concrete', { collide: false });
     // carro abandonado, coberto de cinza, e entulho
-    b.box(7.6, Y, 15.5, 9.3, Y + 1.35, 19.6, 'rust', { tag: 'obstacle', cast: true });
-    b.box(7.7, Y + 1.35, 16.6, 9.2, Y + 1.5, 18.6, 'ash', { collide: false });
-    b.box(5.0, Y, 29.0, 6.2, Y + 0.8, 30.2, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
-    b.box(8.6, Y, 41.0, 9.6, Y + 1.0, 42.0, 'metal', { tag: 'prop-low', sight: false });   // lixeira
+    b.sbox(7.6, Y, 15.5, 9.3, Y + 1.35, 19.6, 'rust', { tag: 'obstacle', cast: true });
+    b.sbox(7.7, Y + 1.35, 16.6, 9.2, Y + 1.5, 18.6, 'ash', { collide: false });
+    b.sbox(5.0, Y, 29.0, 6.2, Y + 0.8, 30.2, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
+    b.sbox(8.6, Y, 41.0, 9.6, Y + 1.0, 42.0, 'metal', { tag: 'prop-low', sight: false });   // lixeira
     // montes de cinza junto aos muros
-    for (const [x, z, w] of [[4.3, 13, 1.2], [9.6, 24, 1.4], [4.4, 37, 1.0], [9.5, 45, 1.2]]) b.box(x - w / 2, Y, z - w, x + w / 2, Y + 0.2, z + w, 'ash', { collide: false });
+    for (const [x, z, w] of [[4.3, 13, 1.2], [9.6, 24, 1.4], [4.4, 37, 1.0], [9.5, 45, 1.2]]) b.sbox(x - w / 2, Y, z - w, x + w / 2, Y + 0.2, z + w, 'ash', { collide: false });
     // lampiões a gás (postes)
-    for (const [x, z] of [[5.2, 14], [8.8, 30], [5.2, 42]]) b.box(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.6, z + 0.06, 'metal', { tag: 'prop' });
+    for (const [x, z] of [[5.2, 14], [8.8, 30], [5.2, 42]]) b.sbox(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.6, z + 0.06, 'metal', { tag: 'prop' });
     // BARRICADA: o bonde da Linha 2 tombado de lado atravessa a rua, com sacos e uma carroça
-    b.box(4, Y, 46, 10, Y + 2.7, 48.6, 'rust', { tag: 'obstacle', cast: true });
-    for (let x = 4.6; x < 9.6; x += 1.4) b.box(x, Y + 1.0, 45.96, x + 0.9, Y + 1.8, 46.0, 'glass', { collide: false }); // janelas viradas
-    b.box(4, Y, 44.6, 6.4, Y + 0.8, 45.6, 'pantsGray', { tag: 'prop-low', sight: false });  // sacos de areia
-    b.box(8.4, Y, 44.4, 10, Y + 1.4, 46, 'woodDark', { tag: 'obstacle' });                   // carroça
+    b.sbox(4, Y, 46, 10, Y + 2.7, 48.6, 'rust', { tag: 'obstacle', cast: true });
+    for (let x = 4.6; x < 9.6; x += 1.4) b.sbox(x, Y + 1.0, 45.96, x + 0.9, Y + 1.8, 46.0, 'glass', { collide: false }); // janelas viradas
+    b.sbox(4, Y, 44.6, 6.4, Y + 0.8, 45.6, 'pantsGray', { tag: 'prop-low', sight: false });  // sacos de areia
+    b.sbox(8.4, Y, 44.4, 10, Y + 1.4, 46, 'woodDark', { tag: 'obstacle' });                   // carroça
     this.sign('LINHA 2 — PRAÇA DO RELÓGIO', 7, Y + 2.2, 45.95, Math.PI, 2.6, 0.26, { bg: '#2a2016', fg: '#d0a060' });
   }
 
@@ -195,17 +195,17 @@ export class CidadeLevel {
     b.wallX(18, -4, 4, Y, Y + H_SHOP, [], 'wallLower');
     b.wallX(28, -4, 4, Y, Y + H_SHOP, [], 'wallLower');
     // balcão de madeira (o caixa fica sobre ele) e as prateleiras de vidros atrás
-    b.box(-1.2, Y, 19.4, -0.4, Y + 1.05, 26.0, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(-4, Y, 19, -3.5, Y + 2.6, 27.4, 'woodDark', { tag: 'prop' });
-    for (let z = 19.3; z < 27; z += 0.45) for (const y of [0.9, 1.5, 2.1]) b.box(-3.48, Y + y, z, -3.36, Y + y + 0.24, z + 0.18, 'glass', { collide: false });
+    b.sbox(-1.2, Y, 19.4, -0.4, Y + 1.05, 26.0, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(-4, Y, 19, -3.5, Y + 2.6, 27.4, 'woodDark', { tag: 'prop' });
+    for (let z = 19.3; z < 27; z += 0.45) for (const y of [0.9, 1.5, 2.1]) b.sbox(-3.48, Y + y, z, -3.36, Y + y + 0.24, z + 0.18, 'glass', { collide: false });
     this.sign('MANIPULAÇÃO', -3.46, Y + 2.85, 23, Math.PI / 2, 1.4, 0.24, { bg: '#c9c2a4', fg: '#1e3020' });
     // caixa registradora (gaveta) e balança
-    b.box(-1.05, Y + 1.05, 21.1, -0.55, Y + 1.35, 21.9, 'metal', { collide: false });
-    b.box(-1.0, Y + 1.05, 24.4, -0.6, Y + 1.25, 24.9, 'brass', { collide: false });
+    b.sbox(-1.05, Y + 1.05, 21.1, -0.55, Y + 1.35, 21.9, 'metal', { collide: false });
+    b.sbox(-1.0, Y + 1.05, 24.4, -0.6, Y + 1.25, 24.9, 'brass', { collide: false });
     // mesinha da entrada, cadeira de espera e a vitrine de frascos quebrada
-    b.box(2.4, Y, 18.4, 3.6, Y + 0.85, 19.6, 'wood', { tag: 'prop-low', sight: false });
-    b.box(2.6, Y, 26.4, 3.4, Y + 0.5, 27.2, 'wood', { tag: 'prop-low', sight: false });
-    b.box(0.6, Y, 27.2, 3.0, Y + 1.0, 27.8, 'glass', { tag: 'prop-low', sight: false });
+    b.sbox(2.4, Y, 18.4, 3.6, Y + 0.85, 19.6, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(2.6, Y, 26.4, 3.4, Y + 0.5, 27.2, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(0.6, Y, 27.2, 3.0, Y + 1.0, 27.8, 'glass', { tag: 'prop-low', sight: false });
     // relógio de parede, parado
     this.clockFace(1.0, Y + 2.6, 18.12, 0.3, 0);
   }
@@ -219,13 +219,13 @@ export class CidadeLevel {
     b.wallZ(18, 30, 40, Y, Y + H_SHOP, [], 'wall');
     b.wallX(40, 10, 18, Y, Y + H_SHOP, [14], 'wall');
     // vitrines de vidro (duas, deixando o corredor da porta) e a bancada do relojoeiro
-    b.box(11.4, Y, 30.6, 12.4, Y + 1.0, 34.0, 'glass', { tag: 'prop-low', sight: false });
-    b.box(11.4, Y, 36.0, 12.4, Y + 1.0, 39.4, 'glass', { tag: 'prop-low', sight: false });
-    b.box(16.9, Y, 31.0, 17.9, Y + 0.95, 35.2, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(17.1, Y + 0.95, 31.4, 17.4, Y + 1.2, 31.8, 'brass', { collide: false }); // lupa/torno
+    b.sbox(11.4, Y, 30.6, 12.4, Y + 1.0, 34.0, 'glass', { tag: 'prop-low', sight: false });
+    b.sbox(11.4, Y, 36.0, 12.4, Y + 1.0, 39.4, 'glass', { tag: 'prop-low', sight: false });
+    b.sbox(16.9, Y, 31.0, 17.9, Y + 0.95, 35.2, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(17.1, Y + 0.95, 31.4, 17.4, Y + 1.2, 31.8, 'brass', { collide: false }); // lupa/torno
     // parede de relógios (todos às 3h07) e o relógio de pé no canto
     for (let i = 0; i < 6; i++) this.clockFace(17.88, Y + 1.7 + (i % 2) * 0.75, 36.0 + Math.floor(i / 2) * 1.2, 0.26, -Math.PI / 2);
-    b.box(10.5, Y, 39.0, 11.3, Y + 2.4, 39.8, 'woodDark', { tag: 'prop' });
+    b.sbox(10.5, Y, 39.0, 11.3, Y + 2.4, 39.8, 'woodDark', { tag: 'prop' });
     this.clockFace(10.9, Y + 1.9, 38.98, 0.24, Math.PI);
     this.sign('CONSERTOS — PRONTOS ÀS 3H', 14, Y + 2.9, 30.12, 0, 2.2, 0.26, { bg: '#2a2010', fg: '#e0c070' });
   }
@@ -234,15 +234,15 @@ export class CidadeLevel {
   _yard() {
     const b = this.b;
     b.floor(10.4, 40, 18, 50, Y, 'concrete', 'c4_patio');
-    b.box(18, Y, 40, 18.4, Y + 4.5, 50, 'brick');
+    b.sbox(18, Y, 40, 18.4, Y + 4.5, 50, 'brick');
     b.wallX(50, 10, 18, Y, Y + 4.5, [14], 'brick', 1.8, 2.9);
-    b.box(12.9, Y + 2.9, 49.7, 15.1, Y + 3.2, 50.3, 'stone', { collide: false }); // verga do arco
+    b.sbox(12.9, Y + 2.9, 49.7, 15.1, Y + 3.2, 50.3, 'stone', { collide: false }); // verga do arco
     // caixotes e um varal com lençóis cinzentos
-    b.box(16.4, Y, 43.4, 17.8, Y + 1.1, 44.8, 'woodDark', { tag: 'obstacle' });
-    b.box(10.6, Y, 46.4, 11.8, Y + 0.9, 47.6, 'woodDark', { tag: 'prop-low', sight: false });
-    for (const x of [10.8, 17.6]) b.box(x - 0.04, Y, 41.96, x + 0.04, Y + 2.4, 42.04, 'metal', { collide: false });
-    b.box(10.8, Y + 2.3, 41.99, 17.6, Y + 2.32, 42.01, 'metal', { collide: false });
-    for (const x of [12, 14.2, 16.1]) b.box(x, Y + 1.3, 41.98, x + 1.2, Y + 2.3, 42.02, 'sheet', { collide: false });
+    b.sbox(16.4, Y, 43.4, 17.8, Y + 1.1, 44.8, 'woodDark', { tag: 'obstacle' });
+    b.sbox(10.6, Y, 46.4, 11.8, Y + 0.9, 47.6, 'woodDark', { tag: 'prop-low', sight: false });
+    for (const x of [10.8, 17.6]) b.sbox(x - 0.04, Y, 41.96, x + 0.04, Y + 2.4, 42.04, 'metal', { collide: false });
+    b.sbox(10.8, Y + 2.3, 41.99, 17.6, Y + 2.32, 42.01, 'metal', { collide: false });
+    for (const x of [12, 14.2, 16.1]) b.sbox(x, Y + 1.3, 41.98, x + 1.2, Y + 2.3, 42.02, 'sheet', { collide: false });
   }
 
   // ---------- PRAÇA DO RELÓGIO x0..30 z50..76 ----------
@@ -250,33 +250,33 @@ export class CidadeLevel {
     const b = this.b;
     b.floor(0, 50, 30, 76, Y, 'stone', 'c4_praca');
     b.floor(4, 48.6, 10, 50, Y, 'stone', 'c4_praca_b');
-    b.box(-0.4, Y, 49.6, 0, Y + 8, 76.4, 'wall');
-    b.box(30, Y, 49.6, 30.4, Y + 8, 76.4, 'brick');
-    b.box(0, Y, 49.6, 4, Y + 7, 50, 'wallLower');
-    b.box(18.4, Y, 49.6, 30, Y + 7, 50, 'wall');
-    b.box(0, Y, 76, 11, Y + 9, 76.4, 'wall');
-    b.box(19, Y, 76, 30, Y + 9, 76.4, 'wallLower');
+    b.sbox(-0.4, Y, 49.6, 0, Y + 8, 76.4, 'wall');
+    b.sbox(30, Y, 49.6, 30.4, Y + 8, 76.4, 'brick');
+    b.sbox(0, Y, 49.6, 4, Y + 7, 50, 'wallLower');
+    b.sbox(18.4, Y, 49.6, 30, Y + 7, 50, 'wall');
+    b.sbox(0, Y, 76, 11, Y + 9, 76.4, 'wall');
+    b.sbox(19, Y, 76, 30, Y + 9, 76.4, 'wallLower');
     // casario em volta (janelas escuras, uma ou outra com vidro)
-    for (const [x0, x1] of [[1, 4], [5, 9], [21, 25], [26, 29]]) b.box(x0, Y + 3.2, 75.96, x1, Y + 4.6, 76.0, 'glass', { collide: false });
-    for (const z of [55, 61, 67, 72]) { b.box(0.0, Y + 3.0, z, 0.04, Y + 4.4, z + 2, 'glass', { collide: false }); b.box(29.96, Y + 3.0, z, 30.0, Y + 4.4, z + 2, 'glass', { collide: false }); }
+    for (const [x0, x1] of [[1, 4], [5, 9], [21, 25], [26, 29]]) b.sbox(x0, Y + 3.2, 75.96, x1, Y + 4.6, 76.0, 'glass', { collide: false });
+    for (const z of [55, 61, 67, 72]) { b.sbox(0.0, Y + 3.0, z, 0.04, Y + 4.4, z + 2, 'glass', { collide: false }); b.sbox(29.96, Y + 3.0, z, 30.0, Y + 4.4, z + 2, 'glass', { collide: false }); }
     // chafariz seco, cheio de cinza (bacia + coluna) — obstáculo
-    b.box(12.8, Y, 59.8, 17.2, Y + 0.9, 64.2, 'stone', { tag: 'obstacle' });
-    b.box(13.1, Y + 0.6, 60.1, 16.9, Y + 0.85, 63.9, 'ash', { collide: false });
-    b.box(14.6, Y, 61.6, 15.4, Y + 2.8, 62.4, 'stone', { tag: 'obstacle' });
-    b.box(14.2, Y + 2.8, 61.2, 15.8, Y + 3.0, 62.8, 'stone', { collide: false });
+    b.sbox(12.8, Y, 59.8, 17.2, Y + 0.9, 64.2, 'stone', { tag: 'obstacle' });
+    b.sbox(13.1, Y + 0.6, 60.1, 16.9, Y + 0.85, 63.9, 'ash', { collide: false });
+    b.sbox(14.6, Y, 61.6, 15.4, Y + 2.8, 62.4, 'stone', { tag: 'obstacle' });
+    b.sbox(14.2, Y + 2.8, 61.2, 15.8, Y + 3.0, 62.8, 'stone', { collide: false });
     // pedestais: o do fundador (estátua sem cabeça) e um vazio; banca de jornais fechada
-    b.box(4.8, Y, 66.8, 7.2, Y + 1.6, 69.2, 'stone', { tag: 'obstacle' });
-    b.box(5.5, Y + 1.6, 67.6, 6.5, Y + 3.6, 68.4, 'concrete', { collide: false });
-    b.box(22.8, Y, 66.8, 25.2, Y + 1.6, 69.2, 'stone', { tag: 'obstacle' });
-    b.box(22.8, Y, 55, 25.2, Y + 2.4, 57, 'woodDark', { tag: 'obstacle' });
-    b.box(22.6, Y + 2.4, 54.8, 25.4, Y + 2.55, 57.2, 'rust', { collide: false });
+    b.sbox(4.8, Y, 66.8, 7.2, Y + 1.6, 69.2, 'stone', { tag: 'obstacle' });
+    b.sbox(5.5, Y + 1.6, 67.6, 6.5, Y + 3.6, 68.4, 'concrete', { collide: false });
+    b.sbox(22.8, Y, 66.8, 25.2, Y + 1.6, 69.2, 'stone', { tag: 'obstacle' });
+    b.sbox(22.8, Y, 55, 25.2, Y + 2.4, 57, 'woodDark', { tag: 'obstacle' });
+    b.sbox(22.6, Y + 2.4, 54.8, 25.4, Y + 2.55, 57.2, 'rust', { collide: false });
     this.sign('JORNAIS · REVISTAS', 24, Y + 2.1, 54.98, Math.PI, 1.8, 0.24, { bg: '#c9c2a4', fg: '#3a1010' });
     // bancos de pedra
-    for (const [x, z] of [[3, 57], [26, 71], [3, 72]]) b.box(x - 1.0, Y, z - 0.3, x + 1.0, Y + 0.48, z + 0.3, 'stone', { tag: 'prop-low', sight: false });
+    for (const [x, z] of [[3, 57], [26, 71], [3, 72]]) b.sbox(x - 1.0, Y, z - 0.3, x + 1.0, Y + 0.48, z + 0.3, 'stone', { tag: 'prop-low', sight: false });
     // lampiões da praça
     for (const [x, z] of [[2.5, 52.5], [27.5, 52.5], [2.5, 74], [27.5, 74]]) {
-      b.box(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.8, z + 0.06, 'metal', { tag: 'prop' });
-      b.box(x - 0.16, Y + 3.7, z - 0.16, x + 0.16, Y + 4.05, z + 0.16, 'lampOn', { collide: false });
+      b.sbox(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.8, z + 0.06, 'metal', { tag: 'prop' });
+      b.sbox(x - 0.16, Y + 3.7, z - 0.16, x + 0.16, Y + 4.05, z + 0.16, 'lampOn', { collide: false });
     }
     this.sign('PRAÇA DO RELÓGIO', 14, Y + 3.5, 50.32, 0, 2.2, 0.3, { bg: '#20304a', fg: '#e0e0d0' });
   }
@@ -287,14 +287,14 @@ export class CidadeLevel {
     const b = this.b, H = 22, GY = Y + GEAR_Y;
     b.floor(11.4, 76.4, 18.6, 83.6, Y, 'stone', 'c4_torre');
     b.wallX(76.2, 11, 19, Y, Y + H, [15], 'stone', 1.6, 2.6);
-    b.box(11, Y, 76, 11.4, Y + H, 84, 'stone');
-    b.box(18.6, Y, 76, 19, Y + H, 84, 'stone');
+    b.sbox(11, Y, 76, 11.4, Y + H, 84, 'stone');
+    b.sbox(18.6, Y, 76, 19, Y + H, 84, 'stone');
     // parede norte com a porta da casa das máquinas na galeria (x 17.75, y 9..11.4)
-    b.box(11, Y, 83.6, 16.95, Y + H, 84, 'stone');
-    b.box(18.55, Y, 83.6, 19, Y + H, 84, 'stone');
-    b.box(16.95, Y, 83.6, 18.55, GY, 84, 'stone');
-    b.box(16.95, GY + 2.4, 83.6, 18.55, Y + H, 84, 'stone');
-    b.box(10.6, Y + H, 75.6, 19.4, Y + H + 0.5, 84.4, 'woodDark', { collide: false });
+    b.sbox(11, Y, 83.6, 16.95, Y + H, 84, 'stone');
+    b.sbox(18.55, Y, 83.6, 19, Y + H, 84, 'stone');
+    b.sbox(16.95, Y, 83.6, 18.55, GY, 84, 'stone');
+    b.sbox(16.95, GY + 2.4, 83.6, 18.55, Y + H, 84, 'stone');
+    b.sbox(10.6, Y + H, 75.6, 19.4, Y + H + 0.5, 84.4, 'woodDark', { collide: false });
     const roof = new THREE.Mesh(new THREE.ConeGeometry(6.2, 5, 4), this.M.rust); roof.position.set(15, Y + H + 3, 80); roof.rotation.y = Math.PI / 4; b.group.add(roof);
     // escada quadrada em caracol, colada às paredes: leste ↑ norte ← oeste ↓ sul → galeria leste
     for (const f of TOWER_FLIGHTS) {
@@ -303,27 +303,27 @@ export class CidadeLevel {
     }
     for (const [x0, z0, x1, z1, y] of TOWER_LANDINGS) b.floor(x0, z0, x1, z1, Y + y, 'woodDark', 'c4_torre');
     // alvenaria maciça sob os lances (ninguém anda por baixo da escada)
-    b.box(13.1, Y, 81.9, 16.9, Y + 2.4, 83.6, 'stone');
-    b.box(11.4, Y, 78.1, 13.1, Y + 4.4, 83.6, 'stone');
-    b.box(11.4, Y, 76.4, 13.1, Y + 6.8, 78.1, 'stone');
+    b.sbox(13.1, Y, 81.9, 16.9, Y + 2.4, 83.6, 'stone');
+    b.sbox(11.4, Y, 78.1, 13.1, Y + 4.4, 83.6, 'stone');
+    b.sbox(11.4, Y, 76.4, 13.1, Y + 6.8, 78.1, 'stone');
     // guarda-corpos internos (só colidem na altura de cada lance)
     for (const [x0, y0, z0, x1, y1, z1] of TOWER_RAILS) {
-      b.box(x0, Y + y0, z0, x1, Y + y1, z1, 'metal', { sight: false });
+      b.sbox(x0, Y + y0, z0, x1, Y + y1, z1, 'metal', { sight: false });
     }
     // varanda do Vigia (y ≈ 9) e o mostrador parado às 3h07 acima dela
-    b.box(12.5, Y + 9, 74.6, 17.5, Y + 9.25, 76, 'stone', { collide: false });
-    b.box(12.5, Y + 9.25, 74.6, 17.5, Y + 10.2, 74.7, 'metal', { collide: false });
+    b.sbox(12.5, Y + 9, 74.6, 17.5, Y + 9.25, 76, 'stone', { collide: false });
+    b.sbox(12.5, Y + 9.25, 74.6, 17.5, Y + 10.2, 74.7, 'metal', { collide: false });
     this.clockFace(15, Y + 15.5, 75.94, 2.4, Math.PI);
     this.faceHands = this.clockFace(15, Y + 15.5, 76.42, 2.2, 0); // o verso do mostrador, visto de dentro
     // campanário: abertura escura e o sino
-    b.box(13.2, Y + 18.6, 75.9, 16.8, Y + 21.4, 75.98, new THREE.MeshBasicMaterial({ color: 0x050505 }), { collide: false });
+    b.sbox(13.2, Y + 18.6, 75.9, 16.8, Y + 21.4, 75.98, new THREE.MeshBasicMaterial({ color: 0x050505 }), { collide: false });
     const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.1, 1.4, 10), this.M.brass || this.M.metal); bell.position.set(15, Y + 19.8, 76.8); b.group.add(bell);
     this.bell = bell;
     this.sign('VIGIA DE VÉSPERA · MDCCCXC', 15, Y + 3.4, 75.98, Math.PI, 3.2, 0.32, { bg: '#2a2622', fg: '#c8b080' });
     // térreo: atril com o livro de rondas e o livro de registros; correntes do pêndulo descendo pelo poço
-    b.box(14.2, Y, 80.8, 15.0, Y + 1.0, 81.5, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(15.6, Y, 80.8, 16.4, Y + 0.85, 81.5, 'woodDark', { tag: 'prop-low', sight: false });
-    for (const x of [14.4, 15.6]) b.box(x - 0.02, Y + 1.2, 79.98, x + 0.02, GY - 0.3, 80.02, 'metal', { collide: false });
+    b.sbox(14.2, Y, 80.8, 15.0, Y + 1.0, 81.5, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(15.6, Y, 80.8, 16.4, Y + 0.85, 81.5, 'woodDark', { tag: 'prop-low', sight: false });
+    for (const x of [14.4, 15.6]) b.sbox(x - 0.02, Y + 1.2, 79.98, x + 0.02, GY - 0.3, 80.02, 'metal', { collide: false });
     this.sign('CASA DAS MÁQUINAS ↑', 17.75, GY + 2.7, 83.58, Math.PI, 1.6, 0.26, { bg: '#2a2622', fg: '#c8b080' });
   }
 
@@ -332,7 +332,7 @@ export class CidadeLevel {
     const b = this.b, dx = (xBottom - xTop) / steps, dy = (yTop - yBottom) / steps;
     for (let i = 0; i < steps; i++) {
       const x0 = xBottom - dx * (i + 1), x1 = xBottom - dx * i, top = yBottom + dy * (i + 1);
-      b.box(Math.min(x0, x1), yBottom - 0.3, minZ, Math.max(x0, x1), top, maxZ, mat, { collide: false, tile: 1 });
+      b.sbox(Math.min(x0, x1), yBottom - 0.3, minZ, Math.max(x0, x1), top, maxZ, mat, { collide: false, tile: 1 });
     }
     return this.game.col.addFloor({ minX: Math.min(xTop, xBottom), maxX: Math.max(xTop, xBottom), minZ, maxZ, ramp: { axis: 'x', a: xTop, b: xBottom, ya: yTop, yb: yBottom } });
   }
@@ -341,10 +341,10 @@ export class CidadeLevel {
   _gearHall() {
     const b = this.b, M = this.M, GY = Y + GEAR_Y, top = GY + 8, P = PASSAGE;
     // corpo do prédio atrás da Torre (só visual até o piso)
-    b.box(4, Y, 84, 26, GY - 0.3, 96, 'stone', { collide: false });
-    b.box(4, Y, 96, 13.5, GY - 0.3, 100, 'stone', { collide: false });
-    b.box(16.5, Y, 96, 26, GY - 0.3, 100, 'stone', { collide: false });
-    b.box(13.5, Y, 96, 16.5, GY - P.drop - 0.5, 103.2, 'stone', { collide: false });
+    b.sbox(4, Y, 84, 26, GY - 0.3, 96, 'stone', { collide: false });
+    b.sbox(4, Y, 96, 13.5, GY - 0.3, 100, 'stone', { collide: false });
+    b.sbox(16.5, Y, 96, 26, GY - 0.3, 100, 'stone', { collide: false });
+    b.sbox(13.5, Y, 96, 16.5, GY - P.drop - 0.5, 103.2, 'stone', { collide: false });
     // piso em três peças + a chapa da passagem (que se abre depois do Vigia)
     b.floor(4, 84, 26, P.minZ, GY, 'woodDark', 'c4_maquinas');
     b.floor(4, P.minZ, P.minX, 100, GY, 'woodDark', 'c4_maquinas');
@@ -354,15 +354,15 @@ export class CidadeLevel {
     this.plateY0 = this.plate.position.y; this.plateX0 = this.plate.position.x;
     this.plate.matrixAutoUpdate = true;
     // paredes (a sul é a parede norte da Torre + dois trechos fora dela)
-    b.box(3.6, GY, 84, 4, top, 100, 'brick');
-    b.box(26, GY, 84, 26.4, top, 100, 'brick');
-    b.box(3.6, GY, 100, 26.4, top, 100.4, 'brick');
-    b.box(4, GY, 83.6, 11, top, 84, 'brick');
-    b.box(19, GY, 83.6, 26, top, 84, 'brick');
+    b.sbox(3.6, GY, 84, 4, top, 100, 'brick');
+    b.sbox(26, GY, 84, 26.4, top, 100, 'brick');
+    b.sbox(3.6, GY, 100, 26.4, top, 100.4, 'brick');
+    b.sbox(4, GY, 83.6, 11, top, 84, 'brick');
+    b.sbox(19, GY, 83.6, 26, top, 84, 'brick');
     b.ceiling(4, 84, 26, 100, top, 'woodDark');
-    for (const z of [87, 91, 95, 99]) b.box(4, top - 0.35, z - 0.18, 26, top, z + 0.18, 'woodDark', { collide: false });
+    for (const z of [87, 91, 95, 99]) b.sbox(4, top - 0.35, z - 0.18, 26, top, z + 0.18, 'woodDark', { collide: false });
     // alçapão do campanário (por onde o Vigia desce)
-    b.box(VIGIA_HATCH.x - 0.9, top - 0.02, VIGIA_HATCH.z - 0.9, VIGIA_HATCH.x + 0.9, top - 0.01, VIGIA_HATCH.z + 0.9, new THREE.MeshBasicMaterial({ color: 0x030303 }), { collide: false });
+    b.sbox(VIGIA_HATCH.x - 0.9, top - 0.02, VIGIA_HATCH.z - 0.9, VIGIA_HATCH.x + 0.9, top - 0.01, VIGIA_HATCH.z + 0.9, new THREE.MeshBasicMaterial({ color: 0x030303 }), { collide: false });
     // caixas de engrenagens (obstáculos: atordoam a investida) com rodas girando em cima
     this.gears = [];
     const gear = (x, y, z, r, axis, speed) => {
@@ -375,18 +375,18 @@ export class CidadeLevel {
       b.group.add(g); this.gears.push({ g, axis, speed }); return g;
     };
     for (const [x, z] of HALL_OBSTACLES) {
-      b.box(x - 0.8, GY, z - 0.8, x + 0.8, GY + 1.8, z + 0.8, 'metal', { tag: 'obstacle' });
+      b.sbox(x - 0.8, GY, z - 0.8, x + 0.8, GY + 1.8, z + 0.8, 'metal', { tag: 'obstacle' });
       gear(x, GY + 2.5, z, 0.75, 'z', (x < 15 ? 1 : -1) * 0.6);
     }
     // mecanismo central: armação, eixo que sobe ao mostrador, a trava do pêndulo e a manivela dos ponteiros
     const MC = MECH;
-    b.box(MC.minX, GY, MC.minZ, MC.maxX, GY + 2.2, MC.maxZ, 'steelDark', { tag: 'obstacle' });
+    b.sbox(MC.minX, GY, MC.minZ, MC.maxX, GY + 2.2, MC.maxZ, 'steelDark', { tag: 'obstacle' });
     gear(15, GY + 2.6, 93.5, 1.1, 'y', 0.4);
     gear(13.4, GY + 1.6, 93.5, 0.5, 'x', -1.0);
     gear(16.6, GY + 1.6, 93.5, 0.6, 'x', 0.8);
-    b.box(14.9, GY + 2.2, 93.4, 15.1, top, 93.6, 'metal', { collide: false });
+    b.sbox(14.9, GY + 2.2, 93.4, 15.1, top, 93.6, 'metal', { collide: false });
     // encaixe vazio da roda de escape (face sul) e a roda instalada (escondida até encaixar)
-    b.box(14.5, GY + 1.0, MC.minZ - 0.06, 15.5, GY + 2.0, MC.minZ, new THREE.MeshBasicMaterial({ color: 0x0a0806 }), { collide: false });
+    b.sbox(14.5, GY + 1.0, MC.minZ - 0.06, 15.5, GY + 2.0, MC.minZ, new THREE.MeshBasicMaterial({ color: 0x0a0806 }), { collide: false });
     this.escapeWheel = gear(15, GY + 1.5, MC.minZ - 0.12, 0.42, 'z', 2.4); this.escapeWheel.visible = false;
     // alavanca da trava (face sul, à direita)
     this.lockLever = new THREE.Group();
@@ -407,23 +407,23 @@ export class CidadeLevel {
     b.group.add(this.pendulum);
     this.pendAngle = 0; this.mechT = 0; this.mechRunning = false;
     // bancada do sineiro (leste) onde fica a roda de escape; prateleiras e caixotes
-    b.box(22.2, GY, 91.4, 25.6, GY + 0.9, 92.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(25.4, GY, 85, 26, GY + 2.2, 89, 'woodDark', { sight: false });
-    b.box(4.4, GY, 85.2, 5.6, GY + 0.8, 86.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(4.0, GY, 98.6, 6.4, GY + 1.2, 100, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(22.2, GY, 91.4, 25.6, GY + 0.9, 92.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(25.4, GY, 85, 26, GY + 2.2, 89, 'woodDark', { sight: false });
+    b.sbox(4.4, GY, 85.2, 5.6, GY + 0.8, 86.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(4.0, GY, 98.6, 6.4, GY + 1.2, 100, 'woodDark', { tag: 'prop-low', sight: false });
     // contrapeso pendurado e a corrente na parede oeste
-    b.box(4.4, GY + 3.0, 91.6, 5.2, GY + 4.4, 92.4, 'metal', { collide: false });
-    b.box(4.78, GY + 4.4, 91.98, 4.82, top, 92.02, 'metal', { collide: false });
+    b.sbox(4.4, GY + 3.0, 91.6, 5.2, GY + 4.4, 92.4, 'metal', { collide: false });
+    b.sbox(4.78, GY + 4.4, 91.98, 4.82, top, 92.02, 'metal', { collide: false });
     // janelas de luar (estreitas)
-    for (const z of [88, 96]) { b.box(26.0, GY + 3.2, z - 0.4, 26.02, GY + 5.4, z + 0.4, M.moonGlass, { collide: false }); b.box(3.98, GY + 3.2, z - 0.4, 4.0, GY + 5.4, z + 0.4, M.moonGlass, { collide: false }); }
+    for (const z of [88, 96]) { b.sbox(26.0, GY + 3.2, z - 0.4, 26.02, GY + 5.4, z + 0.4, M.moonGlass, { collide: false }); b.sbox(3.98, GY + 3.2, z - 0.4, 4.0, GY + 5.4, z + 0.4, M.moonGlass, { collide: false }); }
     this.sign('OFICINA DO RELÓGIO · ACERTO E MARTELO', 15, GY + 3.2, 99.98, Math.PI, 3.6, 0.3, { bg: '#2a2010', fg: '#e0c070' });
 
     // ---------- passagem do Relógio: escada sob a chapa, descendo para o norte ----------
     b.stairsZ(P.minX, P.maxX, P.minZ, P.stairEnd, GY, GY - P.drop, 8, 'stone');
     b.floor(P.minX, P.stairEnd, P.maxX, P.stairEnd + 1.2, GY - P.drop, 'stone', 'c4_passagem');
-    b.box(P.minX - 0.4, GY - P.drop - 0.5, P.minZ, P.minX, GY, P.stairEnd + 1.6, 'stone');
-    b.box(P.maxX, GY - P.drop - 0.5, P.minZ, P.maxX + 0.4, GY, P.stairEnd + 1.6, 'stone');
-    b.box(P.minX - 0.4, GY - P.drop - 0.5, P.stairEnd + 1.2, P.maxX + 0.4, GY + 2, P.stairEnd + 1.6, 'stone');
+    b.sbox(P.minX - 0.4, GY - P.drop - 0.5, P.minZ, P.minX, GY, P.stairEnd + 1.6, 'stone');
+    b.sbox(P.maxX, GY - P.drop - 0.5, P.minZ, P.maxX + 0.4, GY, P.stairEnd + 1.6, 'stone');
+    b.sbox(P.minX - 0.4, GY - P.drop - 0.5, P.stairEnd + 1.2, P.maxX + 0.4, GY + 2, P.stairEnd + 1.6, 'stone');
     b.ceiling(P.minX, 100.4, P.maxX, P.stairEnd + 1.2, GY - 0.3, 'stone');
     // brilho frio lá embaixo: água corrente
     const water = new THREE.Mesh(new THREE.PlaneGeometry(P.maxX - P.minX, 1.2), new THREE.MeshBasicMaterial({ color: 0x1a3040 }));

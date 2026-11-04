@@ -56,39 +56,39 @@ function laundry(L) {
   L.sign('LAVANDERIA', 12.13, LO + 2.62, 12, Math.PI / 2, 1.1, 0.2, { bg: '#4a4a3a', fg: '#e0dcc4' });
   // máquinas de lavar industriais (parede oeste)
   for (const z of [4, 6.5, 9]) {
-    b.box(2.1, LO, z - 0.6, 3.4, LO + 1.15, z + 0.6, 'steel', P);
+    b.sbox(2.1, LO, z - 0.6, 3.4, LO + 1.15, z + 0.6, 'steel', P);
     const door = new THREE.Mesh(new THREE.CircleGeometry(0.34, 10), M.steelDark);
     door.rotation.y = Math.PI / 2; door.position.set(3.41, LO + 0.62, z); b.group.add(door);
-    b.box(3.4, LO + 0.25, z - 0.45, 3.44, LO + 0.3, z + 0.45, 'rust', NC);
+    b.sbox(3.4, LO + 0.25, z - 0.45, 3.44, LO + 0.3, z + 0.45, 'rust', NC);
   }
   // calandra (passadeira de rolos)
-  b.box(5, LO, 2.2, 9, LO + 1.0, 3.3, 'rust', P);
+  b.sbox(5, LO, 2.2, 9, LO + 1.0, 3.3, 'rust', P);
   for (const x of [5.6, 7, 8.4]) {
     const r = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 8), M.steel);
     r.rotation.x = Math.PI / 2; r.position.set(x, LO + 1.1, 2.75); b.group.add(r);
   }
   // mesa de dobrar + carrinhos de roupa
-  b.box(9.6, LO, 4.4, 11.7, LO + 0.88, 6.1, 'steel', PL);
-  b.box(9.8, LO + 0.88, 4.6, 10.6, LO + 0.98, 5.3, 'sheet', NC);
-  b.box(8.4, LO, 7.1, 9.3, LO + 0.85, 7.8, 'metal', PL);
-  b.box(8.45, LO + 0.6, 7.15, 9.25, LO + 0.95, 7.75, 'sheet', { collide: false, tile: 1 });
-  b.box(4.4, LO, 11.2, 5.2, LO + 0.85, 12.0, 'metal', PL);
-  b.box(4.45, LO + 0.6, 11.25, 5.15, LO + 0.9, 11.95, 'bandageDirty', NC);
+  b.sbox(9.6, LO, 4.4, 11.7, LO + 0.88, 6.1, 'steel', PL);
+  b.sbox(9.8, LO + 0.88, 4.6, 10.6, LO + 0.98, 5.3, 'sheet', NC);
+  b.sbox(8.4, LO, 7.1, 9.3, LO + 0.85, 7.8, 'metal', PL);
+  b.sbox(8.45, LO + 0.6, 7.15, 9.25, LO + 0.95, 7.75, 'sheet', { collide: false, tile: 1 });
+  b.sbox(4.4, LO, 11.2, 5.2, LO + 0.85, 12.0, 'metal', PL);
+  b.sbox(4.45, LO + 0.6, 11.25, 5.15, LO + 0.9, 11.95, 'bandageDirty', NC);
   // varal com lençóis pendurados (escondem quem está atrás)
-  b.box(3.8, LO + 2.75, 8.18, 9.6, LO + 2.78, 8.22, 'metal', NC);
+  b.sbox(3.8, LO + 2.75, 8.18, 9.6, LO + 2.78, 8.22, 'metal', NC);
   for (const [x0, x1, low] of [[4.2, 5.4, 0.7], [5.9, 7.1, 0.55], [7.6, 8.8, 0.8]]) {
-    b.box(x0, LO + low, 8.17, x1, LO + 2.75, 8.23, 'sheet', { collide: false, tile: 1 });
+    b.sbox(x0, LO + low, 8.17, x1, LO + 2.75, 8.23, 'sheet', { collide: false, tile: 1 });
   }
   // duto de roupa suja vindo da enfermaria
-  b.box(10.8, LO + 1.5, 2.1, 11.9, CEIL_LO, 3.2, 'metal', { tag: 'prop', cast: true });
-  b.box(10.6, LO, 2.1, 11.95, LO + 0.5, 3.6, 'sheet', { tag: 'prop-low', sight: false, tile: 1 });
+  b.sbox(10.8, LO + 1.5, 2.1, 11.9, CEIL_LO, 3.2, 'metal', { tag: 'prop', cast: true });
+  b.sbox(10.6, LO, 2.1, 11.95, LO + 0.5, 3.6, 'sheet', { tag: 'prop-low', sight: false, tile: 1 });
   // registro de gás do incinerador + tubulação
   const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.035, 5, 10), M.lampRed);
   wheel.rotation.y = Math.PI / 2; wheel.position.set(2.2, LO + 1.3, 12.5); b.group.add(wheel);
   for (const a of [0, Math.PI / 2]) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.42, 0.03), M.rust); s.rotation.x = a; wheel.add(s); }
   L.valveWheel = wheel;
-  b.box(2.02, LO + 1.25, 12.0, 2.14, LO + 1.35, 14, 'rust', NC);
-  b.box(2.02, LO + 1.25, 11.0, 2.14, CEIL_LO, 11.1, 'rust', NC);
+  b.sbox(2.02, LO + 1.25, 12.0, 2.14, LO + 1.35, 14, 'rust', NC);
+  b.sbox(2.02, LO + 1.25, 11.0, 2.14, CEIL_LO, 11.1, 'rust', NC);
   L.sign('GÁS · INCINERADOR', 2.13, LO + 1.75, 12.5, Math.PI / 2, 0.7, 0.14, { bg: '#d8c890', fg: '#5a1a10' });
   for (const [x, z, sz] of [[7.5, 10.5, 0.9], [4.2, 5.2, 0.6]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = x; m.position.set(x, LO + 0.013, z); b.group.add(m);
@@ -105,13 +105,13 @@ function furnace(L) {
   b.wallZ(10, 14, 20, LO, CEIL_LO, [], 'brick');
   // corpo do forno (boca voltada para +x)
   L.game.col.addBox(0.1, LO, 15, 3, CEIL_LO, 19, { tag: 'wall', blocksSight: true });
-  b.box(0.1, LO, 15, 3, LO + 0.4, 19, 'brick', NC);
-  b.box(0.1, LO + 1.4, 15, 3, LO + 2.4, 19, 'brick', { collide: false, cast: true });
-  b.box(0.1, LO + 0.4, 15, 3, LO + 1.4, 16.3, 'brick', NC);
-  b.box(0.1, LO + 0.4, 17.7, 3, LO + 1.4, 19, 'brick', NC);
-  b.box(0.1, LO + 2.4, 15.6, 2.2, CEIL_LO, 18.4, 'rust', NC);           // coifa / chaminé
-  b.box(2.95, LO + 1.38, 16.2, 3.08, LO + 1.48, 17.8, 'rust', NC);     // verga de ferro
-  b.box(0.2, LO + 0.4, 16.3, 0.3, LO + 1.4, 17.7, 'ember', NC);        // fundo em brasa
+  b.sbox(0.1, LO, 15, 3, LO + 0.4, 19, 'brick', NC);
+  b.sbox(0.1, LO + 1.4, 15, 3, LO + 2.4, 19, 'brick', { collide: false, cast: true });
+  b.sbox(0.1, LO + 0.4, 15, 3, LO + 1.4, 16.3, 'brick', NC);
+  b.sbox(0.1, LO + 0.4, 17.7, 3, LO + 1.4, 19, 'brick', NC);
+  b.sbox(0.1, LO + 2.4, 15.6, 2.2, CEIL_LO, 18.4, 'rust', NC);           // coifa / chaminé
+  b.sbox(2.95, LO + 1.38, 16.2, 3.08, LO + 1.48, 17.8, 'rust', NC);     // verga de ferro
+  b.sbox(0.2, LO + 0.4, 16.3, 0.3, LO + 1.4, 17.7, 'ember', NC);        // fundo em brasa
   // fogo animado (caixas aditivas) + cinzas
   const fire = new THREE.Group(); fire.position.set(1.6, LO + 0.4, 17); b.group.add(fire);
   const flames = [];
@@ -123,12 +123,12 @@ function furnace(L) {
   const bed = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 1.3), M.ember); bed.position.set(0, 0.02, 0); fire.add(bed);
   const light = new THREE.PointLight(0xff7030, 3.2, 11, 1.6); light.position.set(3.6, LO + 1.0, 17); L.game.scene.add(light);
   L.furnace = { fire, flames, bed, light, lit: true, t: 0 };
-  for (const [x, z, s] of [[4.2, 16.5, 0.7], [3.5, 18.6, 0.5], [6.5, 15.2, 0.4]]) b.box(x - s, LO, z - s * 0.7, x + s, LO + 0.12, z + s * 0.7, 'ash', NC);
+  for (const [x, z, s] of [[4.2, 16.5, 0.7], [3.5, 18.6, 0.5], [6.5, 15.2, 0.4]]) b.sbox(x - s, LO, z - s * 0.7, x + s, LO + 0.12, z + s * 0.7, 'ash', NC);
   // atiçador, carrinho de cadáveres, mesa do forneiro
-  b.box(3.3, LO, 19.4, 3.36, LO + 1.6, 19.46, 'rust', NC);
-  b.box(6.6, LO, 18.2, 8.4, LO + 0.8, 19.6, 'steel', PL);
-  b.box(6.7, LO + 0.8, 18.3, 8.3, LO + 1.0, 19.5, 'sheet', { collide: false, tile: 1 });
-  b.box(8.6, LO, 14.4, 9.8, LO + 0.82, 15.6, 'woodDark', PL);
+  b.sbox(3.3, LO, 19.4, 3.36, LO + 1.6, 19.46, 'rust', NC);
+  b.sbox(6.6, LO, 18.2, 8.4, LO + 0.8, 19.6, 'steel', PL);
+  b.sbox(6.7, LO + 0.8, 18.3, 8.3, LO + 1.0, 19.5, 'sheet', { collide: false, tile: 1 });
+  b.sbox(8.6, LO, 14.4, 9.8, LO + 0.82, 15.6, 'woodDark', PL);
   L.sign('INCINERADOR — PERIGO', 5, LO + 2.6, 19.87, Math.PI, 1.6, 0.24, { bg: '#7a1c12', fg: '#f0e0b0' });
   L.sign('INCINERADOR', 6, LO + 2.62, 14.13, Math.PI, 1.0, 0.2, { bg: '#4a3a2a', fg: '#e0d0b0' });
 }
@@ -144,7 +144,7 @@ function serviceStair(L) {
   b.wallZ(24, 14, 22, H_UP, TOP2, [], 'wallLower');
   b.wallZ(28, 14, 22, H_UP, TOP2, [], 'wallLower');
   b.wallX(14, 24, 28, H_UP, TOP2, [], 'wallLower');
-  b.box(24.1, 0.9, 14.8, 24.16, 0.96, 22.4, 'rust', NC);   // corrimão
+  b.sbox(24.1, 0.9, 14.8, 24.16, 0.96, 22.4, 'rust', NC);   // corrimão
   L.sign('ESCADA DE SERVIÇO', 26, 2.62, 13.87, Math.PI, 1.3, 0.2, { bg: '#c9c2a4', fg: '#1c1a14' });
   L.sign('ADMINISTRAÇÃO ↑', 26, UP2 + 2.5, 22.42, 0, 1.2, 0.2, { bg: '#c9c2a4' });
 }
@@ -161,11 +161,11 @@ function admin(L) {
   b.wallX(22, 28, 38, UP2, TOP2, [33]);
   // quadros de antigos diretores (as janelas deram lugar à ala cirúrgica)
   for (const x of [15.5, 21, 31, 35.5]) {
-    b.box(x - 0.45, UP2 + 1.2, 25.86, x + 0.45, UP2 + 2.2, 25.9, 'woodDark', NC);
-    b.box(x - 0.36, UP2 + 1.3, 25.84, x + 0.36, UP2 + 2.1, 25.86, 'leatherDark', NC);
+    b.sbox(x - 0.45, UP2 + 1.2, 25.86, x + 0.45, UP2 + 2.2, 25.9, 'woodDark', NC);
+    b.sbox(x - 0.36, UP2 + 1.3, 25.84, x + 0.36, UP2 + 2.1, 25.86, 'leatherDark', NC);
   }
-  b.box(29.2, UP2, 25.3, 30.8, UP2 + 0.45, 25.85, 'woodDark', PL);   // banco de espera
-  b.box(16.6, UP2, 25.3, 18.2, UP2 + 0.45, 25.85, 'woodDark', PL);
+  b.sbox(29.2, UP2, 25.3, 30.8, UP2 + 0.45, 25.85, 'woodDark', PL);   // banco de espera
+  b.sbox(16.6, UP2, 25.3, 18.2, UP2 + 0.45, 25.85, 'woodDark', PL);
   L.sign('ADMINISTRAÇÃO', 19, UP2 + 2.62, 22.13, 0, 1.2, 0.2, { bg: '#c9c2a4' });
   L.sign('SECRETARIA', 19, UP2 + 2.45, 22.13, 0, 0.8, 0.14, { bg: '#c9c2a4' });
   L.sign('DIRETORIA', 33, UP2 + 2.45, 22.13, 0, 0.8, 0.14, { bg: '#c9c2a4' });
@@ -174,11 +174,11 @@ function admin(L) {
   b.ceiling(14, 14, 24, 22, TOP2);
   b.wallZ(14, 14, 22, H_UP, TOP2); b.wallX(14, 14, 24, H_UP, UP2); b.wallX(14, 14, 24, UP2, TOP2, [18.6]);
   for (const x0 of [15.4, 20]) {
-    b.box(x0, UP2, 15.6, x0 + 1.8, UP2 + 0.76, 16.6, 'woodDark', PL);
-    b.box(x0 + 0.5, UP2 + 0.76, 15.8, x0 + 1.0, UP2 + 0.96, 16.2, 'metal', NC);   // máquina de escrever
+    b.sbox(x0, UP2, 15.6, x0 + 1.8, UP2 + 0.76, 16.6, 'woodDark', PL);
+    b.sbox(x0 + 0.5, UP2 + 0.76, 15.8, x0 + 1.0, UP2 + 0.96, 16.2, 'metal', NC);   // máquina de escrever
   }
-  for (const z of [18, 19, 20]) b.box(14.1, UP2, z, 14.7, UP2 + 1.4, z + 0.9, 'metal', P); // arquivos
-  b.box(22.6, UP2, 14.1, 23.9, UP2 + 2.0, 15.0, 'woodDark', P);
+  for (const z of [18, 19, 20]) b.sbox(14.1, UP2, z, 14.7, UP2 + 1.4, z + 0.9, 'metal', P); // arquivos
+  b.sbox(22.6, UP2, 14.1, 23.9, UP2 + 2.0, 15.0, 'woodDark', P);
   for (const [x, z, r] of [[17.5, 19, 0.3], [21, 18, 1.2], [19.5, 15, 2]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.22), M.paper); m.rotation.x = -Math.PI / 2; m.rotation.z = r; m.position.set(x, UP2 + 0.012, z); b.group.add(m);
   }
@@ -186,11 +186,11 @@ function admin(L) {
   b.floor(28, 14, 38, 22, UP2, 'wood', 'diretoria');
   b.ceiling(28, 14, 38, 22, TOP2);
   b.wallZ(38, 14, 22, H_UP, TOP2); b.wallX(14, 28, 38, H_UP, TOP2);
-  b.box(31.4, UP2, 15.3, 34.6, UP2 + 0.78, 16.4, 'woodDark', PL);
-  b.box(32.6, UP2, 14.3, 33.4, UP2 + 1.1, 14.9, 'leatherDark', PL);       // poltrona
-  b.box(37.2, UP2, 16.6, 37.9, UP2 + 2.2, 21.6, 'woodDark', P);           // estante
-  for (let i = 0; i < 4; i++) b.box(37.15, UP2 + 0.4 + i * 0.5, 16.7, 37.2, UP2 + 0.75 + i * 0.5, 21.5, 'leather', NC);
-  b.box(36, UP2, 14.6, 37.2, UP2 + 0.86, 15.7, 'woodDark', PL);           // mesinha do livro
+  b.sbox(31.4, UP2, 15.3, 34.6, UP2 + 0.78, 16.4, 'woodDark', PL);
+  b.sbox(32.6, UP2, 14.3, 33.4, UP2 + 1.1, 14.9, 'leatherDark', PL);       // poltrona
+  b.sbox(37.2, UP2, 16.6, 37.9, UP2 + 2.2, 21.6, 'woodDark', P);           // estante
+  for (let i = 0; i < 4; i++) b.sbox(37.15, UP2 + 0.4 + i * 0.5, 16.7, 37.2, UP2 + 0.75 + i * 0.5, 21.5, 'leather', NC);
+  b.sbox(36, UP2, 14.6, 37.2, UP2 + 0.86, 15.7, 'woodDark', PL);           // mesinha do livro
   const rug = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.2), M.altarCloth); rug.rotation.x = -Math.PI / 2; rug.position.set(33, UP2 + 0.01, 18.4); b.group.add(rug);
   // retrato do diretor com o rosto raspado
   const tex = canvasTex(64, 80, (g, w, h) => {
@@ -211,13 +211,13 @@ function chapel(L) {
   b.wallZ(0, 14, 24, UP, TOP2, [], 'chapelWall');
   b.wallX(24, 0, 12, UP, TOP2, [], 'chapelWall');
   b.wallZ(12, 14, 24, UP, UP2, [], 'chapelWall');
-  b.box(0, H_UP, 13.9, 12, TOP2, 14.1, 'chapelWall');
+  b.sbox(0, H_UP, 13.9, 12, TOP2, 14.1, 'chapelWall');
   L.sign('CAPELA DE SÃO DIMAS', 6, 2.62, 13.87, Math.PI, 1.5, 0.22, { bg: '#5a4a2a', fg: '#e8d8a8' });
   // degrau do altar, altar e relicário
   b.floor(2.5, 21.9, 9.5, 23.9, UP + 0.2, 'stone', 'altarStep');
-  b.box(2.5, UP, 21.9, 9.5, UP + 0.2, 23.9, 'stone', NC);
-  b.box(4.2, UP + 0.2, 22.7, 7.8, UP + 1.15, 23.5, 'stone', { tag: 'prop', cast: true });
-  b.box(4.1, UP + 0.75, 22.62, 7.9, UP + 1.18, 23.58, 'altarCloth', NC);
+  b.sbox(2.5, UP, 21.9, 9.5, UP + 0.2, 23.9, 'stone', NC);
+  b.sbox(4.2, UP + 0.2, 22.7, 7.8, UP + 1.15, 23.5, 'stone', { tag: 'prop', cast: true });
+  b.sbox(4.1, UP + 0.75, 22.62, 7.9, UP + 1.18, 23.58, 'altarCloth', NC);
   const rel = new THREE.Group(); rel.position.set(6, UP + 1.18, 23.1); b.group.add(rel);
   const base = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.26, 0.32), M.gold); base.position.y = 0.13; rel.add(base);
   const lidPivot = new THREE.Group(); lidPivot.position.set(0, 0.26, 0.16); rel.add(lidPivot);
@@ -225,7 +225,7 @@ function chapel(L) {
   const cross = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.04), M.gold); cross.position.set(0, 0.12, -0.17); lidPivot.add(cross);
   L.relic = { group: rel, lid: lidPivot, open: false, t: 0 };
   // castiçais altos e o emblema do culto (sol de cinzas) sobre a imagem raspada
-  for (const x of [3.2, 8.8]) { b.box(x - 0.05, UP + 0.2, 23.4, x + 0.05, UP + 1.9, 23.5, 'gold', NC); b.box(x - 0.04, UP + 1.9, 23.42, x + 0.04, UP + 2.1, 23.48, 'candle', NC); }
+  for (const x of [3.2, 8.8]) { b.sbox(x - 0.05, UP + 0.2, 23.4, x + 0.05, UP + 1.9, 23.5, 'gold', NC); b.sbox(x - 0.04, UP + 1.9, 23.42, x + 0.04, UP + 2.1, 23.48, 'candle', NC); }
   const emb = canvasTex(128, 128, (g, w) => {
     g.fillStyle = '#2a2420'; g.fillRect(0, 0, w, w);
     g.strokeStyle = '#8a7a5a'; g.lineWidth = 3;
@@ -248,18 +248,18 @@ function chapel(L) {
     });
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.8), new THREE.MeshBasicMaterial({ map: t, color: 0x9098b0 }));
     glass.rotation.y = Math.PI / 2; glass.position.set(0.12, 3.6, 16.2 + i * 3); b.group.add(glass);
-    b.box(0.1, 2.15, 15.6 + i * 3, 0.2, 2.2, 16.8 + i * 3, 'stone', NC);
+    b.sbox(0.1, 2.15, 15.6 + i * 3, 0.2, 2.2, 16.8 + i * 3, 'stone', NC);
   }
   // bancos (pews): dois blocos com corredor central
   for (const z of [16.4, 17.8, 19.2, 20.6]) for (const [x0, x1] of [[1.0, 4.6], [7.0, 9.6]]) {
-    b.box(x0, UP + 0.42, z, x1, UP + 0.48, z + 0.45, 'pew', NC);
-    b.box(x0, UP + 0.48, z + 0.4, x1, UP + 0.98, z + 0.48, 'pew', NC);
-    for (const x of [x0, x1 - 0.06]) b.box(x, UP, z, x + 0.06, UP + 0.98, z + 0.48, 'pew', NC);
+    b.sbox(x0, UP + 0.42, z, x1, UP + 0.48, z + 0.45, 'pew', NC);
+    b.sbox(x0, UP + 0.48, z + 0.4, x1, UP + 0.98, z + 0.48, 'pew', NC);
+    for (const x of [x0, x1 - 0.06]) b.sbox(x, UP, z, x + 0.06, UP + 0.98, z + 0.48, 'pew', NC);
     L.game.col.addBox(x0, UP, z, x1, UP + 0.98, z + 0.5, { tag: 'prop-low', blocksSight: false });
   }
   // púlpito/estante com o hinário
-  b.box(2.7, UP, 21.0, 3.3, UP + 1.05, 21.5, 'woodDark', PL);
-  b.box(2.6, UP + 1.05, 20.95, 3.4, UP + 1.1, 21.55, 'woodDark', NC);
+  b.sbox(2.7, UP, 21.0, 3.3, UP + 1.05, 21.5, 'woodDark', PL);
+  b.sbox(2.6, UP + 1.05, 20.95, 3.4, UP + 1.1, 21.55, 'woodDark', NC);
   // suportes de velas com placas
   L.candles = {};
   for (const id in CANDLES) {
@@ -267,11 +267,11 @@ function chapel(L) {
     const along = Math.abs(fx) > 0.5 ? 'z' : 'x';
     const hw = 0.45, hd = 0.22, y0 = id === 'dimas' ? UP + 0.2 : UP;
     const [x0, x1, z0, z1] = along === 'z' ? [c.x - hd, c.x + hd, c.z - hw, c.z + hw] : [c.x - hw, c.x + hw, c.z - hd, c.z + hd];
-    b.box(x0, y0, z0, x1, y0 + 0.9, z1, 'woodDark', PL);
+    b.sbox(x0, y0, z0, x1, y0 + 0.9, z1, 'woodDark', PL);
     const flames = [];
     for (let k = -2; k <= 2; k++) {
       const cx = c.x + (along === 'x' ? k * 0.16 : 0), cz = c.z + (along === 'z' ? k * 0.16 : 0);
-      b.box(cx - 0.02, y0 + 0.9, cz - 0.02, cx + 0.02, y0 + 1.02 + (k & 1) * 0.04, cz + 0.02, 'candle', NC);
+      b.sbox(cx - 0.02, y0 + 0.9, cz - 0.02, cx + 0.02, y0 + 1.02 + (k & 1) * 0.04, cz + 0.02, 'candle', NC);
       const f = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.07, 0.035), M.flame); f.position.set(cx, y0 + 1.08 + (k & 1) * 0.04, cz); f.visible = false; b.group.add(f); flames.push(f);
     }
     L.sign(c.name, c.x + fx * (hd + 0.01), y0 + 0.62, c.z + fz * (hd + 0.01), c.face, 0.5, 0.12, { bg: '#3a2a1a', fg: '#e8d8a8' });
@@ -279,13 +279,13 @@ function chapel(L) {
   }
   // escada para o coro (encostada à parede leste) + parede-guarda de madeira
   b.stairsZ(10.1, 11.9, 21.6, 15.4, UP2, UP, 16, 'woodDark');
-  b.box(9.95, UP, 15.4, 10.05, UP2 + 1.0, 21.6, 'woodDark', { tag: 'wall' });
+  b.sbox(9.95, UP, 15.4, 10.05, UP2 + 1.0, 21.6, 'woodDark', { tag: 'wall' });
   // coro (mezanino) x8.6..12 z21.6..24 no nível do 2º andar
   b.floor(8.6, 21.6, 12, 24, UP2, 'woodDark', 'coro');
-  b.box(8.6, UP2, 21.6, 8.7, UP2 + 1.0, 24, 'woodDark', { tag: 'wall', sight: false });
-  b.box(8.6, UP2, 21.55, 10.05, UP2 + 1.0, 21.65, 'woodDark', { tag: 'wall', sight: false });
-  b.box(8.8, UP2, 23.3, 10.0, UP2 + 1.9, 23.9, 'woodDark', P);   // órgão
-  for (let i = 0; i < 6; i++) b.box(8.85 + i * 0.2, UP2 + 1.9, 23.6, 8.95 + i * 0.2, UP2 + 2.4 + (i % 3) * 0.25, 23.7, 'gold', NC);
+  b.sbox(8.6, UP2, 21.6, 8.7, UP2 + 1.0, 24, 'woodDark', { tag: 'wall', sight: false });
+  b.sbox(8.6, UP2, 21.55, 10.05, UP2 + 1.0, 21.65, 'woodDark', { tag: 'wall', sight: false });
+  b.sbox(8.8, UP2, 23.3, 10.0, UP2 + 1.9, 23.9, 'woodDark', P);   // órgão
+  for (let i = 0; i < 6; i++) b.sbox(8.85 + i * 0.2, UP2 + 1.9, 23.6, 8.95 + i * 0.2, UP2 + 2.4 + (i % 3) * 0.25, 23.7, 'gold', NC);
 }
 
 // ---------- portas ----------

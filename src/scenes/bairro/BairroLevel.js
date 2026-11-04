@@ -81,54 +81,54 @@ export class BairroLevel {
     b.floor(1, 0, 40, 1.4, Y, 'concrete', 'c2_walkS');
     b.floor(1, 6.6, 40, 8, Y, 'concrete', 'c2_walkN');
     // meio-fio (visual)
-    b.box(1, Y, 1.35, 38, Y + 0.06, 1.45, 'concrete', { collide: false });
-    b.box(1, Y, 6.55, 18, Y + 0.06, 6.65, 'concrete', { collide: false });
+    b.sbox(1, Y, 1.35, 38, Y + 0.06, 1.45, 'concrete', { collide: false });
+    b.sbox(1, Y, 6.55, 18, Y + 0.06, 6.65, 'concrete', { collide: false });
     // muro do hospital com o portão de serviço fechado atrás de Elias (oeste)
-    b.box(0.2, Y, -1, 1.0, Y + 4.2, 9, 'brick');
-    for (let z = 2.3; z <= 5.7; z += 0.34) b.box(1.0, Y, z - 0.03, 1.08, Y + 3.0, z + 0.03, 'rust', { collide: false });
-    b.box(1.0, Y + 2.95, 2.2, 1.12, Y + 3.1, 5.8, 'rust', { collide: false });
+    b.sbox(0.2, Y, -1, 1.0, Y + 4.2, 9, 'brick');
+    for (let z = 2.3; z <= 5.7; z += 0.34) b.sbox(1.0, Y, z - 0.03, 1.08, Y + 3.0, z + 0.03, 'rust', { collide: false });
+    b.sbox(1.0, Y + 2.95, 2.2, 1.12, Y + 3.1, 5.8, 'rust', { collide: false });
     this.sign('HOSPITAL SÃO DIMAS', 1.13, Y + 3.5, 4, Math.PI / 2, 2.2, 0.3, { bg: '#3a3026', fg: '#c8b890' });
     // fachadas das casas geminadas (sul), alturas variadas
     const houses = [[1, 7, 5.6, 'brick'], [7, 13, 6.4, 'wall'], [13, 19, 5.2, 'brick'], [19, 26, 6.8, 'wallLower'], [26, 32, 5.8, 'brick'], [32, 40, 6.2, 'wall']];
     for (const [x0, x1, h, mat] of houses) {
-      b.box(x0, Y, -3, x1, Y + h, 0, mat);
-      b.box(x0, Y + h, -3.2, x1, Y + h + 0.25, 0.25, 'woodDark', { collide: false }); // beiral
+      b.sbox(x0, Y, -3, x1, Y + h, 0, mat);
+      b.sbox(x0, Y + h, -3.2, x1, Y + h + 0.25, 0.25, 'woodDark', { collide: false }); // beiral
       const mid = (x0 + x1) / 2;
-      b.box(mid - 0.55, Y, -0.02, mid + 0.55, Y + 2.2, 0.06, 'door', { collide: false });             // porta pregada
-      b.box(mid - 0.7, Y + 0.9, 0.04, mid + 0.7, Y + 1.05, 0.1, 'wood', { collide: false });          // tábua atravessada
+      b.sbox(mid - 0.55, Y, -0.02, mid + 0.55, Y + 2.2, 0.06, 'door', { collide: false });             // porta pregada
+      b.sbox(mid - 0.7, Y + 0.9, 0.04, mid + 0.7, Y + 1.05, 0.1, 'wood', { collide: false });          // tábua atravessada
       for (const wx of [x0 + 1.2, x1 - 1.2]) {
-        b.box(wx - 0.45, Y + 1.2, -0.02, wx + 0.45, Y + 2.2, 0.04, 'glass', { collide: false });
-        b.box(wx - 0.5, Y + 3.4, -0.02, wx + 0.5, Y + 4.4, 0.04, 'glass', { collide: false });
+        b.sbox(wx - 0.45, Y + 1.2, -0.02, wx + 0.45, Y + 2.2, 0.04, 'glass', { collide: false });
+        b.sbox(wx - 0.5, Y + 3.4, -0.02, wx + 0.5, Y + 4.4, 0.04, 'glass', { collide: false });
       }
     }
     // casas do lado norte (x1..18), separadas pelo beco x9.5..12.5
-    b.box(1, Y, 8, 9.5, Y + 6, 16, 'wall');
-    b.box(12.5, Y, 8, 18, Y + 5.4, 16, 'brick');
+    b.sbox(1, Y, 8, 9.5, Y + 6, 16, 'wall');
+    b.sbox(12.5, Y, 8, 18, Y + 5.4, 16, 'brick');
     for (const [x0, x1] of [[1, 9.5], [12.5, 18]]) {
       const mid = (x0 + x1) / 2;
-      b.box(mid - 0.55, Y, 7.94, mid + 0.55, Y + 2.2, 8.02, 'door', { collide: false });
-      b.box(x0 + 0.8, Y + 1.2, 7.94, x0 + 1.8, Y + 2.2, 8.0, 'glass', { collide: false });
+      b.sbox(mid - 0.55, Y, 7.94, mid + 0.55, Y + 2.2, 8.02, 'door', { collide: false });
+      b.sbox(x0 + 0.8, Y + 1.2, 7.94, x0 + 1.8, Y + 2.2, 8.0, 'glass', { collide: false });
     }
     // barricada a leste: bonde tombado em chamas, entulho e sacos
-    b.box(39.4, Y, -1, 40.6, Y + 4, 8, 'brick');
-    b.box(35.6, Y, 1.6, 39.4, Y + 2.6, 6.4, 'rust', { cast: true });
-    b.box(35.9, Y + 1.4, 1.55, 39.1, Y + 2.2, 1.6, 'glass', { collide: false });
-    b.box(35.6, Y + 2.6, 2.2, 39.4, Y + 2.8, 5.8, 'woodDark', { collide: false });
-    b.box(34.2, Y, 0.2, 35.6, Y + 1.1, 1.6, 'concrete', { tag: 'prop' });
-    b.box(34.6, Y, 6.4, 36.6, Y + 0.9, 7.9, 'stone', { tag: 'prop' });
+    b.sbox(39.4, Y, -1, 40.6, Y + 4, 8, 'brick');
+    b.sbox(35.6, Y, 1.6, 39.4, Y + 2.6, 6.4, 'rust', { cast: true });
+    b.sbox(35.9, Y + 1.4, 1.55, 39.1, Y + 2.2, 1.6, 'glass', { collide: false });
+    b.sbox(35.6, Y + 2.6, 2.2, 39.4, Y + 2.8, 5.8, 'woodDark', { collide: false });
+    b.sbox(34.2, Y, 0.2, 35.6, Y + 1.1, 1.6, 'concrete', { tag: 'prop' });
+    b.sbox(34.6, Y, 6.4, 36.6, Y + 0.9, 7.9, 'stone', { tag: 'prop' });
     this.sign('LINHA 4', 37.5, Y + 2.35, 6.42, 0, 1.0, 0.25, { bg: '#2a2016', fg: '#d0a060' });
     this._fire(37.4, Y + 2.8, 4.0, 1.0);
     this._fire(35.0, Y + 1.1, 0.9, 0.5);
     // postes de lampião a gás
     for (const [x, z] of [[6, 1.1], [16, 6.9], [30, 1.1]]) {
-      b.box(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.6, z + 0.06, 'metal', { tag: 'prop' });
-      b.box(x - 0.16, Y + 3.5, z - 0.16, x + 0.16, Y + 3.85, z + 0.16, 'lampOn', { collide: false });
+      b.sbox(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.6, z + 0.06, 'metal', { tag: 'prop' });
+      b.sbox(x - 0.16, Y + 3.5, z - 0.16, x + 0.16, Y + 3.85, z + 0.16, 'lampOn', { collide: false });
     }
     // carroça abandonada, barris e caixotes (obstáculos baixos: não tapam a visão)
-    b.box(20, Y, 5.4, 23, Y + 1.0, 6.4, 'wood', { tag: 'prop-low', sight: false });
-    b.box(20.4, Y, 5.2, 20.8, Y + 0.6, 6.6, 'woodDark', { collide: false });
-    b.box(27, Y, 1.5, 27.8, Y + 0.9, 2.3, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(14, Y, 0.3, 14.7, Y + 0.85, 1.0, 'rust', { tag: 'prop-low', sight: false });
+    b.sbox(20, Y, 5.4, 23, Y + 1.0, 6.4, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(20.4, Y, 5.2, 20.8, Y + 0.6, 6.6, 'woodDark', { collide: false });
+    b.sbox(27, Y, 1.5, 27.8, Y + 0.9, 2.3, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(14, Y, 0.3, 14.7, Y + 0.85, 1.0, 'rust', { tag: 'prop-low', sight: false });
     // cartazes
     this.sign('RUA DOS TECELÕES', 4, Y + 2.8, 0.08, 0, 1.6, 0.26, { bg: '#1e2a3a', fg: '#d8d2b8' });
     this.sign('TOQUE DE RECOLHER APÓS A SIRENE', 16.5, Y + 1.7, 0.08, 0, 1.5, 0.3, { bg: '#c9c2a4', fg: '#6a1010' });
@@ -138,11 +138,11 @@ export class BairroLevel {
   _alley() {
     const b = this.b, Y = STREET;
     b.floor(9.5, 8, 12.5, 16, Y, 'stone', 'c2_alley');
-    b.box(9.5, Y, 15.8, 12.5, Y + 4.5, 16.4, 'brick');
-    b.box(9.5, Y + 3.4, 8, 12.5, Y + 3.55, 8.3, 'woodDark', { collide: false }); // varal / viga
-    b.box(10.0, Y, 14.6, 10.8, Y + 0.85, 15.4, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
-    b.box(11.6, Y, 14.9, 12.3, Y + 0.95, 15.6, 'rust', { tag: 'prop-low', sight: false });     // barril
-    b.box(11.9, Y, 10.2, 12.4, Y + 1.6, 11.6, 'wood', { tag: 'prop' });                         // portas velhas encostadas
+    b.sbox(9.5, Y, 15.8, 12.5, Y + 4.5, 16.4, 'brick');
+    b.sbox(9.5, Y + 3.4, 8, 12.5, Y + 3.55, 8.3, 'woodDark', { collide: false }); // varal / viga
+    b.sbox(10.0, Y, 14.6, 10.8, Y + 0.85, 15.4, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
+    b.sbox(11.6, Y, 14.9, 12.3, Y + 0.95, 15.6, 'rust', { tag: 'prop-low', sight: false });     // barril
+    b.sbox(11.9, Y, 10.2, 12.4, Y + 1.6, 11.6, 'wood', { tag: 'prop' });                         // portas velhas encostadas
   }
 
   // ---------- DEPÓSITO DA TECELAGEM x18..40 z8..24 + ESCRITÓRIO x34..40 z18..24 ----------
@@ -156,28 +156,28 @@ export class BairroLevel {
     b.wallZ(40, 8, 24, Y, H_DEP, [14], 'brick', 3.0, 3.0);
     // fachada: letreiro sobre a porta
     this.sign('TECELAGEM SANTA CECÍLIA — DEPÓSITO', 24, Y + 3.0, 7.88, Math.PI, 2.6, 0.32, { bg: '#2a1e14', fg: '#c8a060' });
-    for (const x of [20, 28, 32, 36]) b.box(x - 0.6, Y + 1.4, 7.88, x + 0.6, Y + 2.4, 7.9, 'glass', { collide: false });
+    for (const x of [20, 28, 32, 36]) b.sbox(x - 0.6, Y + 1.4, 7.88, x + 0.6, Y + 2.4, 7.9, 'glass', { collide: false });
     // prateleiras com fardos de algodão (altas: bloqueiam a visão, criam corredores para se esconder)
     for (const [x0, z0, x1, z1, h, mat] of [[20.5, 13, 22, 22, 3.2, 'woodDark'], [26, 14, 28, 21, 2.6, 'wood'], [31, 13, 32.5, 17, 2.6, 'woodDark']]) {
-      b.box(x0, Y, z0, x1, Y + h, z1, mat, { tag: 'prop' });
-      for (let z = z0 + 0.6; z < z1 - 0.4; z += 1.4) b.box(x0 + 0.1, Y + h, z - 0.4, x1 - 0.1, Y + h + 0.5, z + 0.4, 'sheet', { collide: false });
+      b.sbox(x0, Y, z0, x1, Y + h, z1, mat, { tag: 'prop' });
+      for (let z = z0 + 0.6; z < z1 - 0.4; z += 1.4) b.sbox(x0 + 0.1, Y + h, z - 0.4, x1 - 0.1, Y + h + 0.5, z + 0.4, 'sheet', { collide: false });
     }
     // tear mecânico parado
-    b.box(28.5, Y, 9.4, 32.5, Y + 1.5, 11, 'metal', { tag: 'prop-low', sight: false });
-    b.box(28.7, Y + 1.5, 9.6, 32.3, Y + 2.4, 9.8, 'steelDark', { collide: false });
-    b.box(29, Y + 1.5, 10.2, 32, Y + 1.56, 10.8, 'sheet', { collide: false });
+    b.sbox(28.5, Y, 9.4, 32.5, Y + 1.5, 11, 'metal', { tag: 'prop-low', sight: false });
+    b.sbox(28.7, Y + 1.5, 9.6, 32.3, Y + 2.4, 9.8, 'steelDark', { collide: false });
+    b.sbox(29, Y + 1.5, 10.2, 32, Y + 1.56, 10.8, 'sheet', { collide: false });
     // fardos soltos e carrinho
-    b.box(19, Y, 9, 20.4, Y + 1.0, 10.4, 'sheet', { tag: 'prop-low', sight: false });
-    b.box(33.5, Y, 9, 35, Y + 0.9, 10.2, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(24.8, Y, 22.6, 26.6, Y + 1.1, 23.8, 'sheet', { tag: 'prop-low', sight: false });
+    b.sbox(19, Y, 9, 20.4, Y + 1.0, 10.4, 'sheet', { tag: 'prop-low', sight: false });
+    b.sbox(33.5, Y, 9, 35, Y + 0.9, 10.2, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(24.8, Y, 22.6, 26.6, Y + 1.1, 23.8, 'sheet', { tag: 'prop-low', sight: false });
     // escritório do capataz
     b.wallX(18, 34, 40, Y, H_DEP, [37], 'wall', 1.4, 2.3);
     b.wallZ(34, 18, 24, Y, H_DEP, [], 'wall');
-    b.box(34.2, Y + 1.2, 19.6, 34.3, Y + 2.1, 21.6, 'glass', { collide: false }); // janela interna (visual)
-    b.box(37.6, Y, 20.4, 39.8, Y + 0.85, 21.6, 'wood', { tag: 'prop-low', sight: false }); // mesa
-    b.box(38.3, Y, 22.8, 39.8, Y + 0.9, 23.8, 'woodDark', { tag: 'prop-low', sight: false }); // aparador (livro)
-    b.box(34.3, Y, 22.9, 36.8, Y + 0.8, 23.8, 'woodDark', { tag: 'prop-low', sight: false }); // arquivo baixo
-    b.box(39.6, Y + 1.3, 19, 39.8, Y + 2.3, 20.4, 'blueprint', { collide: false }); // quadro de turnos
+    b.sbox(34.2, Y + 1.2, 19.6, 34.3, Y + 2.1, 21.6, 'glass', { collide: false }); // janela interna (visual)
+    b.sbox(37.6, Y, 20.4, 39.8, Y + 0.85, 21.6, 'wood', { tag: 'prop-low', sight: false }); // mesa
+    b.sbox(38.3, Y, 22.8, 39.8, Y + 0.9, 23.8, 'woodDark', { tag: 'prop-low', sight: false }); // aparador (livro)
+    b.sbox(34.3, Y, 22.9, 36.8, Y + 0.8, 23.8, 'woodDark', { tag: 'prop-low', sight: false }); // arquivo baixo
+    b.sbox(39.6, Y + 1.3, 19, 39.8, Y + 2.3, 20.4, 'blueprint', { collide: false }); // quadro de turnos
     this.sign('CAPATAZ', 37, Y + 2.55, 17.88, Math.PI, 0.8, 0.2);
     this.sign('CARGA', 39.88, Y + 3.3, 14, -Math.PI / 2, 1.0, 0.24, { bg: '#3a2a10', fg: '#e0c070' });
     // eixo da porta de carga (onde a manivela encaixa)
@@ -193,16 +193,16 @@ export class BairroLevel {
     b.wallX(30, 39.8, 46.2, Y, 3, [43], 'brick', 2.4, 2.6); // portão norte (trilhos) → Rua do Carvão
     b.wallZ(40, 24, 30, Y, 3, [], 'brick');
     // trilhos do bonde atravessando o pátio
-    for (const x of [42.6, 43.4]) b.box(x - 0.04, Y, 18, x + 0.04, Y + 0.06, 30, 'steel', { collide: false });
-    for (let z = 18.4; z < 30; z += 0.9) b.box(42.3, Y, z - 0.1, 43.7, Y + 0.03, z + 0.1, 'woodDark', { collide: false });
+    for (const x of [42.6, 43.4]) b.sbox(x - 0.04, Y, 18, x + 0.04, Y + 0.06, 30, 'steel', { collide: false });
+    for (let z = 18.4; z < 30; z += 0.9) b.sbox(42.3, Y, z - 0.1, 43.7, Y + 0.03, z + 0.1, 'woodDark', { collide: false });
     // ponto do bonde: poste, placa e banco
-    b.box(44.6, Y, 26.9, 44.75, Y + 2.8, 27.05, 'metal', { tag: 'prop' });
+    b.sbox(44.6, Y, 26.9, 44.75, Y + 2.8, 27.05, 'metal', { tag: 'prop' });
     this.sign('PONTO DO BONDE · LINHA 4', 44.2, Y + 2.6, 26.86, Math.PI, 1.3, 0.28, { bg: '#e0d8b0', fg: '#1c2a40' });
-    b.box(44.8, Y, 24.6, 45.6, Y + 0.5, 26.4, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(44.8, Y, 24.6, 45.6, Y + 0.5, 26.4, 'wood', { tag: 'prop-low', sight: false });
     // caixotes de carga
-    b.box(40.6, Y, 9, 42, Y + 1.2, 10.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(44.4, Y, 12, 45.8, Y + 1.4, 13.6, 'wood', { tag: 'prop-low', sight: false });
-    b.box(40.6, Y, 19, 41.6, Y + 0.9, 20, 'rust', { tag: 'prop-low', sight: false });
+    b.sbox(40.6, Y, 9, 42, Y + 1.2, 10.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(44.4, Y, 12, 45.8, Y + 1.4, 13.6, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(40.6, Y, 19, 41.6, Y + 0.9, 20, 'rust', { tag: 'prop-low', sight: false });
   }
 
   // ---------- RUA DO CARVÃO x38..50 z30..60 ----------
@@ -210,46 +210,46 @@ export class BairroLevel {
     const b = this.b, Y = STREET;
     b.floor(38, 30, 50, 60, Y, 'stone', 'c2_coalst');
     // cantos do portão do pátio
-    b.box(38, Y, 29.8, 39.8, Y + 3, 30.2, 'brick'); b.box(46.2, Y, 29.8, 50, Y + 3, 30.2, 'brick');
+    b.sbox(38, Y, 29.8, 39.8, Y + 3, 30.2, 'brick'); b.sbox(46.2, Y, 29.8, 50, Y + 3, 30.2, 'brick');
     // casas do lado oeste (a carvoaria fica entre elas, z38..48)
-    b.box(32, Y, 30.2, 38, Y + 5.2, 37.9, 'brick');
-    b.box(32, Y, 48.1, 38, Y + 6.0, 60, 'wall');
+    b.sbox(32, Y, 30.2, 38, Y + 5.2, 37.9, 'brick');
+    b.sbox(32, Y, 48.1, 38, Y + 6.0, 60, 'wall');
     // quarteirão leste: casas de operários, alturas variadas, portas pregadas
     const east = [[30.2, 37, 5.8, 'wallLower'], [37, 44, 6.6, 'brick'], [44, 51, 5.4, 'wall'], [51, 60, 7.2, 'brick']];
     for (const [z0, z1, h, mat] of east) {
-      b.box(50, Y, z0, 54, Y + h, z1, mat);
-      b.box(49.8, Y + h, z0, 54.2, Y + h + 0.25, z1, 'woodDark', { collide: false });
+      b.sbox(50, Y, z0, 54, Y + h, z1, mat);
+      b.sbox(49.8, Y + h, z0, 54.2, Y + h + 0.25, z1, 'woodDark', { collide: false });
       const mid = (z0 + z1) / 2;
-      b.box(49.94, Y, mid - 0.55, 50.02, Y + 2.2, mid + 0.55, 'door', { collide: false });
-      b.box(49.9, Y + 0.9, mid - 0.7, 49.96, Y + 1.05, mid + 0.7, 'wood', { collide: false });
-      for (const wz of [z0 + 1.1, z1 - 1.1]) b.box(49.94, Y + 1.3, wz - 0.4, 50.0, Y + 2.2, wz + 0.4, 'glass', { collide: false });
+      b.sbox(49.94, Y, mid - 0.55, 50.02, Y + 2.2, mid + 0.55, 'door', { collide: false });
+      b.sbox(49.9, Y + 0.9, mid - 0.7, 49.96, Y + 1.05, mid + 0.7, 'wood', { collide: false });
+      for (const wz of [z0 + 1.1, z1 - 1.1]) b.sbox(49.94, Y + 1.3, wz - 0.4, 50.0, Y + 2.2, wz + 0.4, 'glass', { collide: false });
     }
     for (const [z0, z1] of [[30.2, 37.9], [48.1, 60]]) {
       const mid = (z0 + z1) / 2;
-      b.box(37.98, Y, mid - 0.55, 38.06, Y + 2.2, mid + 0.55, 'door', { collide: false });
-      b.box(38.0, Y + 1.3, z0 + 0.8, 38.06, Y + 2.2, z0 + 1.6, 'glass', { collide: false });
+      b.sbox(37.98, Y, mid - 0.55, 38.06, Y + 2.2, mid + 0.55, 'door', { collide: false });
+      b.sbox(38.0, Y + 1.3, z0 + 0.8, 38.06, Y + 2.2, z0 + 1.6, 'glass', { collide: false });
     }
     // trilhos da Linha 4 seguindo até o portão da fábrica
-    for (const x of [42.6, 43.4]) b.box(x - 0.04, Y, 30, x + 0.04, Y + 0.06, 58, 'steel', { collide: false });
-    for (let z = 30.4; z < 58; z += 0.9) b.box(42.3, Y, z - 0.1, 43.7, Y + 0.03, z + 0.1, 'woodDark', { collide: false });
+    for (const x of [42.6, 43.4]) b.sbox(x - 0.04, Y, 30, x + 0.04, Y + 0.06, 58, 'steel', { collide: false });
+    for (let z = 30.4; z < 58; z += 0.9) b.sbox(42.3, Y, z - 0.1, 43.7, Y + 0.03, z + 0.1, 'woodDark', { collide: false });
     // vagonete de carvão descarrilado sobre os trilhos (cobertura baixa)
-    b.box(42.2, Y, 39, 43.8, Y + 1.1, 41, 'rust', { tag: 'prop-low', sight: false });
-    b.box(42.3, Y + 1.1, 39.1, 43.7, Y + 1.35, 40.9, 'coal', { collide: false });
+    b.sbox(42.2, Y, 39, 43.8, Y + 1.1, 41, 'rust', { tag: 'prop-low', sight: false });
+    b.sbox(42.3, Y + 1.1, 39.1, 43.7, Y + 1.35, 40.9, 'coal', { collide: false });
     // montes de carvão espalhados e entulho de uma casa desabada
-    for (const [x0, z0, x1, z1, h] of [[38.2, 33, 39.6, 35.2, 0.7], [48.4, 46, 49.8, 48.6, 0.9], [38.2, 56.4, 40, 59.8, 1.0]]) b.box(x0, Y, z0, x1, Y + h, z1, 'coal', { tag: 'prop-low', sight: false });
-    b.box(38, Y, 49, 41, Y + 1.8, 51, 'stone', { tag: 'prop' });
-    b.box(38.4, Y + 1.8, 49.3, 40.2, Y + 2.4, 50.6, 'woodDark', { collide: false });
+    for (const [x0, z0, x1, z1, h] of [[38.2, 33, 39.6, 35.2, 0.7], [48.4, 46, 49.8, 48.6, 0.9], [38.2, 56.4, 40, 59.8, 1.0]]) b.sbox(x0, Y, z0, x1, Y + h, z1, 'coal', { tag: 'prop-low', sight: false });
+    b.sbox(38, Y, 49, 41, Y + 1.8, 51, 'stone', { tag: 'prop' });
+    b.sbox(38.4, Y + 1.8, 49.3, 40.2, Y + 2.4, 50.6, 'woodDark', { collide: false });
     // carroça de coque em chamas
-    b.box(47, Y, 52, 49.5, Y + 1.0, 54, 'woodDark', { tag: 'prop-low', sight: false, cast: true });
-    b.box(47.2, Y + 1.0, 52.2, 49.3, Y + 1.25, 53.8, 'coal', { collide: false });
+    b.sbox(47, Y, 52, 49.5, Y + 1.0, 54, 'woodDark', { tag: 'prop-low', sight: false, cast: true });
+    b.sbox(47.2, Y + 1.0, 52.2, 49.3, Y + 1.25, 53.8, 'coal', { collide: false });
     this._fire(48.2, Y + 1.2, 53, 0.8);
     // postes de lampião a gás
     for (const [x, z] of [[39, 34], [49, 44], [39, 54]]) {
-      b.box(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.6, z + 0.06, 'metal', { tag: 'prop' });
-      b.box(x - 0.16, Y + 3.5, z - 0.16, x + 0.16, Y + 3.85, z + 0.16, 'lampOn', { collide: false });
+      b.sbox(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.6, z + 0.06, 'metal', { tag: 'prop' });
+      b.sbox(x - 0.16, Y + 3.5, z - 0.16, x + 0.16, Y + 3.85, z + 0.16, 'lampOn', { collide: false });
     }
     // chaminés da fábrica despontando ao fundo (silhuetas na fumaça)
-    for (const [x, z, h] of [[38, 66, 22], [47, 72, 26], [54, 64, 19]]) b.box(x - 0.9, Y + H_FAB, z - 0.9, x + 0.9, Y + h, z + 0.9, 'soot', { collide: false });
+    for (const [x, z, h] of [[38, 66, 22], [47, 72, 26], [54, 64, 19]]) b.sbox(x - 0.9, Y + H_FAB, z - 0.9, x + 0.9, Y + h, z + 0.9, 'soot', { collide: false });
     // placas
     this.sign('RUA DO CARVÃO', 39.9, Y + 2.7, 30.25, 0, 1.4, 0.26, { bg: '#1e2a3a', fg: '#d8d2b8' });
     this.sign('CIA. DE GÁS E COQUE DE VÉSPERA', 43, Y + 4.4, 59.85, Math.PI, 3.2, 0.36, { bg: '#2a1a10', fg: '#e0a050' });
@@ -267,15 +267,15 @@ export class BairroLevel {
     b.wallZ(38, 38, 48, Y, H_CARV, [43], 'soot', 1.4, 2.3);
     this.sign('CARVOARIA SÃO BRÁS', 38.12, Y + 2.9, 43, Math.PI / 2, 1.8, 0.3, { bg: '#2a1e14', fg: '#d8b070' });
     // montes de carvão e sacos (corredores para contornar o que vive aqui)
-    b.box(30.2, Y, 38.2, 32.6, Y + 1.6, 41.4, 'coal', { tag: 'prop' });
-    b.box(31.8, Y, 45.6, 34.4, Y + 1.2, 47.8, 'coal', { tag: 'prop-low', sight: false });
-    for (const [x, z] of [[35.2, 39], [36.2, 39], [35.7, 39.9]]) b.box(x - 0.4, Y, z - 0.3, x + 0.4, Y + 0.7, z + 0.3, 'sheet', { tag: 'prop-low', sight: false });
+    b.sbox(30.2, Y, 38.2, 32.6, Y + 1.6, 41.4, 'coal', { tag: 'prop' });
+    b.sbox(31.8, Y, 45.6, 34.4, Y + 1.2, 47.8, 'coal', { tag: 'prop-low', sight: false });
+    for (const [x, z] of [[35.2, 39], [36.2, 39], [35.7, 39.9]]) b.sbox(x - 0.4, Y, z - 0.3, x + 0.4, Y + 0.7, z + 0.3, 'sheet', { tag: 'prop-low', sight: false });
     // balança de pesagem com a mesa do encarregado (chave pendurada no gancho)
-    b.box(35.5, Y, 46.6, 37.6, Y + 0.9, 47.8, 'wood', { tag: 'prop-low', sight: false });
-    b.box(36.9, Y + 0.9, 47.4, 37.0, Y + 2.0, 47.5, 'metal', { collide: false });
-    b.box(36.5, Y + 1.95, 47.3, 37.3, Y + 2.0, 47.6, 'metal', { collide: false });
+    b.sbox(35.5, Y, 46.6, 37.6, Y + 0.9, 47.8, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(36.9, Y + 0.9, 47.4, 37.0, Y + 2.0, 47.5, 'metal', { collide: false });
+    b.sbox(36.5, Y + 1.95, 47.3, 37.3, Y + 2.0, 47.6, 'metal', { collide: false });
     // prateleira com pás e lampiões
-    b.box(30.2, Y, 43.6, 30.9, Y + 2.4, 45.8, 'woodDark', { tag: 'prop' });
+    b.sbox(30.2, Y, 43.6, 30.9, Y + 2.4, 45.8, 'woodDark', { tag: 'prop' });
     this.sign('PESO JUSTO — DEUS VÊ', 37.85, Y + 2.6, 46.9, -Math.PI / 2, 1.2, 0.22, { bg: '#c9c2a4', fg: '#3a2a10' });
   }
 
@@ -289,29 +289,29 @@ export class BairroLevel {
     b.wallZ(56, 60, 78, Y, H_FAB, [], 'brick');
     b.wallX(78, 34, 56, Y, H_ARENA, [45], 'soot', 2.4, 2.8);
     // bateria de fornos de coque (parede oeste): portas de ferro e bocas em brasa
-    b.box(34.1, Y, 62, 36.5, Y + 3.2, 76, 'soot', { tag: 'prop' });
+    b.sbox(34.1, Y, 62, 36.5, Y + 3.2, 76, 'soot', { tag: 'prop' });
     for (const z of [64, 68, 72]) {
-      b.box(36.5, Y + 0.6, z - 0.8, 36.56, Y + 2.0, z + 0.8, 'rust', { collide: false });
-      b.box(36.5, Y + 0.2, z - 0.5, 36.6, Y + 0.6, z + 0.5, 'ember', { collide: false });
+      b.sbox(36.5, Y + 0.6, z - 0.8, 36.56, Y + 2.0, z + 0.8, 'rust', { collide: false });
+      b.sbox(36.5, Y + 0.2, z - 0.5, 36.6, Y + 0.6, z + 0.5, 'ember', { collide: false });
       this._fire(36.9, Y, z, 0.45);
     }
-    b.box(34.1, Y + 3.2, 62, 36.5, Y + 6.8, 63, 'soot', { collide: false });
+    b.sbox(34.1, Y + 3.2, 62, 36.5, Y + 6.8, 63, 'soot', { collide: false });
     // esteira de coque parada (cobertura baixa)
-    b.box(39, Y, 66, 51, Y + 1.0, 67.2, 'metal', { tag: 'prop-low', sight: false });
-    b.box(39.2, Y + 1.0, 66.1, 50.8, Y + 1.12, 67.1, 'coal', { collide: false });
-    for (let x = 40; x <= 50; x += 2.5) b.box(x - 0.1, Y + 1.12, 66, x + 0.1, Y + 4.5, 66.2, 'steelDark', { collide: false });
+    b.sbox(39, Y, 66, 51, Y + 1.0, 67.2, 'metal', { tag: 'prop-low', sight: false });
+    b.sbox(39.2, Y + 1.0, 66.1, 50.8, Y + 1.12, 67.1, 'coal', { collide: false });
+    for (let x = 40; x <= 50; x += 2.5) b.sbox(x - 0.1, Y + 1.12, 66, x + 0.1, Y + 4.5, 66.2, 'steelDark', { collide: false });
     // tanques de alcatrão (leste)
-    b.box(51, Y, 70, 55, Y + 3.6, 76, 'rust', { tag: 'prop' });
-    b.box(51.3, Y + 3.6, 70.4, 54.7, Y + 3.8, 75.6, 'steelDark', { collide: false });
+    b.sbox(51, Y, 70, 55, Y + 3.6, 76, 'rust', { tag: 'prop' });
+    b.sbox(51.3, Y + 3.6, 70.4, 54.7, Y + 3.8, 75.6, 'steelDark', { collide: false });
     // canos e válvulas de alívio (duas rodas vermelhas)
-    b.box(34.6, Y + 4.6, 60.3, 55.6, Y + 4.9, 60.6, 'steel', { collide: false });
-    b.box(55.4, Y + 0.8, 60.6, 55.7, Y + 4.9, 60.9, 'steel', { collide: false });
+    b.sbox(34.6, Y + 4.6, 60.3, 55.6, Y + 4.9, 60.6, 'steel', { collide: false });
+    b.sbox(55.4, Y + 0.8, 60.6, 55.7, Y + 4.9, 60.9, 'steel', { collide: false });
     this.valveA = this._valve(36.75, Y + 1.25, 75.6, Math.PI / 2);
     this.valveB = this._valve(55.8, Y + 1.25, 63, -Math.PI / 2);
     // mesa do fornalheiro (diário) e caixote do livro de registro junto à porta da casa das fornalhas
-    b.box(51.5, Y, 60.3, 54, Y + 0.85, 61.2, 'wood', { tag: 'prop-low', sight: false });
-    b.box(47, Y, 76.8, 48.4, Y + 0.9, 77.8, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(38.6, Y, 65.8, 39, Y + 1.0, 67.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(51.5, Y, 60.3, 54, Y + 0.85, 61.2, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(47, Y, 76.8, 48.4, Y + 0.9, 77.8, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(38.6, Y, 65.8, 39, Y + 1.0, 67.4, 'woodDark', { tag: 'prop-low', sight: false });
     this.sign('CASA DAS FORNALHAS', 45, Y + 3.2, 77.86, Math.PI, 1.8, 0.3, { bg: '#2a1a10', fg: '#e08040' });
     this.sign('ALIVIE AS VÁLVULAS ANTES DE ABRIR', 45, Y + 3.6, 77.86 - 0.01, Math.PI, 2.0, 0.22, { bg: '#c9c2a4', fg: '#7a1010' });
   }
@@ -334,24 +334,24 @@ export class BairroLevel {
     b.wallZ(56, 78, 96, Y, H_ARENA, [], 'soot');
     b.wallX(96, 34, 56, Y, H_ARENA, [], 'soot');
     // a Garganta: fornalha gigante com boca em brasa e grelha
-    b.box(41, Y, 93, 49, Y + 6.5, 96, 'brick');
-    b.box(42.5, Y + 0.4, 92.94, 47.5, Y + 3.2, 93.0, 'ember', { collide: false });
-    b.box(41.4, Y + 6.5, 93.6, 48.6, Y + 8.99, 95.6, 'soot', { collide: false });
-    b.box(43, Y, 91.8, 47, Y + 0.4, 93, 'rust', { tag: 'prop-low', sight: false });
-    for (let x = 43.3; x < 47; x += 0.5) b.box(x - 0.03, Y + 0.4, 91.8, x + 0.03, Y + 0.46, 93, 'steelDark', { collide: false });
+    b.sbox(41, Y, 93, 49, Y + 6.5, 96, 'brick');
+    b.sbox(42.5, Y + 0.4, 92.94, 47.5, Y + 3.2, 93.0, 'ember', { collide: false });
+    b.sbox(41.4, Y + 6.5, 93.6, 48.6, Y + 8.99, 95.6, 'soot', { collide: false });
+    b.sbox(43, Y, 91.8, 47, Y + 0.4, 93, 'rust', { tag: 'prop-low', sight: false });
+    for (let x = 43.3; x < 47; x += 0.5) b.sbox(x - 0.03, Y + 0.4, 91.8, x + 0.03, Y + 0.46, 93, 'steelDark', { collide: false });
     this._fire(45, Y + 0.4, 93.3, 1.4);
     // quatro pilares de ferro fundido: ele atordoa se investir contra eles
     for (const [x, z] of [[38.5, 82.5], [51.5, 82.5], [38.5, 89.5], [51.5, 89.5]]) {
-      b.box(x - 0.7, Y, z - 0.7, x + 0.7, Y + H_ARENA, z + 0.7, 'steelDark', { tag: 'obstacle' });
-      b.box(x - 0.85, Y, z - 0.85, x + 0.85, Y + 0.5, z + 0.85, 'rust', { collide: false });
+      b.sbox(x - 0.7, Y, z - 0.7, x + 0.7, Y + H_ARENA, z + 0.7, 'steelDark', { tag: 'obstacle' });
+      b.sbox(x - 0.85, Y, z - 0.85, x + 0.85, Y + 0.5, z + 0.85, 'rust', { collide: false });
     }
     // montes de coque nos cantos
-    b.box(34.2, Y, 93.4, 37.4, Y + 1.4, 95.8, 'coal', { tag: 'prop-low', sight: false });
-    b.box(52.6, Y, 93.4, 55.8, Y + 1.4, 95.8, 'coal', { tag: 'prop-low', sight: false });
+    b.sbox(34.2, Y, 93.4, 37.4, Y + 1.4, 95.8, 'coal', { tag: 'prop-low', sight: false });
+    b.sbox(52.6, Y, 93.4, 55.8, Y + 1.4, 95.8, 'coal', { tag: 'prop-low', sight: false });
     // caixote com o recado e a porta de serviço (saída leste)
-    b.box(54.2, Y, 90, 55.8, Y + 0.9, 91.2, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(55.9, Y, 86.2, 55.98, Y + 2.3, 87.8, 'doorMetal', { collide: false });
-    b.box(55.84, Y + 1.0, 87.5, 55.9, Y + 1.1, 87.65, 'metal', { collide: false });
+    b.sbox(54.2, Y, 90, 55.8, Y + 0.9, 91.2, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(55.9, Y, 86.2, 55.98, Y + 2.3, 87.8, 'doorMetal', { collide: false });
+    b.sbox(55.84, Y + 1.0, 87.5, 55.9, Y + 1.1, 87.65, 'metal', { collide: false });
     this.sign('SAÍDA — RUA DA FUNDIÇÃO', 55.86, Y + 2.65, 87, -Math.PI / 2, 1.6, 0.26, { bg: '#1e2a3a', fg: '#d8d2b8' });
     this.sign('BRÁS GUARDA A GARGANTA DA FUMAÇA', 45, Y + 4.0, 92.9, Math.PI, 2.6, 0.3, { bg: '#2a1a10', fg: '#e08040' });
   }
