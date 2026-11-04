@@ -5,6 +5,7 @@ import { ENEMIES } from '../data/enemies.js';
 import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from '../gameplay/ProceduralRig.js';
 import { freezeRig } from '../render/Perf.js';
 import { attachEnemyModel, updateEnemyModel } from '../models/EnemyModels.js';
+import { restPoseFor } from '../models/MixamoPoses.js';
 
 const tmp = new THREE.Vector3();
 const angDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -33,6 +34,7 @@ export class Enemy {
     this.speed = 0;
     this.groanT = 3 + Math.random() * 6;
     this.dormant = !!o.dormant; // só desperta por trigger
+    this.restPose = restPoseFor(o); // pt54u: dormente sentado ou deitado no chão (pose no esqueleto do GLB)
     // Afogado: espera deitado no fundo do canal (submerso) e emerge ao acordar
     this.submerged = !!(o.submerged && this.dormant); this.emerging = 0;
     this._build();
@@ -363,7 +365,7 @@ export class Enemy {
     this.poiseT -= dt; if (this.poiseT <= 0) this.poise = this.def.poise;
     // pt48u: corpo já caído / dormente tem pose parada → congela as matrizes dos ossos (a raiz continua livre para
     // afundar/mover); qualquer outro estado descongela antes de animar
-    const still = (this.state === 'dead' && this.stateT > 1.0) || (this.dormant && this.stateT > 0.05 && !this.def.crawler);
+    const still = (this.state === 'dead' && this.stateT > 1.0) || (this.dormant && this.stateT > (this.glb?.mixer ? 0.6 : 0.05) && !this.def.crawler);
     if (this._frozen && !still) { freezeRig(this.rig.root, false); this._frozen = false; }
     if (this.state === 'dead') {
       if (this.despawned) return;

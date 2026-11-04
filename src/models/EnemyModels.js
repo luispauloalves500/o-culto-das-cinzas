@@ -9,18 +9,23 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
+import { buildPoseClips } from './MixamoPoses.js';
+import { freezeRig } from '../render/Perf.js';
 
 export const ENEMY_MODELS = {
   enfermeiro: { url: './models/enfermeiro.glb' },
   hornbeard: { url: './models/hornbeard.glb', draco: true, legacy: true },
   interno: { url: './models/infectado.glb' },
 };
-/** escolhe o clipe pela velocidade (m/s) e estado; null = sem clipe (pose estática) */
-export function pickClip(names, speed, state) {
+/** escolhe o clipe pelo estado e velocidade (m/s). Dormente → pose sentada/deitada; morto → deitado; parado → idle
+ *  (pose sintetizada, nunca a pose T de ligação). null = sem clipe aplicável. */
+export function pickClip(names, speed, state, rest = 'sit') {
   const has = (n) => names.includes(n);
-  if (state === 'dead' || state === 'dormant') return null;
+  if (state === 'dormant') return has('Pose_' + rest) ? { name: 'Pose_' + rest, scale: 1, fade: 0.2 } : has('Walking') ? { name: 'Walking', scale: 0 } : null;
+  if (state === 'dead') return has('Pose_lie') ? { name: 'Pose_lie', scale: 1, fade: 0.55 } : has('Walking') ? { name: 'Walking', scale: 0 } : null;
   if (speed > 1.6 && has('Running')) return { name: 'Running', scale: Math.min(1.4, speed / 3) };
-  if (has('Walking')) return { name: 'Walking', scale: speed > 0.05 ? Math.max(0.5, Math.min(1.5, speed / 1.1)) : 0.15 };
+  if (speed <= 0.05 && has('Pose_idle')) return { name: 'Pose_idle', scale: 1, fade: 0.35 };
+  if (has('Walking')) return { name: 'Walking', scale: speed > 0.05 ? Math.max(0.5, Math.min(1.5, speed / 1.1)) : 0 };
   return null;
 }
 /** escala uniforme para a altura do arquétipo e deslocamento para apoiar os pés no chão */
@@ -47,6 +52,10 @@ export function loadEnemyModel(kind) {
     for (const c of g.animations) { // tira root motion do quadril (a IA já move o inimigo)
       const hp = c.tracks.find((t) => /Hips\.position$/.test(t.name));
       if (hp) { const v = hp.values, x0 = v[0], z0 = v[2]; for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } }
+    }
+    if (g.animations.length) {
+      try { const b = new THREE.Box3().setFromObject(g.scene); g.animations.push(...buildPoseClips(g.scene, g.animations, b.max.y - b.min.y)); }
+      catch (e) { console.warn('[inimigo] poses não sintetizadas:', kind, e?.message || e); }
     }
     res(g);
   }, undefined, rej));
@@ -75,6 +84,8 @@ export function attachEnemyModel(enemy) {
       const mx = new THREE.AnimationMixer(model);
       for (const c of g.animations) enemy.glb.actions[c.name] = mx.clipAction(c);
       enemy.glb.mixer = mx;
+      // pt54u: o GLB chega assíncrono; se o rig já foi congelado (dormente/morto), descongela para o mixer pôr a pose
+      if (enemy._frozen) { freezeRig(enemy.rig.root, false); enemy._frozen = false; }
     }
     return true;
   }).catch((e) => { console.warn('[inimigo] GLB indisponível, usando procedural:', kind, e?.message || e); return false; });
@@ -93,11 +104,19 @@ export function updateEnemyModel(enemy, dt, speed) {
   else if (st === 'stagger') lean = -0.25;
   G.model.rotation.x = lean; G.model.position.z = push;
   if (enemy.flinch > 0) G.model.rotation.x -= enemy.flinch * 0.6;
+  // morto: o rig procedural tomba o corpo inteiro; o GLB desfaz essa rotação e cai na pose deitada pelo esqueleto
+  const body = enemy.rig.body;
+  if (G.mixer && st === 'dead') { G.holder.rotation.x = -body.rotation.x; G.holder.position.y = -body.position.y; G.model.rotation.x = 0; }
+  else { G.holder.rotation.x = 0; G.holder.position.y = 0; }
   if (!G.mixer) return;
-  const pick = pickClip(G.names, st === 'attack' || st === 'grabbing' ? 0.6 : speed, st);
+  const pick = pickClip(G.names, st === 'attack' || st === 'grabbing' ? 0.6 : speed, st, enemy.restPose || 'sit');
   if (!pick) { if (G.cur) { G.cur.paused = true; } return; }
   const act = G.actions[pick.name];
-  if (G.cur !== act) { act.reset().play(); if (G.cur) { G.cur.paused = false; act.crossFadeFrom(G.cur, 0.25, false); } G.cur = act; }
+  if (G.cur !== act) {
+    // levantar (sentado/deitado → andar) é uma transição mais longa
+    const fade = G.cur && /^Pose_(sit|lie)$/.test(G.cur.getClip().name) && st !== 'dead' ? 1.0 : pick.fade ?? 0.25;
+    act.reset().play(); if (G.cur) { G.cur.paused = false; act.crossFadeFrom(G.cur, fade, false); } G.cur = act;
+  }
   act.paused = false; act.timeScale = pick.scale;
   G.mixer.update(dt);
 }
