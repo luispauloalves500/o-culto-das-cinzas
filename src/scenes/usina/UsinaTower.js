@@ -235,26 +235,26 @@ export function buildTower(L) {
     col.addBox(a, MACH_Y - 0.3, c, d, MACH_Y - 0.02, e, { tag: 'ceiling', blocksSight: true });
   }
   // borda do alçapão: guarda-corpo baixo (a escada se pega por cima dele)
-  b.box(HATCH.maxX - 0.05, MACH_Y, HATCH.minZ, HATCH.maxX + 0.05, MACH_Y + 1.0, HATCH.maxZ, 'rust', { tag: 'prop-low', sight: false });
-  b.box(HATCH.minX, MACH_Y, HATCH.maxZ - 0.05, HATCH.maxX + 0.05, MACH_Y + 1.0, HATCH.maxZ + 0.05, 'rust', { tag: 'prop-low', sight: false });
+  b.sbox(HATCH.maxX - 0.05, MACH_Y, HATCH.minZ, HATCH.maxX + 0.05, MACH_Y + 1.0, HATCH.maxZ, 'rust', { tag: 'prop-low', sight: false });
+  b.sbox(HATCH.minX, MACH_Y, HATCH.maxZ - 0.05, HATCH.maxX + 0.05, MACH_Y + 1.0, HATCH.maxZ + 0.05, 'rust', { tag: 'prop-low', sight: false });
   // escada de marinheiro na parede oeste
   const LX = 8.18;
-  for (const z of [LADDER_T1.z - 0.25, LADDER_T1.z + 0.25]) b.box(LX - 0.03, 0, z - 0.03, LX + 0.03, MACH_Y + 1.1, z + 0.03, 'rust', { collide: false });
-  for (let y = 0.3; y < MACH_Y + 1; y += 0.32) b.box(LX - 0.025, y, LADDER_T1.z - 0.25, LX + 0.025, y + 0.04, LADDER_T1.z + 0.25, 'rust', { collide: false });
+  for (const z of [LADDER_T1.z - 0.25, LADDER_T1.z + 0.25]) b.sbox(LX - 0.03, 0, z - 0.03, LX + 0.03, MACH_Y + 1.1, z + 0.03, 'rust', { collide: false });
+  for (let y = 0.3; y < MACH_Y + 1; y += 0.32) b.sbox(LX - 0.025, y, LADDER_T1.z - 0.25, LX + 0.025, y + 0.04, LADDER_T1.z + 0.25, 'rust', { collide: false });
   L.sign('CASA DE MÁQUINAS ↑', 8.13, 2.6, 70.8, Math.PI / 2, 1.5, 0.2, { bg: '#1a1712', fg: '#cbbf98' });
 
   // ===== POÇO DO MONTA-CARGAS =====
-  b.box(S.minX - 0.1, 0, S.minZ, S.minX, ARENA_Y, S.maxZ + 0.1, 'rust', { tag: 'wall' });
-  b.box(S.maxX, 0, S.minZ, S.maxX + 0.1, ARENA_Y, S.maxZ + 0.1, 'rust', { tag: 'wall' });
-  b.box(S.minX - 0.1, ARENA_Y, S.minZ - 0.1, S.minX, HOUSING_TOP, S.maxZ, 'rust', { tag: 'obstacle' });
-  b.box(S.maxX, ARENA_Y, S.minZ - 0.1, S.maxX + 0.1, HOUSING_TOP, S.maxZ, 'rust', { tag: 'obstacle' });
-  b.box(S.minX, 0, S.maxZ, S.maxX, ARENA_Y, S.maxZ + 0.1, 'rust', { tag: 'wall' });
-  b.box(S.minX - 0.1, ARENA_Y, S.minZ - 0.1, S.maxX + 0.1, HOUSING_TOP, S.minZ, 'rust', { tag: 'obstacle' });
-  b.box(S.minX - 0.1, HOUSING_TOP, S.minZ - 0.1, S.maxX + 0.1, HOUSING_TOP + 0.2, S.maxZ + 0.1, 'steelDark', { tag: 'ceiling' });
+  b.sbox(S.minX - 0.1, 0, S.minZ, S.minX, ARENA_Y, S.maxZ + 0.1, 'rust', { tag: 'wall' });
+  b.sbox(S.maxX, 0, S.minZ, S.maxX + 0.1, ARENA_Y, S.maxZ + 0.1, 'rust', { tag: 'wall' });
+  b.sbox(S.minX - 0.1, ARENA_Y, S.minZ - 0.1, S.minX, HOUSING_TOP, S.maxZ, 'rust', { tag: 'obstacle' });
+  b.sbox(S.maxX, ARENA_Y, S.minZ - 0.1, S.maxX + 0.1, HOUSING_TOP, S.maxZ, 'rust', { tag: 'obstacle' });
+  b.sbox(S.minX, 0, S.maxZ, S.maxX, ARENA_Y, S.maxZ + 0.1, 'rust', { tag: 'wall' });
+  b.sbox(S.minX - 0.1, ARENA_Y, S.minZ - 0.1, S.maxX + 0.1, HOUSING_TOP, S.minZ, 'rust', { tag: 'obstacle' });
+  b.sbox(S.minX - 0.1, HOUSING_TOP, S.minZ - 0.1, S.maxX + 0.1, HOUSING_TOP + 0.2, S.maxZ + 0.1, 'steelDark', { tag: 'ceiling' });
   // paredes sul do poço acima das portas (base e casa de máquinas); dintel da porta de cima
-  b.box(S.minX, GATE_H, S.minZ - 0.1, S.maxX, MACH_Y - 0.3, S.minZ, 'rust', { tag: 'wall' });
-  b.box(S.minX, MACH_Y + GATE_H, S.minZ - 0.1, S.maxX, ARENA_Y - 0.3, S.minZ, 'rust', { tag: 'wall' });
-  b.box(S.minX, ARENA_Y + GATE_H, S.maxZ, S.maxX, HOUSING_TOP, S.maxZ + 0.1, 'rust', { tag: 'obstacle' });
+  b.sbox(S.minX, GATE_H, S.minZ - 0.1, S.maxX, MACH_Y - 0.3, S.minZ, 'rust', { tag: 'wall' });
+  b.sbox(S.minX, MACH_Y + GATE_H, S.minZ - 0.1, S.maxX, ARENA_Y - 0.3, S.minZ, 'rust', { tag: 'wall' });
+  b.sbox(S.minX, ARENA_Y + GATE_H, S.maxZ, S.maxX, HOUSING_TOP, S.maxZ + 0.1, 'rust', { tag: 'obstacle' });
   // portas pantográficas (colisor real; abrem só com a cabine parada no andar)
   const mkGate = (id, z, y0, face) => {
     const coll = col.addBox(S.minX, y0, z - 0.07, S.maxX, y0 + GATE_H, z + 0.07, { tag: 'door', blocksSight: false });
@@ -266,7 +266,7 @@ export function buildTower(L) {
     const rail = new THREE.Mesh(new THREE.BoxGeometry(S.maxX - S.minX, 0.08, 0.1), M.steelDark); rail.position.set((S.minX + S.maxX) / 2, y0 + GATE_H - 0.04, z); grp.add(rail);
     // botoeira de chamada ao lado da porta
     const px = S.maxX + 0.45, pz = z + face * 0.12;
-    b.box(px - 0.15, y0 + 1.0, pz - 0.05, px + 0.15, y0 + 1.5, pz + 0.05, 'steelDark', { collide: false });
+    b.sbox(px - 0.15, y0 + 1.0, pz - 0.05, px + 0.15, y0 + 1.5, pz + 0.05, 'steelDark', { collide: false });
     const lampMat = (M.lampRed || M.ember).clone();
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), lampMat); lamp.position.set(px, y0 + 1.38, pz + face * 0.05); b.group.add(lamp);
     tw.gates[id] = { id, z, y0, coll, bars, k: 0, lamp, lampMat };
@@ -304,21 +304,21 @@ export function buildTower(L) {
   // ===== CASA DE MÁQUINAS (y 7) =====
   const MY = MACH_Y;
   // guincho: tambor que gira quando a cabine anda
-  b.box(WINCH.minX, MY, WINCH.minZ, WINCH.maxX, MY + 0.4, WINCH.maxZ, 'steelDark', { tag: 'obstacle' });
-  b.box(WINCH.minX, MY + 0.4, WINCH.minZ, WINCH.minX + 0.2, MY + 1.9, WINCH.maxZ, 'rust', { tag: 'obstacle' });
-  b.box(WINCH.maxX - 0.2, MY + 0.4, WINCH.minZ, WINCH.maxX, MY + 1.9, WINCH.maxZ, 'rust', { tag: 'obstacle' });
+  b.sbox(WINCH.minX, MY, WINCH.minZ, WINCH.maxX, MY + 0.4, WINCH.maxZ, 'steelDark', { tag: 'obstacle' });
+  b.sbox(WINCH.minX, MY + 0.4, WINCH.minZ, WINCH.minX + 0.2, MY + 1.9, WINCH.maxZ, 'rust', { tag: 'obstacle' });
+  b.sbox(WINCH.maxX - 0.2, MY + 0.4, WINCH.minZ, WINCH.maxX, MY + 1.9, WINCH.maxZ, 'rust', { tag: 'obstacle' });
   const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, WINCH.maxX - WINCH.minX - 0.45, 14), M.boilerIron || M.steel);
   drum.rotation.z = Math.PI / 2; drum.position.set((WINCH.minX + WINCH.maxX) / 2, MY + 1.15, (WINCH.minZ + WINCH.maxZ) / 2); b.group.add(drum);
   for (let i = 0; i < 4; i++) { const st = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.3, WINCH.maxX - WINCH.minX - 0.5), M.rust); st.rotation.y = Math.PI / 2; const piv = new THREE.Group(); piv.rotation.y = (i * Math.PI) / 4; piv.add(st); drum.add(piv); }
   tw.drum = drum;
-  b.box(S.maxX + 0.1, ARENA_Y - 0.8, 74, WINCH.minX + 0.6, ARENA_Y - 0.6, 74.4, 'steel', { collide: false });
+  b.sbox(S.maxX + 0.1, ARENA_Y - 0.8, 74, WINCH.minX + 0.6, ARENA_Y - 0.6, 74.4, 'steel', { collide: false });
   // banco de baterias (acumuladores ácidos) + faca de força
-  b.box(BATTERIES.minX, MY, BATTERIES.minZ, BATTERIES.maxX, MY + 1.0, BATTERIES.maxZ, 'woodDark', { tag: 'prop-low', sight: false });
+  b.sbox(BATTERIES.minX, MY, BATTERIES.minZ, BATTERIES.maxX, MY + 1.0, BATTERIES.maxZ, 'woodDark', { tag: 'prop-low', sight: false });
   for (let x = BATTERIES.minX + 0.3; x < BATTERIES.maxX - 0.2; x += 0.55) {
-    b.box(x - 0.2, MY + 1.0, 68.25, x + 0.2, MY + 1.42, 68.75, M.vial || 'glass', { collide: false });
-    b.box(x - 0.04, MY + 1.42, 68.45, x + 0.04, MY + 1.5, 68.55, 'brass', { collide: false });
+    b.sbox(x - 0.2, MY + 1.0, 68.25, x + 0.2, MY + 1.42, 68.75, M.vial || 'glass', { collide: false });
+    b.sbox(x - 0.04, MY + 1.42, 68.45, x + 0.04, MY + 1.5, 68.55, 'brass', { collide: false });
   }
-  b.box(KNIFE.x - 0.5, MY + 1.0, 68.1, KNIFE.x + 0.5, MY + 2.2, 68.3, 'woodDark', { collide: false });
+  b.sbox(KNIFE.x - 0.5, MY + 1.0, 68.1, KNIFE.x + 0.5, MY + 2.2, 68.3, 'woodDark', { collide: false });
   const knife = new THREE.Group(); knife.position.set(KNIFE.x, MY + 1.6, 68.42); b.group.add(knife);
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.06), M.brass || M.metal); blade.position.x = 0.2; knife.add(blade);
   const handle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.06), M.woodDark); handle.position.set(0.42, 0, 0.04); knife.add(handle);
@@ -328,10 +328,10 @@ export function buildTower(L) {
   tw.knifeLampMat = kLampMat;
   L.sign('FORÇA DO MONTA-CARGAS', KNIFE.x, MY + 2.45, 68.15, 0, 1.2, 0.18, { bg: '#2a1a0c', fg: '#f0c070' });
   // caixotes: diário de Helena (oeste) e livro de registros (leste)
-  b.box(8.2, MY, 75.0, 9.4, MY + 0.65, 75.9, 'woodDark', { tag: 'prop-low', sight: false });
-  b.box(16.8, MY, 71.0, 17.9, MY + 0.8, 72.0, 'woodDark', { tag: 'prop-low', sight: false });
+  b.sbox(8.2, MY, 75.0, 9.4, MY + 0.65, 75.9, 'woodDark', { tag: 'prop-low', sight: false });
+  b.sbox(16.8, MY, 71.0, 17.9, MY + 0.8, 72.0, 'woodDark', { tag: 'prop-low', sight: false });
   // trapos e uma maleta aberta ao lado de Helena (curativos)
-  b.box(9.4, MY, 73.2, 10.0, MY + 0.06, 73.8, 'linen', { collide: false });
+  b.sbox(9.4, MY, 73.2, 10.0, MY + 0.06, 73.8, 'linen', { collide: false });
   L.sign('CASA DE MÁQUINAS — Nº 3', 13, MY + 3.4, T.minZ + 0.12, 0, 1.8, 0.24, { bg: '#1a1712', fg: '#cbbf98' });
 
   // ===== SALA DOS TRANSMISSORES (y 13,5) =====
@@ -349,16 +349,16 @@ export function buildTower(L) {
   b.ceiling(A.minX, A.minZ, A.maxX, A.maxZ, ARENA_TOP, 'soot');
   // janelões sobre a cidade (vidro escuro, caixilhos)
   for (const z of [72, 78, 84]) for (const x of [A.minX + 0.06, A.maxX - 0.06]) {
-    b.box(x - 0.04, AY + 2.4, z - 1.4, x + 0.04, AY + 5.4, z + 1.4, M.moonGlass || 'glass', { collide: false });
-    b.box(x - 0.06, AY + 3.85, z - 1.4, x + 0.06, AY + 3.95, z + 1.4, 'rust', { collide: false });
+    b.sbox(x - 0.04, AY + 2.4, z - 1.4, x + 0.04, AY + 5.4, z + 1.4, M.moonGlass || 'glass', { collide: false });
+    b.sbox(x - 0.06, AY + 3.85, z - 1.4, x + 0.06, AY + 3.95, z + 1.4, 'rust', { collide: false });
   }
   // vigas do teto (treliça)
-  for (const z of [71, 76, 81, 86]) b.box(A.minX, ARENA_TOP - 0.6, z - 0.12, A.maxX, ARENA_TOP - 0.4, z + 0.12, 'rust', { collide: false });
+  for (const z of [71, 76, 81, 86]) b.sbox(A.minX, ARENA_TOP - 0.6, z - 0.12, A.maxX, ARENA_TOP - 0.4, z + 0.12, 'rust', { collide: false });
   // transmissores (armários de válvulas) na parede norte, leste
-  b.box(19.5, AY, 87.2, 22.5, AY + 2.6, 87.9, 'steelDark', { tag: 'wall' });
-  for (let x = 19.8; x < 22.4; x += 0.5) for (const y of [1.2, 1.7, 2.2]) b.box(x - 0.08, AY + y, 87.12, x + 0.08, AY + y + 0.16, 87.2, M.vial || 'glass', { collide: false });
-  b.box(3.6, AY, 87.2, 7.6, AY + 2.6, 87.9, 'steelDark', { tag: 'wall' });
-  for (let x = 3.9; x < 7.5; x += 0.5) b.box(x - 0.08, AY + 1.7, 87.12, x + 0.08, AY + 1.86, 87.2, M.vial || 'glass', { collide: false });
+  b.sbox(19.5, AY, 87.2, 22.5, AY + 2.6, 87.9, 'steelDark', { tag: 'wall' });
+  for (let x = 19.8; x < 22.4; x += 0.5) for (const y of [1.2, 1.7, 2.2]) b.sbox(x - 0.08, AY + y, 87.12, x + 0.08, AY + y + 0.16, 87.2, M.vial || 'glass', { collide: false });
+  b.sbox(3.6, AY, 87.2, 7.6, AY + 2.6, 87.9, 'steelDark', { tag: 'wall' });
+  for (let x = 3.9; x < 7.5; x += 0.5) b.sbox(x - 0.08, AY + 1.7, 87.12, x + 0.08, AY + 1.86, 87.2, M.vial || 'glass', { collide: false });
   L.sign('SALA DOS TRANSMISSORES', 13, AY + 4.4, A.maxZ - 0.12, Math.PI, 2.8, 0.3, { bg: '#2a1a0c', fg: '#f0c070' });
   // acumuladores de vapor (W/E), com registro e bocal apontado para o centro
   for (const V of ARENA_STEAM) {
@@ -395,8 +395,8 @@ export function buildTower(L) {
     // disjuntor na parede
     const wallFace = C.id === 'N' ? 0 : C.id === 'W' ? 1 : -1;
     const bx = C.breaker.x, bz = C.breaker.z;
-    if (C.id === 'N') b.box(bx - 0.35, AY + 1.0, bz - 0.12, bx + 0.35, AY + 1.9, bz + 0.12, 'steelDark', { collide: false });
-    else b.box(bx - 0.12, AY + 1.0, bz - 0.35, bx + 0.12, AY + 1.9, bz + 0.35, 'steelDark', { collide: false });
+    if (C.id === 'N') b.sbox(bx - 0.35, AY + 1.0, bz - 0.12, bx + 0.35, AY + 1.9, bz + 0.12, 'steelDark', { collide: false });
+    else b.sbox(bx - 0.12, AY + 1.0, bz - 0.35, bx + 0.12, AY + 1.9, bz + 0.35, 'steelDark', { collide: false });
     const lever = new THREE.Group(); lever.position.set(bx + wallFace * 0.15, AY + 1.45, bz + (C.id === 'N' ? -0.15 : 0)); b.group.add(lever);
     const la = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 0.06), M.ember || M.rust); la.position.y = 0.18; lever.add(la);
     tw.coils[C.id] = { C, tor, torusMat, lever, live: true };
@@ -404,7 +404,7 @@ export function buildTower(L) {
   }
   // a lâmpada da Primeira Cinza sobre o pedestal
   const P = BULB.pedestal;
-  b.box(P.minX, AY, P.minZ, P.maxX, AY + 1.05, P.maxZ, 'brass', { tag: 'obstacle' });
+  b.sbox(P.minX, AY, P.minZ, P.maxX, AY + 1.05, P.maxZ, 'brass', { tag: 'obstacle' });
   const bulbMat = (M.vial || M.glass).clone(); bulbMat.transparent = true; bulbMat.opacity = 0.55;
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(BULB.r, 16, 12), bulbMat); bulb.position.set(BULB.x, BULB.y, BULB.z); b.group.add(bulb);
   const emberMat = (M.fireCore || M.ember).clone();
@@ -415,7 +415,7 @@ export function buildTower(L) {
   tw.bulb = { bulb, flame, bulbMat, emberMat, shards, broken: false, gone: false };
   // a cadeira de Inês: armação de ferro, capacete de fios até o teto, microfone de carvão diante da boca
   const IC = INES_CHAIR;
-  b.box(IC.x - 0.35, AY, IC.z - 0.35, IC.x + 0.35, AY + 0.48, IC.z + 0.35, 'rust', { tag: 'obstacle' });
+  b.sbox(IC.x - 0.35, AY, IC.z - 0.35, IC.x + 0.35, AY + 0.48, IC.z + 0.35, 'rust', { tag: 'obstacle' });
   const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, 0.08), M.rust);
   chairBack.position.set(IC.x - Math.sin(IC.yaw) * 0.33, AY + 0.98, IC.z - Math.cos(IC.yaw) * 0.33); chairBack.rotation.y = IC.yaw; b.group.add(chairBack);
   const helmet = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.14, 12, 1, true), M.brass || M.metal);

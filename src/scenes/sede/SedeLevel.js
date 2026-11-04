@@ -85,39 +85,39 @@ export class SedeLevel {
     const b = this.b, Y = GROUND;
     b.floor(0, 0, 24, 9.4, Y, 'stone', 'c3_largo');
     b.floor(0, 9.4, 24, 12, Y, 'concrete', 'c3_adro');                 // adro diante da fachada
-    for (const z of [2.0, 3.0]) b.box(0, Y, z - 0.05, 22, Y + 0.05, z + 0.05, 'rust', { collide: false }); // trilhos
+    for (const z of [2.0, 3.0]) b.sbox(0, Y, z - 0.05, 22, Y + 0.05, z + 0.05, 'rust', { collide: false }); // trilhos
     // muros do largo: casarões fechados ao sul, muro alto a oeste e a leste (até a portaria)
-    b.box(-0.6, Y, -1, 0, Y + 5, 12, 'brick');
+    b.sbox(-0.6, Y, -1, 0, Y + 5, 12, 'brick');
     const houses = [[0, 8, 7.2, 'wall'], [8, 15, 8.0, 'brick'], [15, 24, 6.8, 'wallLower']];
     for (const [x0, x1, h, mat] of houses) {
-      b.box(x0, Y, -3, x1, Y + h, 0, mat);
-      b.box(x0, Y + h, -3.2, x1, Y + h + 0.25, 0.25, 'woodDark', { collide: false });
-      for (const wx of [x0 + 1.5, x1 - 1.5]) b.box(wx - 0.45, Y + 2.6, -0.02, wx + 0.45, Y + 3.8, 0.04, 'glass', { collide: false });
+      b.sbox(x0, Y, -3, x1, Y + h, 0, mat);
+      b.sbox(x0, Y + h, -3.2, x1, Y + h + 0.25, 0.25, 'woodDark', { collide: false });
+      for (const wx of [x0 + 1.5, x1 - 1.5]) b.sbox(wx - 0.45, Y + 2.6, -0.02, wx + 0.45, Y + 3.8, 0.04, 'glass', { collide: false });
     }
-    b.box(24, Y, -1, 24.6, Y + 5, 4, 'brick');
+    b.sbox(24, Y, -1, 24.6, Y + 5, 4, 'brick');
     // bonde da Linha 4 parado no fim da linha (trouxe Elias), janelas acesas
-    b.box(1.2, Y, 1.4, 9.6, Y + 2.7, 3.6, 'rust', { cast: true });
-    b.box(1.0, Y + 2.7, 1.3, 9.8, Y + 2.9, 3.7, 'woodDark', { collide: false });
-    for (let x = 2; x < 9.4; x += 1.4) b.box(x, Y + 1.4, 3.6, x + 1.0, Y + 2.2, 3.64, 'lampOn', { collide: false });
-    b.box(9.6, Y, 2.0, 9.9, Y + 1.0, 3.0, 'metal', { tag: 'prop-low', sight: false });
+    b.sbox(1.2, Y, 1.4, 9.6, Y + 2.7, 3.6, 'rust', { cast: true });
+    b.sbox(1.0, Y + 2.7, 1.3, 9.8, Y + 2.9, 3.7, 'woodDark', { collide: false });
+    for (let x = 2; x < 9.4; x += 1.4) b.sbox(x, Y + 1.4, 3.6, x + 1.0, Y + 2.2, 3.64, 'lampOn', { collide: false });
+    b.sbox(9.6, Y, 2.0, 9.9, Y + 1.0, 3.0, 'metal', { tag: 'prop-low', sight: false });
     this.sign('LINHA 4 — LARGO DO VÉU', 5.4, Y + 2.45, 3.66, 0, 1.8, 0.24, { bg: '#2a2016', fg: '#d0a060' });
     // poste do ponto final e bancos de pedra
-    b.box(11.9, Y, 4.4, 12.1, Y + 3.6, 4.6, 'metal', { tag: 'prop' });
-    b.box(15, Y, 4.6, 17.4, Y + 0.5, 5.2, 'stone', { tag: 'prop-low', sight: false });
-    b.box(18.8, Y, 1.2, 20.2, Y + 0.9, 2.4, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
+    b.sbox(11.9, Y, 4.4, 12.1, Y + 3.6, 4.6, 'metal', { tag: 'prop' });
+    b.sbox(15, Y, 4.6, 17.4, Y + 0.5, 5.2, 'stone', { tag: 'prop-low', sight: false });
+    b.sbox(18.8, Y, 1.2, 20.2, Y + 0.9, 2.4, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
     // FACHADA DA SEDE (z = 12): pedra clara, colunas, frontão e as portas de bronze no centro (x = 12)
     b.wallX(12, 0, 24, Y, Y + 9, [12], 'marble', 2.4, 3.2);
-    for (const x of [7, 10, 14, 17]) b.box(x - 0.35, Y, 11.3, x + 0.35, Y + 6.2, 11.9, 'marble', { tag: 'prop' });
-    b.box(5.5, Y + 6.2, 11.0, 18.5, Y + 6.8, 11.9, 'marble', { collide: false });
-    b.box(9.5, Y, 10.6, 14.5, Y + 0.12, 11.9, 'marble', { collide: false }); // degrau
+    for (const x of [7, 10, 14, 17]) b.sbox(x - 0.35, Y, 11.3, x + 0.35, Y + 6.2, 11.9, 'marble', { tag: 'prop' });
+    b.sbox(5.5, Y + 6.2, 11.0, 18.5, Y + 6.8, 11.9, 'marble', { collide: false });
+    b.sbox(9.5, Y, 10.6, 14.5, Y + 0.12, 11.9, 'marble', { collide: false }); // degrau
     this.sign('INSTITUTO DE BENEMERÊNCIA DE VÉSPERA', 12, Y + 6.5, 10.98, Math.PI, 4.4, 0.36, { bg: '#2a2622', fg: '#c8b080' });
     this.sign('· MCMIX ·', 12, Y + 4.2, 11.89, Math.PI, 1.2, 0.2, { bg: '#2a2622', fg: '#a89060' });
     // véu de pedra esculpido acima das portas (o símbolo da Confraria, escondido à vista)
-    b.box(11.2, Y + 3.5, 11.86, 12.8, Y + 4.0, 11.9, 'veil', { collide: false });
+    b.sbox(11.2, Y + 3.5, 11.86, 12.8, Y + 4.0, 11.9, 'veil', { collide: false });
     // lampiões a gás do largo
     for (const [x, z] of [[4, 8.5], [20, 8.5]]) {
-      b.box(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.6, z + 0.06, 'metal', { tag: 'prop' });
-      b.box(x - 0.16, Y + 3.5, z - 0.16, x + 0.16, Y + 3.85, z + 0.16, 'lampOn', { collide: false });
+      b.sbox(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.6, z + 0.06, 'metal', { tag: 'prop' });
+      b.sbox(x - 0.16, Y + 3.5, z - 0.16, x + 0.16, Y + 3.85, z + 0.16, 'lampOn', { collide: false });
     }
     this.sign('PORTARIA →', 22.6, Y + 2.2, 11.88, Math.PI, 1.1, 0.22, { bg: '#c9c2a4', fg: '#3a1010' });
   }
@@ -128,16 +128,16 @@ export class SedeLevel {
     b.floor(24, 4, 30, 12, Y, 'woodDark', 'c3_lodge');
     b.ceiling(24, 4, 30, 12, Y + H_LODGE);
     b.wallZ(24, 4, 12, Y, Y + H_LODGE + 2, [8], 'marble', 1.2, 2.2);         // postigo (x = 24, z = 8)
-    b.box(23.7, Y + 1.5, 7.5, 23.8, Y + 1.8, 8.5, 'brass', { collide: false }); // portinhola de latão
+    b.sbox(23.7, Y + 1.5, 7.5, 23.8, Y + 1.8, 8.5, 'brass', { collide: false }); // portinhola de latão
     b.wallZ(30, 4, 12, Y, Y + H_LODGE, [], 'wall');
     b.wallX(4, 24, 30, Y, Y + H_LODGE, [], 'wall');
     // balcão do porteiro, cadeira, quadro de fitas e o livro de registros
-    b.box(27.6, Y, 4.4, 29.8, Y + 1.0, 6.2, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(28.2, Y, 6.6, 28.9, Y + 0.5, 7.3, 'wood', { tag: 'prop-low', sight: false });
-    b.box(29.86, Y + 1.4, 6.8, 29.9, Y + 2.4, 9.0, 'woodDark', { collide: false });
-    for (let z = 7.0; z < 8.9; z += 0.3) b.box(29.8, Y + 1.6, z, 29.84, Y + 2.1, z + 0.05, 'altarCloth', { collide: false }); // fitas
+    b.sbox(27.6, Y, 4.4, 29.8, Y + 1.0, 6.2, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(28.2, Y, 6.6, 28.9, Y + 0.5, 7.3, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(29.86, Y + 1.4, 6.8, 29.9, Y + 2.4, 9.0, 'woodDark', { collide: false });
+    for (let z = 7.0; z < 8.9; z += 0.3) b.sbox(29.8, Y + 1.6, z, 29.84, Y + 2.1, z + 0.05, 'altarCloth', { collide: false }); // fitas
     this.sign('SÓ COM A FITA', 29.82, Y + 2.6, 7.9, -Math.PI / 2, 1.2, 0.2, { bg: '#2a2016', fg: '#c84030' });
-    b.box(28.6, Y, 10.0, 29.8, Y + 0.95, 11.2, 'woodDark', { tag: 'prop-low', sight: false }); // estante do livro de registros
+    b.sbox(28.6, Y, 10.0, 29.8, Y + 0.95, 11.2, 'woodDark', { tag: 'prop-low', sight: false }); // estante do livro de registros
   }
 
   // ---------- SALÃO NOBRE x6..30 z12..30, pé-direito 7 ----------
@@ -151,29 +151,29 @@ export class SedeLevel {
     b.wallX(30, 6, 17, Y, Y + H_HALL, [10], 'marble', 1.4, 2.3);            // secretaria (x = 10)
     b.wallX(30, 17, 30, Y, Y + H_HALL, [24], 'marble', 2.6, 3.0);           // portão do arquivo (x = 24)
     // tapete vermelho do portal ao fundo e colunas
-    b.box(10.8, Y, 12.4, 13.2, Y + 0.02, 29.6, 'velvet', { collide: false });
-    b.box(13.2, Y, 21.0, 26, Y + 0.02, 22.4, 'velvet', { collide: false });
+    b.sbox(10.8, Y, 12.4, 13.2, Y + 0.02, 29.6, 'velvet', { collide: false });
+    b.sbox(13.2, Y, 21.0, 26, Y + 0.02, 22.4, 'velvet', { collide: false });
     for (const [x, z] of [[9, 17], [15.5, 17], [20.5, 17], [27, 17], [9, 25], [15.5, 25], [20.5, 25], [27, 25]]) {
-      b.box(x - 0.45, Y, z - 0.45, x + 0.45, Y + H_HALL, z + 0.45, 'marble', { tag: 'prop' });
-      b.box(x - 0.6, Y, z - 0.6, x + 0.6, Y + 0.3, z + 0.6, 'stone', { collide: false });
+      b.sbox(x - 0.45, Y, z - 0.45, x + 0.45, Y + H_HALL, z + 0.45, 'marble', { tag: 'prop' });
+      b.sbox(x - 0.6, Y, z - 0.6, x + 0.6, Y + 0.3, z + 0.6, 'stone', { collide: false });
     }
     // estátua velada no centro (pedestal + figura coberta)
-    b.box(17.2, Y, 20.2, 18.8, Y + 1.0, 23.2, 'stone', { tag: 'prop' });
-    b.box(17.5, Y + 1.0, 20.9, 18.5, Y + 2.9, 22.5, 'veil', { collide: false, cast: true });
-    b.box(17.7, Y + 2.9, 21.3, 18.3, Y + 3.4, 22.1, 'veil', { collide: false });
+    b.sbox(17.2, Y, 20.2, 18.8, Y + 1.0, 23.2, 'stone', { tag: 'prop' });
+    b.sbox(17.5, Y + 1.0, 20.9, 18.5, Y + 2.9, 22.5, 'veil', { collide: false, cast: true });
+    b.sbox(17.7, Y + 2.9, 21.3, 18.3, Y + 3.4, 22.1, 'veil', { collide: false });
     this.sign('A CINZA LEMBRA', 18, Y + 0.6, 20.18, Math.PI, 1.2, 0.2, { bg: '#2a2622', fg: '#c8b080' });
     // retratos dos fundadores nas paredes laterais
     for (const z of [15, 20, 25]) {
-      b.box(6.1, Y + 2.6, z - 0.7, 6.16, Y + 4.4, z + 0.7, 'woodDark', { collide: false });
-      b.box(6.16, Y + 2.8, z - 0.55, 6.2, Y + 4.2, z + 0.55, 'veil', { collide: false });
+      b.sbox(6.1, Y + 2.6, z - 0.7, 6.16, Y + 4.4, z + 0.7, 'woodDark', { collide: false });
+      b.sbox(6.16, Y + 2.8, z - 0.55, 6.2, Y + 4.2, z + 0.55, 'veil', { collide: false });
     }
     // bancos de espera e a tranca das portas de bronze (lado de dentro)
-    b.box(6.3, Y, 13.5, 7.3, Y + 0.5, 16, 'pew', { tag: 'prop-low', sight: false });
-    b.box(28.7, Y, 19, 29.7, Y + 0.5, 23, 'pew', { tag: 'prop-low', sight: false });
+    b.sbox(6.3, Y, 13.5, 7.3, Y + 0.5, 16, 'pew', { tag: 'prop-low', sight: false });
+    b.sbox(28.7, Y, 19, 29.7, Y + 0.5, 23, 'pew', { tag: 'prop-low', sight: false });
     this.mainBar = b.box(10.6, Y + 1.3, 12.12, 13.4, Y + 1.5, 12.3, 'woodDark', { collide: false });
     // painel do portão do arquivo: três discos de latão (esq. → dir.) e a alavanca
     this.sign('ARQUIVO — SÓ O ARQUIVISTA', 24, Y + 3.5, 29.88, Math.PI, 2.4, 0.28, { bg: '#2a2622', fg: '#c8b080' });
-    b.box(19.9, Y + 0.9, 29.82, 22.9, Y + 2.1, 29.9, 'woodDark', { collide: false });
+    b.sbox(19.9, Y + 0.9, 29.82, 22.9, Y + 2.1, 29.9, 'woodDark', { collide: false });
     for (let i = 0; i < 3; i++) {
       const x = 20.4 + i * 1.0;
       const gr = new THREE.Group(); gr.position.set(x, Y + 1.5, 29.78);
@@ -183,7 +183,7 @@ export class SedeLevel {
       const label = this.sign(DIAL_SYMBOLS[3], x, Y + 1.05, 29.8, Math.PI, 0.6, 0.14, { bg: '#2a2622', fg: '#d8b860' });
       this.dials.push({ gr, label, value: 3, x });
     }
-    b.box(26.0, Y + 0.8, 29.8, 26.6, Y + 2.0, 29.9, 'metal', { collide: false });
+    b.sbox(26.0, Y + 0.8, 29.8, 26.6, Y + 2.0, 29.9, 'metal', { collide: false });
     this.lever = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.6, 0.08), this.M.brass);
     this.lever.position.set(26.3, Y + 1.6, 29.7); this.lever.rotation.x = -0.5; this.b.group.add(this.lever);
   }
@@ -207,12 +207,12 @@ export class SedeLevel {
     b.wallZ(14, 30, 38, Y, Y + H_SEC, [], 'wall');
     b.wallX(38, 6, 14, Y, Y + H_SEC, [], 'wall');
     // mesas de datilografia, arquivos de aço e o regimento emoldurado na parede do fundo
-    b.box(11.6, Y, 33.2, 13.4, Y + 0.8, 35.0, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(7.0, Y, 33.6, 8.8, Y + 0.8, 35.2, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(12.0, Y + 0.8, 33.5, 12.6, Y + 1.05, 34.0, 'metal', { collide: false }); // máquina de escrever
-    for (const x of [6.4, 7.4]) b.box(x, Y, 36.6, x + 0.9, Y + 1.9, 37.8, 'doorMetal', { tag: 'prop' });
-    b.box(12.4, Y, 36.8, 13.8, Y + 2.1, 37.8, 'woodDark', { tag: 'prop' });
-    b.box(9.3, Y + 1.2, 37.86, 10.9, Y + 2.3, 37.9, 'woodDark', { collide: false });
+    b.sbox(11.6, Y, 33.2, 13.4, Y + 0.8, 35.0, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(7.0, Y, 33.6, 8.8, Y + 0.8, 35.2, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(12.0, Y + 0.8, 33.5, 12.6, Y + 1.05, 34.0, 'metal', { collide: false }); // máquina de escrever
+    for (const x of [6.4, 7.4]) b.sbox(x, Y, 36.6, x + 0.9, Y + 1.9, 37.8, 'doorMetal', { tag: 'prop' });
+    b.sbox(12.4, Y, 36.8, 13.8, Y + 2.1, 37.8, 'woodDark', { tag: 'prop' });
+    b.sbox(9.3, Y + 1.2, 37.86, 10.9, Y + 2.3, 37.9, 'woodDark', { collide: false });
     this.sign('REGIMENTO', 10.1, Y + 2.45, 37.88, Math.PI, 1.0, 0.16, { bg: '#2a2622', fg: '#c8b080' });
   }
 
@@ -225,7 +225,7 @@ export class SedeLevel {
     b.wallZ(25.4, 30, 40, ARCH, GROUND + 3.4, [], 'stone');
     b.ceiling(22.5, 30, 25.5, 35, GROUND + 3.0, 'stone');
     b.ceiling(22.5, 35, 25.5, 40, GROUND + 0.6, 'stone');
-    b.box(22.75, GROUND - 1.0, 30.6, 22.85, GROUND - 0.9, 40, 'brass', { collide: false }); // corrimão
+    b.sbox(22.75, GROUND - 1.0, 30.6, 22.85, GROUND - 0.9, 40, 'brass', { collide: false }); // corrimão
   }
 
   // ---------- ARQUIVOS SUBTERRÂNEOS x14..36 z40..58 (y −4.5) ----------
@@ -240,16 +240,16 @@ export class SedeLevel {
     // estantes altas (tapam a visão), corredor central x 22.5..26.5, passagens em z 48.4..50
     for (const x of [17.6, 20.6, 28.4, 31.4]) {
       for (const [z0, z1] of [[43, 48.4], [50, 55.4]]) {
-        b.box(x - 0.4, Y, z0, x + 0.4, Y + 2.9, z1, 'woodDark', { tag: 'prop' });
-        for (let k = 0; k < 4; k++) b.box(x - 0.42, Y + 0.3 + k * 0.7, z0 + 0.1, x + 0.42, Y + 0.6 + k * 0.7, z1 - 0.1, k % 2 ? 'paper' : 'leather', { collide: false });
+        b.sbox(x - 0.4, Y, z0, x + 0.4, Y + 2.9, z1, 'woodDark', { tag: 'prop' });
+        for (let k = 0; k < 4; k++) b.sbox(x - 0.42, Y + 0.3 + k * 0.7, z0 + 0.1, x + 0.42, Y + 0.6 + k * 0.7, z1 - 0.1, k % 2 ? 'paper' : 'leather', { collide: false });
       }
     }
     // fichário de gavetas no fundo leste (letra V) e a mesa de leitura com o livro de registros
-    b.box(34.6, Y, 54.4, 35.8, Y + 1.6, 57.6, 'doorMetal', { tag: 'prop' });
-    for (let z = 54.6; z < 57.4; z += 0.45) b.box(34.56, Y + 0.3, z, 34.6, Y + 1.4, z + 0.35, 'brass', { collide: false });
+    b.sbox(34.6, Y, 54.4, 35.8, Y + 1.6, 57.6, 'doorMetal', { tag: 'prop' });
+    for (let z = 54.6; z < 57.4; z += 0.45) b.sbox(34.56, Y + 0.3, z, 34.6, Y + 1.4, z + 0.35, 'brass', { collide: false });
     this.sign('E — V', 34.55, Y + 1.8, 56, -Math.PI / 2, 0.8, 0.16, { bg: '#2a2622', fg: '#c8b080' });
-    b.box(15.0, Y, 41.0, 16.6, Y + 0.8, 42.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(26.4, Y, 44.0, 27.4, Y + 0.8, 45.2, 'woodDark', { tag: 'prop-low', sight: false }); // mesa de leitura do corredor
+    b.sbox(15.0, Y, 41.0, 16.6, Y + 0.8, 42.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(26.4, Y, 44.0, 27.4, Y + 0.8, 45.2, 'woodDark', { tag: 'prop-low', sight: false }); // mesa de leitura do corredor
     // grade da cripta: barras (sobem com o sarilho) e o selo da chama
     this.grate = new THREE.Group(); this.grate.name = 'grade_cripta';
     for (let x = 24.1; x <= 25.95; x += 0.25) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.6, 0.05), this.M.rust); m.position.set(x + 0.025, Y + 1.3, 58.0); this.grate.add(m); }
@@ -257,15 +257,15 @@ export class SedeLevel {
     b.group.add(this.grate); this.grateT = 0; this.grateRaise = 0;
     this.sign('CRIPTA — O SACRISTÃO', 25, Y + 3.0, 57.88, Math.PI, 1.8, 0.24, { bg: '#2a1010', fg: '#d0a060' });
     // sarilho da grade, à esquerda: tambor de corrente, manivela e o selo de latão com a CHAMA
-    b.box(22.3, Y, 57.4, 23.5, Y + 0.9, 57.95, 'stone', { tag: 'prop-low', sight: false });
+    b.sbox(22.3, Y, 57.4, 23.5, Y + 0.9, 57.95, 'stone', { tag: 'prop-low', sight: false });
     this.winch = new THREE.Group(); this.winch.position.set(22.9, Y + 1.15, 57.6);
     const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.9, 10), this.M.rust); drum.rotation.z = Math.PI / 2; this.winch.add(drum);
     this.crank = new THREE.Group(); this.crank.position.set(-0.5, 0, 0); this.winch.add(this.crank);
     const arm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.4, 0.06), this.M.metal); arm.position.y = 0.2; this.crank.add(arm);
     const knob = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.06), this.M.woodDark); knob.position.set(-0.08, 0.4, 0); this.crank.add(knob);
     b.group.add(this.winch);
-    for (let k = 0; k < 6; k++) b.box(23.45 + k * 0.1, Y + 1.2 + k * 0.22, 57.85, 23.5 + k * 0.1, Y + 1.32 + k * 0.22, 57.9, 'metal', { collide: false }); // corrente até a grade
-    b.box(22.6, Y + 1.5, 57.93, 23.2, Y + 2.1, 57.97, 'brass', { collide: false });
+    for (let k = 0; k < 6; k++) b.sbox(23.45 + k * 0.1, Y + 1.2 + k * 0.22, 57.85, 23.5 + k * 0.1, Y + 1.32 + k * 0.22, 57.9, 'metal', { collide: false }); // corrente até a grade
+    b.sbox(22.6, Y + 1.5, 57.93, 23.2, Y + 2.1, 57.97, 'brass', { collide: false });
     this.sealEmpty = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.02), this.M.coal); this.sealEmpty.position.set(22.9, Y + 1.8, 57.92); b.group.add(this.sealEmpty);
     this.sealLit = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.03), this.M.ember); this.sealLit.position.set(22.9, Y + 1.8, 57.91); this.sealLit.visible = false; b.group.add(this.sealLit);
     this.sign('SELO DA CHAMA', 22.9, Y + 2.3, 57.9, Math.PI, 0.8, 0.14, { bg: '#2a1010', fg: '#d0a060' });
@@ -281,7 +281,7 @@ export class SedeLevel {
     b.wallZ(24, 58, 68, Y, ARCH + 2.8, [], 'stone');
     b.wallZ(26, 58, 68, Y, ARCH + 2.8, [], 'stone');
     b.ceiling(23.9, 58, 26.1, 68, ARCH + 2.8, 'stone');
-    b.box(25.85, ARCH - 1.0, 58.4, 25.95, ARCH - 0.9, 65, 'brass', { collide: false }); // corrimão
+    b.sbox(25.85, ARCH - 1.0, 58.4, 25.95, ARCH - 0.9, 65, 'brass', { collide: false }); // corrimão
     // arena
     b.floor(14, 68, 36, 90, Y, 'stone', 'c3_crypt');
     b.ceiling(14, 68, 36, 90, Y + H_CRYPT, 'stone');
@@ -291,25 +291,25 @@ export class SedeLevel {
     b.wallZ(36, 68, 90, Y, Y + H_CRYPT, [86], 'stone', 1.6, 2.4);         // galeria das catacumbas (leste)
     // pilares de pedra: a investida do Sacristão se quebra neles
     for (const [x, z] of CRYPT_PILLARS) {
-      b.box(x - 0.7, Y, z - 0.7, x + 0.7, Y + H_CRYPT, z + 0.7, 'stone', { tag: 'obstacle' });
-      b.box(x - 0.85, Y, z - 0.85, x + 0.85, Y + 0.4, z + 0.85, 'stone', { collide: false });
+      b.sbox(x - 0.7, Y, z - 0.7, x + 0.7, Y + H_CRYPT, z + 0.7, 'stone', { tag: 'obstacle' });
+      b.sbox(x - 0.85, Y, z - 0.85, x + 0.85, Y + 0.4, z + 0.85, 'stone', { collide: false });
     }
     // ossuários laterais: nichos com crânios empilhados (de onde se levantam os noviços)
     for (const [x, sx] of [[14, 1], [36, -1]]) {
       for (const z of [72.5, 79.5]) {
-        b.box(Math.min(x, x + sx * 0.5), Y, z - 1.2, Math.max(x, x + sx * 0.5), Y + 2.6, z + 1.2, 'coal', { collide: false });
+        b.sbox(Math.min(x, x + sx * 0.5), Y, z - 1.2, Math.max(x, x + sx * 0.5), Y + 2.6, z + 1.2, 'coal', { collide: false });
         for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) {
           const cx = x + sx * 0.3, cz = z - 0.75 + k * 0.5, cy = Y + 0.5 + r * 0.6;
-          b.box(cx - 0.12, cy, cz - 0.12, cx + 0.12, cy + 0.22, cz + 0.12, 'paper', { collide: false });
+          b.sbox(cx - 0.12, cy, cz - 0.12, cx + 0.12, cy + 0.22, cz + 0.12, 'paper', { collide: false });
         }
       }
     }
     // altar ao norte, com a toalha vermelha e velas
-    b.box(22.4, Y, 87.6, 27.6, Y + 1.1, 89.4, 'stone', { tag: 'prop-low', sight: false });
-    b.box(22.3, Y + 1.1, 87.5, 27.7, Y + 1.14, 89.5, 'altarCloth', { collide: false });
-    for (const x of [22.8, 23.4, 26.6, 27.2]) b.box(x - 0.04, Y + 1.14, 89.0, x + 0.04, Y + 1.44, 89.08, 'candle', { collide: false });
-    b.box(24.2, Y + 1.14, 89.1, 25.8, Y + 3.2, 89.3, 'woodDark', { collide: false });             // cruz/retábulo
-    b.box(23.6, Y + 2.5, 89.1, 26.4, Y + 2.7, 89.3, 'woodDark', { collide: false });
+    b.sbox(22.4, Y, 87.6, 27.6, Y + 1.1, 89.4, 'stone', { tag: 'prop-low', sight: false });
+    b.sbox(22.3, Y + 1.1, 87.5, 27.7, Y + 1.14, 89.5, 'altarCloth', { collide: false });
+    for (const x of [22.8, 23.4, 26.6, 27.2]) b.sbox(x - 0.04, Y + 1.14, 89.0, x + 0.04, Y + 1.44, 89.08, 'candle', { collide: false });
+    b.sbox(24.2, Y + 1.14, 89.1, 25.8, Y + 3.2, 89.3, 'woodDark', { collide: false });             // cruz/retábulo
+    b.sbox(23.6, Y + 2.5, 89.1, 26.4, Y + 2.7, 89.3, 'woodDark', { collide: false });
     this.sign('IN CINERE VITA', 25, Y + 3.6, 89.85, Math.PI, 1.8, 0.24, { bg: '#2a1010', fg: '#d0a060' });
     // galeria das catacumbas (a saída rumo ao centro antigo)
     b.floor(36, 85, 40, 87, Y, 'stone', 'c3_gallery');

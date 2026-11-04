@@ -194,21 +194,21 @@ export class PedraLevel {
     b.ceiling(S.minX, S.minZ + 1.6, S.maxX, S.maxZ, Y + 3.4, 'cantaria');
     b.ceiling(S.minX, S.minZ, LADDER.x - 1.2, S.minZ + 1.6, Y + 3.4, 'cantaria');
     b.ceiling(LADDER.x + 1.2, S.minZ, S.maxX, S.minZ + 1.6, Y + 3.4, 'cantaria');
-    b.box(S.minX - 0.2, Y, S.minZ - 0.2, S.maxX + 0.2, Y + 9, S.minZ, 'cantaria');                 // parede sul (escada)
+    b.sbox(S.minX - 0.2, Y, S.minZ - 0.2, S.maxX + 0.2, Y + 9, S.minZ, 'cantaria');                 // parede sul (escada)
     b.wallZ(S.minX, S.minZ, S.maxZ, Y, Y + 3.4, [], 'cantaria');
     b.wallZ(S.maxX, S.minZ, S.maxZ, Y, Y + 3.4, [3], 'cantaria', 1.2, 2.2);                       // porta de serviço
     b.wallX(S.maxZ, S.minX, S.maxX, Y, Y + 3.4, [18], 'cantaria', 4.0, 3.0);                       // arco para a galeria
     // poço da escada: chaminé de pedra subindo até o alçapão (fechado lá em cima)
-    b.box(LADDER.x - 1.2, Y + 3.4, S.minZ, LADDER.x - 1.0, Y + 9, S.minZ + 1.6, 'cantaria');
-    b.box(LADDER.x + 1.0, Y + 3.4, S.minZ, LADDER.x + 1.2, Y + 9, S.minZ + 1.6, 'cantaria');
-    b.box(LADDER.x - 1.2, Y + 3.4, S.minZ + 1.6, LADDER.x + 1.2, Y + 9, S.minZ + 1.8, 'cantaria');
-    b.box(LADDER.x - 1.0, Y + 8.9, S.minZ, LADDER.x + 1.0, Y + 9.0, S.minZ + 1.6, 'rust', { collide: false });
-    for (const x of [LADDER.x - 0.32, LADDER.x + 0.32]) b.box(x - 0.03, Y, 0.12, x + 0.03, Y + 8.8, 0.2, 'rust', { collide: false });
-    for (let y = 0.3; y < 8.8; y += 0.34) b.box(LADDER.x - 0.32, Y + y, 0.14, LADDER.x + 0.32, Y + y + 0.03, 0.18, 'rust', { collide: false });
+    b.sbox(LADDER.x - 1.2, Y + 3.4, S.minZ, LADDER.x - 1.0, Y + 9, S.minZ + 1.6, 'cantaria');
+    b.sbox(LADDER.x + 1.0, Y + 3.4, S.minZ, LADDER.x + 1.2, Y + 9, S.minZ + 1.6, 'cantaria');
+    b.sbox(LADDER.x - 1.2, Y + 3.4, S.minZ + 1.6, LADDER.x + 1.2, Y + 9, S.minZ + 1.8, 'cantaria');
+    b.sbox(LADDER.x - 1.0, Y + 8.9, S.minZ, LADDER.x + 1.0, Y + 9.0, S.minZ + 1.6, 'rust', { collide: false });
+    for (const x of [LADDER.x - 0.32, LADDER.x + 0.32]) b.sbox(x - 0.03, Y, 0.12, x + 0.03, Y + 8.8, 0.2, 'rust', { collide: false });
+    for (let y = 0.3; y < 8.8; y += 0.34) b.sbox(LADDER.x - 0.32, Y + y, 0.14, LADDER.x + 0.32, Y + y + 0.03, 0.18, 'rust', { collide: false });
     // caixotes e o que caiu da reserva técnica pelo alçapão
-    b.box(19.9, Y, 4.2, 21.3, Y + 0.9, 5.6, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(14.3, Y, 4.6, 15.4, Y + 0.7, 5.8, 'wood', { tag: 'prop-low', sight: false });
-    b.box(16.6, Y + 0.002, 1.0, 17.3, Y + 0.02, 1.6, 'paper', { collide: false });
+    b.sbox(19.9, Y, 4.2, 21.3, Y + 0.9, 5.6, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(14.3, Y, 4.6, 15.4, Y + 0.7, 5.8, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(16.6, Y + 0.002, 1.0, 17.3, Y + 0.02, 1.6, 'paper', { collide: false });
     this.sign('CIA. DO METROPOLITANO — POÇO DE SERVIÇO 3', 18, Y + 2.7, 5.88, Math.PI, 2.8, 0.26, { bg: '#1a1712', fg: '#cbbf98' });
     this.sign('SERVIÇO →', 21.88, Y + 2.5, 3, -Math.PI / 2, 0.9, 0.2, { bg: '#1a1712', fg: '#cbbf98' });
   }
@@ -222,21 +222,21 @@ export class PedraLevel {
     b.wallZ(G.maxX, G.minZ, G.maxZ, Y, Y + 3.0, [], 'cantaria');
     // arcos de reforço
     for (const z of [8.5, 12.5]) {
-      b.box(G.minX + 0.1, Y, z - 0.2, G.minX + 0.4, Y + 2.8, z + 0.2, 'stone');
-      b.box(G.maxX - 0.4, Y, z - 0.2, G.maxX - 0.1, Y + 2.8, z + 0.2, 'stone');
-      b.box(G.minX + 0.1, Y + 2.6, z - 0.2, G.maxX - 0.1, Y + 2.95, z + 0.2, 'stone', { collide: false });
+      b.sbox(G.minX + 0.1, Y, z - 0.2, G.minX + 0.4, Y + 2.8, z + 0.2, 'stone');
+      b.sbox(G.maxX - 0.4, Y, z - 0.2, G.maxX - 0.1, Y + 2.8, z + 0.2, 'stone');
+      b.sbox(G.minX + 0.1, Y + 2.6, z - 0.2, G.maxX - 0.1, Y + 2.95, z + 0.2, 'stone', { collide: false });
     }
     // carrinho de ferramentas (o pé de cabra fica em cima)
     const C = TOOL_CART;
-    b.box(C.x - 0.45, Y + 0.25, C.z - 0.8, C.x + 0.45, Y + 0.85, C.z + 0.8, 'rust', { tag: 'prop-low', sight: false });
+    b.sbox(C.x - 0.45, Y + 0.25, C.z - 0.8, C.x + 0.45, Y + 0.85, C.z + 0.8, 'rust', { tag: 'prop-low', sight: false });
     for (const [dx, dz] of [[-0.35, -0.65], [0.35, -0.65], [-0.35, 0.65], [0.35, 0.65]]) {
       const w = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.06, 10), this.M.steelDark || this.M.rust);
       w.rotation.z = Math.PI / 2; w.position.set(C.x + dx, Y + 0.13, C.z + dz); b.group.add(w);
     }
-    b.box(C.x - 0.4, Y + 0.85, C.z + 0.3, C.x + 0.1, Y + 1.0, C.z + 0.7, 'woodDark', { collide: false });
+    b.sbox(C.x - 0.4, Y + 0.85, C.z + 0.3, C.x + 0.1, Y + 1.0, C.z + 0.7, 'woodDark', { collide: false });
     this.sign('CIA. METROPOLITANO — FERRAMENTAS', C.x + 0.46, Y + 0.55, C.z, Math.PI / 2, 1.4, 0.18, { bg: '#2a2010', fg: '#d0b070' });
     // trilho estreito de vagonete no chão, rumo ao ossuário
-    for (const x of [17.6, 18.4]) b.box(x - 0.03, Y, G.minZ, x + 0.03, Y + 0.04, G.maxZ, 'rust', { collide: false });
+    for (const x of [17.6, 18.4]) b.sbox(x - 0.03, Y, G.minZ, x + 0.03, Y + 0.04, G.maxZ, 'rust', { collide: false });
   }
 
   // ---------- OSSUÁRIO x12..24 z16..36: paredes de crânios, nichos de cal, ossos no chão ----------
@@ -257,11 +257,11 @@ export class PedraLevel {
     this._skullWall('x', O.maxX - 0.1, 30.4, 35.6, Y + 0.6, 6, -1);
     // pilares de ossos empilhados
     for (const [x, z] of [[14.8, 25.2], [21.2, 25.2], [14.8, 31.8], [21.2, 31.8]]) {
-      b.box(x - 0.35, Y, z - 0.35, x + 0.35, Y + 4.4, z + 0.35, 'stone');
+      b.sbox(x - 0.35, Y, z - 0.35, x + 0.35, Y + 4.4, z + 0.35, 'stone');
       for (let y = 0.5; y < 3.6; y += 0.45) { this._skull(x, Y + y, z - 0.37, 0.8); this._skull(x, Y + y, z + 0.37, 0.8); }
     }
     // estante do livro do coveiro (entrada)
-    b.box(16.95, Y, 17.15, 17.55, Y + 1.05, 17.75, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(16.95, Y, 17.15, 17.55, Y + 1.05, 17.75, 'woodDark', { tag: 'prop-low', sight: false });
     // ossos no chão: fêmures e costelas espalhados (visual) sobre as manchas que estalam
     const rnd = mulberry(77);
     for (const P of BONE_PATCHES) {
@@ -278,7 +278,7 @@ export class PedraLevel {
     }
     // velas no chão junto às paredes
     for (const [x, z] of [[12.4, 18.2], [23.6, 24.6], [12.4, 30.2], [23.6, 34.8]]) {
-      b.box(x - 0.05, Y, z - 0.05, x + 0.05, Y + 0.22, z + 0.05, 'candle', { collide: false });
+      b.sbox(x - 0.05, Y, z - 0.05, x + 0.05, Y + 0.22, z + 0.05, 'candle', { collide: false });
     }
     this.sign('OSSUÁRIO DA IRMANDADE — SILÊNCIO', 18, Y + 3.0, 16.12, 0, 2.6, 0.26, { bg: '#16140f', fg: '#c8b890' });
     this.sign('AQUI ESPERAM OS DA VIGÍLIA', 18, Y + 3.0, 35.88, Math.PI, 2.4, 0.24, { bg: '#16140f', fg: '#c8b890' });
@@ -349,13 +349,13 @@ export class PedraLevel {
     b.wallZ(C.minX, C.minZ, C.maxZ, Y, Y + 3.2, [33.5], 'cantaria', 1.4, 2.4);
     // dois sarcófagos comuns
     for (const x of [6.0, 9.0]) {
-      b.box(x, Y, 30.5, x + 1.4, Y + 0.8, 32.5, 'stone', { tag: 'prop-low', sight: false });
-      b.box(x - 0.05, Y + 0.8, 30.45, x + 1.45, Y + 0.92, 32.55, 'cantaria', { collide: false });
+      b.sbox(x, Y, 30.5, x + 1.4, Y + 0.8, 32.5, 'stone', { tag: 'prop-low', sight: false });
+      b.sbox(x - 0.05, Y + 0.8, 30.45, x + 1.45, Y + 0.92, 32.55, 'cantaria', { collide: false });
       this._skull(x + 0.7, Y + 0.98, 30.75, 0.7);
     }
     // jazigo do coveiro-mor: corpo (colide), tampa solta (some de cima quando a alavanca a empurra)
     const J = JAZIGO;
-    b.box(J.minX, Y, J.minZ, J.maxX, Y + 0.9, J.maxZ, 'stone', { tag: 'prop-low', sight: false });
+    b.sbox(J.minX, Y, J.minZ, J.maxX, Y + 0.9, J.maxZ, 'stone', { tag: 'prop-low', sight: false });
     const lid = new THREE.Mesh(new THREE.BoxGeometry(J.maxX - J.minX + 0.1, 0.14, J.maxZ - J.minZ + 0.1), M.cantaria || M.stone);
     lid.position.set(J.x, Y + 0.97, J.z); b.group.add(lid);
     const cross = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.03, 0.12), M.mortar || M.soot); cross.position.set(0, 0.085, 0); lid.add(cross);
@@ -394,8 +394,8 @@ export class PedraLevel {
     b.ceiling(T.minX, T.minZ, T.maxX, T.maxZ, Y + 3.0, 'cantaria');
     b.wallZ(T.minX, T.minZ, T.maxZ, Y, Y + 3.0, [], 'brick');
     b.wallZ(T.maxX, T.minZ, T.maxZ, Y, Y + 3.0, [], 'brick');
-    for (const x of [17.6, 18.4]) b.box(x - 0.03, Y, T.minZ, x + 0.03, Y + 0.04, T.maxZ, 'rust', { collide: false });
-    b.box(T.minX + 0.1, Y, 40.5, T.minX + 0.9, Y + 0.5, 42.0, 'stone', { tag: 'prop-low', sight: false });
+    for (const x of [17.6, 18.4]) b.sbox(x - 0.03, Y, T.minZ, x + 0.03, Y + 0.04, T.maxZ, 'rust', { collide: false });
+    b.sbox(T.minX + 0.1, Y, 40.5, T.minX + 0.9, Y + 0.5, 42.0, 'stone', { tag: 'prop-low', sight: false });
   }
 
   // ---------- ESTAÇÃO SÉ VELHA: plataforma x4..44 z44..50 (y 0) e trilhos x4..50 z50..55 (y −1) ----------
@@ -406,38 +406,38 @@ export class PedraLevel {
     b.ceiling(P.minX, P.minZ, T.maxX, T.maxZ, Y + 4.6, 'cantaria');
     // parede do fundo (túnel e porta de serviço), oeste (desabamento), leste da plataforma, parede além dos trilhos
     b.wallX(P.minZ, P.minX, P.maxX, Y, Y + 4.6, [18, 38], 'stationTile', 4.0, 3.0);
-    b.box(36, Y, P.minZ - 0.1, 37.4, Y + 4.6, P.minZ + 0.1, 'stationTile');
-    b.box(38.6, Y, P.minZ - 0.1, 40, Y + 4.6, P.minZ + 0.1, 'stationTile');
-    b.box(37.4, Y + 2.3, P.minZ - 0.1, 38.6, Y + 4.6, P.minZ + 0.1, 'stationTile');
-    b.box(P.minX - 0.2, TRACK_Y, P.minZ, P.minX, Y + 4.6, T.maxZ, 'cantaria');
-    b.box(P.maxX, TRACK_Y, P.minZ, P.maxX + 0.2, Y + 4.6, P.maxZ, 'stationTile');
-    b.box(P.minX, TRACK_Y, T.maxZ, T.maxX, Y + 4.6, T.maxZ + 0.2, 'cantaria');
+    b.sbox(36, Y, P.minZ - 0.1, 37.4, Y + 4.6, P.minZ + 0.1, 'stationTile');
+    b.sbox(38.6, Y, P.minZ - 0.1, 40, Y + 4.6, P.minZ + 0.1, 'stationTile');
+    b.sbox(37.4, Y + 2.3, P.minZ - 0.1, 38.6, Y + 4.6, P.minZ + 0.1, 'stationTile');
+    b.sbox(P.minX - 0.2, TRACK_Y, P.minZ, P.minX, Y + 4.6, T.maxZ, 'cantaria');
+    b.sbox(P.maxX, TRACK_Y, P.minZ, P.maxX + 0.2, Y + 4.6, P.maxZ, 'stationTile');
+    b.sbox(P.minX, TRACK_Y, T.maxZ, T.maxX, Y + 4.6, T.maxZ + 0.2, 'cantaria');
     // túnel leste (continuação dos trilhos): grade acorrentada da Linha Velha (abre com o pé de cabra) e testeira de pedra
-    b.box(P.maxX, Y + 2.4, T.minZ, T.maxX, Y + 4.6, T.minZ + 0.2, 'cantaria', { collide: false });
-    b.box(48.9, Y + 2.4, T.minZ, 50.1, Y + 4.6, T.maxZ, 'cantaria');
+    b.sbox(P.maxX, Y + 2.4, T.minZ, T.maxX, Y + 4.6, T.minZ + 0.2, 'cantaria', { collide: false });
+    b.sbox(48.9, Y + 2.4, T.minZ, 50.1, Y + 4.6, T.maxZ, 'cantaria');
     this._lineGate();
     // desabamento a oeste (sobre os trilhos)
-    b.box(T.minX, TRACK_Y, T.minZ, T.minX + 2.4, Y + 1.2, T.maxZ, 'stone');
-    b.box(T.minX + 2.4, TRACK_Y, T.minZ + 1.6, T.minX + 3.6, Y + 0.2, T.maxZ, 'stone');
+    b.sbox(T.minX, TRACK_Y, T.minZ, T.minX + 2.4, Y + 1.2, T.maxZ, 'stone');
+    b.sbox(T.minX + 2.4, TRACK_Y, T.minZ + 1.6, T.minX + 3.6, Y + 0.2, T.maxZ, 'stone');
     // borda da plataforma: face de 1 m (não se sobe de volta sem a escada de manutenção a leste)
-    b.box(P.minX, TRACK_Y, P.maxZ - 0.15, 41, Y, P.maxZ, 'concrete');
-    b.box(43, TRACK_Y, P.maxZ - 0.15, P.maxX, Y, P.maxZ, 'concrete');
-    b.box(P.minX, Y, P.maxZ - 0.55, P.maxX, Y + 0.012, P.maxZ - 0.35, 'hazard', { collide: false });
+    b.sbox(P.minX, TRACK_Y, P.maxZ - 0.15, 41, Y, P.maxZ, 'concrete');
+    b.sbox(43, TRACK_Y, P.maxZ - 0.15, P.maxX, Y, P.maxZ, 'concrete');
+    b.sbox(P.minX, Y, P.maxZ - 0.55, P.maxX, Y + 0.012, P.maxZ - 0.35, 'hazard', { collide: false });
     this.stairs = b.stairsZ(41, 43, P.maxZ, P.maxZ + 3, Y, TRACK_Y, 5, 'concrete');
-    b.box(40.85, Y, 49.4, 41.0, Y + 1.0, 49.6, 'rust', { collide: false });
-    b.box(43.0, Y, 49.4, 43.15, Y + 1.0, 49.6, 'rust', { collide: false });
+    b.sbox(40.85, Y, 49.4, 41.0, Y + 1.0, 49.6, 'rust', { collide: false });
+    b.sbox(43.0, Y, 49.4, 43.15, Y + 1.0, 49.6, 'rust', { collide: false });
     // trilhos e dormentes
-    for (const z of [51.7, 53.3]) b.box(T.minX + 3.6, TRACK_Y, z - 0.04, T.maxX, TRACK_Y + 0.14, z + 0.04, 'steel', { collide: false });
-    for (let x = T.minX + 4; x < T.maxX; x += 0.9) b.box(x, TRACK_Y, 51.3, x + 0.25, TRACK_Y + 0.06, 53.7, 'woodDark', { collide: false });
+    for (const z of [51.7, 53.3]) b.sbox(T.minX + 3.6, TRACK_Y, z - 0.04, T.maxX, TRACK_Y + 0.14, z + 0.04, 'steel', { collide: false });
+    for (let x = T.minX + 4; x < T.maxX; x += 0.9) b.sbox(x, TRACK_Y, 51.3, x + 0.25, TRACK_Y + 0.06, 53.7, 'woodDark', { collide: false });
     // pilares, bancos, bilheteria
-    for (const x of [11, 25, 31]) b.box(x - 0.3, Y, 46.7, x + 0.3, Y + 4.6, 47.3, 'stationTile');
+    for (const x of [11, 25, 31]) b.sbox(x - 0.3, Y, 46.7, x + 0.3, Y + 4.6, 47.3, 'stationTile');
     for (const x of [14, 22.5, 28]) {
-      b.box(x - 0.9, Y, 44.35, x + 0.9, Y + 0.45, 44.85, 'woodDark', { tag: 'prop-low', sight: false });
-      b.box(x - 0.9, Y + 0.45, 44.2, x + 0.9, Y + 1.0, 44.3, 'woodDark', { collide: false });
+      b.sbox(x - 0.9, Y, 44.35, x + 0.9, Y + 0.45, 44.85, 'woodDark', { tag: 'prop-low', sight: false });
+      b.sbox(x - 0.9, Y + 0.45, 44.2, x + 0.9, Y + 1.0, 44.3, 'woodDark', { collide: false });
     }
-    b.box(P.minX, Y, P.minZ, 7.6, Y + 2.6, 46.0, 'woodDark', { tag: 'prop' });
-    b.box(7.6, Y, 44.2, 9.2, Y + 1.0, 45.0, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(P.minX + 0.2, Y + 1.2, 45.98, 7.4, Y + 2.2, 46.02, 'glass', { collide: false });
+    b.sbox(P.minX, Y, P.minZ, 7.6, Y + 2.6, 46.0, 'woodDark', { tag: 'prop' });
+    b.sbox(7.6, Y, 44.2, 9.2, Y + 1.0, 45.0, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(P.minX + 0.2, Y + 1.2, 45.98, 7.4, Y + 2.2, 46.02, 'glass', { collide: false });
     // placas
     this.sign('SÉ VELHA', 24, Y + 2.4, T.maxZ - 0.02, Math.PI, 3.4, 0.5, { bg: '#0c2a3a', fg: '#e8e0c8' });
     this.sign('SÉ VELHA', 12, Y + 2.4, T.maxZ - 0.02, Math.PI, 3.4, 0.5, { bg: '#0c2a3a', fg: '#e8e0c8' });
@@ -459,10 +459,10 @@ export class PedraLevel {
     b.wallZ(N.maxX, S.minZ, N.maxZ, Y, Y + 2.6, [], 'brick');
     b.wallZ(N.minX, N.minZ, N.maxZ, Y, Y + 2.6, [], 'brick');
     // canos ao longo do teto e caixotes da Companhia
-    b.box(N.maxX - 0.35, Y + 2.2, N.minZ, N.maxX - 0.2, Y + 2.35, N.maxZ, 'rust', { collide: false });
-    b.box(S.minX, Y + 2.2, S.minZ + 0.2, S.maxX, Y + 2.35, S.minZ + 0.35, 'rust', { collide: false });
-    b.box(38.6, Y, 19.4, 39.4, Y + 0.8, 20.6, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(36.6, Y, 30.0, 37.3, Y + 1.4, 31.2, 'wood', { tag: 'prop', sight: false });
+    b.sbox(N.maxX - 0.35, Y + 2.2, N.minZ, N.maxX - 0.2, Y + 2.35, N.maxZ, 'rust', { collide: false });
+    b.sbox(S.minX, Y + 2.2, S.minZ + 0.2, S.maxX, Y + 2.35, S.minZ + 0.35, 'rust', { collide: false });
+    b.sbox(38.6, Y, 19.4, 39.4, Y + 0.8, 20.6, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(36.6, Y, 30.0, 37.3, Y + 1.4, 31.2, 'wood', { tag: 'prop', sight: false });
     this.sign('← POÇO 3', 37.2, Y + 1.9, 4.62, 0, 0.9, 0.18, { bg: '#1a1712', fg: '#cbbf98' });
   }
 
@@ -504,26 +504,26 @@ export class PedraLevel {
     b.floor(L.minX, L.minZ, L.maxX, L.maxZ, y0, 'concrete', 'c7_linha');
     b.ceiling(L.minX, L.minZ, L.maxX, L.maxZ, yT, 'brick');
     // parede norte: porta da cabine (x 63) e o nicho nL2 (x 72)
-    b.box(L.minX, y0, L.minZ - 0.2, CABIN.door.x - 0.6, yT, L.minZ, 'brick');
-    b.box(CABIN.door.x - 0.6, y0 + 2.3, L.minZ - 0.2, CABIN.door.x + 0.6, yT, L.minZ, 'brick');
-    b.box(CABIN.door.x + 0.6, y0, L.minZ - 0.2, 71.3, yT, L.minZ, 'brick');
-    b.box(71.3, y0 + 2.4, L.minZ - 0.2, 72.7, yT, L.minZ, 'brick');
-    b.box(72.7, y0, L.minZ - 0.2, L.maxX, yT, L.minZ, 'brick');
+    b.sbox(L.minX, y0, L.minZ - 0.2, CABIN.door.x - 0.6, yT, L.minZ, 'brick');
+    b.sbox(CABIN.door.x - 0.6, y0 + 2.3, L.minZ - 0.2, CABIN.door.x + 0.6, yT, L.minZ, 'brick');
+    b.sbox(CABIN.door.x + 0.6, y0, L.minZ - 0.2, 71.3, yT, L.minZ, 'brick');
+    b.sbox(71.3, y0 + 2.4, L.minZ - 0.2, 72.7, yT, L.minZ, 'brick');
+    b.sbox(72.7, y0, L.minZ - 0.2, L.maxX, yT, L.minZ, 'brick');
     // parede sul: nicho nL1 (x 59) e um refúgio de manutenção (x 66..67.6)
-    b.box(L.minX, y0, L.maxZ, 58.3, yT, L.maxZ + 0.2, 'brick');
-    b.box(58.3, y0 + 2.4, L.maxZ, 59.7, yT, L.maxZ + 0.2, 'brick');
-    b.box(59.7, y0, L.maxZ, 66, yT, L.maxZ + 0.2, 'brick');
-    b.box(66, y0 + 2.2, L.maxZ, 67.6, yT, L.maxZ + 0.2, 'brick');
-    b.box(67.6, y0, L.maxZ, L.maxX, yT, L.maxZ + 0.2, 'brick');
+    b.sbox(L.minX, y0, L.maxZ, 58.3, yT, L.maxZ + 0.2, 'brick');
+    b.sbox(58.3, y0 + 2.4, L.maxZ, 59.7, yT, L.maxZ + 0.2, 'brick');
+    b.sbox(59.7, y0, L.maxZ, 66, yT, L.maxZ + 0.2, 'brick');
+    b.sbox(66, y0 + 2.2, L.maxZ, 67.6, yT, L.maxZ + 0.2, 'brick');
+    b.sbox(67.6, y0, L.maxZ, L.maxX, yT, L.maxZ + 0.2, 'brick');
     b.floor(66, L.maxZ, 67.6, L.maxZ + 1.2, y0, 'concrete', 'c7_refugio');
-    b.box(65.8, y0, L.maxZ + 0.2, 66, y0 + 2.2, L.maxZ + 1.4, 'brick');
-    b.box(67.6, y0, L.maxZ + 0.2, 67.8, y0 + 2.2, L.maxZ + 1.4, 'brick');
-    b.box(65.8, y0, L.maxZ + 1.2, 67.8, y0 + 2.2, L.maxZ + 1.4, 'brick');
-    b.box(65.8, y0 + 2.2, L.maxZ, 67.8, y0 + 2.4, L.maxZ + 1.4, 'brick', { collide: false });
+    b.sbox(65.8, y0, L.maxZ + 0.2, 66, y0 + 2.2, L.maxZ + 1.4, 'brick');
+    b.sbox(67.6, y0, L.maxZ + 0.2, 67.8, y0 + 2.2, L.maxZ + 1.4, 'brick');
+    b.sbox(65.8, y0, L.maxZ + 1.2, 67.8, y0 + 2.2, L.maxZ + 1.4, 'brick');
+    b.sbox(65.8, y0 + 2.2, L.maxZ, 67.8, y0 + 2.4, L.maxZ + 1.4, 'brick', { collide: false });
     this.sign('REFÚGIO', 66.8, y0 + 2.0, L.maxZ - 0.02, Math.PI, 0.8, 0.16, { bg: '#2a2010', fg: '#d0b070' });
     // trilhos, dormentes e cascalho solto (visual) sobre as manchas que rangem
-    for (const z of [51.7, 53.3]) b.box(L.minX, y0, z - 0.04, L.maxX, y0 + 0.14, z + 0.04, 'steel', { collide: false });
-    for (let x = L.minX + 0.4; x < L.maxX; x += 0.9) b.box(x, y0, 51.3, x + 0.25, y0 + 0.06, 53.7, 'woodDark', { collide: false });
+    for (const z of [51.7, 53.3]) b.sbox(L.minX, y0, z - 0.04, L.maxX, y0 + 0.14, z + 0.04, 'steel', { collide: false });
+    for (let x = L.minX + 0.4; x < L.maxX; x += 0.9) b.sbox(x, y0, 51.3, x + 0.25, y0 + 0.06, 53.7, 'woodDark', { collide: false });
     const rnd = mulberry(4711);
     for (const P of GRAVEL_PATCHES) {
       const pale = new THREE.Mesh(new THREE.PlaneGeometry(P.x1 - P.x0, P.z1 - P.z0), M.stone);
@@ -536,14 +536,14 @@ export class PedraLevel {
       }
     }
     // cabos ao longo da parede e marcos quilométricos
-    b.box(L.minX, yT - 0.5, L.maxZ - 0.15, L.maxX, yT - 0.4, L.maxZ - 0.05, 'rust', { collide: false });
+    b.sbox(L.minX, yT - 0.5, L.maxZ - 0.15, L.maxX, yT - 0.4, L.maxZ - 0.05, 'rust', { collide: false });
     this.sign('KM 2,4', 55, y0 + 1.6, L.minZ + 0.02, 0, 0.6, 0.18, { bg: '#e0d8c0', fg: '#1a1712' });
     this.sign('KM 2,6', 75, y0 + 1.6, L.minZ + 0.02, 0, 0.6, 0.18, { bg: '#e0d8c0', fg: '#1a1712' });
     this.sign('CABINE DE SINALIZAÇÃO 4', CABIN.door.x, y0 + 2.6, L.minZ + 0.02, 0, 2.0, 0.2, { bg: '#1a1712', fg: '#cbbf98' });
     // sineta de alarme do túnel (o sinal errado da cabine toca aqui)
     const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.26, 10, 1, true), M.brass);
     bell.position.set(LINE_BELL.x, yT - 0.45, L.minZ + 0.25); b.group.add(bell);
-    b.box(LINE_BELL.x - 0.03, yT - 0.32, L.minZ + 0.02, LINE_BELL.x + 0.03, yT, L.minZ + 0.3, 'rust', { collide: false });
+    b.sbox(LINE_BELL.x - 0.03, yT - 0.32, L.minZ + 0.02, LINE_BELL.x + 0.03, yT, L.minZ + 0.3, 'rust', { collide: false });
     this.bells.line = { mesh: bell, t: -1 };
     this._portcullis();
   }
@@ -576,20 +576,20 @@ export class PedraLevel {
     const b = this.b, C = CABIN, M = this.M, y0 = TRACK_Y, yT = TRACK_Y + 2.8;
     b.floor(C.minX, C.minZ, C.maxX, C.maxZ, y0, 'woodDark', 'c7_cabine');
     b.ceiling(C.minX, C.minZ, C.maxX, C.maxZ, yT, 'woodDark');
-    b.box(C.minX - 0.2, y0, C.minZ - 0.2, C.maxX + 0.2, yT, C.minZ, 'brick');
-    b.box(C.minX - 0.2, y0, C.minZ, C.minX, yT, C.maxZ - 0.2, 'brick');
-    b.box(C.maxX, y0, C.minZ, C.maxX + 0.2, yT, C.maxZ - 0.2, 'brick');
+    b.sbox(C.minX - 0.2, y0, C.minZ - 0.2, C.maxX + 0.2, yT, C.minZ, 'brick');
+    b.sbox(C.minX - 0.2, y0, C.minZ, C.minX, yT, C.maxZ - 0.2, 'brick');
+    b.sbox(C.maxX, y0, C.minZ, C.maxX + 0.2, yT, C.maxZ - 0.2, 'brick');
     // quadro de alavancas (agulhas I, II, III + sinal vermelho) encostado na parede norte
-    b.box(60.8, y0, C.minZ, 65.2, y0 + 0.5, C.minZ + 0.6, 'steelDark', { tag: 'prop-low', sight: false });
+    b.sbox(60.8, y0, C.minZ, 65.2, y0 + 0.5, C.minZ + 0.6, 'steelDark', { tag: 'prop-low', sight: false });
     for (const Lv of LEVERS) this._lever(Lv.id, Lv.x, Lv.z + 0.35, M.steel, Lv.id);
     this._lever('S', SIGNAL_LEVER.x, SIGNAL_LEVER.z + 0.35, M.lampRed || M.rust, 'SINAL');
     // painel do diagrama da linha (luzes das agulhas) acima das alavancas
-    b.box(60.8, y0 + 1.6, C.minZ, 65.2, y0 + 2.5, C.minZ + 0.05, 'blueprint', { collide: false });
+    b.sbox(60.8, y0 + 1.6, C.minZ, 65.2, y0 + 2.5, C.minZ + 0.05, 'blueprint', { collide: false });
     this.signalLamp = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), M.lampRed || M.lampOff); this.signalLamp.position.set(64.6, y0 + 2.2, C.minZ + 0.08); b.group.add(this.signalLamp);
     // mesa do sinaleiro (guia de remoção + livro de registros) e placa esmaltada das agulhas
-    b.box(64.4, y0, 47.6, 65.8, y0 + 0.85, 49.2, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(64.6, y0 + 0.86, 48.2, 65.1, y0 + 0.88, 48.6, 'paper', { collide: false });
-    b.box(60.2, y0, 47.8, 61.0, y0 + 1.6, 49.4, 'woodDark', { tag: 'prop', sight: false });   // armário (longe do quadro de alavancas)
+    b.sbox(64.4, y0, 47.6, 65.8, y0 + 0.85, 49.2, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(64.6, y0 + 0.86, 48.2, 65.1, y0 + 0.88, 48.6, 'paper', { collide: false });
+    b.sbox(60.2, y0, 47.8, 61.0, y0 + 1.6, 49.4, 'woodDark', { tag: 'prop', sight: false });   // armário (longe do quadro de alavancas)
     this.sign('AGULHAS: N = NORMAL (ALAVANCA EMPURRADA) · R = REVERSA (PUXADA)', 63, y0 + 2.62, C.minZ + 0.06, 0, 4.2, 0.18, { bg: '#e8e0c8', fg: '#20180c' });
     this.sign('I', 61.3, y0 + 1.45, C.minZ + 0.07, 0, 0.3, 0.2, { bg: '#e8e0c8', fg: '#20180c' });
     this.sign('II', 62.2, y0 + 1.45, C.minZ + 0.07, 0, 0.3, 0.2, { bg: '#e8e0c8', fg: '#20180c' });
@@ -619,23 +619,23 @@ export class PedraLevel {
     b.floor(S.minX, S.minZ, S.maxX, S.maxZ, y0, 'stationTile', 'c7_sobapedra');
     b.ceiling(S.minX, S.minZ, S.maxX, S.maxZ, yT, 'cantaria');
     // paredes: sul, norte (porta da escada x 99), oeste (boca do túnel + dois nichos), leste (nicho do Vigia)
-    b.box(S.minX - 0.2, y0, S.minZ - 0.2, S.maxX + 0.2, yT, S.minZ, 'cantaria');
-    b.box(S.minX - 0.2, y0, S.maxZ, STAIR.door.x - 0.8, yT, S.maxZ + 0.2, 'cantaria');
-    b.box(STAIR.door.x + 0.8, y0, S.maxZ, S.maxX + 0.2, yT, S.maxZ + 0.2, 'cantaria');
-    b.box(STAIR.door.x - 0.8, y0 + 2.4, S.maxZ, STAIR.door.x + 0.8, yT, S.maxZ + 0.2, 'cantaria');
+    b.sbox(S.minX - 0.2, y0, S.minZ - 0.2, S.maxX + 0.2, yT, S.minZ, 'cantaria');
+    b.sbox(S.minX - 0.2, y0, S.maxZ, STAIR.door.x - 0.8, yT, S.maxZ + 0.2, 'cantaria');
+    b.sbox(STAIR.door.x + 0.8, y0, S.maxZ, S.maxX + 0.2, yT, S.maxZ + 0.2, 'cantaria');
+    b.sbox(STAIR.door.x - 0.8, y0 + 2.4, S.maxZ, STAIR.door.x + 0.8, yT, S.maxZ + 0.2, 'cantaria');
     const wW = (z0, z1, ya = y0) => b.box(S.minX - 0.1, ya, z0, S.minX + 0.1, yT, z1, 'cantaria');
     wW(S.minZ, 44.9); wW(46.3, LINE.minZ); wW(LINE.maxZ, 58.9); wW(60.3, S.maxZ);
     wW(44.9, 46.3, y0 + 2.4); wW(58.9, 60.3, y0 + 2.4); wW(LINE.minZ, LINE.maxZ, y0 + LINE_H);
     const V = VIGIA_NICHE;
-    b.box(S.maxX - 0.1, y0, S.minZ, S.maxX + 0.1, yT, V.minZ, 'cantaria');
-    b.box(S.maxX - 0.1, y0, V.maxZ, S.maxX + 0.1, yT, S.maxZ, 'cantaria');
-    b.box(S.maxX - 0.1, y0 + 3.4, V.minZ, S.maxX + 0.1, yT, V.maxZ, 'cantaria');
+    b.sbox(S.maxX - 0.1, y0, S.minZ, S.maxX + 0.1, yT, V.minZ, 'cantaria');
+    b.sbox(S.maxX - 0.1, y0, V.maxZ, S.maxX + 0.1, yT, S.maxZ, 'cantaria');
+    b.sbox(S.maxX - 0.1, y0 + 3.4, V.minZ, S.maxX + 0.1, yT, V.maxZ, 'cantaria');
     // alcova do Vigia (atrás da parede de cal)
     b.floor(S.maxX, V.minZ, S.maxX + 1.8, V.maxZ, y0, 'cantaria', 'c7_nicho_vigia');
-    b.box(S.maxX + 1.6, y0, V.minZ - 0.2, S.maxX + 1.8, y0 + 3.4, V.maxZ + 0.2, 'cantaria');
-    b.box(S.maxX, y0, V.minZ - 0.2, S.maxX + 1.8, y0 + 3.4, V.minZ, 'cantaria');
-    b.box(S.maxX, y0, V.maxZ, S.maxX + 1.8, y0 + 3.4, V.maxZ + 0.2, 'cantaria');
-    b.box(S.maxX, y0 + 3.2, V.minZ, S.maxX + 1.8, y0 + 3.4, V.maxZ, 'cantaria', { collide: false });
+    b.sbox(S.maxX + 1.6, y0, V.minZ - 0.2, S.maxX + 1.8, y0 + 3.4, V.maxZ + 0.2, 'cantaria');
+    b.sbox(S.maxX, y0, V.minZ - 0.2, S.maxX + 1.8, y0 + 3.4, V.minZ, 'cantaria');
+    b.sbox(S.maxX, y0, V.maxZ, S.maxX + 1.8, y0 + 3.4, V.maxZ + 0.2, 'cantaria');
+    b.sbox(S.maxX, y0 + 3.2, V.minZ, S.maxX + 1.8, y0 + 3.4, V.maxZ, 'cantaria', { collide: false });
     // parede de cal: lacre fresco com uma silhueta em relevo; colide até ele rompê-la
     const wall = new THREE.Group(); b.group.add(wall);
     const lime = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.35, V.maxZ - V.minZ), M.lime || M.wall); lime.position.set(S.maxX - 0.02, y0 + 1.68, (V.minZ + V.maxZ) / 2); wall.add(lime);
@@ -653,23 +653,23 @@ export class PedraLevel {
     }
     this.vigiaWall = { wall, collider: wallCol, rubble, broken: false };
     // velas e oferendas ao pé da parede de cal
-    for (const [x, z] of [[103.4, 50.6], [103.5, 51.2], [103.4, 54.5], [103.6, 55.2], [103.0, 52.8]]) b.box(x - 0.05, y0, z - 0.05, x + 0.05, y0 + 0.24, z + 0.05, 'candle', { collide: false });
+    for (const [x, z] of [[103.4, 50.6], [103.5, 51.2], [103.4, 54.5], [103.6, 55.2], [103.0, 52.8]]) b.sbox(x - 0.05, y0, z - 0.05, x + 0.05, y0 + 0.24, z + 0.05, 'candle', { collide: false });
     // pilares de ferro fundido (investida contra eles = atordoado) com capitéis
     for (const P of SOB_PILLARS) {
-      b.box(P.x - P.r, y0, P.z - P.r, P.x + P.r, yT, P.z + P.r, 'steelDark', { tag: 'obstacle' });
-      b.box(P.x - 0.6, y0, P.z - 0.6, P.x + 0.6, y0 + 0.35, P.z + 0.6, 'steel', { collide: false });
-      b.box(P.x - 0.65, yT - 0.5, P.z - 0.65, P.x + 0.65, yT - 0.2, P.z + 0.65, 'steel', { collide: false });
+      b.sbox(P.x - P.r, y0, P.z - P.r, P.x + P.r, yT, P.z + P.r, 'steelDark', { tag: 'obstacle' });
+      b.sbox(P.x - 0.6, y0, P.z - 0.6, P.x + 0.6, y0 + 0.35, P.z + 0.6, 'steel', { collide: false });
+      b.sbox(P.x - 0.65, yT - 0.5, P.z - 0.65, P.x + 0.65, yT - 0.2, P.z + 0.65, 'steel', { collide: false });
     }
     // trilhos atravessando a estação e o vagão funerário (obstáculo)
-    for (const z of [51.7, 53.3]) b.box(S.minX, y0, z - 0.04, 102, y0 + 0.14, z + 0.04, 'steel', { collide: false });
-    for (let x = S.minX + 0.4; x < 102; x += 0.9) b.box(x, y0, 51.3, x + 0.25, y0 + 0.06, 53.7, 'woodDark', { collide: false });
-    b.box(101.8, y0, 51.1, 102.4, y0 + 1.0, 53.9, 'rust');   // para-choque do fim da linha
+    for (const z of [51.7, 53.3]) b.sbox(S.minX, y0, z - 0.04, 102, y0 + 0.14, z + 0.04, 'steel', { collide: false });
+    for (let x = S.minX + 0.4; x < 102; x += 0.9) b.sbox(x, y0, 51.3, x + 0.25, y0 + 0.06, 53.7, 'woodDark', { collide: false });
+    b.sbox(101.8, y0, 51.1, 102.4, y0 + 1.0, 53.9, 'rust');   // para-choque do fim da linha
     const Wg = WAGON;
-    b.box(Wg.minX, y0 + 0.5, Wg.minZ, Wg.maxX, y0 + 2.9, Wg.maxZ, 'woodDark', { tag: 'obstacle' });
-    b.box(Wg.minX - 0.1, y0 + 2.9, Wg.minZ - 0.1, Wg.maxX + 0.1, y0 + 3.05, Wg.maxZ + 0.1, 'coal', { collide: false });
+    b.sbox(Wg.minX, y0 + 0.5, Wg.minZ, Wg.maxX, y0 + 2.9, Wg.maxZ, 'woodDark', { tag: 'obstacle' });
+    b.sbox(Wg.minX - 0.1, y0 + 2.9, Wg.minZ - 0.1, Wg.maxX + 0.1, y0 + 3.05, Wg.maxZ + 0.1, 'coal', { collide: false });
     for (let x = Wg.minX + 0.6; x < Wg.maxX - 0.4; x += 1.4) {
-      b.box(x, y0 + 1.6, Wg.minZ - 0.02, x + 0.8, y0 + 2.4, Wg.minZ, 'glass', { collide: false });
-      b.box(x, y0 + 1.6, Wg.maxZ, x + 0.8, y0 + 2.4, Wg.maxZ + 0.02, 'glass', { collide: false });
+      b.sbox(x, y0 + 1.6, Wg.minZ - 0.02, x + 0.8, y0 + 2.4, Wg.minZ, 'glass', { collide: false });
+      b.sbox(x, y0 + 1.6, Wg.maxZ, x + 0.8, y0 + 2.4, Wg.maxZ + 0.02, 'glass', { collide: false });
     }
     for (const x of [Wg.minX + 1, Wg.maxX - 1]) for (const z of [51.7, 53.3]) {
       const w = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.1, 12), M.steelDark || M.rust); w.rotation.x = Math.PI / 2; w.position.set(x, y0 + 0.4, z); b.group.add(w);
@@ -677,9 +677,9 @@ export class PedraLevel {
     this.sign('IRMANDADE — TRANSLADO', (Wg.minX + Wg.maxX) / 2, y0 + 1.1, Wg.minZ - 0.03, Math.PI, 2.4, 0.22, { bg: '#16140f', fg: '#c8b890' });
     // atril com a ata, bancos de pedra, placas
     const A = ATRIL;
-    b.box(A.x - 0.3, y0, A.z - 0.25, A.x + 0.3, y0 + 1.05, A.z + 0.25, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(A.x - 0.35, y0 + 1.05, A.z - 0.3, A.x + 0.35, y0 + 1.12, A.z + 0.3, 'paper', { collide: false });
-    for (const z of [44.2, 61.8]) b.box(86, y0, z - 0.3, 89, y0 + 0.5, z + 0.3, 'stone', { tag: 'prop-low', sight: false });
+    b.sbox(A.x - 0.3, y0, A.z - 0.25, A.x + 0.3, y0 + 1.05, A.z + 0.25, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(A.x - 0.35, y0 + 1.05, A.z - 0.3, A.x + 0.35, y0 + 1.12, A.z + 0.3, 'paper', { collide: false });
+    for (const z of [44.2, 61.8]) b.sbox(86, y0, z - 0.3, 89, y0 + 0.5, z + 0.3, 'stone', { tag: 'prop-low', sight: false });
     this.sign('SOB A PEDRA', 91, y0 + 3.6, S.minZ + 0.12, 0, 4.2, 0.6, { bg: '#0c2a3a', fg: '#e8e0c8' });
     this.sign('SOB A PEDRA', 84, y0 + 3.6, S.maxZ - 0.12, Math.PI, 4.2, 0.6, { bg: '#0c2a3a', fg: '#e8e0c8' });
     this.sign('AQUI DORME A PRIMEIRA CINZA', S.maxX - 0.12, y0 + 4.2, V.z, -Math.PI / 2, 3.2, 0.3, { bg: '#16140f', fg: '#c8b890' });
@@ -689,8 +689,8 @@ export class PedraLevel {
       const pv = new THREE.Group(); pv.position.set(B.lever.x - 0.25, y0 + 0.9, B.lever.z); b.group.add(pv);
       const rod = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.5), M.rust); rod.position.z = 0; rod.position.x = 0.25; rod.rotation.y = Math.PI / 2; pv.add(rod);
       const knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), M.brass); knob.position.x = 0.5; pv.add(knob);
-      b.box(S.minX + 0.1, y0 + 0.9, B.lever.z - 0.02, B.lever.x - 0.2, yT - 0.6, B.lever.z + 0.02, 'rust', { collide: false });
-      b.box(S.minX + 0.1, yT - 0.62, B.lever.z - 0.015, B.bell.x, yT - 0.58, B.lever.z + 0.015, 'rust', { collide: false });
+      b.sbox(S.minX + 0.1, y0 + 0.9, B.lever.z - 0.02, B.lever.x - 0.2, yT - 0.6, B.lever.z + 0.02, 'rust', { collide: false });
+      b.sbox(S.minX + 0.1, yT - 0.62, B.lever.z - 0.015, B.bell.x, yT - 0.58, B.lever.z + 0.015, 'rust', { collide: false });
       const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.32, 0.4, 12, 1, true), M.brass);
       bell.position.set(B.bell.x, yT - 0.9, B.bell.z); b.group.add(bell);
       this.bells[B.id] = { ...B, mesh: bell, lever: pv, t: -1, rung: 0 };
@@ -712,11 +712,11 @@ export class PedraLevel {
     const b = this.b, S = STAIR, y0 = TRACK_Y;
     b.floor(S.minX, S.minZ, S.maxX, S.maxZ, y0, 'concrete', 'c7_saida');
     b.ceiling(S.minX, S.minZ, S.maxX, S.maxZ, y0 + 6, 'cantaria');
-    b.box(S.minX - 0.2, y0, S.minZ, S.minX, y0 + 6, S.maxZ, 'cantaria');
-    b.box(S.maxX, y0, S.minZ, S.maxX + 0.2, y0 + 6, S.maxZ, 'cantaria');
-    b.box(S.minX - 0.2, y0, S.maxZ, S.maxX + 0.2, y0 + 6, S.maxZ + 0.2, 'cantaria');
+    b.sbox(S.minX - 0.2, y0, S.minZ, S.minX, y0 + 6, S.maxZ, 'cantaria');
+    b.sbox(S.maxX, y0, S.minZ, S.maxX + 0.2, y0 + 6, S.maxZ, 'cantaria');
+    b.sbox(S.minX - 0.2, y0, S.maxZ, S.maxX + 0.2, y0 + 6, S.maxZ + 0.2, 'cantaria');
     // degraus de ferro subindo para o norte (visual: a saída encerra o capítulo)
-    for (let i = 0; i < 12; i++) b.box(S.minX + 0.3, y0, 65.4 + i * 0.34, S.maxX - 0.3, y0 + 0.2 + i * 0.3, 65.74 + i * 0.34, 'steelDark', { collide: false });
+    for (let i = 0; i < 12; i++) b.sbox(S.minX + 0.3, y0, 65.4 + i * 0.34, S.maxX - 0.3, y0 + 0.2 + i * 0.3, 65.74 + i * 0.34, 'steelDark', { collide: false });
     this.sign('USINA DE VÉSPERA — TORRE DE TRANSMISSÃO ↑', 99, y0 + 4.6, S.maxZ - 0.02, Math.PI, 2.6, 0.24, { bg: '#2a1a0c', fg: '#f0c070' });
   }
 

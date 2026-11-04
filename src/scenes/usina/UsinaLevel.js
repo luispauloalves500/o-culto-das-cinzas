@@ -171,26 +171,26 @@ export class UsinaLevel {
   _yard() {
     const b = this.b, M = this.M, Yd = YARD;
     b.floor(Yd.minX, Yd.minZ, Yd.maxX, Yd.maxZ, Y, 'coal', 'c8_patio');
-    b.box(Yd.minX - 0.2, Y, Yd.minZ - 0.2, Yd.maxX + 0.2, Y + 4, Yd.minZ, 'brick');
-    b.box(Yd.minX - 0.2, Y, Yd.minZ, Yd.minX, Y + 4, Yd.maxZ, 'brick');
-    b.box(Yd.maxX, Y, Yd.minZ, Yd.maxX + 0.2, Y + 4, Yd.maxZ, 'brick');
+    b.sbox(Yd.minX - 0.2, Y, Yd.minZ - 0.2, Yd.maxX + 0.2, Y + 4, Yd.minZ, 'brick');
+    b.sbox(Yd.minX - 0.2, Y, Yd.minZ, Yd.minX, Y + 4, Yd.maxZ, 'brick');
+    b.sbox(Yd.maxX, Y, Yd.minZ, Yd.maxX + 0.2, Y + 4, Yd.maxZ, 'brick');
     // casinhola da escada de serviço (de onde Elias sai das catacumbas)
-    b.box(1.2, Y, 0, 5.2, Y + 2.6, 1.6, 'concrete');
-    b.box(1.0, Y + 2.6, -0.1, 5.4, Y + 2.8, 1.8, 'rust', { collide: false });
-    b.box(2.5, Y, 1.6, 3.9, Y + 2.2, 1.62, 'steelDark', { collide: false });
+    b.sbox(1.2, Y, 0, 5.2, Y + 2.6, 1.6, 'concrete');
+    b.sbox(1.0, Y + 2.6, -0.1, 5.4, Y + 2.8, 1.8, 'rust', { collide: false });
+    b.sbox(2.5, Y, 1.6, 3.9, Y + 2.2, 1.62, 'steelDark', { collide: false });
     this.sign('CIA. DO METRÔ — SAÍDA DE SERVIÇO', 3.2, Y + 2.35, 1.63, 0, 2.2, 0.2, { bg: '#1a1712', fg: '#cbbf98' });
     // montes de carvão (obstáculos) e os vagonetes nos trilhos
     for (const H of HEAPS) {
       const c = new THREE.Mesh(new THREE.ConeGeometry(H.r + 0.6, 2.2, 9), M.coal); c.position.set(H.x, Y + 1.1, H.z); b.group.add(c);
       b.box(H.x - H.r, Y, H.z - H.r, H.x + H.r, Y + 1.8, H.z + H.r, M.coal, { tag: 'obstacle' }).visible = false;
     }
-    for (const z of [19.1, 19.9]) b.box(4, Y, z - 0.04, 22, Y + 0.12, z + 0.04, 'steel', { collide: false });
+    for (const z of [19.1, 19.9]) b.sbox(4, Y, z - 0.04, 22, Y + 0.12, z + 0.04, 'steel', { collide: false });
     for (const W of WAGONS) {
-      b.box(W.minX, Y + 0.35, W.minZ, W.maxX, Y + 1.7, W.maxZ, 'rust', { tag: 'obstacle' });
-      b.box(W.minX + 0.15, Y + 1.7, W.minZ + 0.15, W.maxX - 0.15, Y + 1.95, W.maxZ - 0.15, 'coal', { collide: false });
+      b.sbox(W.minX, Y + 0.35, W.minZ, W.maxX, Y + 1.7, W.maxZ, 'rust', { tag: 'obstacle' });
+      b.sbox(W.minX + 0.15, Y + 1.7, W.minZ + 0.15, W.maxX - 0.15, Y + 1.95, W.maxZ - 0.15, 'coal', { collide: false });
     }
     // postes de luz de sódio
-    for (const [x, z] of [[7, 13.5], [18, 4]]) b.box(x - 0.08, Y, z - 0.08, x + 0.08, Y + 5, z + 0.08, 'steelDark', { tag: 'obstacle' });
+    for (const [x, z] of [[7, 13.5], [18, 4]]) b.sbox(x - 0.08, Y, z - 0.08, x + 0.08, Y + 5, z + 0.08, 'steelDark', { tag: 'obstacle' });
     this.sign('USINA DE VÉSPERA — PÁTIO DE CARVÃO', 13, Y + 3.4, 0.02, 0, 3.4, 0.34, { bg: '#2a1a0c', fg: '#f0c070' });
     // cinza caindo da chaminé (partículas)
     const N = 260, pos = new Float32Array(N * 3), rnd = mulberry(1934);
@@ -208,36 +208,36 @@ export class UsinaLevel {
     b.wallX(H.maxZ, YARD.minX, H.maxX, Y, Y + 2.8, [], 'brick');
     b.wallZ(H.maxX, H.minZ, H.maxZ, Y, Y + 2.8, [H.door.z], 'brick', 1.1, 2.2);
     b.ceiling(YARD.minX, H.minZ, H.maxX, H.maxZ, Y + 2.8, 'ceiling');
-    b.box(1.2, Y, 10.6, 2.6, Y + 0.85, 11.8, 'woodDark', { tag: 'prop-low', sight: false });  // mesa
-    b.box(1.1, Y, 8.2, 1.8, Y + 1.6, 8.7, 'wood', { tag: 'prop-low', sight: false });         // estante
+    b.sbox(1.2, Y, 10.6, 2.6, Y + 0.85, 11.8, 'woodDark', { tag: 'prop-low', sight: false });  // mesa
+    b.sbox(1.1, Y, 8.2, 1.8, Y + 1.6, 8.7, 'wood', { tag: 'prop-low', sight: false });         // estante
     this.sign('GUARITA', H.maxX + 0.12, Y + 2.45, 9.0, Math.PI / 2, 0.8, 0.2, { bg: '#1a1712', fg: '#cbbf98' });
   }
 
   // ---------- TORRE DE CARVÃO x20..24 z12..16 + escada de marinheiro + ESTEIRA coberta até a galeria ----------
   _tower() {
     const b = this.b, T = TOWER, C = CATWALK, L = LADDER_C8;
-    b.box(T.minX + 0.2, Y, T.minZ + 0.2, T.maxX - 0.2, G, T.maxZ - 0.2, 'rust');            // silo (bloco sólido)
+    b.sbox(T.minX + 0.2, Y, T.minZ + 0.2, T.maxX - 0.2, G, T.maxZ - 0.2, 'rust');            // silo (bloco sólido)
     b.floor(T.minX, T.minZ, T.maxX, T.maxZ, G, 'steelDark', 'c8_torre_carvao');
     // guarda-corpos do topo (vão da escada no sul, da esteira no norte)
-    b.box(T.minX - 0.1, G, T.minZ, T.minX, G + 1.05, T.maxZ, 'steel');
-    b.box(T.maxX, G, T.minZ, T.maxX + 0.1, G + 1.05, T.maxZ, 'steel');
-    b.box(T.minX, G, T.minZ - 0.1, L.x - 0.6, G + 1.05, T.minZ, 'steel');
-    b.box(L.x + 0.6, G, T.minZ - 0.1, T.maxX, G + 1.05, T.minZ, 'steel');
-    b.box(T.minX, G, T.maxZ, C.minX, G + 1.05, T.maxZ + 0.1, 'steel');
-    b.box(C.maxX, G, T.maxZ, T.maxX, G + 1.05, T.maxZ + 0.1, 'steel');
-    for (const [x, z] of [[T.minX, T.minZ], [T.maxX, T.minZ], [T.minX, T.maxZ], [T.maxX, T.maxZ]]) b.box(x - 0.08, G, z - 0.08, x + 0.08, G + 3.4, z + 0.08, 'steelDark', { collide: false });
-    b.box(T.minX - 0.3, G + 3.4, T.minZ - 0.3, T.maxX + 0.3, G + 3.6, T.maxZ + 0.3, 'rust', { collide: false });
+    b.sbox(T.minX - 0.1, G, T.minZ, T.minX, G + 1.05, T.maxZ, 'steel');
+    b.sbox(T.maxX, G, T.minZ, T.maxX + 0.1, G + 1.05, T.maxZ, 'steel');
+    b.sbox(T.minX, G, T.minZ - 0.1, L.x - 0.6, G + 1.05, T.minZ, 'steel');
+    b.sbox(L.x + 0.6, G, T.minZ - 0.1, T.maxX, G + 1.05, T.minZ, 'steel');
+    b.sbox(T.minX, G, T.maxZ, C.minX, G + 1.05, T.maxZ + 0.1, 'steel');
+    b.sbox(C.maxX, G, T.maxZ, T.maxX, G + 1.05, T.maxZ + 0.1, 'steel');
+    for (const [x, z] of [[T.minX, T.minZ], [T.maxX, T.minZ], [T.minX, T.maxZ], [T.maxX, T.maxZ]]) b.sbox(x - 0.08, G, z - 0.08, x + 0.08, G + 3.4, z + 0.08, 'steelDark', { collide: false });
+    b.sbox(T.minX - 0.3, G + 3.4, T.minZ - 0.3, T.maxX + 0.3, G + 3.6, T.maxZ + 0.3, 'rust', { collide: false });
     // escada de marinheiro (trilhos + degraus) na face sul do silo
-    for (const x of [L.x - 0.3, L.x + 0.3]) b.box(x - 0.03, Y, T.minZ + 0.02, x + 0.03, G + 1.1, T.minZ + 0.1, 'rust', { collide: false });
-    for (let y = 0.3; y < G + 0.1; y += 0.32) b.box(L.x - 0.3, Y + y, T.minZ + 0.04, L.x + 0.3, Y + y + 0.03, T.minZ + 0.08, 'rust', { collide: false });
+    for (const x of [L.x - 0.3, L.x + 0.3]) b.sbox(x - 0.03, Y, T.minZ + 0.02, x + 0.03, G + 1.1, T.minZ + 0.1, 'rust', { collide: false });
+    for (let y = 0.3; y < G + 0.1; y += 0.32) b.sbox(L.x - 0.3, Y + y, T.minZ + 0.04, L.x + 0.3, Y + y + 0.03, T.minZ + 0.08, 'rust', { collide: false });
     this.sign('SILO 2 — SOMENTE PESSOAL', L.x, Y + 1.9, T.minZ + 0.22, Math.PI, 1.3, 0.2, { bg: '#c9a020', fg: '#1a1712' });
     // esteira coberta (passarela y 4,4) até a parede sul da Casa das Caldeiras
     b.floor(C.minX, C.minZ, C.maxX, C.maxZ, G, 'steelDark', 'c8_esteira');
-    b.box(C.minX - 0.1, G, C.minZ, C.minX, G + 1.05, C.maxZ, 'steel');
-    b.box(C.maxX, G, C.minZ, C.maxX + 0.1, G + 1.05, C.maxZ, 'steel');
-    b.box(C.maxX - 0.55, G, C.minZ + 0.2, C.maxX - 0.1, G + 0.35, C.maxZ - 0.2, 'belt', { collide: false });   // a correia
-    b.box(C.minX - 0.2, G + 2.6, C.minZ, C.maxX + 0.2, G + 2.75, C.maxZ, 'rust', { collide: false });
-    for (const z of [18.5, 22]) for (const x of [C.minX + 0.1, C.maxX - 0.1]) b.box(x - 0.1, Y, z - 0.1, x + 0.1, G - 0.3, z + 0.1, 'steelDark', { tag: 'obstacle' });
+    b.sbox(C.minX - 0.1, G, C.minZ, C.minX, G + 1.05, C.maxZ, 'steel');
+    b.sbox(C.maxX, G, C.minZ, C.maxX + 0.1, G + 1.05, C.maxZ, 'steel');
+    b.sbox(C.maxX - 0.55, G, C.minZ + 0.2, C.maxX - 0.1, G + 0.35, C.maxZ - 0.2, 'belt', { collide: false });   // a correia
+    b.sbox(C.minX - 0.2, G + 2.6, C.minZ, C.maxX + 0.2, G + 2.75, C.maxZ, 'rust', { collide: false });
+    for (const z of [18.5, 22]) for (const x of [C.minX + 0.1, C.maxX - 0.1]) b.sbox(x - 0.1, Y, z - 0.1, x + 0.1, G - 0.3, z + 0.1, 'steelDark', { tag: 'obstacle' });
   }
 
   // ---------- CASA DAS CALDEIRAS x0..30 z24..52 ----------
@@ -247,8 +247,8 @@ export class UsinaLevel {
     b.ceiling(H.minX, H.minZ, H.maxX, H.maxZ, yT, 'soot');
     // parede sul: portão de carga (x13) e a boca da esteira (x21..23, y 4,4..6,6)
     b.wallX(H.minZ, H.minX, CATWALK.minX, Y, yT, [CARGO_GATE.x], 'brick', CARGO_GATE.width, 3.0);
-    b.box(CATWALK.minX, Y, H.minZ - 0.1, CATWALK.maxX, G, H.minZ + 0.1, 'brick');
-    b.box(CATWALK.minX, G + 2.2, H.minZ - 0.1, CATWALK.maxX, yT, H.minZ + 0.1, 'brick');
+    b.sbox(CATWALK.minX, Y, H.minZ - 0.1, CATWALK.maxX, G, H.minZ + 0.1, 'brick');
+    b.sbox(CATWALK.minX, G + 2.2, H.minZ - 0.1, CATWALK.maxX, yT, H.minZ + 0.1, 'brick');
     b.wallX(H.minZ, CATWALK.maxX, H.maxX, Y, yT, [], 'brick');
     b.wallZ(H.minX, H.minZ, H.maxZ, Y, yT, [33.2], 'brick', 1.2, 2.3);                        // porta do corredor de tubos
     b.wallZ(H.maxX, H.minZ, H.maxZ, Y, yT, [], 'brick');
@@ -264,7 +264,7 @@ export class UsinaLevel {
     const nd = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.28, 0.02), this.M.needle); nd.geometry.translate(0, 0.13, 0); nd.position.z = -0.04; gg.add(nd);
     this.lineNeedle = nd;
     // pistões da porta (visual)
-    for (const dx of [-1.4, 1.4]) b.box(STEAM_DOOR.x + dx - 0.12, Y, H.maxZ - 0.5, STEAM_DOOR.x + dx + 0.12, Y + 3.2, H.maxZ - 0.12, 'boilerIron', { collide: false });
+    for (const dx of [-1.4, 1.4]) b.sbox(STEAM_DOOR.x + dx - 0.12, Y, H.maxZ - 0.5, STEAM_DOOR.x + dx + 0.12, Y + 3.2, H.maxZ - 0.12, 'boilerIron', { collide: false });
   }
 
   // ---------- GALERIA LESTE (y 4,4), patamar, passarela sobre a caldeira III e escada para o chão ----------
@@ -275,22 +275,22 @@ export class UsinaLevel {
     b.floor(Br.minX, Br.minZ, Br.maxX, Br.maxZ, G, 'steelDark', 'c8_passarela');
     b.stairsZ(S.minX, S.maxX, S.zTop, S.zBottom, G, Y, 14, 'steelDark');
     // guarda-corpos (só barram quem está em cima: ficam acima de y 4,4)
-    b.box(Gl.minX - 0.1, G, Gl.minZ, Gl.minX + 0.05, G + 1.05, Gl.maxZ, 'steel');
-    b.box(Ld.minX - 0.1, G, Ld.minZ, Ld.minX + 0.05, G + 1.05, Br.minZ, 'steel');
-    b.box(Ld.minX, G, Ld.maxZ, Ld.maxX, G + 1.05, Ld.maxZ + 0.1, 'steel');
-    b.box(S.maxX, G, Gl.maxZ - 0.1, Gl.maxX, G + 1.05, Gl.maxZ, 'steel');
-    b.box(Br.minX, G, Br.minZ - 0.1, Br.maxX, G + 1.05, Br.minZ, 'steel');
-    b.box(Br.minX, G, Br.maxZ, Br.maxX, G + 1.05, Br.maxZ + 0.1, 'steel');
-    b.box(Br.minX - 0.1, G, Br.minZ, Br.minX, G + 1.05, Br.maxZ, 'steel');
+    b.sbox(Gl.minX - 0.1, G, Gl.minZ, Gl.minX + 0.05, G + 1.05, Gl.maxZ, 'steel');
+    b.sbox(Ld.minX - 0.1, G, Ld.minZ, Ld.minX + 0.05, G + 1.05, Br.minZ, 'steel');
+    b.sbox(Ld.minX, G, Ld.maxZ, Ld.maxX, G + 1.05, Ld.maxZ + 0.1, 'steel');
+    b.sbox(S.maxX, G, Gl.maxZ - 0.1, Gl.maxX, G + 1.05, Gl.maxZ, 'steel');
+    b.sbox(Br.minX, G, Br.minZ - 0.1, Br.maxX, G + 1.05, Br.minZ, 'steel');
+    b.sbox(Br.minX, G, Br.maxZ, Br.maxX, G + 1.05, Br.maxZ + 0.1, 'steel');
+    b.sbox(Br.minX - 0.1, G, Br.minZ, Br.minX, G + 1.05, Br.maxZ, 'steel');
     // painéis laterais da escada (barram o patamar e o vão a leste, em qualquer altura)
-    b.box(S.minX - 0.05, Y, S.zTop + 0.6, S.minX + 0.05, G + 1.05, S.zBottom, 'steel');
-    b.box(S.maxX - 0.05, Y, S.zTop, S.maxX + 0.05, G + 1.05, S.zBottom, 'steel');
+    b.sbox(S.minX - 0.05, Y, S.zTop + 0.6, S.minX + 0.05, G + 1.05, S.zBottom, 'steel');
+    b.sbox(S.maxX - 0.05, Y, S.zTop, S.maxX + 0.05, G + 1.05, S.zBottom, 'steel');
     // embaixo da escada: blocos em degraus (ninguém entra sob a rampa)
-    b.box(S.minX + 0.05, Y, S.zTop, S.maxX - 0.05, Y + 2.9, S.zTop + 2, 'concrete');
-    b.box(S.minX + 0.05, Y, S.zTop + 2, S.maxX - 0.05, Y + 1.7, S.zTop + 3.6, 'concrete');
-    b.box(S.minX + 0.05, Y, S.zTop + 3.6, S.maxX - 0.05, Y + 0.85, S.zTop + 4.8, 'concrete');
+    b.sbox(S.minX + 0.05, Y, S.zTop, S.maxX - 0.05, Y + 2.9, S.zTop + 2, 'concrete');
+    b.sbox(S.minX + 0.05, Y, S.zTop + 2, S.maxX - 0.05, Y + 1.7, S.zTop + 3.6, 'concrete');
+    b.sbox(S.minX + 0.05, Y, S.zTop + 3.6, S.maxX - 0.05, Y + 0.85, S.zTop + 4.8, 'concrete');
     // pilares (obstáculos no chão; a galeria passa por cima deles)
-    for (const [x, z] of [[20.3, 28], [20.3, 34], [20.3, 40], [20.3, 46], [25.6, 48.6], [12, 48.3], [16, 48.3]]) b.box(x - 0.22, Y, z - 0.22, x + 0.22, G - 0.3, z + 0.22, 'steelDark', { tag: 'obstacle' });
+    for (const [x, z] of [[20.3, 28], [20.3, 34], [20.3, 40], [20.3, 46], [25.6, 48.6], [12, 48.3], [16, 48.3]]) b.sbox(x - 0.22, Y, z - 0.22, x + 0.22, G - 0.3, z + 0.22, 'steelDark', { tag: 'obstacle' });
   }
 
   // ---------- AS TRÊS CALDEIRAS ----------
@@ -298,14 +298,14 @@ export class UsinaLevel {
     const b = this.b, M = this.M;
     for (const B of BOILERS) {
       const z = B.z;
-      b.box(3, Y, z - BOILER_R + 0.2, 15, Y + 0.5, z + BOILER_R - 0.2, 'brick', { collide: false });
+      b.sbox(3, Y, z - BOILER_R + 0.2, 15, Y + 0.5, z + BOILER_R - 0.2, 'brick', { collide: false });
       const cyl = new THREE.Mesh(new THREE.CylinderGeometry(BOILER_R, BOILER_R, 12, 18), M.boilerIron);
       cyl.rotation.z = Math.PI / 2; cyl.position.set(9, Y + 2.1, z); b.group.add(cyl);
       for (const x of [4, 7, 10, 13]) { const r = new THREE.Mesh(new THREE.TorusGeometry(BOILER_R + 0.02, 0.05, 6, 18), M.rust); r.rotation.y = Math.PI / 2; r.position.set(x, Y + 2.1, z); b.group.add(r); }
       this.game.col.addBox(3, Y, z - BOILER_R, 15, Y + 3.9, z + BOILER_R, { tag: 'obstacle', blocksSight: true });
       // fornalha na frente (leste): boca em brasa
-      b.box(15, Y, z - 1.2, 16.2, Y + 2.6, z + 1.2, 'boilerIron', { tag: 'obstacle' });
-      b.box(16.2, Y + 0.4, z - 0.5, 16.24, Y + 1.2, z + 0.5, 'ember', { collide: false });
+      b.sbox(15, Y, z - 1.2, 16.2, Y + 2.6, z + 1.2, 'boilerIron', { tag: 'obstacle' });
+      b.sbox(16.2, Y + 0.4, z - 0.5, 16.24, Y + 1.2, z + 0.5, 'ember', { collide: false });
       // manômetro na frente da fornalha (agulha = pressão desta caldeira)
       const gg = new THREE.Group(); gg.position.set(16.27, Y + 2.0, z - 0.7); gg.rotation.y = Math.PI / 2; b.group.add(gg);
       const face = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 14), M.gauge); face.rotation.x = Math.PI / 2; gg.add(face);
@@ -318,19 +318,19 @@ export class UsinaLevel {
       const sp2 = sp.clone(); sp2.rotation.z = Math.PI / 2; wheel.add(sp2);
       if (B.top) {
         // III: válvula no dorso da caldeira, de frente para a passarela
-        b.box(B.valve.x - 0.07, Y + 3.8, z + 0.9, B.valve.x + 0.07, G + 0.9, z + 1.05, 'rust', { collide: false });
-        b.box(B.valve.x - 0.12, G + 0.75, z + 1.05, B.valve.x + 0.12, G + 0.95, BRIDGE.minZ - 0.15, 'rust', { collide: false });
+        b.sbox(B.valve.x - 0.07, Y + 3.8, z + 0.9, B.valve.x + 0.07, G + 0.9, z + 1.05, 'rust', { collide: false });
+        b.sbox(B.valve.x - 0.12, G + 0.75, z + 1.05, B.valve.x + 0.12, G + 0.95, BRIDGE.minZ - 0.15, 'rust', { collide: false });
         wheel.position.set(B.valve.x, G + 0.85, BRIDGE.minZ - 0.12);
         // a haste de baixo, na frente da fornalha, quebrada
-        b.box(16.25, Y + 0.6, B.broken.z - 0.06, 16.45, Y + 1.0, B.broken.z + 0.06, 'rust', { collide: false });
+        b.sbox(16.25, Y + 0.6, B.broken.z - 0.06, 16.45, Y + 1.0, B.broken.z + 0.06, 'rust', { collide: false });
       } else {
-        b.box(16.2, Y + 1.0, B.valve.z - 0.06, 16.5, Y + 1.12, B.valve.z + 0.06, 'rust', { collide: false });
+        b.sbox(16.2, Y + 1.0, B.valve.z - 0.06, 16.5, Y + 1.12, B.valve.z + 0.06, 'rust', { collide: false });
         wheel.position.set(16.52, Y + 1.06, B.valve.z); wheel.rotation.y = Math.PI / 2;
       }
       wheel.visible = false;
       // escape do alívio: cano do dorso da caldeira até o bocal sobre o corredor
-      b.box(B.plume.x - 0.1, Y + 3.9, Math.min(z, B.plume.z) - 0.1, B.plume.x + 0.1, Y + 4.1, Math.max(z, B.plume.z) + 0.1, 'rust', { collide: false });
-      b.box(B.plume.x - 0.12, Y + 3.0, B.plume.z - 0.12, B.plume.x + 0.12, Y + 4.1, B.plume.z + 0.12, 'rust', { collide: false });
+      b.sbox(B.plume.x - 0.1, Y + 3.9, Math.min(z, B.plume.z) - 0.1, B.plume.x + 0.1, Y + 4.1, Math.max(z, B.plume.z) + 0.1, 'rust', { collide: false });
+      b.sbox(B.plume.x - 0.12, Y + 3.0, B.plume.z - 0.12, B.plume.x + 0.12, Y + 4.1, B.plume.z + 0.12, 'rust', { collide: false });
       const plume = new THREE.Group(); plume.position.set(B.plume.x, Y, B.plume.z); b.group.add(plume);
       for (let i = 0; i < 4; i++) {
         const s = new THREE.Mesh(new THREE.SphereGeometry(0.9 + i * 0.25, 8, 6), M.steam);
@@ -349,15 +349,15 @@ export class UsinaLevel {
     b.ceiling(P.minX, P.minZ, P.maxX, P.maxZ, Y + 3, 'soot');
     b.wallX(P.minZ, P.minX, P.maxX, Y, Y + 3, [], 'brick');
     b.wallX(P.maxZ, P.minX, P.maxX, Y, Y + 3, [], 'brick');
-    for (const y of [1.9, 2.3, 2.65]) b.box(P.minX, Y + y, P.maxZ - 0.35, P.maxX, Y + y + 0.18, P.maxZ - 0.15, 'rust', { collide: false });
+    for (const y of [1.9, 2.3, 2.65]) b.sbox(P.minX, Y + y, P.maxZ - 0.35, P.maxX, Y + y + 0.18, P.maxZ - 0.15, 'rust', { collide: false });
     for (const L of LEAKS) {
-      b.box(L.x - 0.12, Y + 1.7, P.maxZ - 0.45, L.x + 0.12, Y + 2.9, P.maxZ - 0.1, 'boilerIron', { collide: false });
+      b.sbox(L.x - 0.12, Y + 1.7, P.maxZ - 0.45, L.x + 0.12, Y + 2.9, P.maxZ - 0.1, 'boilerIron', { collide: false });
       const jet = new THREE.Mesh(new THREE.ConeGeometry(0.55, 2.2, 8, 1, true), M.steam);
       jet.rotation.x = -Math.PI / 2; jet.position.set(L.x, Y + 1.2, P.maxZ - 1.4); jet.visible = false; b.group.add(jet);
       this.leaks.push({ ...L, jet });
     }
     // registro de alimentação (no fim do corredor, parede sul) — o volante fecha o vapor dos tubos
-    b.box(FEED_VALVE.x - 0.1, Y + 0.3, P.minZ + 0.1, FEED_VALVE.x + 0.1, Y + 2.9, P.minZ + 0.3, 'rust', { collide: false });
+    b.sbox(FEED_VALVE.x - 0.1, Y + 0.3, P.minZ + 0.1, FEED_VALVE.x + 0.1, Y + 2.9, P.minZ + 0.3, 'rust', { collide: false });
     const fw = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 6, 12), M.rust); fw.position.set(FEED_VALVE.x, Y + 1.2, P.minZ + 0.36); fw.visible = false; b.group.add(fw);
     this.feedWheel = fw;
     this.sign('REGISTRO DE ALIMENTAÇÃO', FEED_VALVE.x, Y + 1.75, P.minZ + 0.12, 0, 1.4, 0.18, { bg: '#c9a020', fg: '#1a1712' });
@@ -372,10 +372,10 @@ export class UsinaLevel {
     b.wallX(O.maxZ, O.minX, O.maxX, Y, Y + 3.4, [], 'brick');
     b.wallZ(O.minX, O.minZ, O.maxZ, Y, Y + 3.4, [], 'brick');
     b.wallZ(O.maxX, O.minZ, O.maxZ, Y, Y + 3.4, [33.2], 'brick', 1.4, 2.4);
-    b.box(Wb.minX, Y, Wb.minZ, Wb.maxX, Y + 0.9, Wb.maxZ, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(-21.8, Y, 28.3, -20.6, Y + 1.9, 29.0, 'steelDark', { tag: 'prop-low' });                 // armário
-    b.box(-16.2, Y, 28.3, -14.4, Y + 0.8, 29.6, 'rust', { tag: 'prop-low', sight: false });         // torno
-    for (let i = 0; i < 5; i++) b.box(-21.9, Y + 1.3 + i * 0.05, 31 + i * 0.9, -21.85, Y + 1.7, 31.5 + i * 0.9, 'rust', { collide: false });
+    b.sbox(Wb.minX, Y, Wb.minZ, Wb.maxX, Y + 0.9, Wb.maxZ, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(-21.8, Y, 28.3, -20.6, Y + 1.9, 29.0, 'steelDark', { tag: 'prop-low' });                 // armário
+    b.sbox(-16.2, Y, 28.3, -14.4, Y + 0.8, 29.6, 'rust', { tag: 'prop-low', sight: false });         // torno
+    for (let i = 0; i < 5; i++) b.sbox(-21.9, Y + 1.3 + i * 0.05, 31 + i * 0.9, -21.85, Y + 1.7, 31.5 + i * 0.9, 'rust', { collide: false });
     this.sign('OFICINA DE MANUTENÇÃO', -18, Y + 2.7, O.maxZ - 0.12, Math.PI, 2.4, 0.24, { bg: '#1a1712', fg: '#cbbf98' });
   }
 
@@ -391,7 +391,7 @@ export class UsinaLevel {
     b.box(T.minX, Y, T.minZ, T.maxX, Y + 3.6, T.maxZ, M.boilerIron, { tag: 'obstacle' }).visible = false;
     const body = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, T.maxX - T.minX, 18), M.boilerIron);
     body.rotation.z = Math.PI / 2; body.position.set((T.minX + T.maxX) / 2, Y + 2, (T.minZ + T.maxZ) / 2); b.group.add(body);
-    b.box(T.maxX, Y, T.minZ - 0.5, T.maxX + 3, Y + 4, T.maxZ + 0.5, 'steelDark', { tag: 'obstacle' });
+    b.sbox(T.maxX, Y, T.minZ - 0.5, T.maxX + 3, Y + 4, T.maxZ + 0.5, 'steelDark', { tag: 'obstacle' });
     const fw = new THREE.Group(); fw.position.set(T.minX - 0.4, Y + 2.3, (T.minZ + T.maxZ) / 2); b.group.add(fw);
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.35, 20), M.steelDark || M.rust); disc.rotation.z = Math.PI / 2; fw.add(disc);
     for (let i = 0; i < 6; i++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, 4.2), M.rust); sp.rotation.x = i * Math.PI / 6; fw.add(sp); }
@@ -399,7 +399,7 @@ export class UsinaLevel {
     this.game.col.addBox(T.minX - 0.65, Y, T.minZ - 0.3, T.minX - 0.15, Y + 4.5, T.maxZ + 0.3, { tag: 'obstacle', blocksSight: true });
     // quadro de transmissão (parede leste): voltímetro + chave geral
     const Bd = BOARD;
-    b.box(Bd.x - 0.3, Y + 0.3, Bd.z - 1.3, Bd.x + 0.4, Y + 2.8, Bd.z + 1.3, 'steelDark', { tag: 'prop-low' });
+    b.sbox(Bd.x - 0.3, Y + 0.3, Bd.z - 1.3, Bd.x + 0.4, Y + 2.8, Bd.z + 1.3, 'steelDark', { tag: 'prop-low' });
     const vg = new THREE.Group(); vg.position.set(Bd.x - 0.33, Y + 2.2, Bd.z - 0.6); vg.rotation.y = -Math.PI / 2; b.group.add(vg);
     const vf = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.04, 14), M.gauge); vf.rotation.x = Math.PI / 2; vg.add(vf);
     const vn = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.21, 0.02), M.needle); vn.geometry.translate(0, 0.1, 0); vn.position.z = 0.04; vg.add(vn);
@@ -410,7 +410,7 @@ export class UsinaLevel {
     sw.rotation.z = -0.2; this.mainSwitch = sw;
     this.sign('TRANSMISSÃO — TORRE', Bd.x - 0.36, Y + 2.65, Bd.z + 0.4, -Math.PI / 2, 1.4, 0.2, { bg: '#2a1a0c', fg: '#f0c070' });
     // mesa do chefe de turno
-    b.box(2.4, Y, 64.2, 5.2, Y + 0.85, 65.6, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(2.4, Y, 64.2, 5.2, Y + 0.85, 65.6, 'woodDark', { tag: 'prop-low', sight: false });
     this.sign('SALA DA TURBINA', 15, Y + 4.2, H.minZ + 0.12, 0, 2.6, 0.3, { bg: '#2a1a0c', fg: '#f0c070' });
     this.sign('TORRE DE TRANSMISSÃO ↑', 13, Y + 2.9, H.maxZ - 0.12, Math.PI, 2.2, 0.22, { bg: '#1a1712', fg: '#cbbf98' });
   }
