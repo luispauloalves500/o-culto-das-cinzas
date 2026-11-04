@@ -18,8 +18,9 @@ import { attackClipTime, ATTACK_CLIPS, ACTION_CLIPS, CONFIG_MACHADO, CLIP } from
 import { readFileSync } from 'node:fs';
 import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
 import { prepareClips, makeIdleClips } from '../../src/gameplay/EliasModel.js';
-import { restPoseFor, POSE_DEFS } from '../../src/models/MixamoPoses.js';
-import { ENEMY_MODELS, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
+import { restPoseFor, POSE_DEFS, ATTACK_DEFS } from '../../src/models/MixamoPoses.js';
+import { makeKnife } from '../../src/models/EnemyWeapons.js';
+import { ENEMY_MODELS, attackPhase, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
 
 let ok = 0, fail = 0;
 function test(name, fn) {
@@ -1630,6 +1631,12 @@ test('Poses Mixamo (pt54u): dormente sentado/deitado, idle parado, morto deitado
   const ps = new Set(['a', 'b', 'c', 'int_s2', 'int_parto', 'x1', 'x2'].map((id) => restPoseFor({ id, dormant: true })));
   assert.ok(ps.has('sit') && ps.has('lie'), 'ids alternam sentado/deitado');
   assert.deepEqual(Object.keys(POSE_DEFS).sort(), ['idle', 'lie', 'sit']);
+  // pt55u: ataques em 4 quadros e fase pelo tempo do ataque; faca real
+  assert.deepEqual(Object.keys(ATTACK_DEFS).sort(), ['claw', 'stab']); assert.ok(Object.values(ATTACK_DEFS).every((f) => f.length === 4));
+  const a = { windup: 0.5, active: 0.2, recover: 0.4 };
+  assert.equal(attackPhase({ state: 'attack', attack: a, stateT: 0.25 }), 0.5); assert.ok(Math.abs(attackPhase({ state: 'attack', attack: a, stateT: 0.6 }) - 1.5) < 1e-9);
+  assert.equal(attackPhase({ state: 'attack', attack: a, stateT: 5 }), 3); assert.equal(attackPhase({ state: 'grabbing' }), 2);
+  const k = makeKnife(), bb = new THREE.Box3().setFromObject(k); assert.ok(bb.max.y > 0.2 && bb.min.y < -0.1 && k.children.length === 4, 'faca ~36 cm');
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

@@ -131,8 +131,11 @@ try {
         const st0 = d.state, rp = d.restPose; out.dormants = g.enemies.filter((e) => e.glb?.mixer && e.dormant).map((e) => e.restPose);
         d._frozen && (d._frozen = false); for (let i = 0; i < 5; i++) d._animate(1 / 30, 0);
         out.restClip = d.glb.cur?.getClip().name; out.rest = rp; const pRest = hips.position.clone();
+        { d.rig.root.updateMatrixWorld(true); let m = Infinity; const V = hips.position.constructor; for (const [b, r] of d.glb.contacts) { const v = d.rig.root.worldToLocal(b.getWorldPosition(new V())); m = Math.min(m, v.y - r); } out.restGround = +m.toFixed(3); }
         d.dormant = false; d.state = 'idle'; for (let i = 0; i < 20; i++) d._animate(1 / 30, 0); out.idleClip = d.glb.cur?.getClip().name;
         d.state = 'chase'; for (let i = 0; i < 45; i++) d._animate(1 / 30, 1.0); out.wakeClip = d.glb.cur?.getClip().name;
+        { const sv = { a: d.attack, t: d.stateT }; d.state = 'attack'; d.attack = { windup: 0.5, active: 0.2, recover: 0.4 }; d.stateT = 0.6; for (let i = 0; i < 6; i++) d._animate(1 / 60, 0); out.atkClip = d.glb.cur?.getClip().name; out.atkT = +d.glb.cur?.time.toFixed(2); d.attack = sv.a; d.stateT = sv.t; d.state = 'chase'; }
+        { const en = g.enemies.find((e) => e.glb?.mixer && e.def.mats === 'enfermeiro'); out.knife = !!(en?.glb.knife && en.glb.knife.parent?.isBone && /RightHand$/.test(en.glb.knife.parent.name) && en.glb.knife.children.every((m) => m.visible)); out.enfAtk = en?.glb.attackClip; }
         out.hipsUp = +(hips.position.distanceTo(pRest) / hips.position.length()).toFixed(2);
         d.dormant = true; d.state = st0; d.speed = 0; for (let i = 0; i < 5; i++) d._animate(1 / 30, 0); } }
     const inf = g.enemies.find((e) => e.glb?.mixer && e.alive);
@@ -145,7 +148,9 @@ try {
   check('Inimigos GLB: enfermeiro com o modelo Mixamo (pele + Walking/Running), preso ao corpo do rig e na altura do arquétipo',
     eglb.kinds?.enfermeiro?.n > 0 && eglb.kinds.enfermeiro.glb === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.inBody === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.mixer === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.hiddenOk === eglb.kinds.enfermeiro.n && Math.abs(eglb.kinds.enfermeiro.height - 1.95) < 0.15, JSON.stringify(eglb));
   check('Inimigos GLB (pt54u): dormente sentado/deitado com pose no esqueleto, parado em idle (sem pose T) e acordar → Walking levantando o quadril',
-    /^Pose_(sit|lie)$/.test(eglb.restClip || '') && eglb.restClip === 'Pose_' + eglb.rest && eglb.idleClip === 'Pose_idle' && eglb.wakeClip === 'Walking' && eglb.hipsUp > 0.3 && eglb.dormants?.includes('sit') && eglb.dormants?.includes('lie'), JSON.stringify({ r: eglb.restClip, i: eglb.idleClip, w: eglb.wakeClip, up: eglb.hipsUp, d: eglb.dormants }));
+    /^Pose_(sit|lie)$/.test(eglb.restClip || '') && eglb.restClip === 'Pose_' + eglb.rest && eglb.idleClip === 'Pose_idle' && eglb.wakeClip === 'Walking' && eglb.hipsUp > 0.3 && eglb.dormants?.includes('sit') && eglb.dormants?.includes('lie') && Math.abs(eglb.restGround) < 0.03, JSON.stringify({ g: eglb.restGround, r: eglb.restClip, i: eglb.idleClip, w: eglb.wakeClip, up: eglb.hipsUp, d: eglb.dormants }));
+  check('Inimigos GLB (pt55u): ataque no esqueleto (clipe de golpe pela fase do ataque) e enfermeiro com faca presa ao osso RightHand',
+    /^Pose_atk_/.test(eglb.atkClip || '') && eglb.atkT > 1 && eglb.atkT < 2 && eglb.knife && eglb.enfAtk === 'Pose_atk_stab', JSON.stringify({ c: eglb.atkClip, t: eglb.atkT, k: eglb.knife, e: eglb.enfAtk }));
   // pt48u: otimizações que não mexem nas texturas
   const perf = await page.evaluate(() => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};

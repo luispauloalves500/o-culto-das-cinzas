@@ -314,6 +314,14 @@ Os GLBs Mixamo só trazem `Walking`/`Running`; `src/models/MixamoPoses.js` sinte
 dos ossos no espaço do personagem a partir de um quadro "em pé" do Walking. Parado → idle (fim da pose T); dormente → sentado ou
 deitado (`pose: 'sit'|'lie'` no spawn ou alternado pelo id); ao acordar faz crossfade de 1 s para andar/correr; morto → cai na pose deitada.
 
+
+### Ataques, faca e apoio no chão (pt55u)
+- Ataques no esqueleto: `Pose_atk_stab` (enfermeiro: ergue a faca e crava com estocada) e `Pose_atk_claw` (infectado: recua com
+  os braços no alto e se lança arranhando/mordendo), 4 quadros cada; o tempo do clipe segue a fase do ataque (preparação/golpe/recuperação).
+- Faca do enfermeiro (`src/models/EnemyWeapons.js`): malha real (lâmina extrudada com sangue, guarda, cabo) presa ao osso `RightHand`.
+- Apoio no chão: a cada quadro o ponto de apoio mais baixo (pés, nádegas, costas, cabeça) é assentado em y=0 da raiz — sentado/deitado
+  não flutuam mais.
+
 ### Desempenho sem piorar texturas (pt48u/pt49u)
 
 Todos os truques ficam em `src/render/Perf.js`. **Nenhum mexe em textura**: os mapas, a resolução, a filtragem e o anisotrópico continuam os mesmos, e o smoke confere isso em todas as trocas de opção.
