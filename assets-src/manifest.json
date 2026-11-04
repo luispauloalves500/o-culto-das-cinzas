@@ -13,6 +13,14 @@
       ]
     },
     {
+      "out": "public/models/enfermeiro.glb",
+      "size": 1700876,
+      "sha256": "3e46a98ba76ee9dc61d88a3e0bc01c27b12b686886468b8bcd7b648856eea2ed",
+      "parts": [
+        "enfermeiro.glb.b64.part01"
+      ]
+    },
+    {
       "out": "public/models/hornbeard.glb",
       "size": 1367604,
       "sha256": "df3fce46739e61b1d3f2783b7300b4d140c51e182feca9bc13e2e6e1428d23d7",
