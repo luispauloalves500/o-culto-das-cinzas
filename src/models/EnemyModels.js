@@ -11,6 +11,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { buildPoseClips } from './MixamoPoses.js';
 import { freezeRig } from '../render/Perf.js';
+import { attachKnife } from './EnemyWeapons.js';
 
 export const ENEMY_MODELS = {
   enfermeiro: { url: './models/enfermeiro.glb' },
@@ -84,6 +85,17 @@ export function attachEnemyModel(enemy) {
       const mx = new THREE.AnimationMixer(model);
       for (const c of g.animations) enemy.glb.actions[c.name] = mx.clipAction(c);
       enemy.glb.mixer = mx;
+      enemy.glb.attackClip = kind === 'enfermeiro' ? 'Pose_atk_stab' : 'Pose_atk_claw';
+      if (kind === 'enfermeiro') enemy.glb.knife = attachKnife(model, enemy.rig.root, (on) => {
+        const a = enemy.glb.actions.Pose_atk_stab; if (!a) return;
+        if (on) { a.reset().play(); a.time = 0; a.timeScale = 0; mx.update(0); } else { a.stop(); mx.update(0); }
+      });
+      // apoios no chão (pt55u): pés/dedos e o quadril (nádegas ≈ 9% da altura abaixo do osso), costas/cabeça deitado
+      const B = (n) => { let f = null; model.traverse((o) => { if (!f && o.isBone && o.name.endsWith(n)) f = o; }); return f; };
+      const H = enemy.glb.height;
+      enemy.glb.contacts = [['LeftFoot', 0.035], ['RightFoot', 0.035], ['LeftToeBase', 0.02], ['RightToeBase', 0.02], ['Hips', 0.085], ['Spine2', 0.07], ['Head', 0.06], ['LeftHand', 0.02], ['RightHand', 0.02]]
+        .map(([n, r]) => [B(n), r * H / 1.8]).filter(([b]) => b);
+      enemy.glb.gy = 0;
       // pt54u: o GLB chega assíncrono; se o rig já foi congelado (dormente/morto), descongela para o mixer pôr a pose
       if (enemy._frozen) { freezeRig(enemy.rig.root, false); enemy._frozen = false; }
     }
@@ -98,9 +110,9 @@ export function updateEnemyModel(enemy, dt, speed) {
   let lean = 0, push = 0;
   if (st === 'attack' && enemy.attack) {
     const a = enemy.attack, t = enemy.stateT, w = a.windup;
-    lean = t < w ? -0.15 * (t / w) : t < w + a.active ? 0.45 : Math.max(0, 0.45 * (1 - (t - w - a.active) / a.recover));
-    push = lean > 0 ? lean * 0.35 : 0;
-  } else if (st === 'grabbing') lean = 0.35;
+    const p = t < w ? 0 : t < w + a.active ? 1 : Math.max(0, 1 - (t - w - a.active) / a.recover);
+    push = (G.mixer ? 0.28 : 0.16) * p; lean = G.mixer ? 0 : 0.45 * p;
+  } else if (st === 'grabbing') { lean = G.mixer ? 0 : 0.35; push = 0.15; }
   else if (st === 'stagger') lean = -0.25;
   G.model.rotation.x = lean; G.model.position.z = push;
   if (enemy.flinch > 0) G.model.rotation.x -= enemy.flinch * 0.6;
@@ -109,7 +121,8 @@ export function updateEnemyModel(enemy, dt, speed) {
   if (G.mixer && st === 'dead') { G.holder.rotation.x = -body.rotation.x; G.holder.position.y = -body.position.y; G.model.rotation.x = 0; }
   else { G.holder.rotation.x = 0; G.holder.position.y = 0; }
   if (!G.mixer) return;
-  const pick = pickClip(G.names, st === 'attack' || st === 'grabbing' ? 0.6 : speed, st, enemy.restPose || 'sit');
+  const atk = (st === 'attack' && enemy.attack) || st === 'grabbing';
+  const pick = atk && G.actions[G.attackClip] ? { name: G.attackClip, scale: 0, fade: 0.12 } : pickClip(G.names, speed, st, enemy.restPose || 'sit');
   if (!pick) { if (G.cur) { G.cur.paused = true; } return; }
   const act = G.actions[pick.name];
   if (G.cur !== act) {
@@ -118,5 +131,33 @@ export function updateEnemyModel(enemy, dt, speed) {
     act.reset().play(); if (G.cur) { G.cur.paused = false; act.crossFadeFrom(G.cur, fade, false); } G.cur = act;
   }
   act.paused = false; act.timeScale = pick.scale;
+  if (atk) act.time = attackPhase(enemy);
   G.mixer.update(dt);
+  groundModel(enemy, G, dt, st);
+}
+
+/** fase 0..3 do ataque (pronto→preparação→golpe→recuperação); agarrando segura o golpe */
+export function attackPhase(enemy) {
+  if (enemy.state === 'grabbing' || !enemy.attack) return 2;
+  const a = enemy.attack, t = enemy.stateT, w = a.windup, act = w + a.active;
+  return t < w ? 1 * (t / w) : t < act ? 1 + (t - w) / a.active : 2 + Math.min(1, (t - act) / a.recover);
+}
+
+const _gv = new THREE.Vector3();
+/** pt55u: assenta o modelo no chão — o ponto de apoio mais baixo (pés, nádegas, costas) toca y=0 da raiz do inimigo.
+ *  Sentado/deitado/morto/atacando sempre; andando volta suave ao offset 0 do clipe. */
+function groundModel(enemy, G, dt, st) {
+  if (!G.contacts?.length) return;
+  const root = enemy.rig.root;
+  const want = st === 'dormant' || st === 'dead' || st === 'attack' || st === 'grabbing' || (G.cur && /^Pose_/.test(G.cur.getClip().name));
+  let target = 0;
+  if (want) {
+    root.updateMatrixWorld(true);
+    let m = Infinity;
+    for (const [b, r] of G.contacts) { b.getWorldPosition(_gv); root.worldToLocal(_gv); m = Math.min(m, _gv.y - r); }
+    target = -m;
+  }
+  const k = G.gyInit ? Math.min(1, dt * 10) : 1; G.gyInit = true;
+  G.gy += (target - G.gy) * k;
+  G.holder.position.y += G.gy;
 }

@@ -43,6 +43,22 @@ export const POSE_DEFS = {
     },
   },
 };
+// pt55u: ataques em 4 quadros (pronto → preparação → golpe → recuperação), tempo do clipe = fase 0..3 do ataque
+const LUNGE = { LeftUpLeg: [0.14, -1, -0.32], LeftLeg: [0.1, -1, -0.42], RightUpLeg: [-0.1, -1, 0.5], RightLeg: [-0.05, -1, 0.08], RightFoot: [-0.05, -0.35, 1] };
+export const ATTACK_DEFS = {
+  stab: [ // enfermeiro: faca na direita, ergue acima do ombro e crava de cima para baixo com estocada do corpo
+    { lean: 0.15, dirs: { RightArm: [-0.35, -0.8, 0.45], RightForeArm: [-0.1, -0.25, 1], RightHand: [0, 0, 1], LeftArm: [0.3, -0.9, 0.25], LeftForeArm: [0.1, -0.6, 0.8] } },
+    { dirs: { Spine: [0.18, 1, -0.12], Spine1: [0.22, 1, -0.15], Spine2: [0.25, 1, -0.15], Head: [0, 1, 0.35], RightArm: [-0.75, 0.55, -0.4], RightForeArm: [-0.1, 1, 0.15], RightHand: [0, 1, 0.45], LeftArm: [0.35, -0.45, 0.85], LeftForeArm: [0.05, -0.3, 1] } },
+    { dirs: { ...LUNGE, Spine: [-0.1, 1, 0.5], Spine1: [-0.12, 1, 0.6], Spine2: [-0.12, 1, 0.6], Head: [0, 0.8, 0.7], RightArm: [-0.12, 0.15, 1], RightForeArm: [-0.02, -0.75, 0.9], RightHand: [0, -1, 0.35], LeftArm: [0.45, -0.9, -0.25], LeftForeArm: [0.25, -0.7, -0.4] } },
+    { lean: 0.2, dirs: { RightArm: [-0.3, -0.75, 0.6], RightForeArm: [-0.1, -0.4, 1], RightHand: [0, -0.3, 1], LeftArm: [0.3, -0.9, 0.2], LeftForeArm: [0.1, -0.7, 0.6] } },
+  ],
+  claw: [ // infectado: braços estendidos, recua com os braços no alto e se lança arranhando para baixo, cabeça para morder
+    { lean: 0.3, dirs: { Head: [0.15, 0.85, 0.6], LeftArm: [0.3, -0.25, 1], LeftForeArm: [0.1, -0.15, 1], RightArm: [-0.3, -0.25, 1], RightForeArm: [-0.1, -0.15, 1] } },
+    { dirs: { Spine: [0, 1, -0.2], Spine1: [0, 1, -0.22], Spine2: [0, 1, -0.2], Neck: [0, 1, -0.1], Head: [0.2, 0.9, 0.35], LeftArm: [0.5, 0.85, -0.15], LeftForeArm: [0.15, 0.9, 0.45], LeftHand: [0, 0.6, 1], RightArm: [-0.5, 0.85, -0.15], RightForeArm: [-0.15, 0.9, 0.45], RightHand: [0, 0.6, 1] } },
+    { dirs: { ...LUNGE, Spine: [0, 1, 0.75], Spine1: [0, 1, 0.85], Spine2: [0, 1, 0.9], Neck: [0, 0.6, 1], Head: [0, 0.35, 1], LeftArm: [0.15, -0.25, 1], LeftForeArm: [-0.3, -0.75, 0.7], LeftHand: [-0.3, -1, 0.2], RightArm: [-0.1, -0.1, 1], RightForeArm: [0.35, -0.6, 0.75], RightHand: [0.3, -1, 0.3] } },
+    { lean: 0.35, dirs: { Head: [0.2, 0.8, 0.6], LeftArm: [0.35, -0.5, 0.85], LeftForeArm: [0.1, -0.4, 1], RightArm: [-0.35, -0.5, 0.85], RightForeArm: [-0.1, -0.4, 1] } },
+  ],
+};
 export const DORMANT_POSES = ['sit', 'lie'];
 /** pose de repouso de um inimigo dormente: opção explícita (`pose`) ou alterna sit/lie pelo id (determinístico) */
 export function restPoseFor(o) {
@@ -133,6 +149,10 @@ export function buildPoseClips(root, clips, height) {
   for (const [name, def] of Object.entries(POSE_DEFS)) {
     if (def.lean) { apply(def, def.lean[0]); const a = snap(); apply(def, def.lean[1]); const b = snap(); out.push(makeClip('Pose_' + name, [a, b, a], 3.2)); }
     else { apply(def); const a = snap(); out.push(makeClip('Pose_' + name, [a, a], 1)); }
+  }
+  for (const [name, frames] of Object.entries(ATTACK_DEFS)) {
+    const snaps = frames.map((f) => { apply({ floor: null, dirs: f.dirs }, f.lean || 0); return snap(); });
+    out.push(makeClip('Pose_atk_' + name, snaps, 3));
   }
   for (const [b, s] of stand) { b.quaternion.copy(s.q); b.position.copy(s.p); }
   mx.uncacheRoot(root);
