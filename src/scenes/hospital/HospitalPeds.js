@@ -76,9 +76,9 @@ function rooms(L) {
   M.drawing = M.drawing || new THREE.MeshLambertMaterial({ color: 0xd8d0b8, side: THREE.DoubleSide });
   const toys = [M.toyRed, M.toyBlue, M.toyYellow];
   // CORREDOR z22..26: cadeiras de rodas, banco, desenhos de criança nas paredes, cavalinho
-  b.box(13.0, ROOF, 24.6, 14.6, ROOF + 0.45, 25.6, 'woodDark', PL);
-  b.box(30.2, ROOF, 25.1, 31.0, ROOF + 0.9, 25.8, 'metal', PL);
-  b.box(35.6, ROOF, 22.3, 36.4, ROOF + 0.9, 23.0, 'metal', PL);
+  b.sbox(13.0, ROOF, 24.6, 14.6, ROOF + 0.45, 25.6, 'woodDark', PL);
+  b.sbox(30.2, ROOF, 25.1, 31.0, ROOF + 0.9, 25.8, 'metal', PL);
+  b.sbox(35.6, ROOF, 22.3, 36.4, ROOF + 0.9, 23.0, 'metal', PL);
   for (let i = 0; i < 9; i++) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.24), M.drawing);
     m.position.set(14 + i * 2.9 + (i % 2) * 0.4, ROOF + 1.3 + (i % 3) * 0.18, 22.12); m.rotation.z = ((i * 37) % 7 - 3) * 0.05; b.group.add(m);
@@ -89,14 +89,14 @@ function rooms(L) {
   const rk = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.9), M.woodDark); rk.position.y = 0.2; horse.add(rk);
   b.group.add(horse);
   // BRINQUEDOTECA x16..23 z14..22: mesinhas, blocos, estante e o teatrinho de fantoches
-  b.box(18.6, ROOF, 15.8, 20.4, ROOF + 0.5, 17.0, 'wood', PL);
-  b.box(18.6, ROOF, 19.0, 20.4, ROOF + 0.5, 20.2, 'wood', PL);
-  for (const [x, z] of [[18.3, 16.4], [20.7, 16.4], [18.3, 19.6], [20.7, 19.6]]) b.box(x - 0.18, ROOF, z - 0.18, x + 0.18, ROOF + 0.32, z + 0.18, 'woodDark', NC);
+  b.sbox(18.6, ROOF, 15.8, 20.4, ROOF + 0.5, 17.0, 'wood', PL);
+  b.sbox(18.6, ROOF, 19.0, 20.4, ROOF + 0.5, 20.2, 'wood', PL);
+  for (const [x, z] of [[18.3, 16.4], [20.7, 16.4], [18.3, 19.6], [20.7, 19.6]]) b.sbox(x - 0.18, ROOF, z - 0.18, x + 0.18, ROOF + 0.32, z + 0.18, 'woodDark', NC);
   for (let i = 0; i < 14; i++) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.14), toys[i % 3]);
     m.position.set(17.6 + ((i * 53) % 40) / 10, ROOF + 0.07 + (i % 4 === 0 ? 0.14 : 0), 14.8 + ((i * 29) % 65) / 10); m.rotation.y = i; b.group.add(m);
   }
-  b.box(21.2, ROOF, 14.15, 22.85, ROOF + 0.9, 14.9, 'woodDark', PL);              // estante da caixinha
+  b.sbox(21.2, ROOF, 14.15, 22.85, ROOF + 0.9, 14.9, 'woodDark', PL);              // estante da caixinha
   // caixinha de música
   const mb = new THREE.Group(); mb.position.set(MUSIC_BOX.x, ROOF + 0.9, MUSIC_BOX.z);
   const mbody = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.16), M.toyBlue); mbody.position.y = 0.06; mb.add(mbody);
@@ -127,25 +127,25 @@ function rooms(L) {
   L.padlock = { chain, lock, broken: brokenLock };
   // BERÇÁRIO x23..31 z14..22: berços em fileiras, um deles com o facão cravado
   for (const x of [24.6, 27.0, 29.4]) for (const z of [15.6, 18.4]) {
-    b.box(x - 0.4, ROOF, z - 0.6, x + 0.4, ROOF + 0.55, z + 0.6, 'sheet', PL);
-    for (const dx of [-0.38, 0.38]) b.box(x + dx - 0.02, ROOF + 0.55, z - 0.6, x + dx + 0.02, ROOF + 0.95, z + 0.6, 'metal', NC);
-    for (const dz of [-0.58, 0.58]) b.box(x - 0.4, ROOF + 0.55, z + dz - 0.02, x + 0.4, ROOF + 0.95, z + dz + 0.02, 'metal', NC);
+    b.sbox(x - 0.4, ROOF, z - 0.6, x + 0.4, ROOF + 0.55, z + 0.6, 'sheet', PL);
+    for (const dx of [-0.38, 0.38]) b.sbox(x + dx - 0.02, ROOF + 0.55, z - 0.6, x + dx + 0.02, ROOF + 0.95, z + 0.6, 'metal', NC);
+    for (const dz of [-0.58, 0.58]) b.sbox(x - 0.4, ROOF + 0.55, z + dz - 0.02, x + 0.4, ROOF + 0.95, z + dz + 0.02, 'metal', NC);
   }
   for (const [x, z, r] of [[27.2, 16.0, 0.5], [25.6, 20.4, 2.1]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = r; m.position.set(x, ROOF + 0.012, z); b.group.add(m);
   }
   // POSTO DE ENFERMAGEM x31..36 z14..22: balcão, armário, mesa do livro de registros
-  b.box(31.2, ROOF, 19.6, 34.4, ROOF + 1.0, 20.3, 'woodDark', PL);
-  b.box(33.8, ROOF, 14.2, 35.8, ROOF + 0.9, 15.1, 'wood', PL);
-  b.box(31.2, ROOF, 14.2, 32.0, ROOF + 1.9, 16.4, 'metal', P);
+  b.sbox(31.2, ROOF, 19.6, 34.4, ROOF + 1.0, 20.3, 'woodDark', PL);
+  b.sbox(33.8, ROOF, 14.2, 35.8, ROOF + 0.9, 15.1, 'wood', PL);
+  b.sbox(31.2, ROOF, 14.2, 32.0, ROOF + 1.9, 16.4, 'metal', P);
   // POSTO DE SEGURANÇA x36..41 z14..22: mesa, armário de armas arrombado, monitores mortos
-  b.box(37.0, ROOF, 17.6, 38.8, ROOF + 0.85, 18.6, 'woodDark', PL);
-  b.box(39.9, ROOF, 19.6, 40.85, ROOF + 1.9, 21.6, 'steelDark', P);
-  b.box(39.7, ROOF + 0.4, 19.7, 39.72, ROOF + 1.7, 21.5, 'steel', NC);
-  for (const z of [17.7, 18.2]) b.box(37.2, ROOF + 0.85, z, 37.6, ROOF + 1.2, z + 0.35, 'steelDark', NC);
+  b.sbox(37.0, ROOF, 17.6, 38.8, ROOF + 0.85, 18.6, 'woodDark', PL);
+  b.sbox(39.9, ROOF, 19.6, 40.85, ROOF + 1.9, 21.6, 'steelDark', P);
+  b.sbox(39.7, ROOF + 0.4, 19.7, 39.72, ROOF + 1.7, 21.5, 'steel', NC);
+  for (const z of [17.7, 18.2]) b.sbox(37.2, ROOF + 0.85, z, 37.6, ROOF + 1.2, z + 0.35, 'steelDark', NC);
   // QUARTO 7 x12..16 z14..22: caminha, desenhos por toda parede, a fita vermelha
-  b.box(12.2, ROOF, 14.3, 13.2, ROOF + 0.45, 16.1, 'sheet', PL);
-  b.box(12.2, ROOF, 20.6, 13.4, ROOF + 0.7, 21.8, 'woodDark', PL);             // criado-mudo
+  b.sbox(12.2, ROOF, 14.3, 13.2, ROOF + 0.45, 16.1, 'sheet', PL);
+  b.sbox(12.2, ROOF, 20.6, 13.4, ROOF + 0.7, 21.8, 'woodDark', PL);             // criado-mudo
   for (let i = 0; i < 26; i++) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.22), M.drawing);
     const onX = i % 2 === 0;
@@ -168,17 +168,17 @@ function fireEscape(L) {
   col.addBox(41, UP2, 23.85, 43.5, UP2 + 1.2, 24.05, { tag: 'wall', blocksSight: false });
   for (let z = 14; z <= 23.9; z += 1.1) {
     const y0 = z < 16.2 ? ROOF : z > 21.4 ? UP2 : ROOF - (z - 16.2) / 5.2 * (ROOF - UP2);
-    b.box(43.33, y0, z - 0.03, 43.39, y0 + 1.05, z + 0.03, 'rust', NC);
+    b.sbox(43.33, y0, z - 0.03, 43.39, y0 + 1.05, z + 0.03, 'rust', NC);
   }
-  b.box(43.32, ROOF + 1.0, 14, 43.4, ROOF + 1.06, 16.2, 'rust', NC);
-  b.box(43.32, UP2 + 1.0, 21.4, 43.4, UP2 + 1.06, 23.9, 'rust', NC);
-  b.box(41, ROOF + 1.0, 13.95, 43.4, ROOF + 1.06, 14.03, 'rust', NC);
-  b.box(41, UP2 + 1.0, 23.87, 43.4, UP2 + 1.06, 23.95, 'rust', NC);
+  b.sbox(43.32, ROOF + 1.0, 14, 43.4, ROOF + 1.06, 16.2, 'rust', NC);
+  b.sbox(43.32, UP2 + 1.0, 21.4, 43.4, UP2 + 1.06, 23.9, 'rust', NC);
+  b.sbox(41, ROOF + 1.0, 13.95, 43.4, ROOF + 1.06, 14.03, 'rust', NC);
+  b.sbox(41, UP2 + 1.0, 23.87, 43.4, UP2 + 1.06, 23.95, 'rust', NC);
   // corrimão inclinado
   const len = Math.hypot(5.2, ROOF - UP2), rail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, len), L.M.rust);
   rail.position.set(43.36, (ROOF + UP2) / 2 + 1.03, 18.8); rail.rotation.x = Math.atan2(ROOF - UP2, 5.2); b.group.add(rail);
   // estrutura de sustentação até o chão
-  for (const z of [16.2, 21.4, 23.85]) b.box(43.25, 0, z - 0.06, 43.37, z > 21 ? UP2 : ROOF, z + 0.06, 'rust', NC);
+  for (const z of [16.2, 21.4, 23.85]) b.sbox(43.25, 0, z - 0.06, 43.37, z > 21 ? UP2 : ROOF, z + 0.06, 'rust', NC);
 }
 
 // ---------- portas ----------

@@ -90,7 +90,7 @@ export class HospitalLevel {
     b.wallZ(16, -3, 10, LO, UP, [], 'wallLower');
     b.wallZ(16, -3, 10, UP, H_UP, [-1.5], 'wallLower');  // patamar/Ala Leste (porta z=−1.5)
     b.stairsZ(12.1, 15.9, 0, 10, UP, LO, 20);
-    b.box(12, CEIL_LO, 9.9, 16, UP - 0.3, 10.1, 'wallLower'); // verga sobre o pé da escada
+    b.sbox(12, CEIL_LO, 9.9, 16, UP - 0.3, 10.1, 'wallLower'); // verga sobre o pé da escada
     // CORREDOR x0..40 z10..14
     b.floor(0, 10, 40, 14, UP, 'tile', 'corridor');
     b.ceiling(0, 10, 40, 14, H_UP);
@@ -111,7 +111,7 @@ export class HospitalLevel {
     b.wallX(14, 40, 44, LO, H_UP, [], 'metal');
     b.ceiling(40, 10, 44, 14, H_UP);
     b.wallZ(40, 10, 14, LO, CEIL_LO, [12]);
-    b.box(39.9, CEIL_LO, 10, 40.1, UP - 0.3, 14, 'wallLower'); // entre andares
+    b.sbox(39.9, CEIL_LO, 10, 40.1, UP - 0.3, 14, 'wallLower'); // entre andares
 
     // SUBSOLO — HALL x12..40 z10..14
     b.floor(12, 10, 40, 14, LO, 'tile', 'lowerHall');
@@ -138,7 +138,7 @@ export class HospitalLevel {
     b.floor(36, 24, 46, 32, LO, 'concrete', 'yard');
     b.wallX(24, 36, 46, LO, 1.0, [], 'concrete'); b.wallX(32, 36, 46, LO, 1.0, [], 'concrete');
     b.wallZ(46, 24, 32, LO, 1.0, [28], 'concrete', 2.4, 3.0);
-    b.box(46, LO, 26, 50, 1, 30, 'concrete', { collide: true }); // além do portão: bloqueio (fim do capítulo)
+    b.sbox(46, LO, 26, 50, 1, 30, 'concrete', { collide: true }); // além do portão: bloqueio (fim do capítulo)
   }
 
   // ---------- adereços ----------
@@ -146,11 +146,11 @@ export class HospitalLevel {
     const b = this.b, M = this.M;
     const [w, l] = rot ? [2.0, 0.95] : [0.95, 2.0];
     const x0 = x - w / 2, x1 = x + w / 2, z0 = z - l / 2, z1 = z + l / 2;
-    b.box(x0, 0.32, z0, x1, 0.4, z1, 'metal', { collide: false, cast: true });
-    b.box(x0 + 0.04, 0.4, z0 + 0.04, x1 - 0.04, 0.58, z1 - 0.04, 'sheet', { collide: false, cast: true, tile: 1 });
-    for (const [lx, lz] of [[x0, z0], [x1 - 0.05, z0], [x0, z1 - 0.05], [x1 - 0.05, z1 - 0.05]]) b.box(lx, 0, lz, lx + 0.05, 0.4, lz + 0.05, 'metal', { collide: false });
+    b.sbox(x0, 0.32, z0, x1, 0.4, z1, 'metal', { collide: false, cast: true });
+    b.sbox(x0 + 0.04, 0.4, z0 + 0.04, x1 - 0.04, 0.58, z1 - 0.04, 'sheet', { collide: false, cast: true, tile: 1 });
+    for (const [lx, lz] of [[x0, z0], [x1 - 0.05, z0], [x0, z1 - 0.05], [x1 - 0.05, z1 - 0.05]]) b.sbox(lx, 0, lz, lx + 0.05, 0.4, lz + 0.05, 'metal', { collide: false });
     // cabeceira
-    if (rot) b.box(x0, 0, z0, x0 + 0.06, 1.0, z1, 'metal', { collide: false }); else b.box(x0, 0, z0, x1, 1.0, z0 + 0.06, 'metal', { collide: false });
+    if (rot) b.sbox(x0, 0, z0, x0 + 0.06, 1.0, z1, 'metal', { collide: false }); else b.sbox(x0, 0, z0, x1, 1.0, z0 + 0.06, 'metal', { collide: false });
     this.game.col.addBox(x0, 0, z0, x1, 0.62, z1, { tag: 'prop-low', blocksSight: false });
   }
   yShift(y) { return y; }
@@ -163,34 +163,34 @@ export class HospitalLevel {
     for (const z of [-1.2, 4.5, 7.6]) this.bed(1.1, z);
     this.bed(1.1, 1.5); // cama do Elias
     this.bed(10.8, 2.6); this.bed(10.8, 5.6);
-    b.box(1.9, 0, 2.7, 2.4, 0.6, 3.2, 'wood', { ...PL, cast: true });        // criado-mudo
-    b.box(6, 0, -2.85, 8.2, 0.85, -2.1, 'wood', { ...PL, cast: true });       // escrivaninha (livro de registros)
-    b.box(0.2, 0, 8.6, 0.75, 1.8, 9.8, 'metal', { ...P, cast: true });        // armário
-    b.box(11.2, 0, 7.4, 11.8, 1.9, 9.6, 'metal', { ...P, cast: true });
+    b.sbox(1.9, 0, 2.7, 2.4, 0.6, 3.2, 'wood', { ...PL, cast: true });        // criado-mudo
+    b.sbox(6, 0, -2.85, 8.2, 0.85, -2.1, 'wood', { ...PL, cast: true });       // escrivaninha (livro de registros)
+    b.sbox(0.2, 0, 8.6, 0.75, 1.8, 9.8, 'metal', { ...P, cast: true });        // armário
+    b.sbox(11.2, 0, 7.4, 11.8, 1.9, 9.6, 'metal', { ...P, cast: true });
     // caixa do machado na parede sul (lado da enfermaria)
-    b.box(3.5, 0.9, 9.72, 4.7, 2.0, 9.9, 'axeMetal', { collide: false });
-    b.box(3.6, 1.0, 9.69, 4.6, 1.9, 9.72, 'glass', { collide: false });
+    b.sbox(3.5, 0.9, 9.72, 4.7, 2.0, 9.9, 'axeMetal', { collide: false });
+    b.sbox(3.6, 1.0, 9.69, 4.6, 1.9, 9.72, 'glass', { collide: false });
     // suportes de soro
-    for (const [x, z] of [[2.2, -0.3], [2.2, 5.5], [9.9, 3.6]]) { b.box(x, 0, z, x + 0.04, 1.8, z + 0.04, 'metal', { collide: false }); b.box(x - 0.1, 1.7, z, x + 0.14, 1.74, z + 0.04, 'metal', { collide: false }); }
+    for (const [x, z] of [[2.2, -0.3], [2.2, 5.5], [9.9, 3.6]]) { b.sbox(x, 0, z, x + 0.04, 1.8, z + 0.04, 'metal', { collide: false }); b.sbox(x - 0.1, 1.7, z, x + 0.14, 1.74, z + 0.04, 'metal', { collide: false }); }
     // --- Corredor
-    b.box(15, 0, 13.1, 17, 0.8, 13.8, 'metal', { ...PL, cast: true }); // maca
-    b.box(15.1, 0.8, 13.15, 16.9, 0.9, 13.75, 'sheet', { collide: false });
-    b.box(28, 0, 10.2, 30, 0.45, 10.6, 'wood', PL);                   // banco
-    b.box(36.5, 0, 13.2, 37.4, 1.6, 13.85, 'metal', P);                // armário
+    b.sbox(15, 0, 13.1, 17, 0.8, 13.8, 'metal', { ...PL, cast: true }); // maca
+    b.sbox(15.1, 0.8, 13.15, 16.9, 0.9, 13.75, 'sheet', { collide: false });
+    b.sbox(28, 0, 10.2, 30, 0.45, 10.6, 'wood', PL);                   // banco
+    b.sbox(36.5, 0, 13.2, 37.4, 1.6, 13.85, 'metal', P);                // armário
     // --- Depósito
     for (const [x0, x1] of [[14.2, 14.9], [23.1, 23.8]]) {
-      b.box(x0, 0, 15.6, x1, 2.2, 21, 'metal', { ...P, cast: true });
+      b.sbox(x0, 0, 15.6, x1, 2.2, 21, 'metal', { ...P, cast: true });
     }
-    b.box(18, 0, 21, 20.2, 0.85, 21.8, 'wood', PL);                    // bancada do fusível
-    b.box(16.5, 0, 17, 17.4, 0.8, 17.9, 'wood', { ...PL, cast: true }); // caixotes
-    b.box(20.5, 0, 16.2, 21.3, 0.7, 17, 'wood', PL);
+    b.sbox(18, 0, 21, 20.2, 0.85, 21.8, 'wood', PL);                    // bancada do fusível
+    b.sbox(16.5, 0, 17, 17.4, 0.8, 17.9, 'wood', { ...PL, cast: true }); // caixotes
+    b.sbox(20.5, 0, 16.2, 21.3, 0.7, 17, 'wood', PL);
     // --- Sala de máquinas
-    b.box(29, 0, 19.2, 32.2, 2.0, 23.2, 'rust', { ...P, cast: true });   // gerador
-    b.box(29.4, 2.0, 20, 29.8, H_UP, 20.4, 'metal', { collide: false }); // exaustor
-    b.box(28.1, 2.6, 14.2, 37.9, 2.8, 14.5, 'rust', { collide: false });  // tubulação
-    b.box(37.7, 1.0, 15.5, 37.95, 1.9, 16.5, 'metal', { collide: false }); // painel do fusível
-    b.box(37.65, 0.9, 17.5, 37.95, 2.0, 20.5, 'hazard', { collide: false }); // quadro de disjuntores
-    b.box(37.6, 0, 21.5, 37.95, 1.6, 22.6, 'metal', { collide: false });   // base da alavanca
+    b.sbox(29, 0, 19.2, 32.2, 2.0, 23.2, 'rust', { ...P, cast: true });   // gerador
+    b.sbox(29.4, 2.0, 20, 29.8, H_UP, 20.4, 'metal', { collide: false }); // exaustor
+    b.sbox(28.1, 2.6, 14.2, 37.9, 2.8, 14.5, 'rust', { collide: false });  // tubulação
+    b.sbox(37.7, 1.0, 15.5, 37.95, 1.9, 16.5, 'metal', { collide: false }); // painel do fusível
+    b.sbox(37.65, 0.9, 17.5, 37.95, 2.0, 20.5, 'hazard', { collide: false }); // quadro de disjuntores
+    b.sbox(37.6, 0, 21.5, 37.95, 1.6, 22.6, 'metal', { collide: false });   // base da alavanca
     // disjuntores (I, II, III) e alavanca principal: objetos móveis
     this.breakers = [];
     for (let i = 0; i < 3; i++) {
@@ -205,32 +205,32 @@ export class HospitalLevel {
     const lk = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.14), M.mask); lk.position.y = 0.62; this.lever.add(lk);
     this.lever.rotation.z = -0.7; this.b.group.add(this.lever);
     this.fuseSlot = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.25, 0.1), M.paper); this.fuseSlot.position.set(37.66, 1.45, 16); this.fuseSlot.visible = false; this.b.group.add(this.fuseSlot);
-    b.box(36.6, 0, 23.1, 37.9, 1.2, 23.9, 'metal', P);
+    b.sbox(36.6, 0, 23.1, 37.9, 1.2, 23.9, 'metal', P);
     // --- Subsolo: hall
-    b.box(12.2, LO + 2.4, 13.6, 40, LO + 2.6, 13.85, 'rust', { collide: false });
-    b.box(25, LO, 10.2, 27, LO + 0.8, 10.9, 'metal', PL);            // maca
-    b.box(34, LO, 13.1, 35.5, LO + 1.2, 13.85, 'metal', P);
+    b.sbox(12.2, LO + 2.4, 13.6, 40, LO + 2.6, 13.85, 'rust', { collide: false });
+    b.sbox(25, LO, 10.2, 27, LO + 0.8, 10.9, 'metal', PL);            // maca
+    b.sbox(34, LO, 13.1, 35.5, LO + 1.2, 13.85, 'metal', P);
     // Arquivo
-    for (const x of [27, 34.4]) b.box(x, LO, 3, x + 0.6, LO + 2.0, 8, 'metal', { ...P, cast: true });
-    b.box(30, LO, 2.3, 32, LO + 0.8, 3.1, 'wood', PL);                 // mesa
-    b.box(29.4, LO, 6.6, 30.2, LO + 0.6, 7.4, 'wood', PL);              // caixas
+    for (const x of [27, 34.4]) b.sbox(x, LO, 3, x + 0.6, LO + 2.0, 8, 'metal', { ...P, cast: true });
+    b.sbox(30, LO, 2.3, 32, LO + 0.8, 3.1, 'wood', PL);                 // mesa
+    b.sbox(29.4, LO, 6.6, 30.2, LO + 0.6, 7.4, 'wood', PL);              // caixas
     // corredor cirúrgico
-    b.box(23.2, LO, 16.2, 23.85, LO + 0.85, 18.2, 'metal', PL);
+    b.sbox(23.2, LO, 16.2, 23.85, LO + 0.85, 18.2, 'metal', PL);
     // --- Arena: mesas e pilares (obstáculos da investida)
     const OB = { tag: 'obstacle', cast: true };
-    b.box(15.5, LO, 26.9, 16.5, LO + 1.0, 29.1, 'metal', OB);
-    b.box(29.5, LO, 26.9, 30.5, LO + 1.0, 29.1, 'metal', OB);
-    b.box(22.4, LO, 32.4, 23.6, LO + 1.0, 34.6, 'metal', OB);
-    for (const [x, z] of [[16, 23.5], [30, 23.5], [16, 33], [30, 33]]) b.box(x - 0.45, LO, z - 0.45, x + 0.45, CEIL_ARENA, z + 0.45, 'concrete', OB);
+    b.sbox(15.5, LO, 26.9, 16.5, LO + 1.0, 29.1, 'metal', OB);
+    b.sbox(29.5, LO, 26.9, 30.5, LO + 1.0, 29.1, 'metal', OB);
+    b.sbox(22.4, LO, 32.4, 23.6, LO + 1.0, 34.6, 'metal', OB);
+    for (const [x, z] of [[16, 23.5], [30, 23.5], [16, 33], [30, 33]]) b.sbox(x - 0.45, LO, z - 0.45, x + 0.45, CEIL_ARENA, z + 0.45, 'concrete', OB);
     for (const [x, z] of [[16, 28], [30, 28], [23, 33.5]]) {
-      b.box(x - 0.4, CEIL_ARENA - 0.5, z - 0.4, x + 0.4, CEIL_ARENA - 0.35, z + 0.4, 'metal', { collide: false });
+      b.sbox(x - 0.4, CEIL_ARENA - 0.5, z - 0.4, x + 0.4, CEIL_ARENA - 0.35, z + 0.4, 'metal', { collide: false });
     }
-    b.box(10.2, LO, 34, 12.5, LO + 1.6, 35.8, 'metal', P);
+    b.sbox(10.2, LO, 34, 12.5, LO + 1.6, 35.8, 'metal', P);
     // pátio
-    b.box(38, LO, 24.3, 39.2, LO + 0.9, 25.3, 'wood', PL);              // caixote do livro
-    b.box(43, LO, 30.6, 45.7, LO + 1.2, 31.7, 'rust', P);
+    b.sbox(38, LO, 24.3, 39.2, LO + 0.9, 25.3, 'wood', PL);              // caixote do livro
+    b.sbox(43, LO, 30.6, 45.7, LO + 1.2, 31.7, 'rust', P);
     // portão do pátio (grade, apenas visual — colisão vem do bloqueio externo)
-    for (let z = 26.9; z <= 29.1; z += 0.3) b.box(45.95, LO, z, 46.05, LO + 2.9, z + 0.06, 'rust', { collide: false });
+    for (let z = 26.9; z <= 29.1; z += 0.3) b.sbox(45.95, LO, z, 46.05, LO + 2.9, z + 0.06, 'rust', { collide: false });
     // --- sangue / sujeira
     const decals = [[5.8, UP, 6], [8, UP, 12.4], [21, UP, 18.5], [33.5, UP, 21], [24, LO, 12], [31, LO, 6], [22, LO, 17.5], [23, LO, 29], [19, LO, 31], [27, LO, 25]];
     decals.forEach(([x, y, z], i) => {
@@ -451,21 +451,21 @@ export class HospitalLevel {
     // leitos da quarentena e biombos
     for (const x of [20, 23, 26]) this.bed(x, -1.8);
     this.bed(18.6, 7.9); this.bed(28.4, 7.9);
-    for (const x of [21.5, 24.5]) b.box(x - 0.02, 0, -3, x + 0.02, 1.9, -0.9, 'curtain', { collide: false });
-    for (const x of [19.9, 27.1]) b.box(x - 0.02, 0, 6.9, x + 0.02, 1.9, 9.2, 'curtain', { collide: false });
-    b.box(16.2, 0, 4.6, 16.8, 1.8, 6.6, 'metal', { tag: 'prop', cast: true });           // armário de lençóis
-    b.box(28.6, 0, -2.8, 29.8, 0.9, -2.1, 'wood', { tag: 'prop-low', sight: false });    // mesinha do prontuário
+    for (const x of [21.5, 24.5]) b.sbox(x - 0.02, 0, -3, x + 0.02, 1.9, -0.9, 'curtain', { collide: false });
+    for (const x of [19.9, 27.1]) b.sbox(x - 0.02, 0, 6.9, x + 0.02, 1.9, 9.2, 'curtain', { collide: false });
+    b.sbox(16.2, 0, 4.6, 16.8, 1.8, 6.6, 'metal', { tag: 'prop', cast: true });           // armário de lençóis
+    b.sbox(28.6, 0, -2.8, 29.8, 0.9, -2.1, 'wood', { tag: 'prop-low', sight: false });    // mesinha do prontuário
     // suporte de soro tombado
-    b.box(22, 0.02, 3.2, 23.7, 0.06, 3.26, 'metal', { collide: false });
+    b.sbox(22, 0.02, 3.2, 23.7, 0.06, 3.26, 'metal', { collide: false });
     // fita de quarentena no vão da porta (lado de dentro)
-    b.box(23.3, 1.25, 9.7, 24.7, 1.32, 9.74, 'hazard', { collide: false });
+    b.sbox(23.3, 1.25, 9.7, 24.7, 1.32, 9.74, 'hazard', { collide: false });
     this.sign('QUARENTENA · ALA LESTE', 24, 2.75, 10.13, 0, 1.6, 0.24, { bg: '#7a1c12', fg: '#e9dcc0' });
     // isolamento / posto de enfermagem x30..38
-    b.box(32, 0, -2.9, 35.6, 0.9, -2.0, 'wood', { tag: 'prop-low', sight: false, cast: true }); // balcão do posto
-    b.box(36.9, 0, -2.9, 37.9, 2.0, -0.8, 'metal', { tag: 'prop', cast: true });              // armário de chaves
-    b.box(36.85, 1.0, -2.0, 36.9, 1.7, -1.0, 'woodDark', { collide: false });                  // quadro de ganchos
+    b.sbox(32, 0, -2.9, 35.6, 0.9, -2.0, 'wood', { tag: 'prop-low', sight: false, cast: true }); // balcão do posto
+    b.sbox(36.9, 0, -2.9, 37.9, 2.0, -0.8, 'metal', { tag: 'prop', cast: true });              // armário de chaves
+    b.sbox(36.85, 1.0, -2.0, 36.9, 1.7, -1.0, 'woodDark', { collide: false });                  // quadro de ganchos
     this.bed(36.6, 6.5, 1);
-    b.box(30.4, 0, 8.4, 31.6, 1.2, 9.8, 'metal', { tag: 'prop', cast: true });
+    b.sbox(30.4, 0, 8.4, 31.6, 1.2, 9.8, 'metal', { tag: 'prop', cast: true });
     for (const [x, z, sz] of [[26, 5, 1.2], [33.5, 6, 0.9], [35.8, -0.5, 0.7], [19, 1, 1]]) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = x; m.position.set(x, UP + 0.012, z); b.group.add(m);
     }
@@ -480,17 +480,17 @@ export class HospitalLevel {
     b.wallX(0, 16, 26, LO, CEIL_LO, [21.5], 'morgueWall');    // parede das gavetas (painel secreto x=21.5)
     b.wallZ(26, 0, 2, LO, CEIL_LO, [], 'morgueWall');
     // revestimento de azulejo nas paredes já existentes (lado de dentro)
-    b.box(16.1, LO, 0.1, 16.14, CEIL_LO, 9.9, 'morgueWall', { collide: false });
-    b.box(25.86, LO, 0.1, 25.9, CEIL_LO, 9.9, 'morgueWall', { collide: false });
-    b.box(16.1, LO + 2.3, 9.86, 25.9, CEIL_LO, 9.9, 'morgueWall', { collide: false });
-    for (const [x0, x1] of [[16.1, 19.3], [20.7, 25.9]]) b.box(x0, LO, 9.86, x1, LO + 2.3, 9.9, 'morgueWall', { collide: false });
+    b.sbox(16.1, LO, 0.1, 16.14, CEIL_LO, 9.9, 'morgueWall', { collide: false });
+    b.sbox(25.86, LO, 0.1, 25.9, CEIL_LO, 9.9, 'morgueWall', { collide: false });
+    b.sbox(16.1, LO + 2.3, 9.86, 25.9, CEIL_LO, 9.9, 'morgueWall', { collide: false });
+    for (const [x0, x1] of [[16.1, 19.3], [20.7, 25.9]]) b.sbox(x0, LO, 9.86, x1, LO + 2.3, 9.9, 'morgueWall', { collide: false });
     this.sign('NECROTÉRIO', 20, LO + 2.62, 10.13, 0, 1.1, 0.2, { bg: '#28463a', fg: '#cfe8d8' });
     // bancos de gavetas refrigeradas (procedural: colunas × fileiras numeradas)
     const COLW = 0.7, ROWS = [LO + 0.2, LO + 0.82, LO + 1.44], DH = 0.56, FRONT = 0.66;
     const banks = [{ x0: 16.4, cols: 6, n0: 0 }, { x0: 22.4, cols: 5, n0: 6 }];
     this.drawerSlots = {};
     for (const bk of banks) {
-      b.box(bk.x0 - 0.1, LO, 0.1, bk.x0 + bk.cols * COLW + 0.1, LO + 2.1, FRONT - 0.03, 'steelDark', { tag: 'wall', cast: false });
+      b.sbox(bk.x0 - 0.1, LO, 0.1, bk.x0 + bk.cols * COLW + 0.1, LO + 2.1, FRONT - 0.03, 'steelDark', { tag: 'wall', cast: false });
       for (let c = 0; c < bk.cols; c++) for (let r = 0; r < 3; r++) {
         const n = (bk.n0 + c) * 3 + r + 1;
         const cx = bk.x0 + c * COLW + COLW / 2, cy = ROWS[2 - r] + DH / 2;
@@ -514,26 +514,26 @@ export class HospitalLevel {
     }
     // mesas de autópsia (pedestal + tampo de aço com borda e ralo)
     const table = (cx, cz, body) => {
-      b.box(cx - 0.15, LO, cz - 0.15, cx + 0.15, LO + 0.76, cz + 0.15, 'steelDark', { collide: false });
-      b.box(cx - 0.45, LO + 0.76, cz - 1.05, cx + 0.45, LO + 0.86, cz + 1.05, 'steel', { collide: false, cast: true });
-      for (const sx of [-1, 1]) b.box(cx + sx * 0.45 - 0.03, LO + 0.86, cz - 1.05, cx + sx * 0.45 + 0.03, LO + 0.93, cz + 1.05, 'steel', { collide: false });
-      b.box(cx - 0.06, LO + 0.861, cz + 0.85, cx + 0.06, LO + 0.865, cz + 0.97, 'mask', { collide: false });
+      b.sbox(cx - 0.15, LO, cz - 0.15, cx + 0.15, LO + 0.76, cz + 0.15, 'steelDark', { collide: false });
+      b.sbox(cx - 0.45, LO + 0.76, cz - 1.05, cx + 0.45, LO + 0.86, cz + 1.05, 'steel', { collide: false, cast: true });
+      for (const sx of [-1, 1]) b.sbox(cx + sx * 0.45 - 0.03, LO + 0.86, cz - 1.05, cx + sx * 0.45 + 0.03, LO + 0.93, cz + 1.05, 'steel', { collide: false });
+      b.sbox(cx - 0.06, LO + 0.861, cz + 0.85, cx + 0.06, LO + 0.865, cz + 0.97, 'mask', { collide: false });
       if (body) {
-        b.box(cx - 0.25, LO + 0.86, cz - 0.85, cx + 0.25, LO + 1.06, cz + 0.8, 'sheet', { collide: false, cast: true, tile: 1 });
-        b.box(cx - 0.12, LO + 0.86, cz - 0.98, cx + 0.12, LO + 1.1, cz - 0.78, 'sheet', { collide: false, tile: 1 });
+        b.sbox(cx - 0.25, LO + 0.86, cz - 0.85, cx + 0.25, LO + 1.06, cz + 0.8, 'sheet', { collide: false, cast: true, tile: 1 });
+        b.sbox(cx - 0.12, LO + 0.86, cz - 0.98, cx + 0.12, LO + 1.1, cz - 0.78, 'sheet', { collide: false, tile: 1 });
       }
       this.game.col.addBox(cx - 0.47, LO, cz - 1.07, cx + 0.47, LO + 0.93, cz + 1.07, { tag: 'prop', blocksSight: false });
     };
     table(18.9, 4.4, true); table(23.1, 4.4, false); table(23.4, 7.9, true);
     // carrinho de instrumentos, pia, balança e ralos
-    b.box(19.7, LO, 6.4, 20.4, LO + 0.85, 6.9, 'steel', P);
-    for (const [x, z] of [[19.8, 6.5], [20.0, 6.7], [20.25, 6.55]]) b.box(x, LO + 0.85, z, x + 0.12, LO + 0.87, z + 0.03, 'axeEdge', { collide: false });
-    b.box(25.3, LO, 4.9, 25.85, LO + 0.9, 6.6, 'steel', { tag: 'prop', cast: true });
-    b.box(25.35, LO + 0.9, 5.0, 25.8, LO + 0.95, 6.5, 'steelDark', { collide: false });
-    b.box(17, LO + 1.2, 9.4, 17.6, LO + 1.25, 9.85, 'steel', { collide: false });
-    for (const [x, z] of [[21, 4.4], [21, 8]]) b.box(x - 0.2, LO + 0.005, z - 0.2, x + 0.2, LO + 0.012, z + 0.2, 'mask', { collide: false });
+    b.sbox(19.7, LO, 6.4, 20.4, LO + 0.85, 6.9, 'steel', P);
+    for (const [x, z] of [[19.8, 6.5], [20.0, 6.7], [20.25, 6.55]]) b.sbox(x, LO + 0.85, z, x + 0.12, LO + 0.87, z + 0.03, 'axeEdge', { collide: false });
+    b.sbox(25.3, LO, 4.9, 25.85, LO + 0.9, 6.6, 'steel', { tag: 'prop', cast: true });
+    b.sbox(25.35, LO + 0.9, 5.0, 25.8, LO + 0.95, 6.5, 'steelDark', { collide: false });
+    b.sbox(17, LO + 1.2, 9.4, 17.6, LO + 1.25, 9.85, 'steel', { collide: false });
+    for (const [x, z] of [[21, 4.4], [21, 8]]) b.sbox(x - 0.2, LO + 0.005, z - 0.2, x + 0.2, LO + 0.012, z + 0.2, 'mask', { collide: false });
     // mesa do livro de entradas
-    b.box(16.4, LO, 1.4, 17.2, LO + 0.85, 3.0, 'woodDark', { tag: 'prop-low', sight: false, cast: true });
+    b.sbox(16.4, LO, 1.4, 17.2, LO + 0.85, 3.0, 'woodDark', { tag: 'prop-low', sight: false, cast: true });
     for (const [x, z, sz] of [[19.6, 2.6, 1.2], [22.6, 6.4, 0.9], [21.4, 0.9, 0.8], [17.7, 8.2, 0.7]]) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = x; m.position.set(x, LO + 0.013, z); b.group.add(m);
     }
@@ -542,10 +542,10 @@ export class HospitalLevel {
     b.ceiling(19, -3, 24, 0, CEIL_LO, 'morgueWall');
     b.wallZ(19, -3, 0, LO, CEIL_LO, [], 'morgueWall'); b.wallZ(24, -3, 0, LO, CEIL_LO, [], 'morgueWall'); b.wallX(-3, 19, 24, LO, CEIL_LO, [], 'morgueWall');
     for (const [x, z] of [[19.8, -2.2], [20.6, -1.0], [23.3, -1.4]]) { // corpos pendurados em ganchos
-      b.box(x - 0.02, LO + 2.2, z - 0.02, x + 0.02, CEIL_LO, z + 0.02, 'metal', { collide: false });
-      b.box(x - 0.2, LO + 0.6, z - 0.15, x + 0.2, LO + 2.2, z + 0.15, 'sheet', { collide: false, cast: true, tile: 1 });
+      b.sbox(x - 0.02, LO + 2.2, z - 0.02, x + 0.02, CEIL_LO, z + 0.02, 'metal', { collide: false });
+      b.sbox(x - 0.2, LO + 0.6, z - 0.15, x + 0.2, LO + 2.2, z + 0.15, 'sheet', { collide: false, cast: true, tile: 1 });
     }
-    b.box(22.2, LO, -2.9, 23.8, LO + 0.8, -2.2, 'wood', { tag: 'prop-low', sight: false, cast: true }); // caixote do Morais
-    b.box(19.1, LO + 1.2, -2.9, 19.5, LO + 1.24, -0.4, 'woodDark', { collide: false });                // prateleira
+    b.sbox(22.2, LO, -2.9, 23.8, LO + 0.8, -2.2, 'wood', { tag: 'prop-low', sight: false, cast: true }); // caixote do Morais
+    b.sbox(19.1, LO + 1.2, -2.9, 19.5, LO + 1.24, -0.4, 'woodDark', { collide: false });                // prateleira
   }
 }

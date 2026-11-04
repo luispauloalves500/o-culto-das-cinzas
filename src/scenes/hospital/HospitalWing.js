@@ -54,7 +54,7 @@ function mainStair(L) {
   b.wallX(14, 38, 41, H_UP, TOP2, [], 'wallLower');
   b.wallZ(38, 22, 24, H_UP, UP2, [], 'wallLower');
   b.wallX(22.4, 38.1, 40.9, UP, UP2 - 0.3, [], 'wallLower');
-  b.box(40.8, 0.9, 15.0, 40.86, 0.96, 22.4, 'rust', NC);     // corrimão
+  b.sbox(40.8, 0.9, 15.0, 40.86, 0.96, 22.4, 'rust', NC);     // corrimão
   L.sign('ESCADA PRINCIPAL', 39.2, 2.62, 13.87, Math.PI, 1.2, 0.2, { bg: '#c9c2a4', fg: '#1c1a14' });
   L.sign('CENTRO CIRÚRGICO ↑', 39.5, UP2 + 2.5, 23.78, Math.PI, 1.2, 0.2, { bg: '#c9c2a4' });
 }
@@ -77,17 +77,17 @@ function wing(L) {
   b.wallX(36, 24, 31, UP2, TOP2, [CRACKED_WALL.x], 'wall', CRACKED_WALL.w, CRACKED_WALL.h); // sala 2 / expurgo
   // janelas com luar
   for (const z of [27.5, 33.2, 36.8]) {
-    b.box(35.86, UP2 + 1.0, z - 0.7, 35.9, UP2 + 2.3, z + 0.7, 'moonGlass', NC);
-    b.box(35.84, UP2 + 1.0, z - 0.02, 35.86, UP2 + 2.3, z + 0.02, 'woodDark', NC);
+    b.sbox(35.86, UP2 + 1.0, z - 0.7, 35.9, UP2 + 2.3, z + 0.7, 'moonGlass', NC);
+    b.sbox(35.84, UP2 + 1.0, z - 0.02, 35.86, UP2 + 2.3, z + 0.02, 'woodDark', NC);
   }
   for (const x of [18.5, 21.8, 33.5]) {
-    b.box(x - 0.7, UP2 + 1.0, 38.26, x + 0.7, UP2 + 2.3, 38.3, 'moonGlass', NC);
-    b.box(x - 0.02, UP2 + 1.0, 38.24, x + 0.02, UP2 + 2.3, 38.26, 'woodDark', NC);
+    b.sbox(x - 0.7, UP2 + 1.0, 38.26, x + 0.7, UP2 + 2.3, 38.3, 'moonGlass', NC);
+    b.sbox(x - 0.02, UP2 + 1.0, 38.24, x + 0.02, UP2 + 2.3, 38.26, 'woodDark', NC);
   }
   // corredor: macas, placas
-  b.box(29.4, UP2, 28.2, 31.4, UP2 + 0.8, 28.85, 'metal', PL);
-  b.box(29.5, UP2 + 0.8, 28.25, 31.3, UP2 + 0.9, 28.8, 'sheet', NC);
-  b.box(18.0, UP2, 26.15, 19.6, UP2 + 0.45, 26.7, 'woodDark', PL);
+  b.sbox(29.4, UP2, 28.2, 31.4, UP2 + 0.8, 28.85, 'metal', PL);
+  b.sbox(29.5, UP2 + 0.8, 28.25, 31.3, UP2 + 0.9, 28.8, 'sheet', NC);
+  b.sbox(18.0, UP2, 26.15, 19.6, UP2 + 0.45, 26.7, 'woodDark', PL);
   L.sign('CENTRO CIRÚRGICO — ALA SUPERIOR', 26, UP2 + 2.62, 26.13, 0, 1.8, 0.2, { bg: '#c9c2a4' });
   L.sign('ESTERILIZAÇÃO', 20, UP2 + 2.45, 28.87, Math.PI, 0.9, 0.14, { bg: '#c9c2a4' });
   L.sign('SALA 2', 27.5, UP2 + 2.45, 28.87, Math.PI, 0.6, 0.14, { bg: '#c9c2a4' });
@@ -95,32 +95,32 @@ function wing(L) {
   L.sign('TELHADO ↑', 16.55, UP2 + 2.45, 27.5, Math.PI / 2, 0.7, 0.14, { bg: '#7a2018', fg: '#f0e0d0' });
   // ESTERILIZAÇÃO x16.4..24 z29..38.4: autoclaves, prateleiras de bandejas
   for (const z of [30.2, 32.4]) {
-    b.box(16.5, UP2, z, 17.7, UP2 + 1.6, z + 1.6, 'steel', P);
-    b.box(17.68, UP2 + 0.5, z + 0.3, 17.72, UP2 + 1.3, z + 1.3, 'steelDark', NC);   // porta da autoclave
+    b.sbox(16.5, UP2, z, 17.7, UP2 + 1.6, z + 1.6, 'steel', P);
+    b.sbox(17.68, UP2 + 0.5, z + 0.3, 17.72, UP2 + 1.3, z + 1.3, 'steelDark', NC);   // porta da autoclave
   }
-  b.box(16.5, UP2, 35.2, 17.1, UP2 + 2.0, 38.2, 'metal', P);
-  for (let i = 0; i < 4; i++) b.box(16.55, UP2 + 0.4 + i * 0.45, 35.3, 17.05, UP2 + 0.44 + i * 0.45, 38.1, 'steel', NC);
-  b.box(21.2, UP2, 33.6, 23.6, UP2 + 0.85, 34.5, 'steel', PL);                      // bancada
+  b.sbox(16.5, UP2, 35.2, 17.1, UP2 + 2.0, 38.2, 'metal', P);
+  for (let i = 0; i < 4; i++) b.sbox(16.55, UP2 + 0.4 + i * 0.45, 35.3, 17.05, UP2 + 0.44 + i * 0.45, 38.1, 'steel', NC);
+  b.sbox(21.2, UP2, 33.6, 23.6, UP2 + 0.85, 34.5, 'steel', PL);                      // bancada
   // SALA 2 x24..31 z29..36: mesa cirúrgica, foco, carrinho
-  b.box(26.9, UP2, 31.6, 28.1, UP2 + 0.8, 33.8, 'steelDark', PL);
-  b.box(26.8, UP2 + 0.8, 31.5, 28.2, UP2 + 0.92, 33.9, 'sheet', NC);
-  b.box(27.0, TOP2 - 0.9, 32.2, 28.0, TOP2 - 0.75, 33.2, 'metal', NC);
-  b.box(27.46, TOP2 - 0.75, 32.66, 27.54, TOP2, 32.74, 'metal', NC);
-  b.box(29.3, UP2, 33.4, 30.2, UP2 + 0.9, 34.0, 'metal', PL);
+  b.sbox(26.9, UP2, 31.6, 28.1, UP2 + 0.8, 33.8, 'steelDark', PL);
+  b.sbox(26.8, UP2 + 0.8, 31.5, 28.2, UP2 + 0.92, 33.9, 'sheet', NC);
+  b.sbox(27.0, TOP2 - 0.9, 32.2, 28.0, TOP2 - 0.75, 33.2, 'metal', NC);
+  b.sbox(27.46, TOP2 - 0.75, 32.66, 27.54, TOP2, 32.74, 'metal', NC);
+  b.sbox(29.3, UP2, 33.4, 30.2, UP2 + 0.9, 34.0, 'metal', PL);
   for (const [x, z, r] of [[26.2, 33.8, 0.4], [28.9, 31.1, 1.7], [27.4, 34.6, 2.4]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = r; m.position.set(x, UP2 + 0.012, z); b.group.add(m);
   }
   // RECUPERAÇÃO x31..36 z29..38.4: leitos e cortinas
   for (const z of [31.2, 34.4]) {
-    b.box(34.0, UP2 + 0.32, z - 0.5, 35.9, UP2 + 0.58, z + 0.5, 'sheet', PL);
-    b.box(35.84, UP2, z - 0.5, 35.9, UP2 + 1.0, z + 0.5, 'metal', NC);
-    b.box(33.6, UP2, z + 0.75, 35.9, UP2 + 2.2, z + 0.8, 'curtain', NC);
+    b.sbox(34.0, UP2 + 0.32, z - 0.5, 35.9, UP2 + 0.58, z + 0.5, 'sheet', PL);
+    b.sbox(35.84, UP2, z - 0.5, 35.9, UP2 + 1.0, z + 0.5, 'metal', NC);
+    b.sbox(33.6, UP2, z + 0.75, 35.9, UP2 + 2.2, z + 0.8, 'curtain', NC);
   }
-  b.box(34.7, UP2, 37.3, 35.9, UP2 + 0.9, 38.2, 'woodDark', PL);                    // criado-mudo do livro
+  b.sbox(34.7, UP2, 37.3, 35.9, UP2 + 0.9, 38.2, 'woodDark', PL);                    // criado-mudo do livro
   // EXPURGO (secreto) x24..31 z36..38.4: pia, ossada do zelador, prateleira
-  b.box(24.2, UP2, 37.6, 25.6, UP2 + 0.9, 38.3, 'steel', PL);
-  b.box(26.4, UP2, 37.7, 28.6, UP2 + 0.9, 38.3, 'woodDark', PL);
-  b.box(29.4, UP2, 37.0, 30.9, UP2 + 1.8, 38.3, 'metal', P);
+  b.sbox(24.2, UP2, 37.6, 25.6, UP2 + 0.9, 38.3, 'steel', PL);
+  b.sbox(26.4, UP2, 37.7, 28.6, UP2 + 0.9, 38.3, 'woodDark', PL);
+  b.sbox(29.4, UP2, 37.0, 30.9, UP2 + 1.8, 38.3, 'metal', P);
   const skull = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, 0.22), M.sheet); skull.position.set(30.1, UP2 + 0.68, 36.7); b.group.add(skull);
   const ribs = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.2), M.bandageDirty); ribs.position.set(30.1, UP2 + 0.3, 36.75); b.group.add(ribs);
   const legs = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.1, 0.7), M.pantsGray); legs.position.set(30.1, UP2 + 0.06, 36.2); b.group.add(legs);
@@ -170,35 +170,35 @@ function roofStair(L) {
   b.wallZ(16.4, 26, 38.4, TOP2, ROOF, [], 'wallLower');
   b.wallZ(16.4, 26, 38.4, ROOF, HOUSE_TOP, [36.9], 'wallLower');
   b.wallX(35.4, 13.1, 16.3, UP2, ROOF - 0.3, [], 'wallLower');
-  b.box(13.1, UP2 + 0.9, 28.6, 13.16, UP2 + 0.96, 35.4, 'rust', NC);
+  b.sbox(13.1, UP2 + 0.9, 28.6, 13.16, UP2 + 0.96, 35.4, 'rust', NC);
   // fachada da casa de máquinas da escada, vista do telhado
-  b.box(12.9, HOUSE_TOP, 25.9, 16.5, HOUSE_TOP + 0.3, 38.5, 'concrete', NC);
+  b.sbox(12.9, HOUSE_TOP, 25.9, 16.5, HOUSE_TOP + 0.3, 38.5, 'concrete', NC);
 }
 
 // ---------- TELHADO (y 7.3) x16.4..36 z26..38.4 + barracão de manutenção ----------
 function roof(L) {
   const b = L.b, M = L.M;
   b.floor(16.4, 26, 36, 38.4, ROOF, 'concrete', 'roof');
-  b.box(16.4, TOP2 + 0.25, 26, 36, ROOF, 38.4, 'concrete', NC);
+  b.sbox(16.4, TOP2 + 0.25, 26, 36, ROOF, 38.4, 'concrete', NC);
   // platibanda (o lado norte agora é a fachada da pediatria — HospitalPeds.js)
-  b.box(35.9, ROOF, 26, 36.2, ROOF + 1.1, 38.6, 'concrete');
-  b.box(16.4, ROOF, 38.3, 36.2, ROOF + 1.1, 38.6, 'concrete');
+  b.sbox(35.9, ROOF, 26, 36.2, ROOF + 1.1, 38.6, 'concrete');
+  b.sbox(16.4, ROOF, 38.3, 36.2, ROOF + 1.1, 38.6, 'concrete');
   // caixas d'água e respiros
   for (const x of [21, 24.5]) {
     const t = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 1.8, 12), M.rust); t.position.set(x, ROOF + 1.6, 31.5); t.castShadow = true; b.group.add(t);
-    for (const [dx, dz] of [[-0.7, -0.7], [0.7, -0.7], [-0.7, 0.7], [0.7, 0.7]]) b.box(x + dx - 0.05, ROOF, 31.5 + dz - 0.05, x + dx + 0.05, ROOF + 0.7, 31.5 + dz + 0.05, 'metal', NC);
+    for (const [dx, dz] of [[-0.7, -0.7], [0.7, -0.7], [-0.7, 0.7], [0.7, 0.7]]) b.sbox(x + dx - 0.05, ROOF, 31.5 + dz - 0.05, x + dx + 0.05, ROOF + 0.7, 31.5 + dz + 0.05, 'metal', NC);
     L.game.col.addBox(x - 1.05, ROOF, 30.45, x + 1.05, ROOF + 2.5, 32.55, { tag: 'prop', blocksSight: true });
   }
   for (const [x, z] of [[19.2, 36.6], [29.2, 27.4], [33.4, 30.6]]) {
-    b.box(x - 0.35, ROOF, z - 0.35, x + 0.35, ROOF + 0.9, z + 0.35, 'steelDark', P);
-    b.box(x - 0.45, ROOF + 0.9, z - 0.45, x + 0.45, ROOF + 1.0, z + 0.45, 'metal', NC);
+    b.sbox(x - 0.35, ROOF, z - 0.35, x + 0.35, ROOF + 0.9, z + 0.35, 'steelDark', P);
+    b.sbox(x - 0.45, ROOF + 0.9, z - 0.45, x + 0.45, ROOF + 1.0, z + 0.45, 'metal', NC);
   }
   // barracão x31..35.8 z34..38.2 (porta no lado oeste, z 35.2)
   b.wallZ(31, 34, 38.2, ROOF, ROOF + 2.4, [35.2], 'rust', 1.2, 2.2);
   b.wallX(34, 31, 35.8, ROOF, ROOF + 2.4, [], 'rust');
-  b.box(31, ROOF + 2.4, 34, 35.85, ROOF + 2.55, 38.25, 'rust', NC);
-  b.box(33.1, ROOF, 37.5, 35.7, ROOF + 0.9, 38.15, 'woodDark', PL);               // bancada
-  b.box(35.2, ROOF, 34.2, 35.75, ROOF + 1.8, 35.6, 'metal', P);                    // armário
+  b.sbox(31, ROOF + 2.4, 34, 35.85, ROOF + 2.55, 38.25, 'rust', NC);
+  b.sbox(33.1, ROOF, 37.5, 35.7, ROOF + 0.9, 38.15, 'woodDark', PL);               // bancada
+  b.sbox(35.2, ROOF, 34.2, 35.75, ROOF + 1.8, 35.6, 'metal', P);                    // armário
   // a Torre de transmissão no horizonte (só cenário: luz vermelha piscando)
   const tower = new THREE.Group(); tower.position.set(70, ROOF - 30, 66);
   const towerMat = new THREE.MeshBasicMaterial({ color: 0x07090c, fog: false });
