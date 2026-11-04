@@ -112,6 +112,35 @@ try {
   check('Gráficos: "Ultra" liga sombras suaves em até 3 luzes, cenário projetando sombra, FXAA e escala 1,25', gfx.ultra.preset === 'ultra' && gfx.ultra.soft && gfx.ultra.shadowCasters >= 1 && gfx.ultra.shadowCasters <= 3 && gfx.ultra.worldCasters > 0 && gfx.ultra.fxaa && gfx.ultra.scale === 1.25 && gfx.ultra.pool === 360 && gfx.ultra.composerRenders > gfx.def.composerRenders, JSON.stringify(gfx.ultra));
   check('Gráficos: "Baixa" desliga sombras, pós-processamento e poeira, reduz partículas e é salva', gfx.baixa.preset === 'baixa' && !gfx.baixa.shadowMap && !gfx.baixa.composer && gfx.baixa.shadowCasters === 0 && gfx.baixa.worldCasters === 0 && gfx.baixa.dust === 0 && gfx.baixa.pool === 120 && gfx.pool === 120 && gfx.saved.shadows === 'off' && gfx.saved.renderScale === 0.5, JSON.stringify({ b: gfx.baixa, s: gfx.saved }));
   check('Gráficos: mexer num ajuste vira "Personalizada" e aplica (bloom liga o composer)', gfx.custom.preset === 'custom' && gfx.custom.d.bloom && gfx.custom.d.composer && /Baixa/.test(gfx.info), JSON.stringify(gfx.custom));
+  // pt48u: otimizações que não mexem nas texturas
+  const perf = await page.evaluate(() => {
+    const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
+    const set = (id, v) => { const e = $(id); if (e.type === 'checkbox') e.checked = v; else e.value = v; e.dispatchEvent(new Event('change')); for (let i = 0; i < 3; i++) g.step(1 / 60); g.gfx.render(g.scene, g.camera); };
+    const texSig = () => { const m = new Map(); g.scene.traverse((o) => { if (o.isMesh && o.material?.map?.image) { const t = o.material.map; m.set(t.uuid, [t.image.width, t.image.height, t.anisotropy, t.minFilter, t.magFilter].join('x')); } }); return m; };
+    const tex0 = texSig();
+    g.gfx.render(g.scene, g.camera);
+    out.p0 = g.gfx.perf.debug();
+    let src = 0, srcOn0 = 0, rend = 0; g.scene.traverse((o) => { if (o.isPointLight && !o.userData.lightProxy && o !== g.fill && !o.userData.realLight) { src++; if (o.layers.isEnabled(0)) srcOn0++; } if (o.isLight && o.visible && o.layers.isEnabled(0)) rend++; });
+    out.src = src; out.srcOn0 = srcOn0; out.rend = rend;
+    out.batchMeshes = g.scene.children.filter((o) => o.name === 'staticBatch').length;
+    out.batchTex = g.scene.children.filter((o) => o.name === 'staticBatch' && o.material.map).length;
+    set('optLights', '4'); out.p4 = g.gfx.perf.debug(); out.preset4 = $('optPreset').value;
+    set('optDraw', 'max'); out.farMax = g.camera.far;
+    set('optDraw', 'auto'); out.farAuto = g.camera.far; out.fog = g.scene.fog?.density ?? null;
+    set('optFpsCap', '30'); set('optEco', false);
+    out.saved = JSON.parse(localStorage.getItem('ocdc_settings_v1'));
+    set('optFpsCap', '0'); set('optEco', true);
+    $('optPreset').value = 'baixa'; $('optPreset').dispatchEvent(new Event('change'));
+    $('optBloom').checked = true; $('optBloom').dispatchEvent(new Event('change'));
+    const tex1 = texSig(); out.texSame = tex0.size > 0 && [...tex0].every(([k, v]) => !tex1.has(k) || tex1.get(k) === v); out.texN = tex0.size;
+    return out;
+  });
+  check('Desempenho: cenário estático fundido por material/célula (texturas preservadas) e luzes-fonte fora do renderer, só o conjunto fixo de proxies é calculado',
+    perf.p0.batches > 0 && perf.p0.batched > perf.p0.batches && perf.batchMeshes === perf.p0.batches && perf.batchTex > 0 && perf.src > perf.p0.proxies && perf.srcOn0 === 0
+    && perf.p0.lightsUsed <= perf.p0.proxies && perf.p0.proxies <= perf.p0.budget && perf.rend <= 16, JSON.stringify(perf));
+  check('Desempenho: luzes por quadro (4), distância de desenho (máx 90 m / automática pela névoa), limite de FPS e economia em menus salvos; texturas iguais em todas as trocas',
+    perf.p4.proxies === 4 && perf.p4.lightsUsed <= 4 && perf.preset4 === 'custom' && perf.farMax === 90 && perf.farAuto >= 35 && perf.farAuto <= 90 && (perf.fog == null || perf.farAuto <= 90)
+    && perf.saved.lightBudget === 4 && perf.saved.drawDist === 'auto' && perf.saved.fpsCap === 30 && perf.saved.ecoMenus === false && perf.texSame && perf.texN > 0, JSON.stringify({ p4: perf.p4, farMax: perf.farMax, farAuto: perf.farAuto, saved: perf.saved, texSame: perf.texSame, texN: perf.texN }));
   const corpse = await page.evaluate(() => {
     const g = __ocdc, proto = g.enemies[0], kills = g.player.stats.kills, out = { ct: g.settings.get('corpseTime') };
     const pp = document.getElementById('optParticles'); pp.value = 'media'; pp.dispatchEvent(new Event('change')); // poças só a partir de "Média"
@@ -894,7 +923,7 @@ try {
   const glb = await page.evaluate(async () => { const r = await fetch('./models/elias_rev6.glb'); const b = await r.arrayBuffer(); return { status: r.status, size: b.byteLength, magic: new TextDecoder().decode(new Uint8Array(b, 0, 4)) }; });
   check('GLB do Elias servido pelo build (./models/elias_rev6.glb)', glb.status === 200 && glb.magic === 'glTF' && glb.size > 5e6, JSON.stringify(glb));
   // --- desempenho aproximado (render real, swiftshader)
-  const fps = await page.evaluate(() => new Promise((res) => { const g = __ocdc; let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 3000) requestAnimationFrame(f); else res({ fps: n / 3, calls: g.renderer.info.render.calls, tris: g.renderer.info.render.triangles, lights: (() => { let k = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) k++; }); return k; })(), allLights: (() => { let k = 0; g.scene.traverse((o) => { if (o.isLight) k++; }); return k; })(), meshes: (() => { let k = 0; g.scene.traverse((o) => { if (o.isMesh) k++; }); return k; })() }); }; requestAnimationFrame(f); }));
+  const fps = await page.evaluate(() => new Promise((res) => { const g = __ocdc; let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 3000) requestAnimationFrame(f); else res({ fps: n / 3, calls: g.renderer.info.render.calls, tris: g.renderer.info.render.triangles, lights: (() => { let k = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) k++; }); return k; })(), allLights: (() => { let k = 0; g.scene.traverse((o) => { if (o.isLight) k++; }); return k; })(), meshes: (() => { let k = 0; g.scene.traverse((o) => { if (o.isMesh) k++; }); return k; })() }); }; requestAnimationFrame(f); }));
   check('orçamento de luzes limita luzes ativas', fps.lights <= fps.allLights - 16, 'visíveis: ' + fps.lights + ' de ' + fps.allLights);
   check('renderização contínua', fps.fps > 2, fps.fps.toFixed(1) + ' fps (software, sem GPU) ' + JSON.stringify(fps));
   await page.screenshot({ path: SHOTS + '06-continuar.png' });
@@ -950,7 +979,7 @@ try {
     out.tabs = [...document.querySelectorAll('.map-tab')].filter((e) => !e.classList.contains('hidden')).map((e) => e.textContent);
     out.where = document.getElementById('mapWhere').textContent;
     g.closeOverlay();
-    out.lights = (() => { let k = 0, v = 0; g.scene.traverse((o) => { if (o.isLight) { k++; if (o.visible) v++; } }); return { k, v }; })();
+    out.lights = (() => { let k = 0, v = 0; g.scene.traverse((o) => { if (o.isLight) { k++; if (o.visible && o.layers.isEnabled(0)) v++; } }); return { k, v }; })();
     return out;
   });
   check('Cap. 2: botão do fim do Cap. 1 leva ao Capítulo 2', /Capítulo 2/.test(endBtn.text) && endBtn.visible, JSON.stringify(endBtn));
@@ -972,7 +1001,7 @@ try {
   const c2c = await page.evaluate(() => {
     const g = __ocdc, out = {}, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     const E = (id) => g.enemies.find((e) => e.id === id);
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     let maxL = 0; const L = () => { maxL = Math.max(maxL, lights()); };
     T.tp(43, 0, 28.6, 0); T.hold('KeyW', 1.4); out.coalZ = +g.player.pos.z.toFixed(2); T.run(0.1);
     out.inCoal = g.quest.has('c2_inCoal'); out.coalSave = S().checkpoint; out.obj = g.quest.current(); L();
@@ -1031,7 +1060,7 @@ try {
     out.active = g.script.bossActive; out.locked = g.level.doors.c2_arena.locked && !g.level.doors.c2_arena.open;
     out.name = document.getElementById('bossName')?.textContent; out.bossId = b.id; out.hpStart = b.hp;
     T.run(2.5); window.__musK = g.syncMusic()?.key;
-    let lv = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) lv++; }); out.lights = lv;
+    let lv = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) lv++; }); out.lights = lv;
     return out;
   });
   musKeys.push(await page.evaluate(() => window.__musK));
@@ -1136,7 +1165,7 @@ try {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     T.run(0.3);
     const s0 = S();
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const out = { start: { st: g.state, ch: g.chapter, sch: s0.chapter, cp: s0.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), pass: g.inventory.has('passe_bonde'),
       noKeys: !g.inventory.has('manivela_carga') && !g.inventory.has('chave_fabrica'), axe: g.inventory.weapons.includes('machado'), docs: g.inventory.documents.length,
       enemies: g.enemies.map((e) => e.type), obj: g.quest.current(), mainLocked: g.level.doors.c3_main.locked, wicketLocked: g.level.doors.c3_wicket.locked, crypt: g.level.doors.c3_crypt.locked } };
@@ -1200,7 +1229,7 @@ try {
   check('Cap. 3: discos CINZA·OLHO·VÉU abrem o portão do arquivo', c3b.d0 === 'ok' && c3b.d1 === 'ok' && c3b.d2 === 'ok' && c3b.vals.join() === '0,1,2' && c3b.lever1 === 'ok' && c3b.vault && /escada/.test(c3b.obj), JSON.stringify({ d: [c3b.d0, c3b.d1, c3b.d2], v: c3b.vals, l: c3b.lever1, o: c3b.obj }));
   const c3c = await page.evaluate(() => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const out = {};
     // desce a escada andando
     T.tp(24, 0, 30.8, 0); T.hold('KeyW', 4.5); T.run(0.2);
@@ -1248,7 +1277,7 @@ try {
   // --- Cap. 3: sinete do arquivista → sarilho → cripta → O Sacristão → altar → galeria → fim do capítulo
   const c3d = await page.evaluate(() => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const out = {};
     const a = E('aco_arq');
     out.signetVis = !!g.level.pickupMeshes.c3_signet?.visible;
@@ -1376,7 +1405,7 @@ try {
   await inject();
   const c4s = await page.evaluate(() => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     T.run(0.3); const s = S();
     return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), obj: g.quest.current(),
       ribbon: g.inventory.has('fita_ines'), sig: g.inventory.has('sinete_chama'), axe: g.inventory.weapons.includes('machado') && !!g.player.weapon,
@@ -1460,7 +1489,7 @@ try {
   // --- Cap. 4: pátio → Praça do Relógio → O Vigia (primeiro confronto) → chave → Torre
   const c4b = await page.evaluate(() => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id), B = g.boss;
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const out = {};
     T.tp(14, 0, 38.9, 0); out.back = T.interactAt('door_c4_back'); T.run(0.8);
     T.tp(14, 0, 39.0, 0); T.hold('KeyW', 0.9); out.yardZ = +g.player.pos.z.toFixed(2);
@@ -1658,7 +1687,7 @@ try {
   await inject();
   const c5s = await page.evaluate(() => {
     const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.3);
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const afo = g.enemies.filter((e) => e.type === 'afogado');
     return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), obj: g.quest.current(),
       axe: g.inventory.weapons.includes('machado') && !!g.player.weapon, ribbon: g.inventory.has('fita_ines'), keys: ['chave_relojoaria', 'chave_torre', 'roda_escape'].some((k) => g.inventory.has(k)),
@@ -1682,7 +1711,7 @@ try {
     const g = __ocdc, out = {};
     const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
     const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     T.tp(14.8, 0, 8.6, -Math.PI / 2); out.aviso = T.interactAt('doc_aviso_comporta'); T.run(0.1); out.avisoF = g.quest.has('c5_readAviso');
     // afogado do canal emerge e ataca na beira
     E('afo_margem').setDeadInstant();
@@ -1724,7 +1753,7 @@ try {
     const g = __ocdc, out = {};
     const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
     const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     g.player.hp = g.player.maxHp;
     // passarela de tábuas
     T.tp(20, 0, 11.5, 0); T.hold('KeyW', 3.2); out.bridge = P(); out.crossed = g.quest.has('c5_crossed');
@@ -1773,7 +1802,7 @@ try {
     const g = __ocdc, out = {};
     const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
     const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     // escada retrátil → mezanino
     T.tp(44.5, 0, 32.4, 0); T.hold('KeyW', 4.5); out.stairTop = P(); out.upper = g.quest.has('c5_upper');
     T.tp(29.3, 4.5, 44.8, 0); out.cw = T.interactAt('door_c5_catwalk'); T.run(0.9); out.cwOpen = g.level.doors.c5_catwalk.open;
@@ -1837,7 +1866,7 @@ try {
     out.dead = b.state === 'dead' && !b.alive; out.flag = g.quest.has('c5_afogadaDead'); out.cp = S().checkpoint; out.saveDead = !!S().flags.c5_afogadaDead;
     out.exit = g.level.doors.c5_exit.open && !g.level.doors.c5_exit.locked; out.gate = g.level.doors.c5_turbine.open && !g.level.doors.c5_turbine.locked;
     out.obj = g.quest.current(); out.music = g.audio?.intensity ?? null;
-    let l = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) l++; }); out.lights = l;
+    let l = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) l++; }); out.lights = l;
     T.key('KeyM'); out.map = g.menus.lastMap; g.closeOverlay();
     return out;
   });

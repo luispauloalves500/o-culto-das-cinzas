@@ -9,7 +9,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   await hook();
   const c6s = await page.evaluate(() => {
     const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.3);
-    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const esp = g.enemies.filter((e) => e.type === 'especime');
     return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), obj: g.quest.current(),
       axe: g.inventory.weapons.includes('machado') && !!g.player.weapon, fuse: g.inventory.has('fusivel_ceramico'), docs: g.inventory.documents.length,
@@ -68,7 +68,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
     // tabuleiro: gaveta de fundo falso (objetivo lateral)
     const B = g.script.vit.v_tabuleiro; T.tp(24, 0, 26.15, 0); let sw2 = 0; for (; sw2 < 8 && B.alive; sw2++) { g.player.yaw = 0; T.press('Mouse0'); T.run(0.9); }
     const a0 = T.ammo(); T.tp(24, 0, 25.6, 0); out.cache = T.interact('pick_c6_loot_v_tabuleiro'); out.ammoGain = T.ammo() - a0; out.gotCache = g.quest.has('c6_gotCache');
-    let l = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) l++; }); out.lights = l;
+    let l = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) l++; }); out.lights = l;
     out.obj = g.quest.current();
     return out;
   });
@@ -96,7 +96,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
     out.inStorage = g.quest.has('c6_inStorage');
     E('c6_aco2').setDeadInstant();
     T.tp(33.0, 0, 49.7, -Math.PI / 2); out.cartao = T.interact('doc_cartao_inventario_31'); if (g.state === 'reading') g.closeOverlay(); T.run(0.1); out.readC = g.quest.has('c6_readCartao');
-    let l = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) l++; }); out.lights = l;
+    let l = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) l++; }); out.lights = l;
     out.objBefore = g.quest.current();
     T.tp(38.6, 0, 52.4, 0); out.plaque = T.interact('c6_collectorPlaque'); T.run(0.3);
     const s = S(); out.end = { cp: s.checkpoint, ch: s.chapter, done: !!s.flags.c6_sliceDone, st: g.state, locked: D.c6_collector.locked && !D.c6_collector.open };

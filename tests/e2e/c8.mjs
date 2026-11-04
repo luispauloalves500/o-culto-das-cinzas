@@ -9,7 +9,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   const ext = () => page.evaluate(() => {
     const g = __ocdc; window.__toasts = window.__toasts || [];
     if (!g.hud.__wrapped) { const t = g.hud.toast.bind(g.hud); g.hud.toast = (m, d) => { window.__toasts.push(String(m)); return t(m, d); }; g.hud.__wrapped = true; }
-    window.T.lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible) v++; }); return v; };
+    window.T.lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     window.T.E = (id) => g.enemies.find((e) => e.id === id);
     window.T.S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     window.T.P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
