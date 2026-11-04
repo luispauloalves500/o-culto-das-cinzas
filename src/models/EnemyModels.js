@@ -1,5 +1,6 @@
 // pt50u: modelos GLB dos inimigos por cima do rig procedural (mesmo padrão do Elias).
-//  - enfermeiro → public/models/hornbeard.glb (Draco + WebP, malha estática sem ossos)
+//  - enfermeiro → public/models/enfermeiro.glb (pt52u: Mixamo com pele/34 ossos e clipes Walking/Running)
+//    (o Hornbeard estático em hornbeard.glb fica só como recurso legado, sem uso nos inimigos)
 //  - interno    → public/models/infectado.glb (Mixamo com pele/ossos e clipes Walking/Running)
 // O rig procedural continua existindo (hitboxes, mão, IA e pose de morte não mudam); só as malhas dele são
 // escondidas quando o GLB carrega. O GLB fica preso em rig.body, então queda/inclinação do corpo valem para ele.
@@ -10,7 +11,8 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 
 export const ENEMY_MODELS = {
-  enfermeiro: { url: './models/hornbeard.glb', draco: true },
+  enfermeiro: { url: './models/enfermeiro.glb' },
+  hornbeard: { url: './models/hornbeard.glb', draco: true, legacy: true },
   interno: { url: './models/infectado.glb' },
 };
 /** escolhe o clipe pela velocidade (m/s) e estado; null = sem clipe (pose estática) */
@@ -51,7 +53,7 @@ export function loadEnemyModel(kind) {
   shared[kind].catch(() => {});
   return shared[kind];
 }
-export function preloadEnemyModels() { if (enemyModelsEnabled()) for (const k in ENEMY_MODELS) loadEnemyModel(k).catch(() => {}); }
+export function preloadEnemyModels() { if (enemyModelsEnabled()) for (const k in ENEMY_MODELS) if (!ENEMY_MODELS[k].legacy) loadEnemyModel(k).catch(() => {}); }
 
 /** prende o GLB no inimigo assim que carregar; devolve a promessa (resolve true se aplicou) */
 export function attachEnemyModel(enemy) {
