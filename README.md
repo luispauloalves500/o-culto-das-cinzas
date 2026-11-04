@@ -307,6 +307,13 @@ Primeira fatia da lista FALTA: a trilha antiga (um pulso de serra) deu lugar a u
 - `src/models/EnemyModels.js` carrega cada modelo uma vez (cache) e clona por inimigo (SkeletonUtils para os que têm pele). O GLB fica preso ao corpo do rig procedural, que continua invisível e cuida da IA, das hitboxes e da queda na morte. Ataque, agarrão e atordoamento inclinam o corpo do modelo. Se o arquivo falhar (ou com `?enemyglb=0`), o inimigo volta ao visual procedural. O Rastejador segue procedural.
 - Os binários ficam em `assets-src/*.b64.part*` e são remontados por `scripts/assets.mjs` antes do build.
 
+
+### Poses e animações dos inimigos GLB (pt54u)
+Os GLBs Mixamo só trazem `Walking`/`Running`; `src/models/MixamoPoses.js` sintetiza no carregamento três clipes no próprio esqueleto
+(`Pose_idle` com respiração, `Pose_sit` sentado no chão com joelhos dobrados, `Pose_lie` deitado de costas), descritos por direções
+dos ossos no espaço do personagem a partir de um quadro "em pé" do Walking. Parado → idle (fim da pose T); dormente → sentado ou
+deitado (`pose: 'sit'|'lie'` no spawn ou alternado pelo id); ao acordar faz crossfade de 1 s para andar/correr; morto → cai na pose deitada.
+
 ### Desempenho sem piorar texturas (pt48u/pt49u)
 
 Todos os truques ficam em `src/render/Perf.js`. **Nenhum mexe em textura**: os mapas, a resolução, a filtragem e o anisotrópico continuam os mesmos, e o smoke confere isso em todas as trocas de opção.

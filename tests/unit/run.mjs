@@ -18,6 +18,7 @@ import { attackClipTime, ATTACK_CLIPS, ACTION_CLIPS, CONFIG_MACHADO, CLIP } from
 import { readFileSync } from 'node:fs';
 import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
 import { prepareClips, makeIdleClips } from '../../src/gameplay/EliasModel.js';
+import { restPoseFor, POSE_DEFS } from '../../src/models/MixamoPoses.js';
 import { ENEMY_MODELS, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
 
 let ok = 0, fail = 0;
@@ -1615,11 +1616,20 @@ test('Modelos de inimigo: clipe pela velocidade, escala pela altura e fallback p
   assert.equal(pickClip(n, 3, 'chase').name, 'Running');
   assert.equal(pickClip(n, 0.9, 'patrol').name, 'Walking');
   assert.ok(pickClip(n, 0, 'idle').scale < 0.3);
-  assert.equal(pickClip(n, 2, 'dead'), null); assert.equal(pickClip([], 2, 'chase'), null);
+  assert.equal(pickClip([...n, 'Pose_lie'], 2, 'dead').name, 'Pose_lie'); assert.equal(pickClip([], 2, 'chase'), null);
   const f = fitScale(new THREE.Box3(new THREE.Vector3(-1, -0.95, -0.2), new THREE.Vector3(1, 0.95, 0.2)), ENEMIES.enfermeiro.height);
   assert.ok(Math.abs(f.s * 1.9 - 1.95) < 1e-6 && Math.abs(f.y - 0.95 * f.s) < 1e-6);
   assert.equal(enemyModelsEnabled(), false);
   assert.equal(await attachEnemyModel({ def: ENEMIES.interno }), false);
+});
+test('Poses Mixamo (pt54u): dormente sentado/deitado, idle parado, morto deitado e acordar anda', () => {
+  const n = ['Walking', 'Running', 'Pose_idle', 'Pose_sit', 'Pose_lie'];
+  assert.equal(pickClip(n, 0, 'dormant', 'sit').name, 'Pose_sit'); assert.equal(pickClip(n, 0, 'dormant', 'lie').name, 'Pose_lie');
+  assert.equal(pickClip(n, 0, 'idle').name, 'Pose_idle'); assert.equal(pickClip(n, 0, 'dead').name, 'Pose_lie'); assert.equal(pickClip(n, 1, 'chase').name, 'Walking');
+  assert.equal(restPoseFor({ dormant: false }), null); assert.equal(restPoseFor({ dormant: true, pose: 'lie' }), 'lie');
+  const ps = new Set(['a', 'b', 'c', 'int_s2', 'int_parto', 'x1', 'x2'].map((id) => restPoseFor({ id, dormant: true })));
+  assert.ok(ps.has('sit') && ps.has('lie'), 'ids alternam sentado/deitado');
+  assert.deepEqual(Object.keys(POSE_DEFS).sort(), ['idle', 'lie', 'sit']);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

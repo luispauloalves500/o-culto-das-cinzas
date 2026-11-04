@@ -125,6 +125,16 @@ try {
       if (e.glb.mixer) o.mixer++;
       o.height = Math.max(o.height, +e.glb.height.toFixed(2));
     }
+    // pt54u: dormente sentado/deitado no esqueleto do GLB (sem pose T), parado = idle, acordar → Walking
+    { const d = g.enemies.find((e) => e.glb?.mixer && e.dormant && !e.def.crawler);
+      if (d) { const hips = d.glb.model.getObjectByProperty('isBone', true), wp = (o) => { o.updateWorldMatrix(true, false); return o.getWorldPosition(new o.position.constructor()).y; };
+        const st0 = d.state, rp = d.restPose; out.dormants = g.enemies.filter((e) => e.glb?.mixer && e.dormant).map((e) => e.restPose);
+        d._frozen && (d._frozen = false); for (let i = 0; i < 5; i++) d._animate(1 / 30, 0);
+        out.restClip = d.glb.cur?.getClip().name; out.rest = rp; const pRest = hips.position.clone();
+        d.dormant = false; d.state = 'idle'; for (let i = 0; i < 20; i++) d._animate(1 / 30, 0); out.idleClip = d.glb.cur?.getClip().name;
+        d.state = 'chase'; for (let i = 0; i < 45; i++) d._animate(1 / 30, 1.0); out.wakeClip = d.glb.cur?.getClip().name;
+        out.hipsUp = +(hips.position.distanceTo(pRest) / hips.position.length()).toFixed(2);
+        d.dormant = true; d.state = st0; d.speed = 0; for (let i = 0; i < 5; i++) d._animate(1 / 30, 0); } }
     const inf = g.enemies.find((e) => e.glb?.mixer && e.alive);
     if (inf) { inf.speed = 1; const bone = inf.glb.model.getObjectByProperty('isBone', true); const q0 = bone.quaternion.clone(); for (let i = 0; i < 20; i++) inf._animate(1 / 30, 1.0); out.clip = inf.glb.cur?.getClip().name; out.boneMoved = bone.quaternion.angleTo(q0) > 1e-3; }
     out.vol = g.enemies.filter((e) => e.glb).every((e) => Array.isArray(e.hurtVolumes() ?? []));
@@ -134,6 +144,8 @@ try {
     eglb.kinds?.interno?.n > 0 && eglb.kinds.interno.glb === eglb.kinds.interno.n && eglb.kinds.interno.hiddenOk === eglb.kinds.interno.n && eglb.kinds.interno.mixer === eglb.kinds.interno.n && eglb.clip === 'Walking' && eglb.boneMoved && eglb.vol, JSON.stringify(eglb));
   check('Inimigos GLB: enfermeiro com o modelo Mixamo (pele + Walking/Running), preso ao corpo do rig e na altura do arquétipo',
     eglb.kinds?.enfermeiro?.n > 0 && eglb.kinds.enfermeiro.glb === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.inBody === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.mixer === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.hiddenOk === eglb.kinds.enfermeiro.n && Math.abs(eglb.kinds.enfermeiro.height - 1.95) < 0.15, JSON.stringify(eglb));
+  check('Inimigos GLB (pt54u): dormente sentado/deitado com pose no esqueleto, parado em idle (sem pose T) e acordar → Walking levantando o quadril',
+    /^Pose_(sit|lie)$/.test(eglb.restClip || '') && eglb.restClip === 'Pose_' + eglb.rest && eglb.idleClip === 'Pose_idle' && eglb.wakeClip === 'Walking' && eglb.hipsUp > 0.3 && eglb.dormants?.includes('sit') && eglb.dormants?.includes('lie'), JSON.stringify({ r: eglb.restClip, i: eglb.idleClip, w: eglb.wakeClip, up: eglb.hipsUp, d: eglb.dormants }));
   // pt48u: otimizações que não mexem nas texturas
   const perf = await page.evaluate(() => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
