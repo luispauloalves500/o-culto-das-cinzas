@@ -11,6 +11,23 @@
         "elias_rev6.glb.b64.part03",
         "elias_rev6.glb.b64.part04"
       ]
+    },
+    {
+      "out": "public/models/hornbeard.glb",
+      "size": 1367604,
+      "sha256": "df3fce46739e61b1d3f2783b7300b4d140c51e182feca9bc13e2e6e1428d23d7",
+      "parts": [
+        "hornbeard.glb.b64.part01"
+      ]
+    },
+    {
+      "out": "public/models/infectado.glb",
+      "size": 2147140,
+      "sha256": "aeda25f845648515d4c774d84c7a9028adda337d8b088d862bdec9632a3ac263",
+      "parts": [
+        "infectado.glb.b64.part01",
+        "infectado.glb.b64.part02"
+      ]
     }
   ]
 }
