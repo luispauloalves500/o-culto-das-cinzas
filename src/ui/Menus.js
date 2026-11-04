@@ -49,12 +49,14 @@ export class Menus {
     }
     // gráficos: predefinição preenche os ajustes; mexer num ajuste vira "Personalizada"; tudo salvo e aplicado na hora
     const preset = $('optPreset'), shadows = $('optShadows'), parts = $('optParticles'), bloom = $('optBloom'), post = $('optPostfx'), aa = $('optAA'), corpse = $('optCorpse');
+    const lights = $('optLights'), draw = $('optDraw'), cap = $('optFpsCap'), eco = $('optEco');
     const syncGfx = () => {
       scale.value = String(s.get('renderScale')); shadows.value = s.get('shadows'); parts.value = s.get('particles');
       bloom.checked = !!s.get('bloom'); post.checked = !!s.get('postfx'); aa.checked = !!s.get('antialias'); corpse.value = String(s.get('corpseTime'));
+      lights.value = String(s.get('lightBudget')); draw.value = s.get('drawDist'); cap.value = String(s.get('fpsCap') || 0); eco.checked = s.get('ecoMenus') !== false;
       preset.value = detectPreset(s.data);
       const d = g.gfx?.debug?.();
-      if (d) $('optGfxInfo').textContent = `${GFX_LABELS[d.preset]} · ${d.size[0]}×${d.size[1]} · sombras de ${d.shadowCasters} luz(es) · ${d.composer ? 'pós-processamento ligado' : 'renderização direta'}`;
+      if (d) $('optGfxInfo').textContent = `${GFX_LABELS[d.preset]} · ${d.size[0]}×${d.size[1]} · sombras de ${d.shadowCasters} luz(es) · ${d.composer ? 'pós-processamento ligado' : 'renderização direta'} · ${d.lightBudget} luzes/quadro · desenho até ${Math.round(d.perf.far)} m`;
     };
     const applyGfx = (o) => { s.setMany(o); g.applyGraphics(); syncGfx(); };
     preset.onchange = () => { if (GFX_PRESETS[preset.value]) applyGfx({ ...GFX_PRESETS[preset.value] }); };
@@ -65,6 +67,10 @@ export class Menus {
     post.onchange = () => applyGfx({ postfx: post.checked });
     aa.onchange = () => applyGfx({ antialias: aa.checked });
     corpse.onchange = () => { s.set('corpseTime', +corpse.value); syncGfx(); };
+    lights.onchange = () => applyGfx({ lightBudget: +lights.value });
+    draw.onchange = () => applyGfx({ drawDist: draw.value });
+    cap.onchange = () => { s.set('fpsCap', +cap.value); syncGfx(); };
+    eco.onchange = () => { s.set('ecoMenus', eco.checked); syncGfx(); };
     this.syncGfx = syncGfx; syncGfx();
     fov.oninput = () => { s.set('fov', +fov.value); $('optFovV').textContent = fov.value; g.camera.fov = +fov.value; g.camera.updateProjectionMatrix(); };
     shake.onchange = () => s.set('shake', shake.checked);

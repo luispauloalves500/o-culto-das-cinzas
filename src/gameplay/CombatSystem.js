@@ -76,6 +76,7 @@ export class CombatSystem {
     this.points = new THREE.Points(geo, new THREE.PointsMaterial({ size: map ? 0.1 : 0.07, map, alphaTest: map ? 0.05 : 0, vertexColors: true, transparent: true, depthWrite: false }));
     this.points.frustumCulled = false; this.points.name = 'combatParticles';
     this.game.scene.add(this.points);
+    this._live = false; this.points.visible = false;
     this.parts = Array.from({ length: this.maxP }, () => ({ life: 0, vx: 0, vy: 0, vz: 0 }));
     this.pi = 0; this._acc = 0;
     for (let i = 0; i < this.maxP; i++) this.pPos[i * 3 + 1] = -999;
@@ -94,7 +95,10 @@ export class CombatSystem {
   /** poça de sangue sob um corpo: disco escuro que cresce e some junto com o corpo (despawn) */
   bloodPool(pos) {
     if (!this.pools || !this.game.scene) return null;
-    const m = new THREE.Mesh(new THREE.CircleGeometry(0.6, 20), new THREE.MeshStandardMaterial({ color: 0x2a0303, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.82, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    // geometria do disco compartilhada por todas as poças (pt48u: 1 buffer na GPU em vez de 1 por corpo);
+    // o material continua próprio de cada poça porque cada uma esmaece no seu tempo
+    if (!CombatSystem._poolGeo) { CombatSystem._poolGeo = new THREE.CircleGeometry(0.6, 20); CombatSystem._poolGeo.userData.shared = true; }
+    const m = new THREE.Mesh(CombatSystem._poolGeo, new THREE.MeshStandardMaterial({ color: 0x2a0303, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.82, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
     m.rotation.x = -Math.PI / 2; m.position.set(pos.x + (Math.random() - 0.5) * 0.3, pos.y + 0.015, pos.z + (Math.random() - 0.5) * 0.3);
     m.userData = { t: 0, r: 0.8 + Math.random() * 0.5, castOrig: false }; m.scale.setScalar(0.25); m.name = 'bloodPool';
     this.game.scene.add(m);
@@ -156,6 +160,7 @@ export class CombatSystem {
       p.life = 0.5 + Math.random() * 0.5;
       this.pi = (this.pi + 1) % this.maxP;
     }
+    if (n > 0) { this._colDirty = true; this._live = true; this.points.visible = true; }
   }
   blood(pos, n = 14) { this.emit(pos, n, 0x6a0804, 3.2); }
   sparks(pos, n = 12) { this.emit(pos, n, 0xffc060, 5); }
@@ -185,16 +190,20 @@ export class CombatSystem {
   update(dt) {
     for (let i = 0; i < this._dbgPool.length; i++) this._dbgPool[i].visible = i < this._dbgUsed && this.debug ? this._dbgPool[i].visible : false;
     this._dbgUsed = 0;
+    // pt48u: sem faísca/sangue no ar → nada a simular nem a reenviar para a GPU (e o Points nem é desenhado)
+    if (!this._live) return;
+    let alive = 0;
     for (let i = 0; i < this.maxP; i++) {
       const p = this.parts[i];
       if (p.life <= 0) continue;
-      p.life -= dt;
+      p.life -= dt; if (p.life > 0) alive++;
       const k = i * 3;
       p.vy -= 9.8 * dt;
       this.pPos[k] += p.vx * dt; this.pPos[k + 1] += p.vy * dt; this.pPos[k + 2] += p.vz * dt;
       if (p.life <= 0) this.pPos[k + 1] = -999;
     }
     this.points.geometry.attributes.position.needsUpdate = true;
-    this.points.geometry.attributes.color.needsUpdate = true;
+    if (this._colDirty) { this.points.geometry.attributes.color.needsUpdate = true; this._colDirty = false; }
+    if (!alive) { this._live = false; this.points.visible = false; }
   }
 }

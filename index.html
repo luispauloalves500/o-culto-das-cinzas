@@ -66,6 +66,17 @@
       <label><input id="optBloom" type="checkbox" /> Brilho (bloom) de lâmpadas, brasas e olhos</label>
       <label><input id="optPostfx" type="checkbox" /> Pós-processamento (cor, vinheta, granulação)</label>
       <label><input id="optAA" type="checkbox" /> Antisserrilhado (FXAA)</label>
+      <label>Luzes dinâmicas por quadro
+        <select id="optLights"><option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="12">12</option><option value="16">16 (todas)</option></select>
+      </label>
+      <label>Distância de desenho
+        <select id="optDraw"><option value="auto">Automática (some dentro da névoa)</option><option value="max">Máxima (90 m)</option></select>
+      </label>
+      <label>Limite de FPS
+        <select id="optFpsCap"><option value="0">Sem limite</option><option value="60">60</option><option value="30">30 (economia de bateria)</option></select>
+      </label>
+      <label><input id="optEco" type="checkbox" /> Economizar em menus e pausa (redesenha a 10 Hz)</label>
+      <p class="small">Nenhuma destas opções reduz a qualidade das texturas: luzes fora da tela, cenário dentro da névoa e animação de inimigos longe e fora da tela simplesmente deixam de ser calculados.</p>
       <label>Corpos de inimigos somem após
         <select id="optCorpse"><option value="10">10 s</option><option value="20">20 s</option><option value="45">45 s</option><option value="0">Nunca</option></select>
       </label>

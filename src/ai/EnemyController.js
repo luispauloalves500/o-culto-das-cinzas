@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { ENEMIES } from '../data/enemies.js';
 import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from '../gameplay/ProceduralRig.js';
+import { freezeRig } from '../render/Perf.js';
 
 const tmp = new THREE.Vector3();
 const angDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -289,7 +290,7 @@ export class Enemy {
     const r = this.rig.root;
     r.parent?.remove(r);
     r.traverse((o) => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); });
-    if (this.pool) { this.pool.parent?.remove(this.pool); this.pool.geometry.dispose(); this.pool.material.dispose(); this.pool = null; }
+    if (this.pool) { this.pool.parent?.remove(this.pool); if (!this.pool.geometry.userData.shared) this.pool.geometry.dispose(); this.pool.material.dispose(); this.pool = null; }
     this.despawned = true; this.sinkT = 0;
   }
 
@@ -357,9 +358,14 @@ export class Enemy {
     this.stateT += dt; this.animT += dt;
     this.flinch = Math.max(0, this.flinch - dt);
     this.poiseT -= dt; if (this.poiseT <= 0) this.poise = this.def.poise;
+    // pt48u: corpo já caído / dormente tem pose parada → congela as matrizes dos ossos (a raiz continua livre para
+    // afundar/mover); qualquer outro estado descongela antes de animar
+    const still = (this.state === 'dead' && this.stateT > 1.0) || (this.dormant && this.stateT > 0.05 && !this.def.crawler);
+    if (this._frozen && !still) { freezeRig(this.rig.root, false); this._frozen = false; }
     if (this.state === 'dead') {
       if (this.despawned) return;
-      this._animate(dt, 0); this.rig.root.position.copy(this.pos);
+      if (!this._frozen) { this._animate(dt, 0); if (still) { this.rig.root.position.copy(this.pos); this._freeze(); } }
+      this.rig.root.position.copy(this.pos);
       this._corpse(dt);
       return;
     }
@@ -370,7 +376,8 @@ export class Enemy {
         const n = g.perception.hear(this, this.def.dormantHearing ?? 0.6);
         if (n) { this.wakeTo(n); return; }
       }
-      this._animate(dt, 0); if (this.submerged) { this.rig.root.position.copy(this.pos); this.rig.root.position.y -= 1.7; } return; }
+      if (!this._frozen) { this._animate(dt, 0); if (still) this._freeze(); }
+      if (this.submerged) { this.rig.root.position.copy(this.pos); this.rig.root.position.y -= 1.7; } return; }
     if (this.emerging > 0) {
       this.emerging = Math.max(0, this.emerging - dt);
       const k = this.emerging / (this.def.emergeTime || 1);
@@ -479,9 +486,19 @@ export class Enemy {
     const gy = g.col.groundAt(this.pos.x, this.pos.z, this.pos.y, climb ? 1.7 : 0.6);
     if (gy > -Infinity) this.pos.y = gy;
 
-    this._animate(dt, this.speed);
+    // pt48u: LOD de animação — longe (> 28 m) E fora da tela, o esqueleto anima a ~15 Hz (dt acumulado: o passo
+    // de caminhada não perde fase); perto ou na tela, todo passo. A IA (percepção, audição, movimento) não muda.
+    const perf = g.gfx?.perf;
+    if (perf && this.state !== 'attack' && this.state !== 'grabbing' && perf.farOffscreen(this.pos)) {
+      this._animAcc = (this._animAcc || 0) + dt;
+      if (this._animAcc >= 1 / 15) { this._animate(this._animAcc, this.speed); this._animAcc = 0; } else perf.stats.animSkips++;
+    } else { this._animate(dt + (this._animAcc || 0), this.speed); this._animAcc = 0; }
     this.rig.root.position.copy(this.pos);
     this.rig.root.rotation.y = this.yaw;
+  }
+  _freeze() {
+    freezeRig(this.rig.root, true); this._frozen = true;
+    const perf = this.game.gfx?.perf; if (perf) perf.stats.frozenRigs++;
   }
 
   _startAttack(a) {
