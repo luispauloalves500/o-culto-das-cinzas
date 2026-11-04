@@ -143,26 +143,26 @@ export class AcervoLevel {
     const b = this.b, D = DOCK, M = this.M;
     b.floor(D.minX, D.minZ, D.maxX, D.maxZ, Y, 'wood', 'c6_doca');
     b.ceiling(D.minX, D.minZ + 2, D.maxX, D.maxZ, Y + 4.2, 'woodDark');
-    b.box(D.minX - 0.2, Y, D.minZ - 0.2, D.minX, Y + 4.2, D.maxZ, 'brick');
-    b.box(D.maxX, Y, D.minZ - 0.2, D.maxX + 0.2, Y + 4.2, D.maxZ, 'brick');
+    b.sbox(D.minX - 0.2, Y, D.minZ - 0.2, D.minX, Y + 4.2, D.maxZ, 'brick');
+    b.sbox(D.maxX, Y, D.minZ - 0.2, D.maxX + 0.2, Y + 4.2, D.maxZ, 'brick');
     // guarda-corpo da beira (o rio é só cenário: a barcaça já atracou)
-    b.box(D.minX, Y, D.minZ - 0.2, D.maxX, Y + 1.05, D.minZ, 'rust');
-    for (let x = D.minX + 0.5; x < D.maxX; x += 1.5) b.box(x, Y - 1.4, -0.5, x + 0.25, Y, -0.25, 'woodDark', { collide: false });
+    b.sbox(D.minX, Y, D.minZ - 0.2, D.maxX, Y + 1.05, D.minZ, 'rust');
+    for (let x = D.minX + 0.5; x < D.maxX; x += 1.5) b.sbox(x, Y - 1.4, -0.5, x + 0.25, Y, -0.25, 'woodDark', { collide: false });
     // rio das Cinzas: lâmina preta parada
     const wg = new THREE.PlaneGeometry(30, 16, 12, 6); wg.rotateX(-Math.PI / 2);
     const water = new THREE.Mesh(wg, M.water || M.coal); water.position.set(15, Y - 1.1, -8); b.group.add(water);
     this.waterMeshes.push({ m: water, base: Float32Array.from(wg.attributes.position.array) });
     // barcaça: casco, cabine, as amarras e o caixote vazio da remessa
-    b.box(10, Y - 1.4, -4.6, 17.5, Y - 0.35, -0.7, 'woodDark', { collide: false });
-    b.box(15.2, Y - 0.35, -4.0, 17.0, Y + 1.0, -1.4, 'wood', { collide: false });
-    b.box(11, Y - 0.35, -3.2, 12.2, Y + 0.4, -2.0, 'woodDark', { collide: false });
-    b.box(12.4, Y - 0.2, -0.75, 12.5, Y + 0.95, -0.25, 'leatherDark', { collide: false });
+    b.sbox(10, Y - 1.4, -4.6, 17.5, Y - 0.35, -0.7, 'woodDark', { collide: false });
+    b.sbox(15.2, Y - 0.35, -4.0, 17.0, Y + 1.0, -1.4, 'wood', { collide: false });
+    b.sbox(11, Y - 0.35, -3.2, 12.2, Y + 0.4, -2.0, 'woodDark', { collide: false });
+    b.sbox(12.4, Y - 0.2, -0.75, 12.5, Y + 0.95, -0.25, 'leatherDark', { collide: false });
     // pilhas de caixotes e um guindaste de mão na doca
-    b.box(8.4, Y, 5.4, 10.2, Y + 1.2, 7.6, 'woodDark', { tag: 'prop' });
-    b.box(8.6, Y + 1.2, 5.8, 9.8, Y + 2.0, 7.0, 'wood', { tag: 'prop' });
-    b.box(19.8, Y, 1.2, 21.6, Y + 0.9, 3.0, 'wood', { tag: 'prop-low', sight: false });
-    b.box(20.4, Y, 4.6, 21.0, Y + 3.6, 5.2, 'rust', { tag: 'prop' });
-    b.box(17.8, Y + 3.3, 4.7, 21.0, Y + 3.5, 5.1, 'rust', { collide: false });
+    b.sbox(8.4, Y, 5.4, 10.2, Y + 1.2, 7.6, 'woodDark', { tag: 'prop' });
+    b.sbox(8.6, Y + 1.2, 5.8, 9.8, Y + 2.0, 7.0, 'wood', { tag: 'prop' });
+    b.sbox(19.8, Y, 1.2, 21.6, Y + 0.9, 3.0, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(20.4, Y, 4.6, 21.0, Y + 3.6, 5.2, 'rust', { tag: 'prop' });
+    b.sbox(17.8, Y + 3.3, 4.7, 21.0, Y + 3.5, 5.1, 'rust', { collide: false });
     this.sign('DOCA DE CARGA — ENTRADA DE PEÇAS', 15, Y + 3.2, 7.88, Math.PI, 2.6, 0.3, { bg: '#1c1810', fg: '#d8c088' });
   }
 
@@ -173,26 +173,26 @@ export class AcervoLevel {
     b.ceiling(A.minX, A.minZ, A.maxX, A.maxZ, Y + 7);
     b.wallX(8, A.minX, A.maxX, Y, Y + 7, [15], 'museumWall', 1.4, 2.3);
     b.wallZ(A.minX, A.minZ, A.maxZ, Y, Y + 7, [15], 'museumWall', 2.0, 2.8);
-    b.box(A.maxX, Y, A.minZ, A.maxX + 0.2, Y + 7, A.maxZ, 'museumWall');
+    b.sbox(A.maxX, Y, A.minZ, A.maxX + 0.2, Y + 7, A.maxZ, 'museumWall');
     b.wallX(22, A.minX, A.maxX, Y, Y + 7, [15], 'museumWall', 2.0, 2.8);
     // rodapé de madeira escura
-    b.box(A.minX + 0.1, Y, A.minZ + 0.1, A.maxX - 0.1, Y + 0.25, A.minZ + 0.18, 'woodDark', { collide: false });
+    b.sbox(A.minX + 0.1, Y, A.minZ + 0.1, A.maxX - 0.1, Y + 0.25, A.minZ + 0.18, 'woodDark', { collide: false });
     // balcão da recepção
-    b.box(12, Y, 14, 18, Y + 1.1, 15.2, 'woodDark', { tag: 'prop', sight: false });
-    b.box(11.9, Y + 1.1, 13.9, 18.1, Y + 1.16, 15.3, 'marble', { collide: false });
+    b.sbox(12, Y, 14, 18, Y + 1.1, 15.2, 'woodDark', { tag: 'prop', sight: false });
+    b.sbox(11.9, Y + 1.1, 13.9, 18.1, Y + 1.16, 15.3, 'marble', { collide: false });
     // bustos dos fundadores em pedestais
     for (const [x, z] of [[7, 12], [7, 19], [23, 12], [23, 19]]) {
-      b.box(x - 0.35, Y, z - 0.35, x + 0.35, Y + 1.3, z + 0.35, 'marble', { tag: 'prop' });
+      b.sbox(x - 0.35, Y, z - 0.35, x + 0.35, Y + 1.3, z + 0.35, 'marble', { tag: 'prop' });
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), this.M.stone); head.position.set(x, Y + 1.72, z); head.scale.set(0.9, 1.15, 1); b.group.add(head);
-      b.box(x - 0.24, Y + 1.3, z - 0.16, x + 0.24, Y + 1.52, z + 0.16, 'stone', { collide: false });
+      b.sbox(x - 0.24, Y + 1.3, z - 0.16, x + 0.24, Y + 1.52, z + 0.16, 'stone', { collide: false });
     }
     // bilheteria (canto nordeste) e corrente nas portas principais
-    b.box(19.5, Y, 20.2, 25.8, Y + 1.2, 21.8, 'woodDark', { tag: 'prop' });
-    b.box(19.5, Y + 1.2, 21.6, 25.8, Y + 2.6, 21.8, 'glass', { collide: false });
-    b.box(4.25, Y + 0.9, 14.0, 4.35, Y + 1.0, 16.0, 'rust', { collide: false });
-    b.box(4.25, Y + 1.6, 14.0, 4.35, Y + 1.7, 16.0, 'rust', { collide: false });
+    b.sbox(19.5, Y, 20.2, 25.8, Y + 1.2, 21.8, 'woodDark', { tag: 'prop' });
+    b.sbox(19.5, Y + 1.2, 21.6, 25.8, Y + 2.6, 21.8, 'glass', { collide: false });
+    b.sbox(4.25, Y + 0.9, 14.0, 4.35, Y + 1.0, 16.0, 'rust', { collide: false });
+    b.sbox(4.25, Y + 1.6, 14.0, 4.35, Y + 1.7, 16.0, 'rust', { collide: false });
     // tapete vermelho da entrada ao salão
-    b.box(14.2, Y + 0.005, 8.2, 15.8, Y + 0.02, 21.8, 'velvet', { collide: false });
+    b.sbox(14.2, Y + 0.005, 8.2, 15.8, Y + 0.02, 21.8, 'velvet', { collide: false });
     this.sign('MUSEU DE CIÊNCIAS PROIBIDAS — FUNDADO EM 1702', 15, Y + 4.6, 21.88, Math.PI, 4.4, 0.4, { bg: '#20160c', fg: '#e0c890' });
     this.sign('SALÃO DE EXPOSIÇÃO', 15, Y + 3.1, 21.88, Math.PI, 2.0, 0.26, { bg: '#20160c', fg: '#e0c890' });
     this.sign('BILHETERIA', 22.6, Y + 2.9, 21.7, Math.PI, 1.4, 0.22, { bg: '#20160c', fg: '#e0c890' });
@@ -203,11 +203,11 @@ export class AcervoLevel {
     const b = this.b, H = HALL, M = this.M;
     b.floor(H.minX, H.minZ, H.maxX, H.maxZ, Y, 'parquet', 'c6_salao');
     b.ceiling(H.minX, H.minZ, H.maxX, H.maxZ, Y + 6.5);
-    b.box(H.minX - 0.2, Y, H.minZ, H.minX, Y + 6.5, H.maxZ, 'museumWall');
+    b.sbox(H.minX - 0.2, Y, H.minZ, H.minX, Y + 6.5, H.maxZ, 'museumWall');
     b.wallZ(H.maxX, H.minZ, H.maxZ, Y, Y + 6.5, [33], 'museumWall', 1.5, 2.5);
-    b.box(H.minX - 0.2, Y, H.maxZ, H.maxX + 0.2, Y + 6.5, H.maxZ + 0.2, 'museumWall');
+    b.sbox(H.minX - 0.2, Y, H.maxZ, H.maxX + 0.2, Y + 6.5, H.maxZ + 0.2, 'museumWall');
     // colunas
-    for (const x of [7.5, 15, 22.5]) for (const z of [32, 42]) b.box(x - 0.35, Y, z - 0.35, x + 0.35, Y + 6.5, z + 0.35, 'marble');
+    for (const x of [7.5, 15, 22.5]) for (const z of [32, 42]) b.sbox(x - 0.35, Y, z - 0.35, x + 0.35, Y + 6.5, z + 0.35, 'marble');
     // painel do cofre: três discos de latão e a alavanca
     const pg = new THREE.Group();
     const plate = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.9, 2.1), M.steelDark || M.metal); plate.position.set(0, 0, 0.7); pg.add(plate);
@@ -222,7 +222,7 @@ export class AcervoLevel {
     this.sign('ALA DE CONSERVAÇÃO — SOMENTE PESSOAL', 29.88, Y + 2.9, 33, -Math.PI / 2, 2.4, 0.26, { bg: '#1a1410', fg: '#d8b880' });
     this.sign('Nº DE INVENTÁRIO', 29.86, Y + 2.0, 35.4, -Math.PI / 2, 1.2, 0.18, { bg: '#1a1410', fg: '#d8b880' });
     // estante do guia e cordão de veludo
-    b.box(14.4, Y, 43.3, 15.6, Y + 1.0, 43.9, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(14.4, Y, 43.3, 15.6, Y + 1.0, 43.9, 'woodDark', { tag: 'prop-low', sight: false });
     this.sign('SALÃO DE EXPOSIÇÃO PERMANENTE', 15, Y + 4.2, 43.88, Math.PI, 3.2, 0.32, { bg: '#20160c', fg: '#e0c890' });
   }
 
@@ -231,23 +231,23 @@ export class AcervoLevel {
     const b = this.b, C = CONSERV, M = this.M;
     b.floor(C.minX, C.minZ, C.maxX, C.maxZ, Y, 'tile', 'c6_conservacao');
     b.ceiling(C.minX, C.minZ, C.maxX, C.maxZ, Y + 3.6);
-    b.box(C.minX, Y, C.minZ - 0.2, C.maxX + 0.2, Y + 3.6, C.minZ, 'wallLower');
-    b.box(C.maxX, Y, C.minZ, C.maxX + 0.2, Y + 3.6, C.maxZ, 'wallLower');
+    b.sbox(C.minX, Y, C.minZ - 0.2, C.maxX + 0.2, Y + 3.6, C.minZ, 'wallLower');
+    b.sbox(C.maxX, Y, C.minZ, C.maxX + 0.2, Y + 3.6, C.maxZ, 'wallLower');
     b.wallX(40, C.minX, C.maxX, Y, Y + 3.6, [37], 'wallLower', 1.3, 2.3);
     // mesa de restauro com frascos e a lupa
-    b.box(34, Y, 29, 38, Y + 0.9, 30.5, 'steel', { tag: 'prop-low', sight: false });
+    b.sbox(34, Y, 29, 38, Y + 0.9, 30.5, 'steel', { tag: 'prop-low', sight: false });
     for (let i = 0; i < 5; i++) {
       const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.22, 8), M.glass); jar.position.set(34.4 + i * 0.7, Y + 1.01, 29.4); b.group.add(jar);
     }
     // tanques de formol (verde), um com a tampa aberta
     for (const z of [28.2, 30.4, 32.6, 34.8]) {
-      b.box(42.2, Y, z, 43.8, Y + 2.0, z + 1.6, 'glass', { tag: 'prop' });
+      b.sbox(42.2, Y, z, 43.8, Y + 2.0, z + 1.6, 'glass', { tag: 'prop' });
       const liquid = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.5, 1.4), new THREE.MeshLambertMaterial({ color: 0x4a6a30, transparent: true, opacity: 0.55, emissive: 0x0c1a04 }));
       liquid.position.set(43, Y + 0.8, z + 0.8); b.group.add(liquid);
     }
     // armário de ferramentas (livro de registros em cima) e maca de embalsamar
-    b.box(30.2, Y, 37.8, 31.4, Y + 0.9, 39.6, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(33, Y, 38.6, 35.4, Y + 0.85, 39.6, 'steel', { tag: 'prop-low', sight: false });
+    b.sbox(30.2, Y, 37.8, 31.4, Y + 0.9, 39.6, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(33, Y, 38.6, 35.4, Y + 0.85, 39.6, 'steel', { tag: 'prop-low', sight: false });
     this.sign('CONSERVAÇÃO E RESTAURO', 37, Y + 2.7, 26.12, 0, 2.2, 0.24, { bg: '#141a14', fg: '#c8d8b0' });
     this.sign('DEPÓSITO', 37, Y + 2.6, 39.88, Math.PI, 1.2, 0.22, { bg: '#141a14', fg: '#c8d8b0' });
   }
@@ -257,28 +257,28 @@ export class AcervoLevel {
     const b = this.b, S = STORAGE, M = this.M;
     b.floor(S.minX, S.minZ, S.maxX, S.maxZ, Y, 'concrete', 'c6_deposito');
     b.ceiling(S.minX, S.minZ, S.maxX, S.maxZ, Y + 5);
-    b.box(S.minX - 0.2, Y, S.minZ, S.minX, Y + 5, S.maxZ, 'brick');
-    b.box(S.maxX, Y, S.minZ, S.maxX + 0.2, Y + 5, S.maxZ, 'brick');
-    b.box(S.minX - 0.2, Y + 3.6, S.minZ - 0.1, S.maxX + 0.2, Y + 5, S.minZ + 0.1, 'brick');
+    b.sbox(S.minX - 0.2, Y, S.minZ, S.minX, Y + 5, S.maxZ, 'brick');
+    b.sbox(S.maxX, Y, S.minZ, S.maxX + 0.2, Y + 5, S.maxZ, 'brick');
+    b.sbox(S.minX - 0.2, Y + 3.6, S.minZ - 0.1, S.maxX + 0.2, Y + 5, S.minZ + 0.1, 'brick');
     b.wallX(54, S.minX - 0.2, S.maxX + 0.2, Y, Y + 5, [COLLECTOR_DOOR.x], 'brick', 2.0, 3.0);
     // caixotes empilhados
-    b.box(34, Y, 44.6, 36.5, Y + 1.4, 47, 'woodDark', { tag: 'prop' });
-    b.box(34.3, Y + 1.4, 45, 36, Y + 2.3, 46.6, 'wood', { tag: 'prop' });
-    b.box(38, Y, 46.5, 40.5, Y + 1.2, 49, 'wood', { tag: 'prop' });
-    b.box(42.8, Y, 45, 43.8, Y + 2.6, 49, 'woodDark', { tag: 'prop' });
+    b.sbox(34, Y, 44.6, 36.5, Y + 1.4, 47, 'woodDark', { tag: 'prop' });
+    b.sbox(34.3, Y + 1.4, 45, 36, Y + 2.3, 46.6, 'wood', { tag: 'prop' });
+    b.sbox(38, Y, 46.5, 40.5, Y + 1.2, 49, 'wood', { tag: 'prop' });
+    b.sbox(42.8, Y, 45, 43.8, Y + 2.6, 49, 'woodDark', { tag: 'prop' });
     // a remessa nº 31: caixote aberto, tampa no chão, palha
-    b.box(30.3, Y, 49, 31.3, Y + 0.9, 50.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(30.2, Y, 50.6, 31.2, Y + 0.06, 52.0, 'wood', { collide: false });
-    b.box(30.4, Y + 0.7, 49.1, 31.2, Y + 0.85, 50.3, 'ash', { collide: false });
+    b.sbox(30.3, Y, 49, 31.3, Y + 0.9, 50.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(30.2, Y, 50.6, 31.2, Y + 0.06, 52.0, 'wood', { collide: false });
+    b.sbox(30.4, Y + 0.7, 49.1, 31.2, Y + 0.85, 50.3, 'ash', { collide: false });
     // arco de ferro e a placa de latão da Galeria
-    b.box(35.6, Y + 3.0, 53.7, 38.4, Y + 3.4, 53.9, 'brass', { collide: false });
+    b.sbox(35.6, Y + 3.0, 53.7, 38.4, Y + 3.4, 53.9, 'brass', { collide: false });
     const pl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.34, 0.03), M.brass || M.gold); pl.position.set(COLLECTOR_PLAQUE.x, COLLECTOR_PLAQUE.y, COLLECTOR_PLAQUE.z); b.group.add(pl);
     this.sign('GALERIA DO COLECIONADOR', 37, Y + 3.7, 53.88, Math.PI, 2.6, 0.3, { bg: '#1a0e08', fg: '#e8c070' });
     // cordão da campainha de entregas (pende do arco) e a plaquinha "ENTREGAS — TOQUE E AGUARDE"
     const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.75, 5), M.velvet); cord.position.set(BELL_PULL.x, Y + 2.2, BELL_PULL.z); b.group.add(cord);
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), M.brass || M.gold); knob.position.set(BELL_PULL.x, Y + 1.3, BELL_PULL.z); b.group.add(knob);
     this.bellCord = { cord, knob, pull: 0 };
-    b.box(BELL_PULL.x - 0.1, Y + 3.0, BELL_PULL.z - 0.1, BELL_PULL.x + 0.1, Y + 3.15, BELL_PULL.z + 0.06, 'brass', { collide: false });
+    b.sbox(BELL_PULL.x - 0.1, Y + 3.0, BELL_PULL.z - 0.1, BELL_PULL.x + 0.1, Y + 3.15, BELL_PULL.z + 0.06, 'brass', { collide: false });
     this.sign('ENTREGAS — TOQUE E AGUARDE', BELL_PULL.x - 0.15, Y + 1.85, 53.88, Math.PI, 0.9, 0.14, { bg: '#1a0e08', fg: '#e8c070' });
     this.sign('REMESSAS — CONFERIR LACRE', 31.2, Y + 2.6, 40.12, 0, 1.8, 0.22, { bg: '#1c1810', fg: '#d8c088' });
   }
@@ -288,27 +288,27 @@ export class AcervoLevel {
     const b = this.b, G = GALLERY, M = this.M;
     b.floor(G.minX, G.minZ, G.maxX, G.maxZ, Y, 'parquet', 'c6_galeria');
     b.ceiling(G.minX, G.minZ, G.maxX, G.maxZ, Y + 7);
-    b.box(G.minX - 0.2, Y, G.minZ, G.minX, Y + 7, G.maxZ, 'museumWall');
-    b.box(G.maxX, Y, G.minZ, G.maxX + 0.2, Y + 7, G.maxZ, 'museumWall');
+    b.sbox(G.minX - 0.2, Y, G.minZ, G.minX, Y + 7, G.maxZ, 'museumWall');
+    b.sbox(G.maxX, Y, G.minZ, G.maxX + 0.2, Y + 7, G.maxZ, 'museumWall');
     // parede sul (o depósito é mais estreito e mais baixo: completa as laterais e o alto)
-    b.box(G.minX - 0.2, Y, 53.9, STORAGE.minX - 0.2, Y + 7, 54.1, 'museumWall');
-    b.box(STORAGE.maxX + 0.2, Y, 53.9, G.maxX + 0.2, Y + 7, 54.1, 'museumWall');
-    b.box(STORAGE.minX - 0.2, Y + 5, 53.9, STORAGE.maxX + 0.2, Y + 7, 54.1, 'museumWall');
+    b.sbox(G.minX - 0.2, Y, 53.9, STORAGE.minX - 0.2, Y + 7, 54.1, 'museumWall');
+    b.sbox(STORAGE.maxX + 0.2, Y, 53.9, G.maxX + 0.2, Y + 7, 54.1, 'museumWall');
+    b.sbox(STORAGE.minX - 0.2, Y + 5, 53.9, STORAGE.maxX + 0.2, Y + 7, 54.1, 'museumWall');
     b.wallX(G.maxZ, G.minX - 0.2, G.maxX + 0.2, Y, Y + 7, [EXIT_DOOR.x], 'museumWall', 1.6, 2.6);
     // passadeira de veludo e o pedestal redondo onde o Colecionador posa como peça
-    b.box(36.2, Y + 0.005, 54.2, 37.8, Y + 0.02, 73.8, 'velvet', { collide: false });
+    b.sbox(36.2, Y + 0.005, 54.2, 37.8, Y + 0.02, 73.8, 'velvet', { collide: false });
     const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.05, 0.08, 14), M.marble); pl.position.set(COLLECTOR_PLINTH.x, Y + 0.04, COLLECTOR_PLINTH.z); b.group.add(pl);
     for (let i = 0; i < 6; i++) {
       const a = i / 6 * Math.PI * 2, x = COLLECTOR_PLINTH.x + Math.cos(a) * 1.6, z = COLLECTOR_PLINTH.z + Math.sin(a) * 1.6;
-      b.box(x - 0.04, Y, z - 0.04, x + 0.04, Y + 0.95, z + 0.04, 'brass', { collide: false });
+      b.sbox(x - 0.04, Y, z - 0.04, x + 0.04, Y + 0.95, z + 0.04, 'brass', { collide: false });
     }
     // vitrines blindadas (vidro grosso, moldura de bronze): obstáculos de verdade
     for (const c of ARMORED_CASES) {
       const hx = 0.65, top = 2.3;
-      b.box(c.x - hx, Y, c.z - hx, c.x + hx, Y + 0.7, c.z + hx, 'steelDark', { collide: false });
+      b.sbox(c.x - hx, Y, c.z - hx, c.x + hx, Y + 0.7, c.z + hx, 'steelDark', { collide: false });
       const gm = new THREE.Mesh(new THREE.BoxGeometry(hx * 2, top - 0.7, hx * 2), M.showcase || M.glass); gm.position.set(c.x, Y + (0.7 + top) / 2, c.z); gm.renderOrder = 2; b.group.add(gm);
-      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.box(c.x + sx * hx - 0.06, Y + 0.7, c.z + sz * hx - 0.06, c.x + sx * hx + 0.06, Y + top, c.z + sz * hx + 0.06, 'brass', { collide: false });
-      b.box(c.x - hx - 0.04, Y + top, c.z - hx - 0.04, c.x + hx + 0.04, Y + top + 0.12, c.z + hx + 0.04, 'brass', { collide: false });
+      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.sbox(c.x + sx * hx - 0.06, Y + 0.7, c.z + sz * hx - 0.06, c.x + sx * hx + 0.06, Y + top, c.z + sz * hx + 0.06, 'brass', { collide: false });
+      b.sbox(c.x - hx - 0.04, Y + top, c.z - hx - 0.04, c.x + hx + 0.04, Y + top + 0.12, c.z + hx + 0.04, 'brass', { collide: false });
       // peça exposta (silhueta) e as rachaduras (aparecem a cada choque)
       const ex = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.3), c.id === 'rc_nw' ? (M.brass || M.gold) : c.id === 'rc_ne' ? (M.wax || M.paper) : (M.bone || M.ash || M.stone));
       ex.position.set(c.x, Y + 1.2, c.z); b.group.add(ex);
@@ -326,7 +326,7 @@ export class AcervoLevel {
     }
     // bustos em pedestais (o Colecionador os arranca e arremessa)
     for (const u of BUSTS) {
-      b.box(u.x - 0.3, Y, u.z - 0.3, u.x + 0.3, Y + 1.15, u.z + 0.3, 'marble', { tag: 'prop' });
+      b.sbox(u.x - 0.3, Y, u.z - 0.3, u.x + 0.3, Y + 1.15, u.z + 0.3, 'marble', { tag: 'prop' });
       const g = new THREE.Group();
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), M.stone); head.position.y = 0.42; head.scale.set(0.9, 1.15, 1); g.add(head);
       const sh = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.22, 0.28), M.stone); sh.position.y = 0.12; g.add(sh);
@@ -335,7 +335,7 @@ export class AcervoLevel {
     }
     // guinchos do teto: viga, corrente, peça pesada e o círculo de latão no chão; alavanca na parede
     for (const c of CRANES) {
-      b.box(c.x - 0.15, Y + 6.6, G.minZ + 0.2, c.x + 0.15, Y + 6.85, G.maxZ - 0.2, 'rust', { collide: false });
+      b.sbox(c.x - 0.15, Y + 6.6, G.minZ + 0.2, c.x + 0.15, Y + 6.85, G.maxZ - 0.2, 'rust', { collide: false });
       const chain = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1, 0.06), M.steel || M.metal); b.group.add(chain);
       const load = new THREE.Group();
       if (c.id === 'w') {
@@ -351,7 +351,7 @@ export class AcervoLevel {
       const ring = new THREE.Mesh(new THREE.RingGeometry(CRANE_RADIUS - 0.12, CRANE_RADIUS, 24), M.brass || M.gold); ring.rotation.x = -Math.PI / 2; ring.position.set(c.x, Y + 0.03, c.z); b.group.add(ring);
       // alavanca: placa na parede + cabo
       const side = c.lever.x < 37 ? 1 : -1;
-      b.box(c.lever.x - 0.05, c.lever.y - 0.4, c.lever.z - 0.25, c.lever.x + 0.05, c.lever.y + 0.4, c.lever.z + 0.25, 'steelDark', { collide: false });
+      b.sbox(c.lever.x - 0.05, c.lever.y - 0.4, c.lever.z - 0.25, c.lever.x + 0.05, c.lever.y + 0.4, c.lever.z + 0.25, 'steelDark', { collide: false });
       const handle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), M.lampRed || M.rust); handle.position.set(c.lever.x + side * 0.12, c.lever.y + 0.1, c.lever.z); handle.rotation.z = side * -0.5; b.group.add(handle);
       this.sign('GUINCHO — ' + c.name.toUpperCase(), c.lever.x + side * 0.12, c.lever.y + 0.75, c.lever.z, side > 0 ? Math.PI / 2 : -Math.PI / 2, 1.3, 0.16, { bg: '#1a0e08', fg: '#e8c070' });
       this.cranes[c.id] = { c, chain, load, ring, handle, side, hookY, state: 'hung', t: 0, collider: null };
@@ -360,7 +360,7 @@ export class AcervoLevel {
     // trilho de teto: vigas e carrinhos com braços mecânicos (estacionados no oeste); faixa de aviso no chão
     for (let i = 0; i < RAIL_ROWS.length; i++) {
       const z = RAIL_ROWS[i];
-      b.box(G.minX, Y + 6.2, z - 0.1, G.maxX, Y + 6.38, z + 0.1, 'steelDark', { collide: false });
+      b.sbox(G.minX, Y + 6.2, z - 0.1, G.maxX, Y + 6.38, z + 0.1, 'steelDark', { collide: false });
       const car = new THREE.Group();
       const trolley = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, 0.4), M.rust); trolley.position.y = 6.05; car.add(trolley);
       const rod = new THREE.Mesh(new THREE.BoxGeometry(0.08, 4.4, 0.08), M.steel || M.metal); rod.position.y = 3.75; car.add(rod);
@@ -374,9 +374,9 @@ export class AcervoLevel {
     // vitrines de corpo inteiro no fundo (espécimes); vidro com colisor até quebrar
     for (const c of GALLERY_CASES) {
       const hx = 0.6, top = 2.5;
-      b.box(c.x - hx, Y, c.z - hx, c.x + hx, Y + 0.12, c.z + hx, 'marble', { collide: false });
+      b.sbox(c.x - hx, Y, c.z - hx, c.x + hx, Y + 0.12, c.z + hx, 'marble', { collide: false });
       const gm = new THREE.Mesh(new THREE.BoxGeometry(hx * 2, top - 0.12, hx * 2), M.showcase || M.glass); gm.position.set(c.x, Y + (top + 0.12) / 2, c.z); gm.renderOrder = 2; b.group.add(gm);
-      b.box(c.x - hx, Y + top, c.z - hx, c.x + hx, Y + top + 0.05, c.z + hx, 'brass', { collide: false });
+      b.sbox(c.x - hx, Y + top, c.z - hx, c.x + hx, Y + top + 0.05, c.z + hx, 'brass', { collide: false });
       const sg = new THREE.Group();
       for (let i = 0; i < 9; i++) { const sh = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.01, 0.1), M.shards || M.glass); const a = i * 2.39, r = 0.4 + (i % 4) * 0.22; sh.position.set(c.x + Math.cos(a) * r, Y + 0.01, c.z + Math.sin(a) * r); sh.rotation.y = a; sg.add(sh); }
       sg.visible = false; b.group.add(sg);
@@ -388,7 +388,7 @@ export class AcervoLevel {
       const fr = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.4, 0.06), M.gold || M.brass); fr.position.set(x, Y + 1.9, z); fr.rotation.y = ry; b.group.add(fr);
       const gl = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 2.2), M.moonGlass || M.glass); gl.position.set(x + (ry > 0 ? 0.04 : -0.04), Y + 1.9, z); gl.rotation.y = ry; b.group.add(gl);
     }
-    b.box(31.6, Y, 73.2, 32.6, Y + 2.6, 73.8, 'woodDark', { tag: 'prop' });
+    b.sbox(31.6, Y, 73.2, 32.6, Y + 2.6, 73.8, 'woodDark', { tag: 'prop' });
     const face = new THREE.Mesh(new THREE.CircleGeometry(0.32, 14), M.paper); face.position.set(32.1, Y + 2.1, 73.18); face.rotation.y = Math.PI; b.group.add(face);
     this.pendulum = new THREE.Group(); this.pendulum.position.set(32.1, Y + 1.7, 73.16);
     const rodp = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.9, 0.02), M.brass || M.gold); rodp.position.y = -0.45; this.pendulum.add(rodp);
@@ -403,22 +403,22 @@ export class AcervoLevel {
     const b = this.b, R = RESERVE, M = this.M;
     b.floor(R.minX, R.minZ, R.maxX, R.maxZ, Y, 'concrete', 'c6_reserva');
     b.ceiling(R.minX, R.minZ, R.maxX, R.maxZ, Y + 3.4);
-    b.box(R.minX - 0.2, Y, R.minZ, R.minX, Y + 3.4, R.maxZ, 'brick');
-    b.box(R.maxX, Y, R.minZ, R.maxX + 0.2, Y + 3.4, R.maxZ, 'brick');
-    b.box(R.minX - 0.2, Y, R.maxZ, R.maxX + 0.2, Y + 3.4, R.maxZ + 0.2, 'brick');
+    b.sbox(R.minX - 0.2, Y, R.minZ, R.minX, Y + 3.4, R.maxZ, 'brick');
+    b.sbox(R.maxX, Y, R.minZ, R.maxX + 0.2, Y + 3.4, R.maxZ, 'brick');
+    b.sbox(R.minX - 0.2, Y, R.maxZ, R.maxX + 0.2, Y + 3.4, R.maxZ + 0.2, 'brick');
     // estantes com caixas de peças e a escrivaninha do Colecionador (catálogo)
-    b.box(34.05, Y, 75.4, 34.7, Y + 2.6, 79.6, 'woodDark', { tag: 'prop' });
-    b.box(39.3, Y, 78.4, 39.95, Y + 2.6, 83.6, 'woodDark', { tag: 'prop' });
-    for (let i = 0; i < 4; i++) b.box(34.1, Y + 0.5 + i * 0.6, 75.6 + (i % 2) * 1.6, 34.6, Y + 0.85 + i * 0.6, 76.6 + (i % 2) * 1.6, i % 2 ? 'wood' : 'paper', { collide: false });
-    b.box(38.4, Y, 75.0, 39.9, Y + 0.85, 76.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(38.3, Y + 0.85, 74.95, 40, Y + 0.9, 76.45, 'leatherDark', { collide: false });
+    b.sbox(34.05, Y, 75.4, 34.7, Y + 2.6, 79.6, 'woodDark', { tag: 'prop' });
+    b.sbox(39.3, Y, 78.4, 39.95, Y + 2.6, 83.6, 'woodDark', { tag: 'prop' });
+    for (let i = 0; i < 4; i++) b.sbox(34.1, Y + 0.5 + i * 0.6, 75.6 + (i % 2) * 1.6, 34.6, Y + 0.85 + i * 0.6, 76.6 + (i % 2) * 1.6, i % 2 ? 'wood' : 'paper', { collide: false });
+    b.sbox(38.4, Y, 75.0, 39.9, Y + 0.85, 76.4, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(38.3, Y + 0.85, 74.95, 40, Y + 0.9, 76.45, 'leatherDark', { collide: false });
     // alçapão aberto no chão (borda de ferro, escuridão e o topo da escada de serviço)
-    b.box(35.9, Y + 0.0, 81.9, 38.1, Y + 0.06, 82.0, 'rust', { collide: false });
-    b.box(35.9, Y + 0.0, 83.5, 38.1, Y + 0.06, 83.6, 'rust', { collide: false });
-    b.box(35.9, Y + 0.0, 81.9, 36.0, Y + 0.06, 83.6, 'rust', { collide: false });
-    b.box(38.0, Y + 0.0, 81.9, 38.1, Y + 0.06, 83.6, 'rust', { collide: false });
+    b.sbox(35.9, Y + 0.0, 81.9, 38.1, Y + 0.06, 82.0, 'rust', { collide: false });
+    b.sbox(35.9, Y + 0.0, 83.5, 38.1, Y + 0.06, 83.6, 'rust', { collide: false });
+    b.sbox(35.9, Y + 0.0, 81.9, 36.0, Y + 0.06, 83.6, 'rust', { collide: false });
+    b.sbox(38.0, Y + 0.0, 81.9, 38.1, Y + 0.06, 83.6, 'rust', { collide: false });
     const hole = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 1.5), new THREE.MeshBasicMaterial({ color: 0x020202 })); hole.rotation.x = -Math.PI / 2; hole.position.set(37, Y + 0.04, 82.75); b.group.add(hole);
-    for (const x of [36.5, 37.5]) b.box(x - 0.03, Y + 0.0, 82.9, x + 0.03, Y + 0.9, 82.96, 'rust', { collide: false });
+    for (const x of [36.5, 37.5]) b.sbox(x - 0.03, Y + 0.0, 82.9, x + 0.03, Y + 0.9, 82.96, 'rust', { collide: false });
     const lid = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.06, 1.6), M.rust); lid.position.set(37, Y + 0.8, 81.15); lid.rotation.x = -1.3; b.group.add(lid);
     this.sign('SAÍDA DE SERVIÇO — GALERIAS INFERIORES', 37, Y + 2.6, 83.98, Math.PI, 2.6, 0.24, { bg: '#141414', fg: '#c8c0a0' });
   }
@@ -475,12 +475,12 @@ export class AcervoLevel {
     const hx = tall ? 0.6 : 0.5, hz = tall ? 0.6 : 0.4;
     const base = tall ? 0.12 : 0.9, top = tall ? 2.5 : 1.7;
     const rec = { v, glass: null, shards: null, collider: null, broken: false, exhibit: null };
-    b.box(v.x - hx, Y, v.z - hz, v.x + hx, Y + base, v.z + hz, tall ? 'marble' : 'woodDark', { collide: false });
+    b.sbox(v.x - hx, Y, v.z - hz, v.x + hx, Y + base, v.z + hz, tall ? 'marble' : 'woodDark', { collide: false });
     const gm = new THREE.Mesh(new THREE.BoxGeometry(hx * 2, top - base, hz * 2), v.fogged ? (M.showcaseFog || M.glass) : (M.showcase || M.glass));
     gm.position.set(v.x, Y + (base + top) / 2, v.z); gm.renderOrder = 2; b.group.add(gm); rec.glass = gm;
     // moldura de latão
-    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.box(v.x + sx * hx - 0.03, Y + base, v.z + sz * hz - 0.03, v.x + sx * hx + 0.03, Y + top, v.z + sz * hz + 0.03, 'brass', { collide: false });
-    b.box(v.x - hx, Y + top, v.z - hz, v.x + hx, Y + top + 0.05, v.z + hz, 'brass', { collide: false });
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.sbox(v.x + sx * hx - 0.03, Y + base, v.z + sz * hz - 0.03, v.x + sx * hx + 0.03, Y + top, v.z + sz * hz + 0.03, 'brass', { collide: false });
+    b.sbox(v.x - hx, Y + top, v.z - hz, v.x + hx, Y + top + 0.05, v.z + hz, 'brass', { collide: false });
     // cacos no chão (aparecem quando quebra)
     const sg = new THREE.Group();
     for (let i = 0; i < 9; i++) {

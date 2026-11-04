@@ -156,14 +156,14 @@ export class AguasLevel {
     const b = this.b;
     b.floor(13.6, -1, 16.4, 10, Y, 'concrete', 'c5_passagem');
     b.ceiling(13.6, -1, 16.4, 10, Y + 2.9, 'concrete');
-    b.box(13.4, Y, -1, 13.6, Y + 3, 10, 'brick');
-    b.box(16.4, Y, -1, 16.6, Y + 3, 10, 'brick');
-    b.box(13.4, Y, -1.4, 16.6, Y + 3, -1, 'brick');
+    b.sbox(13.4, Y, -1, 13.6, Y + 3, 10, 'brick');
+    b.sbox(16.4, Y, -1, 16.6, Y + 3, 10, 'brick');
+    b.sbox(13.4, Y, -1.4, 16.6, Y + 3, -1, 'brick');
     // degraus que sobem de volta para a Torre (bloqueados por entulho)
-    for (let i = 0; i < 5; i++) b.box(13.6, Y, -1 + i * 0.3, 16.4, Y + 0.3 + i * 0.3, -0.7 + i * 0.3, 'concrete', { collide: false, tile: 1 });
-    b.box(13.6, Y, -1, 16.4, Y + 1.6, -0.1, 'concrete', { tag: 'obstacle' });
+    for (let i = 0; i < 5; i++) b.sbox(13.6, Y, -1 + i * 0.3, 16.4, Y + 0.3 + i * 0.3, -0.7 + i * 0.3, 'concrete', { collide: false, tile: 1 });
+    b.sbox(13.6, Y, -1, 16.4, Y + 1.6, -0.1, 'concrete', { tag: 'obstacle' });
     // cano gotejando
-    b.box(16.2, Y + 2.4, -1, 16.36, Y + 2.56, 10, 'rust', { collide: false });
+    b.sbox(16.2, Y + 2.4, -1, 16.36, Y + 2.56, 10, 'rust', { collide: false });
   }
 
   // ---------- CANAL PRINCIPAL x0..42 z10..22 ----------
@@ -178,8 +178,8 @@ export class AguasLevel {
     const south = CANAL_RAMPS.filter((r) => r.a === 13), north = CANAL_RAMPS.filter((r) => r.a === 19);
     const retain = (z0, z1, ramps) => {
       let cur = 0;
-      for (const r of [...ramps].sort((p, q) => p.minX - q.minX)) { if (r.minX > cur) b.box(cur, -1.6, z0, r.minX, Y, z1, 'concrete', { sight: false, tag: 'retain' }); cur = r.maxX; }
-      if (cur < 42) b.box(cur, -1.6, z0, 42, Y, z1, 'concrete', { sight: false, tag: 'retain' });
+      for (const r of [...ramps].sort((p, q) => p.minX - q.minX)) { if (r.minX > cur) b.sbox(cur, -1.6, z0, r.minX, Y, z1, 'concrete', { sight: false, tag: 'retain' }); cur = r.maxX; }
+      if (cur < 42) b.sbox(cur, -1.6, z0, 42, Y, z1, 'concrete', { sight: false, tag: 'retain' });
     };
     // grossos (1 m, sob a margem): quem está na água é sempre empurrado de volta para o canal, nunca "atravessa" o muro
     retain(12.0, 13.0, south); retain(19.0, 20.0, north);
@@ -190,29 +190,29 @@ export class AguasLevel {
       const n = 5, dz = (r.b - r.a) / n;
       for (let i = 0; i < n; i++) {
         const za = r.a + dz * i, zb = r.a + dz * (i + 1), top = Y + (-1.4 - Y) * ((i + 1) / n);
-        b.box(r.minX, -1.6, Math.min(za, zb), r.maxX, top + 0.05, Math.max(za, zb), 'concrete', { collide: false, tile: 1 });
+        b.sbox(r.minX, -1.6, Math.min(za, zb), r.maxX, top + 0.05, Math.max(za, zb), 'concrete', { collide: false, tile: 1 });
       }
-      b.box(r.minX - 0.06, Y, (r.a + r.b) / 2 - 0.04, r.minX, Y + 1.0, (r.a + r.b) / 2 + 0.04, 'rust', { collide: false });
+      b.sbox(r.minX - 0.06, Y, (r.a + r.b) / 2 - 0.04, r.minX, Y + 1.0, (r.a + r.b) / 2 + 0.04, 'rust', { collide: false });
     }
     // paredes externas do canal: oeste x0, leste x42, sul z10 (boca da passagem em x15), fundo norte z22
-    b.box(-0.2, -1.6, 10, 0, Y + 6, 22, 'brick');
-    b.box(42, -1.6, 10, 42.2, Y + 6, 22, 'brick');
-    b.box(-0.2, Y, 9.8, 13.6, Y + 6, 10, 'brick');
-    b.box(16.4, Y, 9.8, 42.2, Y + 6, 10, 'brick');
-    b.box(13.4, Y + 2.9, 9.8, 16.6, Y + 6, 10, 'brick');
-    for (const w of WATERS) { b.box(w.minX, w.bed - 0.3, w.minZ - 0.01, w.maxX, w.bed, w.minZ, 'slime', { collide: false }); this._water(w); }
+    b.sbox(-0.2, -1.6, 10, 0, Y + 6, 22, 'brick');
+    b.sbox(42, -1.6, 10, 42.2, Y + 6, 22, 'brick');
+    b.sbox(-0.2, Y, 9.8, 13.6, Y + 6, 10, 'brick');
+    b.sbox(16.4, Y, 9.8, 42.2, Y + 6, 10, 'brick');
+    b.sbox(13.4, Y + 2.9, 9.8, 16.6, Y + 6, 10, 'brick');
+    for (const w of WATERS) { b.sbox(w.minX, w.bed - 0.3, w.minZ - 0.01, w.maxX, w.bed, w.minZ, 'slime', { collide: false }); this._water(w); }
     // passarela de tábuas (estreita) e os escombros da margem sul
     b.floor(BRIDGE.minX, BRIDGE.minZ, BRIDGE.maxX, BRIDGE.maxZ, Y, 'woodDark', 'c5_passarelaTabuas');
-    for (let z = BRIDGE.minZ + 0.2; z < BRIDGE.maxZ; z += 0.5) b.box(BRIDGE.minX - 0.05, Y - 0.04, z, BRIDGE.maxX + 0.05, Y + 0.02, z + 0.32, 'wood', { collide: false, tile: 1 });
-    b.box(BRIDGE.minX - 0.1, -1.6, 15.9, BRIDGE.maxX + 0.1, Y - 0.3, 16.1, 'rust', { collide: false }); // cavalete
+    for (let z = BRIDGE.minZ + 0.2; z < BRIDGE.maxZ; z += 0.5) b.sbox(BRIDGE.minX - 0.05, Y - 0.04, z, BRIDGE.maxX + 0.05, Y + 0.02, z + 0.32, 'wood', { collide: false, tile: 1 });
+    b.sbox(BRIDGE.minX - 0.1, -1.6, 15.9, BRIDGE.maxX + 0.1, Y - 0.3, 16.1, 'rust', { collide: false }); // cavalete
     const R = RUBBLE;
-    b.box(R.minX, Y, R.minZ, R.maxX, Y + 2.6, R.maxZ, 'concrete', { tag: 'obstacle' });
-    b.box(R.minX - 0.6, Y, R.minZ + 0.4, R.minX, Y + 1.1, R.maxZ - 0.2, 'brick', { tag: 'prop-low', sight: false });
-    b.box(R.minX + 0.4, Y + 2.6, R.minZ, R.maxX - 0.3, Y + 3.2, R.maxZ - 0.6, 'brick', { collide: false });
+    b.sbox(R.minX, Y, R.minZ, R.maxX, Y + 2.6, R.maxZ, 'concrete', { tag: 'obstacle' });
+    b.sbox(R.minX - 0.6, Y, R.minZ + 0.4, R.minX, Y + 1.1, R.maxZ - 0.2, 'brick', { tag: 'prop-low', sight: false });
+    b.sbox(R.minX + 0.4, Y + 2.6, R.minZ, R.maxX - 0.3, Y + 3.2, R.maxZ - 0.6, 'brick', { collide: false });
     // caixa de ferramentas atrás dos escombros (só se chega pela água)
-    b.box(39.2, Y, 10.3, 40.4, Y + 0.5, 10.9, 'rust', { tag: 'prop-low', sight: false });
+    b.sbox(39.2, Y, 10.3, 40.4, Y + 0.5, 10.9, 'rust', { tag: 'prop-low', sight: false });
     // grade de esgoto na parede oeste e na leste (de onde vem/para onde vai a correnteza)
-    for (const x of [0.02, 41.9]) for (let z = 13.4; z < 19; z += 0.5) b.box(x, -1.4, z, x + 0.08, -0.2, z + 0.06, 'rust', { collide: false });
+    for (const x of [0.02, 41.9]) for (let z = 13.4; z < 19; z += 0.5) b.sbox(x, -1.4, z, x + 0.08, -0.2, z + 0.06, 'rust', { collide: false });
     this.sign('CANAL 3 — CIA. MUNICIPAL DE ÁGUAS', 8, Y + 3.3, 10.12, 0, 3.2, 0.36, { bg: '#1c2a2a', fg: '#b8d0c8' });
     this.sign('CASA DE BOMBAS →', 30, Y + 2.6, 21.88, Math.PI, 2.0, 0.3, { bg: '#2a2416', fg: '#e0c890' });
   }
@@ -224,22 +224,22 @@ export class AguasLevel {
   _north() {
     const b = this.b, H = HUT;
     // fundo norte da margem: casa do comporteiro (porta em x5), parede até a sala do painel
-    b.box(-0.2, Y, 22, 1, Y + 6, 22.2, 'brick');
+    b.sbox(-0.2, Y, 22, 1, Y + 6, 22.2, 'brick');
     b.wallX(22.1, 1, 8, Y, Y + 3, [5], 'wallLower', 1.4, 2.3);
-    b.box(1, Y + 3, 22, 8, Y + 6, 22.2, 'brick', { collide: false });
-    b.box(8, Y, 22, 24, Y + 6, 22.2, 'brick');
+    b.sbox(1, Y + 3, 22, 8, Y + 6, 22.2, 'brick', { collide: false });
+    b.sbox(8, Y, 22, 24, Y + 6, 22.2, 'brick');
     // galeria: teto baixo e pilares entre x20 e x42
     b.ceiling(20, 19, 42, 22, Y + 3.1, 'concrete');
-    for (let x = 22; x < 42; x += 4) if (!CANAL_RAMPS.some((r) => r.a === 19 && x > r.minX - 0.3 && x < r.maxX + 0.3)) b.box(x - 0.15, Y, 19.1, x + 0.15, Y + 3.1, 19.4, 'concrete', { tag: 'prop' });
-    b.box(20, Y + 2.6, 21.7, 42, Y + 2.8, 21.9, 'rust', { collide: false }); // tubulação
+    for (let x = 22; x < 42; x += 4) if (!CANAL_RAMPS.some((r) => r.a === 19 && x > r.minX - 0.3 && x < r.maxX + 0.3)) b.sbox(x - 0.15, Y, 19.1, x + 0.15, Y + 3.1, 19.4, 'concrete', { tag: 'prop' });
+    b.sbox(20, Y + 2.6, 21.7, 42, Y + 2.8, 21.9, 'rust', { collide: false }); // tubulação
     // casa do comporteiro
     b.floor(H.minX, H.minZ, H.maxX, H.maxZ, Y, 'wood', 'c5_comporteiro');
     b.ceiling(H.minX, H.minZ, H.maxX, H.maxZ, Y + 3);
-    b.box(H.minX - 0.2, Y, H.minZ, H.minX, Y + 3, H.maxZ, 'wallLower');
-    b.box(H.maxX, Y, H.minZ, H.maxX + 0.2, Y + 3, H.maxZ, 'wallLower');
-    b.box(H.minX - 0.2, Y, H.maxZ, H.maxX + 0.2, Y + 3, H.maxZ + 0.2, 'wallLower');
-    b.box(1.2, Y, 26.4, 3.2, Y + 0.6, 27.8, 'woodDark', { tag: 'prop-low', sight: false }); // catre
-    b.box(5.6, Y, 26.9, 7.8, Y + 0.9, 27.8, 'woodDark', { tag: 'prop-low', sight: false }); // bancada
+    b.sbox(H.minX - 0.2, Y, H.minZ, H.minX, Y + 3, H.maxZ, 'wallLower');
+    b.sbox(H.maxX, Y, H.minZ, H.maxX + 0.2, Y + 3, H.maxZ, 'wallLower');
+    b.sbox(H.minX - 0.2, Y, H.maxZ, H.maxX + 0.2, Y + 3, H.maxZ + 0.2, 'wallLower');
+    b.sbox(1.2, Y, 26.4, 3.2, Y + 0.6, 27.8, 'woodDark', { tag: 'prop-low', sight: false }); // catre
+    b.sbox(5.6, Y, 26.9, 7.8, Y + 0.9, 27.8, 'woodDark', { tag: 'prop-low', sight: false }); // bancada
     this.fuseBox = b.box(7.7, Y + 1.0, 24.2, 7.98, Y + 1.6, 25.2, 'metal', { collide: false }); // caixa de reserva
   }
 
@@ -248,11 +248,11 @@ export class AguasLevel {
     const b = this.b, P = PANEL, A = ANTE;
     b.floor(P.minX, P.minZ, A.maxX, A.maxZ, Y, 'tile', 'c5_casaBombas');
     b.ceiling(P.minX, P.minZ, A.maxX, A.maxZ, Y + 3.2);
-    b.box(24, Y + 3, 22, 42.2, Y + 6, 22.2, 'brick', { collide: false });
-    b.box(P.minX - 0.2, Y, P.minZ, P.minX, Y + 3.2, P.maxZ, 'wallLower');
+    b.sbox(24, Y + 3, 22, 42.2, Y + 6, 22.2, 'brick', { collide: false });
+    b.sbox(P.minX - 0.2, Y, P.minZ, P.minX, Y + 3.2, P.maxZ, 'wallLower');
     b.wallX(22.1, 24, 42, Y, Y + 3.2, [36], 'wallLower', 1.4, 2.3);
     b.wallZ(30, 22.2, 28, Y, Y + 3.2, [25], 'wallLower', 1.4, 2.3);
-    b.box(A.maxX, Y, 22, A.maxX + 0.2, Y + 3.2, 28, 'wallLower');
+    b.sbox(A.maxX, Y, 22, A.maxX + 0.2, Y + 3.2, 28, 'wallLower');
     // parede z28 (portão de aço do salão em x36)
     b.wallX(28, 24, 46.2, Y, Y + 3.2, [36], 'concrete', 2.0, 2.8);
     // painel elétrico na parede oeste da sala do painel
@@ -270,9 +270,9 @@ export class AguasLevel {
     b.col.addBox(24, Y, 23.8, 24.3, Y + 2.05, 26.2, { tag: 'prop', blocksSight: true });
     this.sign('BOMBA 1 · BOMBA 2 · COMPORTA', 24.32, Y + 2.25, 25, Math.PI / 2, 2.2, 0.22, { bg: '#2a1a14', fg: '#e0b090' });
     // antecâmara: armários, prancheta e banco
-    b.box(41.4, Y, 22.4, 42, Y + 2.0, 24.6, 'metal', { tag: 'prop' });
-    b.box(39.9, Y, 26.2, 41.4, Y + 0.85, 27.8, 'woodDark', { tag: 'prop-low', sight: false });
-    b.box(31, Y, 26.8, 33.4, Y + 0.45, 27.6, 'wood', { tag: 'prop-low', sight: false });
+    b.sbox(41.4, Y, 22.4, 42, Y + 2.0, 24.6, 'metal', { tag: 'prop' });
+    b.sbox(39.9, Y, 26.2, 41.4, Y + 0.85, 27.8, 'woodDark', { tag: 'prop-low', sight: false });
+    b.sbox(31, Y, 26.8, 33.4, Y + 0.45, 27.6, 'wood', { tag: 'prop-low', sight: false });
     this.sign('SALÃO DAS BOMBAS', 36, Y + 3.0, 27.88, Math.PI, 1.8, 0.26, { bg: '#1e2420', fg: '#c8d8c0' });
   }
 
@@ -281,24 +281,24 @@ export class AguasLevel {
     const b = this.b, H = HALL, U = UPPER;
     b.floor(H.minX, H.minZ, H.maxX, H.maxZ, Y, 'concrete', 'c5_bombas');
     b.ceiling(H.minX, H.minZ, H.maxX, H.maxZ, Y + 9);
-    b.box(H.minX - 0.2, Y, H.minZ, H.minX, Y + 9, H.maxZ, 'brick');
-    b.box(H.maxX, Y, H.minZ, H.maxX + 0.2, Y + 9, H.maxZ, 'brick');
-    b.box(24, Y + 3.2, 27.9, 46.2, Y + 9, 28.1, 'brick');
+    b.sbox(H.minX - 0.2, Y, H.minZ, H.minX, Y + 9, H.maxZ, 'brick');
+    b.sbox(H.maxX, Y, H.minZ, H.maxX + 0.2, Y + 9, H.maxZ, 'brick');
+    b.sbox(24, Y + 3.2, 27.9, 46.2, Y + 9, 28.1, 'brick');
     // parede norte: arco baixo (x37) para a rampa do reservatório; porta da passarela em cima (x29.3)
     b.wallX(46, 26, 46, Y, U, [37], 'brick', 1.8, 2.6);
     b.wallX(46, 26, 46, U, Y + 9, [29.3], 'brick', 1.4, 2.3);
     // três bombas centrífugas e os tubos
     for (const [x, z] of [[31, 34], [36, 36], [41, 34]]) {
-      b.box(x - 1.1, Y, z - 1.6, x + 1.1, Y + 1.8, z + 1.6, 'steelDark', { tag: 'obstacle', cast: true });
+      b.sbox(x - 1.1, Y, z - 1.6, x + 1.1, Y + 1.8, z + 1.6, 'steelDark', { tag: 'obstacle', cast: true });
       const m = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 1.2, 12), this.M.steel || this.M.metal); m.rotation.x = Math.PI / 2; m.position.set(x, Y + 2.4, z); b.group.add(m);
-      b.box(x - 0.25, Y + 2.4, z + 1.6, x + 0.25, Y + 2.9, 46, 'rust', { collide: false });
+      b.sbox(x - 0.25, Y + 2.4, z + 1.6, x + 0.25, Y + 2.9, 46, 'rust', { collide: false });
     }
     // mezanino
     b.floor(H.minX, 40, H.maxX, H.maxZ, U, 'metal', 'c5_mezanino');
-    for (const x of [27, 33, 39]) b.box(x - 0.12, Y, 39.9, x + 0.12, U - 0.3, 40.2, 'steelDark', { tag: 'prop' });
-    b.box(H.minX, U, 39.9, STAIR.minX, U + 1.05, 40.0, 'rust', { sight: false });
-    b.box(STAIR.maxX, U, 39.9, H.maxX, U + 1.05, 40.0, 'rust', { sight: false });
-    b.box(STAIR.minX - 0.1, U, 40, STAIR.minX, U + 1.05, 41.2, 'rust', { sight: false });
+    for (const x of [27, 33, 39]) b.sbox(x - 0.12, Y, 39.9, x + 0.12, U - 0.3, 40.2, 'steelDark', { tag: 'prop' });
+    b.sbox(H.minX, U, 39.9, STAIR.minX, U + 1.05, 40.0, 'rust', { sight: false });
+    b.sbox(STAIR.maxX, U, 39.9, H.maxX, U + 1.05, 40.0, 'rust', { sight: false });
+    b.sbox(STAIR.minX - 0.1, U, 40, STAIR.minX, U + 1.05, 41.2, 'rust', { sight: false });
     // escada retrátil (sobe recolhida até a energia voltar)
     this.stairGroup = new THREE.Group(); b.group.add(this.stairGroup);
     const n = 12, dz = (STAIR.zTop - STAIR.zBottom) / n;
@@ -322,20 +322,20 @@ export class AguasLevel {
   // ---------- RESERVATÓRIO x26..40 z46..60 (água) + passarela em y 4.5 ----------
   _reservoir() {
     const b = this.b, U = UPPER, C = CATWALK;
-    b.box(25.8, -1.6, 46, 26, Y + 9, 60, 'brick');
-    b.box(40, -1.6, 46, 40.2, Y + 9, 60, 'brick');
+    b.sbox(25.8, -1.6, 46, 26, Y + 9, 60, 'brick');
+    b.sbox(40, -1.6, 46, 40.2, Y + 9, 60, 'brick');
     b.ceiling(26, 46, 40, 60, Y + 9);
     // rampa do arco baixo (x36..38), de volta ao salão: quem cai da passarela sai por aqui
-    b.box(26, -1.6, 46, 36, Y, 46.1, 'concrete', { sight: false });
-    b.box(38, -1.6, 46, 40, Y, 46.1, 'concrete', { sight: false });
+    b.sbox(26, -1.6, 46, 36, Y, 46.1, 'concrete', { sight: false });
+    b.sbox(38, -1.6, 46, 40, Y, 46.1, 'concrete', { sight: false });
     this.game.col.addFloor({ minX: 36, maxX: 38, minZ: 46, maxZ: 49.5, ramp: { axis: 'z', a: 46, b: 49.5, ya: Y, yb: -1.2 }, name: 'rampa_reservatorio' });
-    for (let i = 0; i < 6; i++) b.box(36, -1.5, 46 + i * 0.58, 38, Y - 1.2 * (i + 1) / 6 + 0.05, 46.58 + i * 0.58, 'concrete', { collide: false, tile: 1 });
+    for (let i = 0; i < 6; i++) b.sbox(36, -1.5, 46 + i * 0.58, 38, Y - 1.2 * (i + 1) / 6 + 0.05, 46.58 + i * 0.58, 'concrete', { collide: false, tile: 1 });
     // passarela
     b.floor(C.minX, C.minZ, C.maxX, C.maxZ, U, 'metal', 'c5_passarela');
-    b.box(C.minX - 0.08, U, C.minZ, C.minX, U + 1.05, C.maxZ, 'rust', { sight: false });
-    b.box(C.maxX, U, C.minZ, C.maxX + 0.08, U + 1.05, 50, 'rust', { sight: false });
-    b.box(C.maxX, U, 55.4, C.maxX + 0.08, U + 1.05, C.maxZ, 'rust', { sight: false });
-    for (const z of [48, 52, 56]) b.box(C.minX + 0.4, -1.2, z - 0.12, C.maxX - 0.4, U - 0.3, z + 0.12, 'steelDark', { sight: false });
+    b.sbox(C.minX - 0.08, U, C.minZ, C.minX, U + 1.05, C.maxZ, 'rust', { sight: false });
+    b.sbox(C.maxX, U, C.minZ, C.maxX + 0.08, U + 1.05, 50, 'rust', { sight: false });
+    b.sbox(C.maxX, U, 55.4, C.maxX + 0.08, U + 1.05, C.maxZ, 'rust', { sight: false });
+    for (const z of [48, 52, 56]) b.sbox(C.minX + 0.4, -1.2, z - 0.12, C.maxX - 0.4, U - 0.3, z + 0.12, 'steelDark', { sight: false });
     // corrimão quebrado: um pedaço pendurado na água
     const br = b.box(C.maxX, U - 1.6, 50.2, C.maxX + 0.06, U - 0.2, 50.3, 'rust', { collide: false }); br.rotation.x = 0.4; br.updateMatrix();
     // volante da válvula da comporta
@@ -344,9 +344,9 @@ export class AguasLevel {
     for (let i = 0; i < 3; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.03, 0.03), this.M.rust); s.rotation.z = i * Math.PI / 3; vg.add(s); }
     vg.rotation.y = Math.PI / 2; vg.position.set(VALVE.x + 0.08, VALVE.y, VALVE.z); b.group.add(vg);
     this.valveWheel = vg;
-    b.box(C.maxX, U, VALVE.z - 0.1, C.maxX + 0.25, VALVE.y, VALVE.z + 0.1, 'steelDark', { collide: false });
+    b.sbox(C.maxX, U, VALVE.z - 0.1, C.maxX + 0.25, VALVE.y, VALVE.z + 0.1, 'steelDark', { collide: false });
     // parede sul (z60) com a comporta da passarela
-    b.box(26, -1.6, 59.9, 40, U, 60.1, 'brick');
+    b.sbox(26, -1.6, 59.9, 40, U, 60.1, 'brick');
     b.wallX(60, 26, 40, U, Y + 9, [29.3], 'brick', 1.4, 2.5);
     this.sluice = b.box(28.6, U, 59.85, 30, U + 2.5, 60.15, 'steelDark', { tag: 'door' });
     this.sluiceY0 = this.sluice.position.y;
@@ -359,15 +359,15 @@ export class AguasLevel {
     const b = this.b, T = TURBINES, U = UPPER;
     b.floor(T.minX, T.minZ, T.maxX, T.maxZ, U, 'tile', 'c5_turbinas');
     b.ceiling(T.minX, T.minZ, T.maxX, T.maxZ, U + 4);
-    b.box(T.minX - 0.2, U - 0.5, T.minZ, T.minX, U + 4, T.maxZ, 'wallLower');
-    b.box(T.maxX, U - 0.5, T.minZ, T.maxX + 0.2, U + 4, T.maxZ, 'wallLower');
+    b.sbox(T.minX - 0.2, U - 0.5, T.minZ, T.minX, U + 4, T.maxZ, 'wallLower');
+    b.sbox(T.maxX, U - 0.5, T.minZ, T.maxX + 0.2, U + 4, T.maxZ, 'wallLower');
     b.wallX(68, 26, 40, U, U + 4, [33], 'concrete', 2.2, 3.0);
-    b.box(26, U - 0.6, 60, 40, U - 0.3, 68, 'concrete', { collide: false });
+    b.sbox(26, U - 0.6, 60, 40, U - 0.3, 68, 'concrete', { collide: false });
     // cofre das turbinas (bancada), manômetros e o grande portão
-    b.box(36.6, U, 66.4, 39.8, U + 0.95, 67.8, 'steelDark', { tag: 'prop-low', sight: false });
+    b.sbox(36.6, U, 66.4, 39.8, U + 0.95, 67.8, 'steelDark', { tag: 'prop-low', sight: false });
     for (const x of [27.4, 39]) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 10), this.M.paper); m.rotation.x = Math.PI / 2; m.position.set(x, U + 2.2, 67.85); b.group.add(m); }
     // poço de inspeção: grade sobre a água das turbinas
-    for (let x = 31; x < 35; x += 0.3) b.box(x, U - 0.02, 63, x + 0.06, U + 0.01, 65, 'rust', { collide: false });
+    for (let x = 31; x < 35; x += 0.3) b.sbox(x, U - 0.02, 63, x + 0.06, U + 0.01, 65, 'rust', { collide: false });
     this.sign('TURBINAS — ACESSO RESTRITO', 33, U + 3.3, 67.88, Math.PI, 2.6, 0.3, { bg: '#2a1010', fg: '#e8c0a0' });
   }
 
@@ -381,41 +381,41 @@ export class AguasLevel {
     b.floor(P.maxX, P.minZ, A.maxX, P.maxZ, U, 'concrete', 'c5_arenaLeste');
     b.ceiling(A.minX, A.minZ, A.maxX, A.maxZ, H, 'concrete');
     // paredes externas
-    b.box(A.minX - 0.2, P.bed - 0.4, A.minZ, A.minX, H, A.maxZ, 'brick');
-    b.box(A.maxX, P.bed - 0.4, A.minZ, A.maxX + 0.2, H, A.maxZ, 'brick');
-    b.box(A.minX, U - 0.5, 67.85, 26, H, 68.15, 'brick');
-    b.box(40, U - 0.5, 67.85, A.maxX, H, 68.15, 'brick');
-    b.box(26, U + 4, 67.85, 40, H, 68.15, 'brick', { sight: false });
+    b.sbox(A.minX - 0.2, P.bed - 0.4, A.minZ, A.minX, H, A.maxZ, 'brick');
+    b.sbox(A.maxX, P.bed - 0.4, A.minZ, A.maxX + 0.2, H, A.maxZ, 'brick');
+    b.sbox(A.minX, U - 0.5, 67.85, 26, H, 68.15, 'brick');
+    b.sbox(40, U - 0.5, 67.85, A.maxX, H, 68.15, 'brick');
+    b.sbox(26, U + 4, 67.85, 40, H, 68.15, 'brick', { sight: false });
     b.wallX(A.maxZ, A.minX, A.maxX, U, H, [33], 'concrete', 1.8, 2.6);
     // muros de arrimo do poço (topo nas margens): só seguram quem está dentro d'água; vãos nas rampas
     const R = { sight: false, tag: 'retain' }, y0 = P.bed - 0.3;
-    b.box(P.minX - 1, y0, P.minZ - 1, POOL_RAMPS[0].minX, U, P.minZ, 'concrete', R);
-    b.box(POOL_RAMPS[0].maxX, y0, P.minZ - 1, P.maxX + 1, U, P.minZ, 'concrete', R);
-    b.box(P.minX - 1, y0, P.maxZ, POOL_RAMPS[1].minX, U, P.maxZ + 1, 'concrete', R);
-    b.box(POOL_RAMPS[1].maxX, y0, P.maxZ, P.maxX + 1, U, P.maxZ + 1, 'concrete', R);
-    b.box(P.minX - 1, y0, P.minZ, P.minX, U, P.maxZ, 'concrete', R);
-    b.box(P.maxX, y0, P.minZ, P.maxX + 1, U, P.maxZ, 'concrete', R);
+    b.sbox(P.minX - 1, y0, P.minZ - 1, POOL_RAMPS[0].minX, U, P.minZ, 'concrete', R);
+    b.sbox(POOL_RAMPS[0].maxX, y0, P.minZ - 1, P.maxX + 1, U, P.minZ, 'concrete', R);
+    b.sbox(P.minX - 1, y0, P.maxZ, POOL_RAMPS[1].minX, U, P.maxZ + 1, 'concrete', R);
+    b.sbox(POOL_RAMPS[1].maxX, y0, P.maxZ, P.maxX + 1, U, P.maxZ + 1, 'concrete', R);
+    b.sbox(P.minX - 1, y0, P.minZ, P.minX, U, P.maxZ, 'concrete', R);
+    b.sbox(P.maxX, y0, P.minZ, P.maxX + 1, U, P.maxZ, 'concrete', R);
     for (const r of POOL_RAMPS) {
       const f = this.game.col.addFloor({ minX: r.minX, maxX: r.maxX, minZ: Math.min(r.a, r.b), maxZ: Math.max(r.a, r.b), ramp: { axis: 'z', a: r.a, b: r.b, ya: U, yb: P.bed } });
       f.name = 'rampa_' + r.id;
       const n = 5, dz = (r.b - r.a) / n;
       for (let i = 0; i < n; i++) {
         const za = r.a + dz * i, zb = r.a + dz * (i + 1), top = U + (P.bed - U) * ((i + 1) / n);
-        b.box(r.minX, y0, Math.min(za, zb), r.maxX, top + 0.05, Math.max(za, zb), 'concrete', { collide: false, tile: 1 });
+        b.sbox(r.minX, y0, Math.min(za, zb), r.maxX, top + 0.05, Math.max(za, zb), 'concrete', { collide: false, tile: 1 });
       }
     }
     // turbina: carcaça de aço (obstáculo: a investida para nela), rotor exposto e a grade da tomada d'água
     const T = TURBINE_HOUSING;
-    b.box(T.minX, U, T.minZ, T.maxX, U + 1.4, T.maxZ, 'steelDark', { tag: 'obstacle' });
+    b.sbox(T.minX, U, T.minZ, T.maxX, U + 1.4, T.maxZ, 'steelDark', { tag: 'obstacle' });
     const drum = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, T.maxX - T.minX - 0.4, 14), this.M.rust);
     drum.rotation.z = Math.PI / 2; drum.position.set((T.minX + T.maxX) / 2, U + 1.9, (T.minZ + T.maxZ) / 2); b.group.add(drum);
     this.rotor = new THREE.Group(); this.rotor.position.set(INTAKE.x, P.bed + 0.75, P.maxZ + 0.3); b.group.add(this.rotor);
     for (let i = 0; i < 6; i++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.05), this.M.metal || this.M.rust); bl.position.y = 0.32; const g = new THREE.Group(); g.rotation.z = i * Math.PI / 3; g.add(bl); this.rotor.add(g); }
-    for (let x = 31; x <= 35; x += 0.35) b.box(x, P.bed, P.maxZ - 0.06, x + 0.06, U - 0.05, P.maxZ - 0.01, 'rust', { collide: false });
-    b.box(31, U - 0.12, P.maxZ - 0.08, 35.06, U - 0.04, P.maxZ, 'rust', { collide: false });
+    for (let x = 31; x <= 35; x += 0.35) b.sbox(x, P.bed, P.maxZ - 0.06, x + 0.06, U - 0.05, P.maxZ - 0.01, 'rust', { collide: false });
+    b.sbox(31, U - 0.12, P.maxZ - 0.08, 35.06, U - 0.04, P.maxZ, 'rust', { collide: false });
     // alavanca da turbina (no posto de comando, à direita da carcaça)
     const L = TURBINE_LEVER;
-    b.box(L.x - 0.3, U, L.z - 0.4, L.x + 0.1, U + 1.0, L.z + 0.4, 'steelDark', { tag: 'prop-low', sight: false });
+    b.sbox(L.x - 0.3, U, L.z - 0.4, L.x + 0.1, U + 1.0, L.z + 0.4, 'steelDark', { tag: 'prop-low', sight: false });
     this.turbineLever = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.6, 0.06), this.M.rust);
     this.turbineLever.geometry.translate(0, 0.3, 0); this.turbineLever.position.set(L.x - 0.1, U + 1.0, L.z); this.turbineLever.rotation.x = 0.6; b.group.add(this.turbineLever);
     this.turbineLamp = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x40ff60 })); this.turbineLamp.position.set(L.x - 0.1, U + 1.05, L.z - 0.3); b.group.add(this.turbineLamp);
@@ -424,11 +424,11 @@ export class AguasLevel {
     this.drainWheel = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.04, 5, 12), this.M.rust);
     this.drainWheel.rotation.y = Math.PI / 2; this.drainWheel.position.set(V.x + 0.12, V.y, V.z); b.group.add(this.drainWheel);
     for (const a of [0, Math.PI / 2]) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.66, 0.03), this.M.rust); sp.rotation.x = a; this.drainWheel.add(sp); }
-    b.box(A.minX, P.bed, V.z - 0.12, A.minX + 0.2, V.y - 0.2, V.z + 0.12, 'rust', { collide: false });
-    b.box(P.minX + 0.02, P.bed + 0.01, 77.4, P.minX + 1.0, P.bed + 0.05, 78.6, 'rust', { collide: false }); // ralo no fundo
+    b.sbox(A.minX, P.bed, V.z - 0.12, A.minX + 0.2, V.y - 0.2, V.z + 0.12, 'rust', { collide: false });
+    b.sbox(P.minX + 0.02, P.bed + 0.01, 77.4, P.minX + 1.0, P.bed + 0.05, 78.6, 'rust', { collide: false }); // ralo no fundo
     // grades de contenção
     for (const G of GRATES) {
-      b.box(G.minX, U, G.minZ, G.maxX, U + 2.2, G.maxZ, 'rust', { tag: 'obstacle', sight: false });
+      b.sbox(G.minX, U, G.minZ, G.maxX, U + 2.2, G.maxZ, 'rust', { tag: 'obstacle', sight: false });
     }
     this.sign('TURBINA 1 — CIA. MUNICIPAL DE ÁGUAS', 33, U + 3.6, 89.85, Math.PI, 3.4, 0.34, { bg: '#1c2a2a', fg: '#b8d0c8' });
     this.sign('RALO DE DRENAGEM', 24.03, U + 1.7, 78, Math.PI / 2, 1.6, 0.24, { bg: '#2a1a14', fg: '#e0b090' });
@@ -436,11 +436,11 @@ export class AguasLevel {
     const D = DISCHARGE;
     b.floor(D.minX, D.minZ, D.maxX, D.maxZ, U, 'concrete', 'c5_descarga');
     b.ceiling(D.minX, D.minZ, D.maxX, D.maxZ, U + 3);
-    b.box(D.minX - 0.2, U - 0.5, D.minZ, D.minX, U + 3, D.maxZ, 'brick');
-    b.box(D.maxX, U - 0.5, D.minZ, D.maxX + 0.2, U + 3, D.maxZ, 'brick');
-    b.box(D.minX - 0.2, U - 0.5, D.maxZ, D.maxX + 0.2, U + 3, D.maxZ + 0.2, 'brick');
-    for (let x = D.minX + 0.3; x < D.maxX - 0.2; x += 0.3) b.box(x, U, D.maxZ - 0.15, x + 0.05, U + 2.6, D.maxZ - 0.1, 'rust', { collide: false });
-    b.box(33.6, U, 95.5, 34.38, U + 0.7, 96.3, 'woodDark', { tag: 'prop-low', sight: false }); // caixote da remessa
+    b.sbox(D.minX - 0.2, U - 0.5, D.minZ, D.minX, U + 3, D.maxZ, 'brick');
+    b.sbox(D.maxX, U - 0.5, D.minZ, D.maxX + 0.2, U + 3, D.maxZ, 'brick');
+    b.sbox(D.minX - 0.2, U - 0.5, D.maxZ, D.maxX + 0.2, U + 3, D.maxZ + 0.2, 'brick');
+    for (let x = D.minX + 0.3; x < D.maxX - 0.2; x += 0.3) b.sbox(x, U, D.maxZ - 0.15, x + 0.05, U + 2.6, D.maxZ - 0.1, 'rust', { collide: false });
+    b.sbox(33.6, U, 95.5, 34.38, U + 0.7, 96.3, 'woodDark', { tag: 'prop-low', sight: false }); // caixote da remessa
     this.sign('DESCARGA — RIO DAS CINZAS', 33, U + 2.6, 90.15, 0, 2.4, 0.3, { bg: '#1c1c14', fg: '#d8c890' });
   }
 

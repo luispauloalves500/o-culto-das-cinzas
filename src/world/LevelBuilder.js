@@ -17,6 +17,8 @@ export function worldUV(geo, w, h, d, tile = 2) {
   return geo;
 }
 
+const B = { batch: true };
+
 export class LevelBuilder {
   constructor(scene, col, materials) {
     this.col = col;
@@ -35,11 +37,20 @@ export class LevelBuilder {
     m.castShadow = !!opts.cast;
     m.receiveShadow = opts.receive !== false;
     m.matrixAutoUpdate = false; m.updateMatrix();
+    // peças de estrutura (paredes/pisos/tetos/escadas) nunca são referenciadas depois: o Perf (pt48u) as funde
+    // em malhas por material/célula. box() avulso devolve a malha a quem chamou, então não entra.
+    if (opts.batch) m.userData.batchable = true;
     (opts.parent || this.group).add(m);
     if (opts.collide !== false) {
       m.userData.collider = this.col.addBox(minX, minY, minZ, maxX, maxY, maxZ, { tag: opts.tag || 'wall', blocksSight: opts.sight !== false, ref: m });
     }
     return m;
+  }
+
+  /** box() cujo retorno ninguém guarda (peça de cenário estática): entra no agrupamento do Perf (pt48u), salvo se
+   *  pendurada num grupo próprio (que pode se mover/sumir). Mesma geometria, material e colisão de box(). */
+  sbox(minX, minY, minZ, maxX, maxY, maxZ, mat, opts = {}) {
+    return this.box(minX, minY, minZ, maxX, maxY, maxZ, mat, opts.parent ? opts : { ...opts, batch: true });
   }
 
   /** parede ao longo de X (z fixo) com vãos centrados em gaps[] */
@@ -48,11 +59,11 @@ export class LevelBuilder {
     let cur = x1;
     for (const g of [...gaps].sort((a, b) => a - b)) {
       const a = g - gapW / 2, b = g + gapW / 2;
-      if (a > cur) this.box(cur, y0, z - t, a, y1, z + t, mat);
-      if (y0 + gapH < y1) this.box(a, y0 + gapH, z - t, b, y1, z + t, mat);
+      if (a > cur) this.box(cur, y0, z - t, a, y1, z + t, mat, B);
+      if (y0 + gapH < y1) this.box(a, y0 + gapH, z - t, b, y1, z + t, mat, B);
       cur = b;
     }
-    if (x2 > cur) this.box(cur, y0, z - t, x2, y1, z + t, mat);
+    if (x2 > cur) this.box(cur, y0, z - t, x2, y1, z + t, mat, B);
   }
   /** parede ao longo de Z (x fixo) */
   wallZ(x, z1, z2, y0, y1, gaps = [], mat = 'wall', gapW = 1.4, gapH = 2.3) {
@@ -60,20 +71,20 @@ export class LevelBuilder {
     let cur = z1;
     for (const g of [...gaps].sort((a, b) => a - b)) {
       const a = g - gapW / 2, b = g + gapW / 2;
-      if (a > cur) this.box(x - t, y0, cur, x + t, y1, a, mat);
-      if (y0 + gapH < y1) this.box(x - t, y0 + gapH, a, x + t, y1, b, mat);
+      if (a > cur) this.box(x - t, y0, cur, x + t, y1, a, mat, B);
+      if (y0 + gapH < y1) this.box(x - t, y0 + gapH, a, x + t, y1, b, mat, B);
       cur = b;
     }
-    if (z2 > cur) this.box(x - t, y0, cur, x + t, y1, z2, mat);
+    if (z2 > cur) this.box(x - t, y0, cur, x + t, y1, z2, mat, B);
   }
 
   floor(minX, minZ, maxX, maxZ, y, mat = 'tile', name = '') {
-    this.box(minX, y - 0.3, minZ, maxX, y, maxZ, mat, { collide: false, tile: 2 });
+    this.box(minX, y - 0.3, minZ, maxX, y, maxZ, mat, { collide: false, tile: 2, batch: true });
     return this.col.addFloor({ minX, maxX, minZ, maxZ, y, name });
   }
   ceiling(minX, minZ, maxX, maxZ, y, mat = 'ceiling') {
     // colisor de teto só para a câmera (não intercepta cápsulas, que ficam abaixo dele)
-    this.box(minX, y, minZ, maxX, y + 0.25, maxZ, mat, { tag: 'ceiling', receive: false, tile: 2 });
+    this.box(minX, y, minZ, maxX, y + 0.25, maxZ, mat, { tag: 'ceiling', receive: false, tile: 2, batch: true });
   }
 
   /** Escada visual (degraus) + rampa de colisão suave ao longo de Z. */
@@ -82,7 +93,7 @@ export class LevelBuilder {
     for (let i = 0; i < steps; i++) {
       const z0 = zBottom - dz * (i + 1), z1 = zBottom - dz * i;
       const top = yBottom + dy * (i + 1);
-      this.box(minX, yBottom - 0.3, Math.min(z0, z1), maxX, top, Math.max(z0, z1), mat, { collide: false, tile: 1 });
+      this.box(minX, yBottom - 0.3, Math.min(z0, z1), maxX, top, Math.max(z0, z1), mat, { collide: false, tile: 1, batch: true });
     }
     return this.col.addFloor({ minX, maxX, minZ: Math.min(zTop, zBottom), maxZ: Math.max(zTop, zBottom), ramp: { axis: 'z', a: zTop, b: zBottom, ya: yTop, yb: yBottom } });
   }
