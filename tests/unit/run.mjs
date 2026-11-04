@@ -1593,11 +1593,14 @@ test('Desempenho: esqueleto congelado mantém a pose e segue a raiz', () => {
 });
 
 const glbJson = (path) => { const f = readFileSync(path), cl = f.readUInt32LE(12); return { magic: f.readUInt32LE(0), size: f.length, json: JSON.parse(f.subarray(20, 20 + cl).toString()) }; };
-test('Modelos de inimigo: enfermeiro=Hornbeard (Draco local), interno=infectado (pele + Walking/Running), caminhos relativos e manifesto', () => {
-  assert.equal(ENEMY_MODELS.enfermeiro.url, './models/hornbeard.glb');
+test('Modelos de inimigo: enfermeiro e interno=infectado com pele + Walking/Running, Hornbeard legado (Draco local), caminhos relativos e manifesto', () => {
+  assert.equal(ENEMY_MODELS.enfermeiro.url, './models/enfermeiro.glb');
+  const en = glbJson('public/models/enfermeiro.glb');
+  assert.equal(en.json.skins.length, 1); assert.deepEqual(en.json.animations.map((a) => a.name).sort(), ['Running', 'Walking']);
+  assert.ok(en.size < 3e6 && en.json.images.every((im) => im.mimeType === 'image/jpeg'), 'enfermeiro otimizado');
   assert.equal(ENEMY_MODELS.interno.url, './models/infectado.glb');
   const man = JSON.parse(readFileSync('assets-src/manifest.json', 'utf8'));
-  for (const f of ['hornbeard.glb', 'infectado.glb']) assert.ok(man.assets.some((a) => a.out === 'public/models/' + f), 'manifesto ' + f);
+  for (const f of ['enfermeiro.glb', 'hornbeard.glb', 'infectado.glb']) assert.ok(man.assets.some((a) => a.out === 'public/models/' + f), 'manifesto ' + f);
   const h = glbJson('public/models/hornbeard.glb'), i = glbJson('public/models/infectado.glb');
   assert.equal(h.magic, 0x46546C67); assert.equal(i.magic, 0x46546C67);
   assert.ok(h.json.extensionsUsed.includes('KHR_draco_mesh_compression'));

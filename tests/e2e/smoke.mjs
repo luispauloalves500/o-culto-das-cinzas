@@ -132,8 +132,8 @@ try {
   }).catch((e) => ({ err: String(e) }));
   check('Inimigos GLB: interno do Cap.1 com o infectado (pele + clipe Walking animando os ossos) e procedural escondido; IA/hitboxes iguais',
     eglb.kinds?.interno?.n > 0 && eglb.kinds.interno.glb === eglb.kinds.interno.n && eglb.kinds.interno.hiddenOk === eglb.kinds.interno.n && eglb.kinds.interno.mixer === eglb.kinds.interno.n && eglb.clip === 'Walking' && eglb.boneMoved && eglb.vol, JSON.stringify(eglb));
-  check('Inimigos GLB: enfermeiro com o Hornbeard (Draco local), preso ao corpo do rig e na altura do arquétipo',
-    eglb.kinds?.enfermeiro?.n > 0 && eglb.kinds.enfermeiro.glb === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.inBody === eglb.kinds.enfermeiro.n && Math.abs(eglb.kinds.enfermeiro.height - 1.95) < 0.15, JSON.stringify(eglb));
+  check('Inimigos GLB: enfermeiro com o modelo Mixamo (pele + Walking/Running), preso ao corpo do rig e na altura do arquétipo',
+    eglb.kinds?.enfermeiro?.n > 0 && eglb.kinds.enfermeiro.glb === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.inBody === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.mixer === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.hiddenOk === eglb.kinds.enfermeiro.n && Math.abs(eglb.kinds.enfermeiro.height - 1.95) < 0.15, JSON.stringify(eglb));
   // pt48u: otimizações que não mexem nas texturas
   const perf = await page.evaluate(() => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
