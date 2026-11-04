@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { ENEMIES } from '../data/enemies.js';
 import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from '../gameplay/ProceduralRig.js';
 import { freezeRig } from '../render/Perf.js';
+import { attachEnemyModel, updateEnemyModel } from '../models/EnemyModels.js';
 
 const tmp = new THREE.Vector3();
 const angDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -159,6 +160,8 @@ export class Enemy {
     if (this.submerged) this.rig.root.position.y -= 1.7;
     this.rig.root.rotation.y = this.yaw;
     this.game.scene.add(this.rig.root);
+    // pt50u: enfermeiro (Hornbeard) e interno (infectado) ganham o modelo GLB; falhou → fica o procedural
+    this.glbReady = attachEnemyModel(this);
   }
 
   /** Afogado: quão "molhado" está o terreno (0 seco … 1 água/margem), informado pelo nível */
@@ -542,6 +545,7 @@ export class Enemy {
 
   // ---- animação procedural ----
   _animate(dt, speed) {
+    updateEnemyModel(this, dt, speed);
     const r = this.rig;
     resetPose(r);
     const t = this.stateT;
