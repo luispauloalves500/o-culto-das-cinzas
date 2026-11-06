@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
+import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
 import { buildTower, towerLights, towerNav, updateTower, TOWER_ZONES, TOWER_CHECKPOINTS } from './UsinaTower.js';
 
@@ -101,6 +102,7 @@ export class UsinaLevel {
     this.M = game.materials;
     this.b = new LevelBuilder(game.scene, game.col, game.materials);
     this.doors = {};
+    this.cabinets = {};
     this.lights = { power: [], emergency: [], flicker: [], all: [] };
     this.pickupMeshes = {};
     this.zone = null;
@@ -373,7 +375,7 @@ export class UsinaLevel {
     b.wallZ(O.minX, O.minZ, O.maxZ, Y, Y + 3.4, [], 'brick');
     b.wallZ(O.maxX, O.minZ, O.maxZ, Y, Y + 3.4, [33.2], 'brick', 1.4, 2.4);
     b.sbox(Wb.minX, Y, Wb.minZ, Wb.maxX, Y + 0.9, Wb.maxZ, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(-21.8, Y, 28.3, -20.6, Y + 1.9, 29.0, 'steelDark', { tag: 'prop-low' });                 // armário
+    placeCabinet(this, { id: 'usina_oficina', minX: -21.8, minY: Y, minZ: 28.3, maxX: -20.6, maxY: Y + 1.9, maxZ: 29.0, face: '+z', label: 'armário' });
     b.sbox(-16.2, Y, 28.3, -14.4, Y + 0.8, 29.6, 'rust', { tag: 'prop-low', sight: false });         // torno
     for (let i = 0; i < 5; i++) b.sbox(-21.9, Y + 1.3 + i * 0.05, 31 + i * 0.9, -21.85, Y + 1.7, 31.5 + i * 0.9, 'rust', { collide: false });
     this.sign('OFICINA DE MANUTENÇÃO', -18, Y + 2.7, O.maxZ - 0.12, Math.PI, 2.4, 0.24, { bg: '#1a1712', fg: '#cbbf98' });
@@ -500,6 +502,7 @@ export class UsinaLevel {
       L.light.intensity = L.base * f * (0.9 + Math.random() * 0.1);
     }
     for (const id in this.doors) this.doors[id].update(dt);
+    updateCabinets(this, dt);
     // pressão das caldeiras: a aliviada cai devagar; a agulha acompanha
     for (const id in this.boilers) {
       const B = this.boilers[id];

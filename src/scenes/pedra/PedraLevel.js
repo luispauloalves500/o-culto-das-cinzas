@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
+import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
 
 const LIGHT_BUDGET = 12;
@@ -137,6 +138,7 @@ export class PedraLevel {
     this.M = game.materials;
     this.b = new LevelBuilder(game.scene, game.col, game.materials);
     this.doors = {};
+    this.cabinets = {};
     this.lights = { power: [], emergency: [], flicker: [], all: [] };
     this.pickupMeshes = {};
     this.zone = null;
@@ -589,7 +591,7 @@ export class PedraLevel {
     // mesa do sinaleiro (guia de remoção + livro de registros) e placa esmaltada das agulhas
     b.sbox(64.4, y0, 47.6, 65.8, y0 + 0.85, 49.2, 'woodDark', { tag: 'prop-low', sight: false });
     b.sbox(64.6, y0 + 0.86, 48.2, 65.1, y0 + 0.88, 48.6, 'paper', { collide: false });
-    b.sbox(60.2, y0, 47.8, 61.0, y0 + 1.6, 49.4, 'woodDark', { tag: 'prop', sight: false });   // armário (longe do quadro de alavancas)
+    placeCabinet(this, { id: 'pedra_cab', minX: 60.2, minY: y0, minZ: 47.8, maxX: 61.0, maxY: y0 + 1.6, maxZ: 49.4, face: '+z', label: 'armário' });
     this.sign('AGULHAS: N = NORMAL (ALAVANCA EMPURRADA) · R = REVERSA (PUXADA)', 63, y0 + 2.62, C.minZ + 0.06, 0, 4.2, 0.18, { bg: '#e8e0c8', fg: '#20180c' });
     this.sign('I', 61.3, y0 + 1.45, C.minZ + 0.07, 0, 0.3, 0.2, { bg: '#e8e0c8', fg: '#20180c' });
     this.sign('II', 62.2, y0 + 1.45, C.minZ + 0.07, 0, 0.3, 0.2, { bg: '#e8e0c8', fg: '#20180c' });
@@ -816,6 +818,7 @@ export class PedraLevel {
       L.light.intensity = L.base * f * (0.9 + Math.random() * 0.1);
     }
     for (const id in this.doors) this.doors[id].update(dt);
+    updateCabinets(this, dt);
     const J = this.jazigo;
     if (J && J.t >= 0) { J.t += dt; this._placeLid(J.t / 0.9); if (J.t >= 0.9) J.t = -1; }
     const G = this.lineGate;

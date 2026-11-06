@@ -44,7 +44,8 @@ export function setupPeds(S) {
   // posto de enfermagem: chave da segurança, munição, bandagem, livro de registros
   S._pickup('key_seg', { x: 34.0, y: ROOF + 1.05, z: 19.95 }, 'Pegar chave da segurança', () => { S._giveItem('chave_seguranca'); S.q.set('hasSecKey'); },
     () => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.04), M.gold); m.position.set(34.0, ROOF + 1.01, 19.95); return m; });
-  S._pickup('ammo_posto', { x: 32.3, y: ROOF + 1.0, z: 15.3 }, 'Pegar munição .38 (×2)', () => giveAmmo(S, 2), () => ammoMesh(M, 32.15, ROOF + 0.95, 15.3, 2));
+  S._pickup('ammo_posto', { x: 32.3, y: ROOF + 1.0, z: 15.3 }, 'Pegar munição .38 (×2)', () => giveAmmo(S, 2), () => ammoMesh(M, 32.15, ROOF + 0.95, 15.3, 2),
+    () => L.cabinets.peds_nurse?.open && L.cabinets.peds_nurse.t > 0.7);
   S._pickup('band_ped', { x: 31.8, y: ROOF + 1.05, z: 19.95 }, 'Pegar bandagem', () => S._giveItem('bandagem'), () => S._bandMesh(31.8, ROOF + 1.05, 19.95));
   S._saveBook('book_peds', { x: 34.8, y: ROOF + 0.95, z: 14.65 }, 34.8, ROOF + 0.93, 14.65, 'postoPed');
   // REVÓLVER na mesa do vigia + munição do armário
@@ -54,7 +55,8 @@ export function setupPeds(S) {
     S.hint('revolver', '<b>Revólver .38</b>: <b>botão direito</b> atira rápido (mira automática no alvo à frente). <b>Segure Q</b> (LT) para a <b>mira manual</b>: retícula, sem ajuda, tiro na cabeça dói mais.<br>Tambor de 6: <b>T</b> (direcional ↑) recarrega da reserva. Botão esquerdo dá coronhada. Cada tiro acorda o andar inteiro. <b>R</b>: trocar de arma.', 13);
     wakeEnemy(S, 'int_seg');
   }, () => revolverMesh(M));
-  S._pickup('ammo_seg', { x: 39.6, y: ROOF + 1.0, z: 20.6 }, 'Pegar munição .38 (×3)', () => giveAmmo(S, 3), () => ammoMesh(M, 39.62, ROOF + 0.9, 20.6, 3));
+  S._pickup('ammo_seg', { x: 39.6, y: ROOF + 1.0, z: 20.6 }, 'Pegar munição .38 (×3)', () => giveAmmo(S, 3), () => ammoMesh(M, 39.62, ROOF + 0.9, 20.6, 3),
+    () => L.cabinets.peds_guns?.open && L.cabinets.peds_guns.t > 0.7);
   // docs
   S._doc('desenho_crianca', { x: 19.5, y: ROOF + 0.6, z: 16.4 }, 19.5, ROOF + 0.51, 16.4);
   S._doc('ficha_bercario', { x: 29.4, y: ROOF + 0.7, z: 15.6 }, 29.4, ROOF + 0.56, 15.6);

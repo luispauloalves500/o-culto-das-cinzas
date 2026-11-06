@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
+import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
 
 const LIGHT_BUDGET = 12;
@@ -79,6 +80,7 @@ export class AguasLevel {
     this.M = game.materials;
     this.b = new LevelBuilder(game.scene, game.col, game.materials);
     this.doors = {};
+    this.cabinets = {};
     this.lights = { power: [], emergency: [], flicker: [], all: [] };
     this.pickupMeshes = {};
     this.zone = null;
@@ -270,7 +272,7 @@ export class AguasLevel {
     b.col.addBox(24, Y, 23.8, 24.3, Y + 2.05, 26.2, { tag: 'prop', blocksSight: true });
     this.sign('BOMBA 1 · BOMBA 2 · COMPORTA', 24.32, Y + 2.25, 25, Math.PI / 2, 2.2, 0.22, { bg: '#2a1a14', fg: '#e0b090' });
     // antecâmara: armários, prancheta e banco
-    b.sbox(41.4, Y, 22.4, 42, Y + 2.0, 24.6, 'metal', { tag: 'prop' });
+    placeCabinet(this, { id: 'aguas_cab', minX: 41.4, minY: Y, minZ: 22.4, maxX: 42, maxY: Y + 2.0, maxZ: 24.6, face: '-x', label: 'armário' });
     b.sbox(39.9, Y, 26.2, 41.4, Y + 0.85, 27.8, 'woodDark', { tag: 'prop-low', sight: false });
     b.sbox(31, Y, 26.8, 33.4, Y + 0.45, 27.6, 'wood', { tag: 'prop-low', sight: false });
     this.sign('SALÃO DAS BOMBAS', 36, Y + 3.0, 27.88, Math.PI, 1.8, 0.26, { bg: '#1e2420', fg: '#c8d8c0' });
@@ -579,6 +581,7 @@ export class AguasLevel {
       L.light.intensity = base * f * (0.9 + Math.random() * 0.1);
     }
     for (const id in this.doors) this.doors[id].update(dt);
+    updateCabinets(this, dt);
     // ondulação da água
     for (const W of this.waterMeshes) {
       const a = W.m.geometry.attributes.position, arr = a.array, b0 = W.base;
