@@ -2,6 +2,14 @@
   "note": "gerado por scripts/assets.mjs --pack",
   "assets": [
     {
+      "out": "public/models/armario.glb",
+      "size": 528588,
+      "sha256": "59b27df0ec77e3c8a14b9aa5d56c0768e096981ab7a7b35cc0d02b64d30401b6",
+      "parts": [
+        "armario.glb.b64.part01"
+      ]
+    },
+    {
       "out": "public/models/elias_rev6.glb",
       "size": 7549980,
       "sha256": "a83657066e318b5d4b6946c0b84842d1d3c9b2a22679c6edaf90ac1c0869358f",
