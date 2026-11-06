@@ -19,6 +19,7 @@ import { readFileSync } from 'node:fs';
 import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
 import { prepareClips, makeIdleClips } from '../../src/gameplay/EliasModel.js';
 import { restPoseFor, POSE_DEFS, ATTACK_DEFS } from '../../src/models/MixamoPoses.js';
+import { ARMARIO_URL, ARMARIO_NATIVE, cabinetsEnabled } from '../../src/world/Cabinets.js';
 import { makeKnife } from '../../src/models/EnemyWeapons.js';
 import { ENEMY_MODELS, attackPhase, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
 
@@ -1637,6 +1638,21 @@ test('Poses Mixamo (pt54u): dormente sentado/deitado, idle parado, morto deitado
   assert.equal(attackPhase({ state: 'attack', attack: a, stateT: 0.25 }), 0.5); assert.ok(Math.abs(attackPhase({ state: 'attack', attack: a, stateT: 0.6 }) - 1.5) < 1e-9);
   assert.equal(attackPhase({ state: 'attack', attack: a, stateT: 5 }), 3); assert.equal(attackPhase({ state: 'grabbing' }), 2);
   const k = makeKnife(), bb = new THREE.Box3().setFromObject(k); assert.ok(bb.max.y > 0.2 && bb.min.y < -0.1 && k.children.length === 4, 'faca ~36 cm');
+});
+
+test('Armário GLB (pt56u/pt57u): otimizado, no manifesto, sem animações; face/yaw e portas gêmeas', () => {
+  const a = glbJson('public/models/armario.glb');
+  assert.equal(a.magic, 0x46546C67);
+  assert.ok(a.size < 1e6, 'armário otimizado < 1 MB (era 7 MB)');
+  assert.equal(a.json.meshes.length, 1);
+  assert.ok(!a.json.animations || a.json.animations.length === 0);
+  assert.ok(!a.json.skins || a.json.skins.length === 0);
+  assert.ok(a.json.images.every((im) => im.mimeType === 'image/jpeg'));
+  const man = JSON.parse(readFileSync('assets-src/manifest.json', 'utf8'));
+  assert.ok(man.assets.some((x) => x.out === 'public/models/armario.glb'));
+  assert.equal(ARMARIO_URL, './models/armario.glb');
+  assert.ok(ARMARIO_NATIVE.h > 1.8 && ARMARIO_NATIVE.w > 0.5);
+  assert.equal(cabinetsEnabled(), false); // Node
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

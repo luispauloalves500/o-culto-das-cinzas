@@ -149,6 +149,26 @@ try {
     eglb.kinds?.enfermeiro?.n > 0 && eglb.kinds.enfermeiro.glb === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.inBody === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.mixer === eglb.kinds.enfermeiro.n && eglb.kinds.enfermeiro.hiddenOk === eglb.kinds.enfermeiro.n && Math.abs(eglb.kinds.enfermeiro.height - 1.95) < 0.15, JSON.stringify(eglb));
   check('Inimigos GLB (pt54u): dormente sentado/deitado com pose no esqueleto, parado em idle (sem pose T) e acordar → Walking levantando o quadril',
     /^Pose_(sit|lie)$/.test(eglb.restClip || '') && eglb.restClip === 'Pose_' + eglb.rest && eglb.idleClip === 'Pose_idle' && eglb.wakeClip === 'Walking' && eglb.hipsUp > 0.3 && eglb.dormants?.includes('sit') && eglb.dormants?.includes('lie') && Math.abs(eglb.restGround) < 0.03, JSON.stringify({ g: eglb.restGround, r: eglb.restClip, i: eglb.idleClip, w: eglb.wakeClip, up: eglb.hipsUp, d: eglb.dormants }));
+  const cab = await page.evaluate(async () => {
+    const g = __ocdc, L = g.level, out = { n: 0, ids: [], opened: false, ang: 0, body: false, interact: false };
+    if (!L.cabinets) return { err: 'sem cabinets' };
+    out.n = Object.keys(L.cabinets).length;
+    out.ids = Object.keys(L.cabinets);
+    const c = L.cabinets.ward_w || Object.values(L.cabinets)[0];
+    if (!c) return out;
+    await (c.ready || Promise.resolve());
+    out.body = !!c.body;
+    const a0 = c.doors[0].pivot.rotation.y;
+    c.setOpen(true); for (let i = 0; i < 45; i++) c.update(1 / 30);
+    out.opened = c.open && c.t > 0.95;
+    out.ang = +Math.abs(c.doors[0].pivot.rotation.y - a0).toFixed(2);
+    out.interact = g.interact.list.some((i) => String(i.id).startsWith('cabinet_'));
+    c.setOpen(false, true); c.update(0);
+    return out;
+  }).catch((e) => ({ err: String(e) }));
+  check('Armários GLB (pt56u/pt57u): modelo no cenário, portas gêmeas abrem ~110° e interação E registrada',
+    cab.n >= 6 && cab.body && cab.opened && cab.ang > 1.5 && cab.interact, JSON.stringify(cab));
+
   check('Inimigos GLB (pt55u): ataque no esqueleto (clipe de golpe pela fase do ataque) e enfermeiro com faca presa ao osso RightHand',
     /^Pose_atk_/.test(eglb.atkClip || '') && eglb.atkT > 1 && eglb.atkT < 2 && eglb.knife && eglb.enfAtk === 'Pose_atk_stab', JSON.stringify({ c: eglb.atkClip, t: eglb.atkT, k: eglb.knife, e: eglb.enfAtk }));
   // pt48u: otimizações que não mexem nas texturas
@@ -628,14 +648,14 @@ try {
     g.player.setWeapon('facao'); g.player.hp = 100;
     T.tp(33.5, ROOF, 23.2, PI); out.postoDoor = T.interactAt('door_postoPed'); T.run(0.8);
     T.tp(34.0, ROOF, 21.0, PI); out.key = T.interactAt('pick_key_seg');
-    T.tp(32.7, ROOF, 15.6, -PI / 2); out.ammo1 = T.interactAt('pick_ammo_posto'); out.ammoA = T.ammo();
+    T.tp(32.7, ROOF, 15.6, -PI / 2); out.cabNurse = T.interactAt('cabinet_peds_nurse'); T.run(0.9); T.tp(32.25, ROOF, 15.3, -PI / 2); out.ammo1 = T.interactAt('pick_ammo_posto'); out.ammoA = T.ammo();
     T.tp(34.8, ROOF, 15.8, PI); out.book = T.interactAt('book_peds'); out.cpPosto = g.checkpoint;
     // segurança: chave → revólver (+3) e mais munição
     out.segLocked = D.seguranca.locked;
     T.tp(38.5, ROOF, 23.2, PI); out.segDoor = T.interactAt('door_seguranca'); T.run(0.8); out.segOpen = D.seguranca.open && g.quest.has('securityOpen');
     const s = E('int_seg'); out.segDormant = s.dormant;
     T.tp(38.0, ROOF, 19.3, PI); out.rev = T.interactAt('pick_revolver'); out.wRev = g.player.weapon?.id; out.segWoke = !s.dormant;
-    T.tp(38.9, ROOF, 20.4, PI); out.ammo2 = T.interactAt('pick_ammo_seg'); out.ammoB = T.ammo();
+    T.tp(39.55, ROOF, 20.6, PI / 2); out.ammo2 = T.interactAt('pick_ammo_seg'); out.ammoB = T.ammo();
     // mira manual (segura Q): retícula sem auto-mira; fora do alvo erra, apontando acerta
     {
       s.dormant = true; s._set('idle'); s.pos.set(38.6, ROOF, 15.6); s.yaw = 0; const sHpKeep = s.hp; s.hp = 999;

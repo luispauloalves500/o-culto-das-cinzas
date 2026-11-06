@@ -322,6 +322,12 @@ deitado (`pose: 'sit'|'lie'` no spawn ou alternado pelo id); ao acordar faz cros
 - Apoio no chão: a cada quadro o ponto de apoio mais baixo (pés, nádegas, costas, cabeça) é assentado em y=0 da raiz — sentado/deitado
   não flutuam mais.
 
+
+### Armários GLB com abertura (pt56u/pt57u)
+`public/models/armario.glb` (otimizado de ~7 MB → ~0,5 MB). O arquivo é monolítico (1 mesh, sem clipes):
+o corpo é o GLB; duas portas de metal procedurais na face frontal giram ~110° na dobradiça ao abrir/fechar
+(E). Substitui os `sbox` de armário do Hospital, Ala Pediátrica, Maternidade, Usina, Pedra e Águas.
+
 ### Desempenho sem piorar texturas (pt48u/pt49u)
 
 Todos os truques ficam em `src/render/Perf.js`. **Nenhum mexe em textura**: os mapas, a resolução, a filtragem e o anisotrópico continuam os mesmos, e o smoke confere isso em todas as trocas de opção.
