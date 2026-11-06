@@ -4,6 +4,7 @@
 // Só geometria/portas/luzes/navegação; a lógica fica em HospitalMaternityScript.js.
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
+import { placeCabinet } from '../../world/Cabinets.js';
 
 export const UP2 = 4;
 const H_UP = 3.2, TOP2 = 7;
@@ -89,7 +90,7 @@ function rooms(L) {
   // POSTO OBSTÉTRICO x31..38 z2..11: balcão, mesa do livro, quadro de chaves
   b.sbox(31.2, UP2, 3.0, 32.0, UP2 + 1.0, 8.5, 'woodDark', PL);
   b.sbox(35.6, UP2, 2.2, 37.8, UP2 + 0.85, 3.2, 'wood', PL);
-  b.sbox(37.4, UP2, 8.4, 37.95, UP2 + 1.9, 10.6, 'metal', P);                          // armário
+  placeCabinet(L, { id: 'mat_cab', minX: 37.4, minY: UP2, minZ: 8.4, maxX: 37.95, maxY: UP2 + 1.9, maxZ: 10.6, face: '-x', label: 'armário' });
   b.sbox(37.9, UP2 + 1.0, 5.3, 37.98, UP2 + 1.8, 6.7, 'woodDark', NC);                 // quadro de chaves
   for (let i = 0; i < 4; i++) b.sbox(37.86, UP2 + 1.6, 5.5 + i * 0.32, 37.9, UP2 + 1.62, 5.52 + i * 0.32, 'steel', NC);
 }

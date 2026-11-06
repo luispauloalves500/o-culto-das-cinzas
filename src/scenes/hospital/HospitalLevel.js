@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
+import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { buildAnnex, updateAnnex, ANNEX_CHECKPOINTS, ANNEX_ZONES } from './HospitalAnnex.js';
 import { buildWing, updateWing, WING_CHECKPOINTS, WING_ZONES } from './HospitalWing.js';
 import { buildPeds, updatePeds, PEDS_CHECKPOINTS, PEDS_ZONES } from './HospitalPeds.js';
@@ -52,6 +53,7 @@ export class HospitalLevel {
     this.lights = { power: [], emergency: [], flicker: [], all: [] };
     this.pickupMeshes = {};
     this.drawers = {};
+    this.cabinets = {};
     this.zone = null;
   }
 
@@ -165,8 +167,8 @@ export class HospitalLevel {
     this.bed(10.8, 2.6); this.bed(10.8, 5.6);
     b.sbox(1.9, 0, 2.7, 2.4, 0.6, 3.2, 'wood', { ...PL, cast: true });        // criado-mudo
     b.sbox(6, 0, -2.85, 8.2, 0.85, -2.1, 'wood', { ...PL, cast: true });       // escrivaninha (livro de registros)
-    b.sbox(0.2, 0, 8.6, 0.75, 1.8, 9.8, 'metal', { ...P, cast: true });        // armário
-    b.sbox(11.2, 0, 7.4, 11.8, 1.9, 9.6, 'metal', { ...P, cast: true });
+    placeCabinet(this, { id: 'ward_w', minX: 0.2, minY: 0, minZ: 8.6, maxX: 0.75, maxY: 1.8, maxZ: 9.8, face: '+x', label: 'armário' });
+    placeCabinet(this, { id: 'ward_e', minX: 11.2, minY: 0, minZ: 7.4, maxX: 11.8, maxY: 1.9, maxZ: 9.6, face: '-x', label: 'armário' });
     // caixa do machado na parede sul (lado da enfermaria)
     b.sbox(3.5, 0.9, 9.72, 4.7, 2.0, 9.9, 'axeMetal', { collide: false });
     b.sbox(3.6, 1.0, 9.69, 4.6, 1.9, 9.72, 'glass', { collide: false });
@@ -176,7 +178,7 @@ export class HospitalLevel {
     b.sbox(15, 0, 13.1, 17, 0.8, 13.8, 'metal', { ...PL, cast: true }); // maca
     b.sbox(15.1, 0.8, 13.15, 16.9, 0.9, 13.75, 'sheet', { collide: false });
     b.sbox(28, 0, 10.2, 30, 0.45, 10.6, 'wood', PL);                   // banco
-    b.sbox(36.5, 0, 13.2, 37.4, 1.6, 13.85, 'metal', P);                // armário
+    placeCabinet(this, { id: 'cor_cab', minX: 36.5, minY: 0, minZ: 13.2, maxX: 37.4, maxY: 1.6, maxZ: 13.85, face: '-z', label: 'armário' });
     // --- Depósito
     for (const [x0, x1] of [[14.2, 14.9], [23.1, 23.8]]) {
       b.sbox(x0, 0, 15.6, x1, 2.2, 21, 'metal', { ...P, cast: true });
@@ -399,6 +401,7 @@ export class HospitalLevel {
       L.light.intensity = L.base * f * (0.92 + Math.random() * 0.08);
     }
     for (const id in this.doors) this.doors[id].update(dt);
+    updateCabinets(this, dt);
     for (const n in this.drawers) {
       const dw = this.drawers[n], target = dw.open ? 1 : 0;
       if (dw.t !== target) { dw.t = target > dw.t ? Math.min(1, dw.t + dt / 0.6) : Math.max(0, dw.t - dt / 0.6); dw.g.position.z = dw.z + dw.t * dw.t * (3 - 2 * dw.t) * 0.62; }
@@ -453,7 +456,7 @@ export class HospitalLevel {
     this.bed(18.6, 7.9); this.bed(28.4, 7.9);
     for (const x of [21.5, 24.5]) b.sbox(x - 0.02, 0, -3, x + 0.02, 1.9, -0.9, 'curtain', { collide: false });
     for (const x of [19.9, 27.1]) b.sbox(x - 0.02, 0, 6.9, x + 0.02, 1.9, 9.2, 'curtain', { collide: false });
-    b.sbox(16.2, 0, 4.6, 16.8, 1.8, 6.6, 'metal', { tag: 'prop', cast: true });           // armário de lençóis
+    placeCabinet(this, { id: 'east_sheets', minX: 16.2, minY: 0, minZ: 4.6, maxX: 16.8, maxY: 1.8, maxZ: 6.6, face: '+x', label: 'armário de lençóis' });
     b.sbox(28.6, 0, -2.8, 29.8, 0.9, -2.1, 'wood', { tag: 'prop-low', sight: false });    // mesinha do prontuário
     // suporte de soro tombado
     b.sbox(22, 0.02, 3.2, 23.7, 0.06, 3.26, 'metal', { collide: false });
@@ -462,7 +465,7 @@ export class HospitalLevel {
     this.sign('QUARENTENA · ALA LESTE', 24, 2.75, 10.13, 0, 1.6, 0.24, { bg: '#7a1c12', fg: '#e9dcc0' });
     // isolamento / posto de enfermagem x30..38
     b.sbox(32, 0, -2.9, 35.6, 0.9, -2.0, 'wood', { tag: 'prop-low', sight: false, cast: true }); // balcão do posto
-    b.sbox(36.9, 0, -2.9, 37.9, 2.0, -0.8, 'metal', { tag: 'prop', cast: true });              // armário de chaves
+    placeCabinet(this, { id: 'east_keys', minX: 36.9, minY: 0, minZ: -2.9, maxX: 37.9, maxY: 2.0, maxZ: -0.8, face: '-x', label: 'armário de chaves' });
     b.sbox(36.85, 1.0, -2.0, 36.9, 1.7, -1.0, 'woodDark', { collide: false });                  // quadro de ganchos
     this.bed(36.6, 6.5, 1);
     b.sbox(30.4, 0, 8.4, 31.6, 1.2, 9.8, 'metal', { tag: 'prop', cast: true });

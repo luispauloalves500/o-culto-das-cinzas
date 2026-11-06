@@ -4,6 +4,7 @@
 // Só geometria/portas/luzes/navegação; a lógica fica em HospitalPedsScript.js.
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
+import { placeCabinet } from '../../world/Cabinets.js';
 
 export const UP2 = 4, ROOF = 7.3;
 const TOP2 = 7, TOP3 = 10.4, HOUSE_TOP = 10;
@@ -137,11 +138,10 @@ function rooms(L) {
   // POSTO DE ENFERMAGEM x31..36 z14..22: balcão, armário, mesa do livro de registros
   b.sbox(31.2, ROOF, 19.6, 34.4, ROOF + 1.0, 20.3, 'woodDark', PL);
   b.sbox(33.8, ROOF, 14.2, 35.8, ROOF + 0.9, 15.1, 'wood', PL);
-  b.sbox(31.2, ROOF, 14.2, 32.0, ROOF + 1.9, 16.4, 'metal', P);
+  placeCabinet(L, { id: 'peds_nurse', minX: 31.2, minY: ROOF, minZ: 14.2, maxX: 32.0, maxY: ROOF + 1.9, maxZ: 16.4, face: '+x', label: 'armário' });
   // POSTO DE SEGURANÇA x36..41 z14..22: mesa, armário de armas arrombado, monitores mortos
   b.sbox(37.0, ROOF, 17.6, 38.8, ROOF + 0.85, 18.6, 'woodDark', PL);
-  b.sbox(39.9, ROOF, 19.6, 40.85, ROOF + 1.9, 21.6, 'steelDark', P);
-  b.sbox(39.7, ROOF + 0.4, 19.7, 39.72, ROOF + 1.7, 21.5, 'steel', NC);
+  const guns = placeCabinet(L, { id: 'peds_guns', minX: 39.9, minY: ROOF, minZ: 19.6, maxX: 40.85, maxY: ROOF + 1.9, maxZ: 21.6, face: '-x', label: 'armário de armas', interactive: false }); guns.setOpen(true, true);
   for (const z of [17.7, 18.2]) b.sbox(37.2, ROOF + 0.85, z, 37.6, ROOF + 1.2, z + 0.35, 'steelDark', NC);
   // QUARTO 7 x12..16 z14..22: caminha, desenhos por toda parede, a fita vermelha
   b.sbox(12.2, ROOF, 14.3, 13.2, ROOF + 0.45, 16.1, 'sheet', PL);

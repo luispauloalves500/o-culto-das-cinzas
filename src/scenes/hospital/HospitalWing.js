@@ -3,6 +3,7 @@
 // Só geometria/portas/luzes/navegação; a lógica fica em HospitalWingScript.js.
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
+import { placeCabinet } from '../../world/Cabinets.js';
 
 export const UP = 0, UP2 = 4, ROOF = 7.3;
 const H_UP = 3.2, TOP2 = 7, CEIL_ARENA = -0.8, HOUSE_TOP = 10;
@@ -198,7 +199,7 @@ function roof(L) {
   b.wallX(34, 31, 35.8, ROOF, ROOF + 2.4, [], 'rust');
   b.sbox(31, ROOF + 2.4, 34, 35.85, ROOF + 2.55, 38.25, 'rust', NC);
   b.sbox(33.1, ROOF, 37.5, 35.7, ROOF + 0.9, 38.15, 'woodDark', PL);               // bancada
-  b.sbox(35.2, ROOF, 34.2, 35.75, ROOF + 1.8, 35.6, 'metal', P);                    // armário
+  placeCabinet(L, { id: 'roof_cab', minX: 35.2, minY: ROOF, minZ: 34.2, maxX: 35.75, maxY: ROOF + 1.8, maxZ: 35.6, face: '-x', label: 'armário' });
   // a Torre de transmissão no horizonte (só cenário: luz vermelha piscando)
   const tower = new THREE.Group(); tower.position.set(70, ROOF - 30, 66);
   const towerMat = new THREE.MeshBasicMaterial({ color: 0x07090c, fog: false });
