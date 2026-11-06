@@ -3,6 +3,7 @@ import './styles/main.css';
 import { Game } from './core/Game.js';
 import { preloadElias } from './gameplay/EliasModel.js';
 import { preloadEnemyModels } from './models/EnemyModels.js';
+import { preloadCabinets } from './world/Cabinets.js';
 
 function showFatal(msg) {
   const el = document.getElementById('fatal');
@@ -19,6 +20,7 @@ try {
   // baixa o Elias REV6 (GLB ~7,5 MB) já no menu; a partida não espera por ele
   preloadElias();
   preloadEnemyModels();
+preloadCabinets();
 } catch (e) {
   showFatal('Não foi possível iniciar o WebGL / jogo:\n' + (e?.stack || e));
 }

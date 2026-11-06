@@ -13,6 +13,7 @@ import { setupPeds, applyPeds, updatePedsScript, useDoorPeds, PEDS_SPAWNS, PEDS_
 import { setupMaternity, applyMaternity, updateMaternityScript, useDoorMaternity, MATERNITY_SPAWNS, MATERNITY_DOORS } from './HospitalMaternityScript.js';
 import { setupRn0, applyRn0 } from './HospitalRn0.js';
 import { setupDeadArchive, applyDeadArchive, updateDeadArchiveScript, useDoorDeadArchive, DEAD_ARCHIVE_SPAWNS, DEAD_ARCHIVE_DOORS } from './HospitalDeadArchiveScript.js';
+import { wireCabinetInteractions, restoreCabinets } from '../../world/Cabinets.js';
 
 const BREAKER_ORDER = [1, 2, 0]; // II → III → I
 
@@ -131,6 +132,9 @@ export class HospitalScript {
         onInteract: () => this._useDoor(d),
       });
     }
+
+    // ---------- armários GLB (pt56u/pt57u) ----------
+    wireCabinetInteractions(g, L);
 
     // ---------- gavetas do necrotério ----------
     for (const n of L.openableDrawers) {

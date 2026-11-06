@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { EventBus } from './EventBus.js';
 import { Settings } from './Settings.js';
 import { InputManager } from './InputManager.js';
+import { wireCabinetInteractions, restoreCabinets } from '../world/Cabinets.js';
 import { SaveManager, createEmptySave, makeChapter2Save, makeChapter3Save, makeChapter4Save, makeChapter5Save, makeChapter6Save, makeChapter7Save, makeChapter8Save } from './SaveManager.js';
 import { AudioManager } from './AudioManager.js';
 import { CollisionWorld } from '../world/CollisionWorld.js';
@@ -138,6 +139,11 @@ export class Game {
     this.inventory.restore(save.inventory, save.documents);
     this.script = new W.Script(this, this.level);
     this.script.setup(save);
+    // pt56u: armários dos capítulos que não passam pelo HospitalScript.setup completo
+    if (this.level.cabinets && !this.interact.list.some((i) => String(i.id).startsWith('cabinet_'))) {
+      wireCabinetInteractions(this, this.level);
+      restoreCabinets(this.level, save.flags);
+    }
     const cp = W.checkpoints[save.checkpoint] || W.checkpoints[W.start];
     this.player.spawn(cp, cp.yaw);
     this.cameraCtl.yaw = cp.yaw;
