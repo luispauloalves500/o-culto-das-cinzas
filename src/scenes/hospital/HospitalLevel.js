@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
-import { placeBed, placeGurney, placeIvStand, placeNightstand, placeTable, placeBench, placeBookcase, placeCrate } from '../../world/Props.js';
+import { placeBed, placeGurney, placeIvStand, placeNightstand, placeTable, placeBench, placeBookcase, placeCrate, placeCart, placeSink, placeGenerator, placeAutopsyTable, dressDrawerFront } from '../../world/Props.js';
 import { buildAnnex, updateAnnex, ANNEX_CHECKPOINTS, ANNEX_ZONES } from './HospitalAnnex.js';
 import { buildWing, updateWing, WING_CHECKPOINTS, WING_ZONES } from './HospitalWing.js';
 import { buildPeds, updatePeds, PEDS_CHECKPOINTS, PEDS_ZONES } from './HospitalPeds.js';
@@ -173,13 +173,13 @@ export class HospitalLevel {
     placeCabinet(this, { id: 'cor_cab', minX: 36.5, minY: 0, minZ: 13.2, maxX: 37.4, maxY: 1.6, maxZ: 13.85, face: '-z', label: 'armário' });
     // --- Depósito
     for (const [x0, x1] of [[14.2, 14.9], [23.1, 23.8]]) {
-      b.sbox(x0, 0, 15.6, x1, 2.2, 21, 'metal', { ...P, cast: true });
+      placeBookcase(this, { minX: x0, minY: 0, minZ: 15.6, maxX: x1, maxY: 2.2, maxZ: 21, mat: 'metal', tag: 'prop', sight: true });
     }
     placeTable(this, { minX: 18, minY: 0, minZ: 21, maxX: 20.2, maxY: 0.85, maxZ: 21.8, mat: 'wood' });
     placeCrate(this, { minX: 16.5, minY: 0, minZ: 17, maxX: 17.4, maxY: 0.8, maxZ: 17.9, mat: 'wood' });
     placeCrate(this, { minX: 20.5, minY: 0, minZ: 16.2, maxX: 21.3, maxY: 0.7, maxZ: 17, mat: 'wood' });
     // --- Sala de máquinas
-    b.sbox(29, 0, 19.2, 32.2, 2.0, 23.2, 'rust', { ...P, cast: true });   // gerador
+    placeGenerator(this, { minX: 29, minY: 0, minZ: 19.2, maxX: 32.2, maxY: 2.0, maxZ: 23.2, tag: 'prop', sight: true });
     b.sbox(29.4, 2.0, 20, 29.8, H_UP, 20.4, 'metal', { collide: false }); // exaustor
     b.sbox(28.1, 2.6, 14.2, 37.9, 2.8, 14.5, 'rust', { collide: false });  // tubulação
     b.sbox(37.7, 1.0, 15.5, 37.95, 1.9, 16.5, 'metal', { collide: false }); // painel do fusível
@@ -506,6 +506,7 @@ export class HospitalLevel {
       g.position.set(sl.x, sl.y, sl.z);
       const front = new THREE.Mesh(new THREE.BoxGeometry(COLW - 0.06, DH - 0.04, 0.05), M.steel); g.add(front);
       const handle = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.04, 0.05), M.metal); handle.position.set(0, -0.12, 0.05); g.add(handle);
+      dressDrawerFront(g, M, COLW - 0.06, DH - 0.04);
       this.sign(String(n).padStart(2, '0'), 0, 0.13, 0.027, 0, 0.16, 0.08, { parent: g, bg: '#d8d2b8' });
       if (this.openableDrawers.includes(+n)) {
         const tray = new THREE.Mesh(new THREE.BoxGeometry(COLW - 0.12, 0.04, 0.6), M.steelDark); tray.position.set(0, -0.2, -0.32); g.add(tray);
@@ -515,23 +516,13 @@ export class HospitalLevel {
       b.group.add(g);
     }
     // mesas de autópsia (pedestal + tampo de aço com borda e ralo)
-    const table = (cx, cz, body) => {
-      b.sbox(cx - 0.15, LO, cz - 0.15, cx + 0.15, LO + 0.76, cz + 0.15, 'steelDark', { collide: false });
-      b.sbox(cx - 0.45, LO + 0.76, cz - 1.05, cx + 0.45, LO + 0.86, cz + 1.05, 'steel', { collide: false, cast: true });
-      for (const sx of [-1, 1]) b.sbox(cx + sx * 0.45 - 0.03, LO + 0.86, cz - 1.05, cx + sx * 0.45 + 0.03, LO + 0.93, cz + 1.05, 'steel', { collide: false });
-      b.sbox(cx - 0.06, LO + 0.861, cz + 0.85, cx + 0.06, LO + 0.865, cz + 0.97, 'mask', { collide: false });
-      if (body) {
-        b.sbox(cx - 0.25, LO + 0.86, cz - 0.85, cx + 0.25, LO + 1.06, cz + 0.8, 'sheet', { collide: false, cast: true, tile: 1 });
-        b.sbox(cx - 0.12, LO + 0.86, cz - 0.98, cx + 0.12, LO + 1.1, cz - 0.78, 'sheet', { collide: false, tile: 1 });
-      }
-      this.game.col.addBox(cx - 0.47, LO, cz - 1.07, cx + 0.47, LO + 0.93, cz + 1.07, { tag: 'prop', blocksSight: false });
-    };
-    table(18.9, 4.4, true); table(23.1, 4.4, false); table(23.4, 7.9, true);
+    placeAutopsyTable(this, { cx: 18.9, y: LO, cz: 4.4, body: true });
+    placeAutopsyTable(this, { cx: 23.1, y: LO, cz: 4.4, body: false });
+    placeAutopsyTable(this, { cx: 23.4, y: LO, cz: 7.9, body: true });
     // carrinho de instrumentos, pia, balança e ralos
-    b.sbox(19.7, LO, 6.4, 20.4, LO + 0.85, 6.9, 'steel', P);
+    placeCart(this, { minX: 19.7, minY: LO, minZ: 6.4, maxX: 20.4, maxY: LO + 0.85, maxZ: 6.9, mat: 'steel' });
     for (const [x, z] of [[19.8, 6.5], [20.0, 6.7], [20.25, 6.55]]) b.sbox(x, LO + 0.85, z, x + 0.12, LO + 0.87, z + 0.03, 'axeEdge', { collide: false });
-    b.sbox(25.3, LO, 4.9, 25.85, LO + 0.9, 6.6, 'steel', { tag: 'prop', cast: true });
-    b.sbox(25.35, LO + 0.9, 5.0, 25.8, LO + 0.95, 6.5, 'steelDark', { collide: false });
+    placeSink(this, { minX: 25.3, minY: LO, minZ: 4.9, maxX: 25.85, maxY: LO + 0.9, maxZ: 6.6, mat: 'steel', tag: 'prop', sight: false });
     b.sbox(17, LO + 1.2, 9.4, 17.6, LO + 1.25, 9.85, 'steel', { collide: false });
     for (const [x, z] of [[21, 4.4], [21, 8]]) b.sbox(x - 0.2, LO + 0.005, z - 0.2, x + 0.2, LO + 0.012, z + 0.2, 'mask', { collide: false });
     // mesa do livro de entradas

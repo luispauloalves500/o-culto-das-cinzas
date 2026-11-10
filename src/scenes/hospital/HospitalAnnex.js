@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
 import { createFire, createCandleFlame } from '../../render/FireFX.js';
-import { placeTable, placeCart, placeBench, placeBookcase, placePew, placeAltar, placeCandlestick, placeCross, placePulpit, placeWindowFrame, placeCrate } from '../../world/Props.js';
+import { placeTable, placeCart, placeBench, placeBookcase, placePew, placeAltar, placeCandlestick, placeCross, placePulpit, placeWindowFrame, placeCrate, placeCalender, placeOrgan, placeFileCabinet, placeArmchair } from '../../world/Props.js';
 
 export const UP = 0, LO = -5, UP2 = 4;
 const H_UP = 3.2, CEIL_LO = -1.8, TOP2 = 7;
@@ -64,11 +64,7 @@ function laundry(L) {
     b.sbox(3.4, LO + 0.25, z - 0.45, 3.44, LO + 0.3, z + 0.45, 'rust', NC);
   }
   // calandra (passadeira de rolos)
-  b.sbox(5, LO, 2.2, 9, LO + 1.0, 3.3, 'rust', P);
-  for (const x of [5.6, 7, 8.4]) {
-    const r = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 8), M.steel);
-    r.rotation.x = Math.PI / 2; r.position.set(x, LO + 1.1, 2.75); b.group.add(r);
-  }
+  placeCalender(L, { minX: 5, minY: LO, minZ: 2.2, maxX: 9, maxY: LO + 1.0, maxZ: 3.3, tag: 'prop', sight: true });
   placeTable(L, { minX: 9.6, minY: LO, minZ: 4.4, maxX: 11.7, maxY: LO + 0.88, maxZ: 6.1, mat: 'steel' });
   b.sbox(9.8, LO + 0.88, 4.6, 10.6, LO + 0.98, 5.3, 'sheet', NC);
   placeCart(L, { minX: 8.4, minY: LO, minZ: 7.1, maxX: 9.3, maxY: LO + 0.85, maxZ: 7.8, mat: 'metal' });
@@ -174,8 +170,8 @@ function admin(L) {
     placeTable(L, { minX: x0, minY: UP2, minZ: 15.6, maxX: x0 + 1.8, maxY: UP2 + 0.76, maxZ: 16.6, mat: 'woodDark' });
     b.sbox(x0 + 0.5, UP2 + 0.76, 15.8, x0 + 1.0, UP2 + 0.96, 16.2, 'metal', NC);   // máquina de escrever
   }
-  for (const z of [18, 19, 20]) b.sbox(14.1, UP2, z, 14.7, UP2 + 1.4, z + 0.9, 'metal', P); // arquivos
-  b.sbox(22.6, UP2, 14.1, 23.9, UP2 + 2.0, 15.0, 'woodDark', P);
+  for (const z of [18, 19, 20]) placeFileCabinet(L, { minX: 14.1, minY: UP2, minZ: z, maxX: 14.7, maxY: UP2 + 1.4, maxZ: z + 0.9, mat: 'metal', face: '+x', tag: 'prop', sight: true });
+  placeBookcase(L, { minX: 22.6, minY: UP2, minZ: 14.1, maxX: 23.9, maxY: UP2 + 2.0, maxZ: 15.0, mat: 'woodDark', tag: 'prop', sight: true });
   for (const [x, z, r] of [[17.5, 19, 0.3], [21, 18, 1.2], [19.5, 15, 2]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.22), M.paper); m.rotation.x = -Math.PI / 2; m.rotation.z = r; m.position.set(x, UP2 + 0.012, z); b.group.add(m);
   }
@@ -184,7 +180,7 @@ function admin(L) {
   b.ceiling(28, 14, 38, 22, TOP2);
   b.wallZ(38, 14, 22, H_UP, TOP2); b.wallX(14, 28, 38, H_UP, TOP2);
   placeTable(L, { minX: 31.4, minY: UP2, minZ: 15.3, maxX: 34.6, maxY: UP2 + 0.78, maxZ: 16.4, mat: 'woodDark' });
-  b.sbox(32.6, UP2, 14.3, 33.4, UP2 + 1.1, 14.9, 'leatherDark', PL);       // poltrona
+  placeArmchair(L, { minX: 32.6, minY: UP2, minZ: 14.3, maxX: 33.4, maxY: UP2 + 1.1, maxZ: 14.9, mat: 'leatherDark', tag: 'prop-low', sight: false });
   placeBookcase(L, { minX: 37.2, minY: UP2, minZ: 16.6, maxX: 37.9, maxY: UP2 + 2.2, maxZ: 21.6, mat: 'woodDark', tag: 'prop' });
   placeTable(L, { minX: 36, minY: UP2, minZ: 14.6, maxX: 37.2, maxY: UP2 + 0.86, maxZ: 15.7, mat: 'woodDark' });
   const rug = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.2), M.altarCloth); rug.rotation.x = -Math.PI / 2; rug.position.set(33, UP2 + 0.01, 18.4); b.group.add(rug);
@@ -280,8 +276,7 @@ function chapel(L) {
   b.floor(8.6, 21.6, 12, 24, UP2, 'woodDark', 'coro');
   b.sbox(8.6, UP2, 21.6, 8.7, UP2 + 1.0, 24, 'woodDark', { tag: 'wall', sight: false });
   b.sbox(8.6, UP2, 21.55, 10.05, UP2 + 1.0, 21.65, 'woodDark', { tag: 'wall', sight: false });
-  b.sbox(8.8, UP2, 23.3, 10.0, UP2 + 1.9, 23.9, 'woodDark', P);   // órgão
-  for (let i = 0; i < 6; i++) b.sbox(8.85 + i * 0.2, UP2 + 1.9, 23.6, 8.95 + i * 0.2, UP2 + 2.4 + (i % 3) * 0.25, 23.7, 'gold', NC);
+  placeOrgan(L, { minX: 8.8, minY: UP2, minZ: 23.3, maxX: 10.0, maxY: UP2 + 1.9, maxZ: 23.9, tag: 'prop', sight: true });
 }
 
 // ---------- portas ----------

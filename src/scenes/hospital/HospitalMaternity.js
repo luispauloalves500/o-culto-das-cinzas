@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet } from '../../world/Cabinets.js';
-import { placeBed, placeGurney, placeWheelchair, placeSink, placeIvStand, placeTable, placeCart, placeBookcase } from '../../world/Props.js';
+import { placeBed, placeGurney, placeWheelchair, placeSink, placeIvStand, placeTable, placeCart, placeBookcase, placeIncubator } from '../../world/Props.js';
 
 export const UP2 = 4;
 const H_UP = 3.2, TOP2 = 7;
@@ -69,7 +69,7 @@ function rooms(L) {
   const lampDisk = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.15, 12), M.steel); lampDisk.position.set(18.5, TOP2 - 0.7, 5.6); b.group.add(lampDisk);
   b.sbox(18.47, TOP2 - 0.65, 5.57, 18.53, TOP2, 5.63, 'steel', NC);
   placeCart(L, { minX: 15.2, minY: UP2, minZ: 8.2, maxX: 16.0, maxY: UP2 + 0.9, maxZ: 9.0, mat: 'steel' });
-  b.sbox(14.2, UP2, 2.3, 15.4, UP2 + 1.1, 3.1, 'glass', P);                            // incubadora
+  placeIncubator(L, { minX: 14.2, minY: UP2, minZ: 2.3, maxX: 15.4, maxY: UP2 + 1.1, maxZ: 3.1, tag: 'prop', sight: true });
   placeSink(L, { minX: 20.6, minY: UP2, minZ: 2.2, maxX: 21.8, maxY: UP2 + 0.9, maxZ: 2.9, mat: 'steel' });
   for (const [x, z, r] of [[18.4, 7.0, 0.3], [16.2, 6.0, 1.7], [20.6, 4.6, 2.6]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = r; m.position.set(x, UP2 + 0.013, z); b.group.add(m);
@@ -79,7 +79,7 @@ function rooms(L) {
   // ALOJAMENTO CONJUNTO x22..31 z2..11: três leitos com bercinhos ao lado
   for (const x of [23.6, 26.5, 29.4]) {
     placeBed(L, { x, y: UP2, z: 3.2, yaw: 0, length: 2.0, width: 1.0, maternity: true });
-    b.sbox(x + 0.7, UP2, 2.4, x + 1.3, UP2 + 0.8, 3.2, 'glass', PL);
+    placeIncubator(L, { minX: x + 0.7, minY: UP2, minZ: 2.4, maxX: x + 1.3, maxY: UP2 + 0.8, maxZ: 3.2, tag: 'prop-low', sight: false });
   }
   b.sbox(23.55, UP2 + 0.2, 4.2, 23.65, UP2 + 0.3, 4.32, 'steelDark', NC);              // eixo da manivela (vazio, se coletada)
   for (const [x, z, r] of [[27.2, 6.4, 0.9], [29.6, 8.6, 2.1]]) {
