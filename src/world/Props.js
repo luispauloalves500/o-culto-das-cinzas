@@ -12,6 +12,7 @@ function geo(key, make) {
 const BOX = () => geo('box', () => new THREE.BoxGeometry(1, 1, 1));
 const CYL = () => geo('cyl6', () => new THREE.CylinderGeometry(1, 1, 1, 6));
 const CYL8 = () => geo('cyl8', () => new THREE.CylinderGeometry(1, 1, 1, 8));
+const CONE = () => geo('cone8', () => new THREE.ConeGeometry(1, 1, 8));
 
 let _detail = 1;
 export function setPropDetail(n) { _detail = n; }
@@ -717,6 +718,291 @@ export function placeBarrel(level, o) {
   cyl(group, M.steelDark || rust, r + 0.01, 0.04, x, y + 0.08, z, { lod: 1 });
   cyl(group, M.steelDark || rust, r + 0.01, 0.04, x, y + h - 0.08, z, { lod: 1 });
   hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+
+function cone(group, mat, r, h, x, y, z, opts) { return add(group, CONE(), mat, x, y, z, r, h, r, opts); }
+
+let _formolMat;
+function formolMat() {
+  if (!_formolMat) _formolMat = new THREE.MeshLambertMaterial({ color: 0x4a6a30, transparent: true, opacity: 0.55, emissive: 0x0c1a04 });
+  return _formolMat;
+}
+
+/** Tear mecânico (quadro, rolo, pente, lançadeira e pano). AABB do bloco de metal. */
+export function placeLoom(level, o) {
+  tally(level, 'loom');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const metal = M.metal || M.steelDark, dark = M.steelDark || M.rust, wood = M.woodDark || M.wood, cloth = M.sheet || M.linen;
+  box(group, metal, w, 0.12, d, x, y + 0.06, z, { cast: true });
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    box(group, metal, 0.1, h + 0.7, 0.1, x + sx * (w / 2 - 0.12), y + (h + 0.7) / 2, z + sz * (d / 2 - 0.1), { cast: true });
+  }
+  box(group, dark, w - 0.2, 0.9, 0.08, x, y + h + 0.35, z - d / 2 + 0.14, { cast: true });
+  cyl(group, wood, 0.12, w - 0.4, x, y + h + 0.15, z - d / 2 + 0.22, { rz: Math.PI / 2, lod: 1 });
+  box(group, cloth, w - 0.6, 0.04, d * 0.45, x, y + h + 0.04, z + 0.05);
+  box(group, wood, 0.16, 0.05, 0.4, x, y + h + 0.08, z + 0.15, { lod: 1, ry: 0.3 });
+  for (const sx of [-0.25, 0.05, 0.3]) box(group, wood, 0.08, 0.2, 0.22, x + sx * w, y + 0.14, z + d * 0.15, { lod: 1 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Detalhe visual de caldeira horizontal (tampas, rebites, bocas). Sem colisão e sem fogo. */
+export function dressBoiler(level, o) {
+  tally(level, 'boiler');
+  const { group, M } = ctxOf(level);
+  const x = o.x, y = o.y, z = o.z, len = o.length ?? 12, r = o.r ?? 1.8;
+  const iron = M.boilerIron || M.rust, rust = M.rust || iron;
+  cyl(group, iron, r, 0.16, x - len / 2, y, z, { rz: Math.PI / 2, cast: true });
+  cyl(group, iron, r, 0.16, x + len / 2, y, z, { rz: Math.PI / 2, cast: true });
+  cyl(group, rust, 0.28, 0.5, x - len / 2 - 0.28, y + r * 0.15, z, { rz: Math.PI / 2, lod: 1, seg8: true });
+  for (let i = 0; i < 4; i++) {
+    const px = x - len / 2 + 1.2 + i * ((len - 2.2) / 3);
+    for (const a of [0.4, 1.2, 2.0, 2.8]) {
+      const ly = y + Math.sin(a) * (r + 0.04), lz = z + Math.cos(a) * (r + 0.04);
+      box(group, rust, 0.06, 0.06, 0.06, px, ly, lz, { lod: 1 });
+    }
+  }
+  box(group, rust, 0.2, 0.16, 0.16, x, y + r + 0.08, z, { lod: 2 });
+}
+
+/** Banco de baterias (estante, acumuladores e bornes). AABB do bloco de madeira. */
+export function placeBatteryBank(level, o) {
+  tally(level, 'batteries');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const wood = M.woodDark || M.wood, glass = M.vial || M.glass, brass = M.brass || M.metal;
+  box(group, wood, w, h * 0.12, d, x, y + h * 0.06, z, { cast: true });
+  box(group, wood, w, 0.06, d, x, y + h - 0.03, z, { cast: true });
+  for (const sx of [-1, 1]) box(group, wood, 0.08, h, 0.08, x + sx * (w / 2 - 0.06), y + h / 2, z, { cast: true });
+  box(group, wood, w - 0.1, 0.04, d - 0.04, x, y + h * 0.5, z, { lod: 1 });
+  const step = o.step ?? 0.55;
+  for (let cx = minX + 0.3; cx < maxX - 0.2; cx += step) {
+    box(group, glass, 0.4, 0.42, Math.min(0.5, d - 0.1), cx, maxY + 0.21, z, { batch: false });
+    box(group, brass, 0.08, 0.08, 0.08, cx, maxY + 0.46, z, { lod: 1 });
+  }
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Cadeira de transmissão (armação, braços, encosto, apoio). Colisão só do assento. */
+export function placeInesChair(level, o) {
+  tally(level, 'inesChair');
+  const { group, M, col } = ctxOf(level);
+  const x = o.x, y = o.y, z = o.z, yaw = o.yaw ?? 0;
+  const rust = M.rust || M.steelDark, leather = M.leatherDark || rust;
+  const p = (lx, ly, lz) => { const [wx, wz] = around(x, z, lx, lz, yaw); return [wx, y + ly, wz]; };
+  const put = (w, h, d, lx, ly, lz, mat, opts) => { const q = p(lx, ly, lz); box(group, mat, w, h, d, q[0], q[1], q[2], { ry: yaw, cast: true, ...opts }); };
+  put(0.7, 0.1, 0.7, 0, 0.43, 0, rust);
+  put(0.7, 1.0, 0.08, 0, 0.98, -0.33, rust);
+  put(0.08, 0.35, 0.5, -0.32, 0.62, 0.02, rust, { lod: 1 });
+  put(0.08, 0.35, 0.5, 0.32, 0.62, 0.02, rust, { lod: 1 });
+  put(0.4, 0.05, 0.28, 0, 0.16, 0.28, rust, { lod: 1 });
+  put(0.66, 0.04, 0.5, 0, 0.49, 0.02, leather, { lod: 1 });
+  for (const [lx, lz] of [[-0.28, -0.28], [0.28, -0.28], [-0.28, 0.28], [0.28, 0.28]]) put(0.07, 0.4, 0.07, lx, 0.2, lz, rust, { lod: 1 });
+  hit(col, x - 0.35, y, z - 0.35, x + 0.35, y + 0.48, z + 0.35, o.tag || 'obstacle', o.sight !== false);
+}
+
+/** Pia batismal de pedra. Colisão 1,2×1,2×0,9. Devolve a malha da cinza (fontAsh). */
+export function placeFont(level, o) {
+  tally(level, 'font');
+  const { group, M, col } = ctxOf(level);
+  const x = o.x, y = o.y, z = o.z;
+  const stone = M.stone || M.marble, ashMat = M.ash || M.coal;
+  cyl(group, stone, 0.28, 0.55, x, y + 0.28, z, { cast: true, seg8: true });
+  cyl(group, stone, 0.58, 0.28, x, y + 0.72, z, { cast: true, seg8: true });
+  cyl(group, stone, 0.62, 0.06, x, y + 0.88, z, { lod: 1, seg8: true });
+  const ash = cyl(group, ashMat, 0.48, 0.04, x, y + 0.88, z, { batch: false, seg8: true });
+  box(group, M.woodDark || stone, 0.04, 0.22, 0.04, x, y + 1.05, z + 0.5, { lod: 2 });
+  hit(col, x - 0.6, y, z - 0.6, x + 0.6, y + 0.9, z + 0.6, o.tag || 'prop-low', o.sight);
+  return { ash };
+}
+
+/** Tanque de formol (armação, vidro, líquido, tampa). AABB do cubo de vidro. */
+export function placeFormalinTank(level, o) {
+  tally(level, 'formol');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const metal = M.steelDark || M.metal, glass = M.glass || metal;
+  box(group, metal, w, 0.08, d, x, y + 0.04, z, { cast: true });
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    box(group, metal, 0.06, h, 0.06, x + sx * (w / 2 - 0.04), y + h / 2, z + sz * (d / 2 - 0.04), { cast: true });
+  }
+  box(group, metal, w, 0.05, d, x, y + h - 0.02, z, { lod: 1 });
+  box(group, glass, 0.02, h * 0.78, d - 0.12, minX + 0.04, y + h * 0.5, z, { batch: false });
+  box(group, glass, 0.02, h * 0.78, d - 0.12, maxX - 0.04, y + h * 0.5, z, { batch: false });
+  box(group, glass, w - 0.12, h * 0.78, 0.02, x, y + h * 0.5, minZ + 0.04, { batch: false });
+  box(group, glass, w - 0.12, h * 0.78, 0.02, x, y + h * 0.5, maxZ - 0.04, { batch: false });
+  const liq = new THREE.Mesh(BOX(), formolMat());
+  liq.position.set(x, y + 0.8, z); liq.scale.set(w - 0.2, 1.5, d - 0.2);
+  liq.userData.batchable = false; liq.matrixAutoUpdate = false; liq.updateMatrix(); group.add(liq);
+  if (o.open) box(group, metal, w * 0.7, 0.04, d * 0.7, x + w * 0.15, y + h + 0.02, z + d * 0.2, { rx: -0.9, lod: 1 });
+  else box(group, metal, w - 0.08, 0.04, d - 0.08, x, y + h + 0.03, z, { lod: 1 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop', o.sight !== false);
+}
+
+/** Moldura extra de vitrine (trilhos, fechadura) — não mexe no vidro, nos cacos nem no colisor. */
+export function dressShowcase(level, o) {
+  tally(level, 'showcase');
+  const { group, M } = ctxOf(level);
+  const brass = M.brass || M.gold || M.metal;
+  const x = o.x, z = o.z, hx = o.hx, hz = o.hz, y0 = o.y0, y1 = o.y1;
+  box(group, brass, hx * 2 + 0.08, 0.05, hz * 2 + 0.08, x, y0 + 0.02, z, { lod: 1 });
+  box(group, brass, hx * 2 - 0.1, 0.03, 0.03, x, (y0 + y1) / 2, z - hz - 0.02, { lod: 1 });
+  box(group, brass, 0.08, 0.08, 0.04, x, y0 + 0.18, z - hz - 0.03, { lod: 2 });
+}
+
+/** Ponteiras e faixas extras na grade animada (filhos do grupo que sobe). */
+export function dressGrate(grate, M, o = {}) {
+  const rust = M.rust || M.metal;
+  const x0 = o.x0 ?? 24.1, x1 = o.x1 ?? 25.95, yC = o.yC ?? 0, z = o.z ?? 0, h = o.h ?? 2.6;
+  const top = yC + h / 2;
+  for (let x = x0; x <= x1 + 0.01; x += 0.25) {
+    add(grate, BOX(), rust, x + 0.025, top + 0.08, z, 0.04, 0.16, 0.04, { lod: 1 });
+  }
+  add(grate, BOX(), rust, (x0 + x1) / 2, yC + 0.15, z, 0.28, 0.22, 0.08, { lod: 2 });
+}
+
+/** Base e ombros do sarilho (o tambor/manivela/selo continuam do cenário). */
+export function dressWinchBase(level, o) {
+  tally(level, 'winch');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const stone = M.stone || M.woodDark, rust = M.rust || M.metal;
+  box(group, stone, w, h, d, x, y + h / 2, z, { cast: true });
+  box(group, stone, w + 0.08, 0.08, d + 0.06, x, y + h - 0.02, z, { lod: 1 });
+  for (const sx of [-1, 1]) box(group, rust, 0.08, 0.55, 0.08, x + sx * 0.35, y + h + 0.28, z, { lod: 1 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Monte de carvão (vários cones sobre a AABB original). */
+export function placeCoalPile(level, o) {
+  tally(level, 'coal');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const coal = M.coal || M.steelDark;
+  box(group, coal, w * 0.92, h * 0.4, d * 0.92, x, y + h * 0.2, z, { cast: true });
+  const s = seedOf(x, z);
+  const lumps = [[-0.22, 0.55, -0.15, 0.7], [0.2, 0.72, 0.18, 0.85], [0.05, 0.45, -0.28, 0.55], [-0.08, 0.38, 0.25, 0.5]];
+  lumps.forEach((L, i) => {
+    const opts = i >= 2 ? { lod: 1 } : { cast: true };
+    cone(group, coal, Math.min(w, d) * L[3] * 0.45, h * L[1], x + L[0] * w, y + h * L[1] * 0.5, z + L[2] * d, opts);
+  });
+  box(group, coal, w * 0.2, h * 0.15, d * 0.18, x + (s - 0.5) * w * 0.3, y + h * 0.12, z + (0.5 - s) * d * 0.3, { lod: 2 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Lixeira de metal (corpo, aro, tampa entreaberta). */
+export function placeTrashCan(level, o) {
+  tally(level, 'trash');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const h = maxY - minY, r = Math.min(maxX - minX, maxZ - minZ) / 2;
+  const metal = M[o.mat] || M.metal || M.steelDark;
+  cyl(group, metal, r * 0.92, h * 0.88, x, y + h * 0.44, z, { cast: true, seg8: true });
+  cyl(group, metal, r, 0.05, x, y + h * 0.86, z, { lod: 1, seg8: true });
+  box(group, metal, r * 1.5, 0.04, r * 1.2, x + r * 0.15, y + h * 0.98, z, { lod: 1, rz: 0.4 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Pilha de sacos (areia / carvão) dentro da AABB original. */
+export function placeSandbags(level, o) {
+  tally(level, 'sandbags');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const cloth = M[o.mat] || M.pantsGray || M.sheet || M.linen;
+  const rows = Math.max(1, Math.round(h / 0.28));
+  for (let r = 0; r < rows; r++) {
+    const n = r % 2 ? 2 : 3;
+    for (let i = 0; i < n; i++) {
+      const t = n === 1 ? 0 : (i / (n - 1) - 0.5);
+      box(group, cloth, w / n * 1.05, h / rows * 0.85, d * 0.85, x + t * w * 0.55, y + (r + 0.5) * (h / rows), z + (r % 2 ? 0.04 : -0.03), { cast: true, ry: (i - 1) * 0.08 });
+    }
+  }
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Varal (fio e lençóis). Sem colisão; os lençóis occludem visualmente. */
+export function placeClothesline(level, o) {
+  tally(level, 'clothesline');
+  const { group, M } = ctxOf(level);
+  const metal = M.metal || M.steelDark, cloth = M.sheet || M.linen || M.bandage;
+  const yW = o.yWire, z = o.z, x0 = o.x0, x1 = o.x1;
+  if (o.poles !== false) {
+    const y0 = o.yFloor ?? yW - 2.4;
+    for (const x of [x0, x1]) box(group, metal, 0.06, yW - y0, 0.06, x, (y0 + yW) / 2, z, { cast: true });
+  }
+  box(group, metal, x1 - x0, 0.02, 0.02, (x0 + x1) / 2, yW, z);
+  for (const sh of (o.sheets || [])) {
+    const [a, b, low] = sh;
+    box(group, cloth, b - a, yW - low, 0.04, (a + b) / 2, (low + yW) / 2, z, { cast: true });
+    box(group, cloth, (b - a) * 0.4, 0.08, 0.05, (a + b) / 2 + 0.05, low + 0.04, z + 0.01, { lod: 1, rz: 0.2 });
+  }
+}
+
+/** Máquina de escrever (corpo, rolo, teclas, papel). Sem colisão. */
+export function placeTypewriter(level, o) {
+  tally(level, 'typewriter');
+  const { group, M } = ctxOf(level);
+  const x = o.x, y = o.y, z = o.z, yaw = o.yaw ?? 0;
+  const metal = M.metal || M.steelDark, paper = M.paper || M.sheet;
+  const put = (w, h, d, lx, ly, lz, mat, opts) => {
+    const [wx, wz] = around(x, z, lx, lz, yaw);
+    box(group, mat, w, h, d, wx, y + ly, wz, { ry: yaw, ...opts });
+  };
+  put(0.5, 0.14, 0.36, 0, 0.07, 0, metal, { cast: true });
+  cyl(group, metal, 0.05, 0.42, ...(() => { const q = around(x, z, 0, -0.08, yaw); return [q[0], y + 0.18, q[1]]; })(), { rz: Math.PI / 2, ry: yaw, lod: 1, seg8: true });
+  put(0.22, 0.16, 0.01, 0, 0.22, -0.02, paper, { lod: 1 });
+  for (let r = 0; r < 3; r++) for (let k = 0; k < 5; k++) {
+    put(0.05, 0.02, 0.05, -0.16 + k * 0.08, 0.15, 0.04 + r * 0.05, metal, { lod: 2 });
+  }
+}
+
+/** Vitrine/balcão de vidro estático (farmácia, relojoaria): caixa, moldura, prateleira. */
+export function placeDisplayCase(level, o) {
+  tally(level, 'display');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const wood = M.woodDark || M.wood, glass = M.glass || M.showcase || wood, brass = M.brass || M.metal;
+  box(group, wood, w, 0.1, d, x, y + 0.05, z, { cast: true });
+  box(group, glass, w - 0.08, h - 0.16, d - 0.08, x, y + h * 0.5, z, { batch: false });
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    box(group, brass, 0.04, h - 0.08, 0.04, x + sx * (w / 2 - 0.03), y + h * 0.5, z + sz * (d / 2 - 0.03), { lod: 1 });
+  }
+  box(group, wood, w, 0.04, d, x, y + h - 0.02, z, { lod: 1 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Moldura de painel elétrico (caixa, aviso). Não cria colisão nem mexe em alavancas/fusível. */
+export function dressElectricalPanel(level, o) {
+  tally(level, 'panel');
+  const { group, M } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = (minY + maxY) / 2, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const metal = M[o.mat] || M.steelDark || M.metal, hazard = M.hazard || metal;
+  box(group, metal, w + 0.04, h + 0.04, d + 0.02, x, y, z, { cast: false });
+  if (o.face === '+x' || o.face === '-x') {
+    const fx = o.face === '+x' ? maxX + 0.015 : minX - 0.015;
+    box(group, hazard, 0.02, 0.08, d * 0.45, fx, maxY - 0.1, z, { lod: 1 });
+  } else {
+    const fz = o.face === '-z' ? minZ - 0.015 : maxZ + 0.015;
+    box(group, hazard, w * 0.45, 0.08, 0.02, x, maxY - 0.1, fz, { lod: 1 });
+  }
 }
 
 /** Contagem de malhas/triângulos (testes e smoke). */
