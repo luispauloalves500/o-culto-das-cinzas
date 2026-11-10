@@ -73,7 +73,7 @@ export class SedeLevel {
     this._crypt();
     this._doors();
     this._lights();
-    this._rain();
+    /* pt61u: cinza ao ar livre passou para Atmosphere.js */;
     this._nav();
     return this;
   }

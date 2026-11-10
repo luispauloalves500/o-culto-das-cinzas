@@ -92,7 +92,7 @@ export class CidadeLevel {
     this._gearHall();
     this._doors();
     this._lights();
-    this._ash();
+    /* pt61u: cinza ao ar livre passou para Atmosphere.js */;
     this._nav();
     return this;
   }
