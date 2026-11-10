@@ -114,7 +114,7 @@ export class Perf {
       if (src.userData.castOrig !== undefined) m.userData.castOrig = src.userData.castOrig;
       m.matrixAutoUpdate = false; m.updateMatrix();
       scene.add(m);
-      for (const o of list) { parents.add(o.parent); o.parent.remove(o); o.geometry.dispose(); o.userData.batched = true; }
+      for (const o of list) { parents.add(o.parent); o.parent.remove(o); if (!o.geometry.userData.shared) o.geometry.dispose(); o.userData.batched = true; }
       merged += list.length; batches++;
     }
     this.stats.batched += merged; this.stats.batches += batches;
