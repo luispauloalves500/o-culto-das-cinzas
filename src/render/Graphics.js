@@ -13,6 +13,8 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { Perf, LIGHT_BUDGETS, DRAW_DIST } from './Perf.js';
+import { setSurfaceDetail, detailForGfx, textureBytes } from '../world/Textures.js';
+import { setFireQuality, fireQualityFor, updateAllFires } from './FireFX.js';
 
 export const GFX_KEYS = ['renderScale', 'shadows', 'particles', 'bloom', 'postfx', 'antialias', 'lightBudget', 'drawDist'];
 export const GFX_PRESETS = {
@@ -106,8 +108,10 @@ export class Graphics {
     // partículas
     this.game.combat?.setQuality?.(c.part);
     this._buildDust();
-    // texturas
+    // texturas (anisotropia + detalhe/bump por predefinição; o mapa em si não muda de resolução)
     this._applyAniso();
+    if (this.game.materials) setSurfaceDetail(this.game.materials, detailForGfx(c));
+    setFireQuality(fireQualityFor(c));
     // desempenho sem tocar em textura: orçamento de luzes, distância de desenho, taxa das sombras
     this.perf.apply(c);
     this.idleT = 1; // força um quadro novo mesmo em menu/pausa (a opção aparece na hora)
@@ -255,6 +259,7 @@ export class Graphics {
     this._pickT -= dt;
     if (this._pickT <= 0) { this._pickT = 0.4; if (this.current.shadow.lights) this._applyShadowLights(); }
     this._updateDust(dt);
+    updateAllFires(dt, this.t, this.game.camera);
   }
 
   render(scene, camera) {
@@ -272,7 +277,10 @@ export class Graphics {
     const c = this.current;
     return { preset: detectPreset(this.game.settings.data), scale: c.renderScale, shadows: c.shadows, shadowMap: this.renderer.shadowMap.enabled, soft: !!this._soft,
       particles: c.particles, pool: this.game.combat?.maxP ?? null, bloom: !!this.bloom, grade: !!this.grade, fxaa: !!this.fxaa, composer: !!this.composer,
-      size: this.renderer.getSize(new THREE.Vector2()).toArray(), lightBudget: c.lightBudget, drawDist: c.drawDist, ...this.stats, perf: this.perf.debug() };
+      size: this.renderer.getSize(new THREE.Vector2()).toArray(), lightBudget: c.lightBudget, drawDist: c.drawDist, ...this.stats, perf: this.perf.debug(),
+      texBytes: textureBytes(this.game.materials?.textures) | 0,
+      detail: detailForGfx(c), fireQ: fireQualityFor(c),
+      draws: this.renderer.info?.render?.calls ?? 0 };
   }
 }
 
