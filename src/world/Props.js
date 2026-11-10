@@ -40,10 +40,31 @@ function add(group, geom, mat, x, y, z, sx, sy, sz, opts = {}) {
   if (opts.rz) m.rotation.z = opts.rz;
   m.castShadow = !!opts.cast;
   m.receiveShadow = opts.receive !== false;
-  m.userData.batchable = opts.batch !== false;
+  const lod = opts.lod, lodHide = opts.lodHide;
+  if (lod || lodHide != null) {
+    if (lod) m.userData.propLod = lod;
+    if (lodHide != null) m.userData.propLodHide = lodHide;
+    m.userData.batchable = false;
+    m.visible = (lod ? _detail >= lod : true) && (lodHide != null ? _detail < lodHide : true);
+  } else {
+    m.userData.batchable = opts.batch !== false;
+  }
   m.matrixAutoUpdate = false; m.updateMatrix();
   group.add(m);
   return m;
+}
+
+/** mostra/esconde peças de detalhe ao trocar o preset, sem remontar o capítulo */
+export function applyPropLod(scene, detail) {
+  if (detail != null) _detail = detail;
+  const d = _detail;
+  scene?.traverse((o) => {
+    if (o.userData?.propLod || o.userData?.propLodHide != null) {
+      const min = o.userData.propLod || 0;
+      const hide = o.userData.propLodHide;
+      o.visible = d >= min && (hide == null || d < hide);
+    }
+  });
 }
 function box(group, mat, w, h, d, x, y, z, opts) { return add(group, BOX(), mat, x, y, z, w, h, d, opts); }
 function cyl(group, mat, r, h, x, y, z, opts) { return add(group, opts?.seg8 ? CYL8() : CYL(), mat, x, y, z, r, h, r, opts); }
@@ -77,10 +98,8 @@ export function placeBed(level, o) {
   // pés / rodas
   for (const [lx, lz] of [[-W / 2 + 0.07, -L / 2 + 0.08], [W / 2 - 0.07, -L / 2 + 0.08], [-W / 2 + 0.07, L / 2 - 0.08], [W / 2 - 0.07, L / 2 - 0.08]]) {
     B(0.045, 0.34, 0.045, lx, 0.17, lz);
-    if (_detail >= 1) {
-      const q = p(lx, 0.035, lz);
-      cyl(group, metal, 0.05, 0.03, q[0], q[1], q[2], { rx: Math.PI / 2, ry: yaw, batch: true });
-    }
+    { const q = p(lx, 0.035, lz);
+      cyl(group, metal, 0.05, 0.03, q[0], q[1], q[2], { rx: Math.PI / 2, ry: yaw, lod: 1 }); }
   }
   // longarinas e travessas
   B(0.04, 0.05, L - 0.1, -W / 2 + 0.06, 0.32, 0);
@@ -88,19 +107,15 @@ export function placeBed(level, o) {
   B(W - 0.08, 0.04, 0.04, 0, 0.32, -L / 2 + 0.1);
   B(W - 0.08, 0.04, 0.04, 0, 0.32, L / 2 - 0.1);
   // grade lateral (média+)
-  if (_detail >= 1) {
-    for (const sx of [-1, 1]) {
-      B(0.025, 0.22, L * 0.55, sx * (W / 2 - 0.03), 0.52, 0.1);
-    }
+  for (const sx of [-1, 1]) {
+    B(0.025, 0.22, L * 0.55, sx * (W / 2 - 0.03), 0.52, 0.1, metal, { lod: 1 });
   }
   // cabeceira tubular
   B(W - 0.05, 0.04, 0.04, 0, 0.95, -L / 2 + 0.03);
   B(0.04, 0.7, 0.04, -W / 2 + 0.06, 0.65, -L / 2 + 0.03);
   B(0.04, 0.7, 0.04, W / 2 - 0.06, 0.65, -L / 2 + 0.03);
-  if (_detail >= 1) {
-    B(W - 0.16, 0.03, 0.03, 0, 0.72, -L / 2 + 0.03);
-    B(W - 0.16, 0.03, 0.03, 0, 0.55, -L / 2 + 0.03);
-  }
+  B(W - 0.16, 0.03, 0.03, 0, 0.72, -L / 2 + 0.03, metal, { lod: 1 });
+  B(W - 0.16, 0.03, 0.03, 0, 0.55, -L / 2 + 0.03, metal, { lod: 1 });
   // pezeira
   B(W - 0.1, 0.35, 0.035, 0, 0.55, L / 2 - 0.03);
   // colchão + lençol
@@ -108,7 +123,7 @@ export function placeBed(level, o) {
   B(W - 0.06, 0.025, L - 0.1, 0, 0.47, 0.02, sheet);
   // aba do lençol
   B(W - 0.08, 0.08, 0.04, 0, 0.42, L / 2 - 0.04, sheet);
-  if (v >= 1 || _detail >= 1) {
+  if (v >= 1) {
     const folds = v === 2 ? 4 : 2;
     for (let i = 0; i < folds; i++) {
       const fz = -0.35 + i * 0.28 + (seedOf(x, z, i) - 0.5) * 0.12;
@@ -119,11 +134,11 @@ export function placeBed(level, o) {
   // travesseiro (um pouco torto em algumas)
   const px = (v ? (seedOf(x, z, 9) - 0.5) * 0.12 : 0);
   B(W * 0.62, 0.1, 0.28, px, 0.55, -L / 2 + 0.32, sheet, { ry: yaw + (v ? (seedOf(x, z, 8) - 0.5) * 0.35 : 0) });
-  if (o.maternity && _detail >= 1) {
+  if (o.maternity) {
     // manivela no pé
-    B(0.03, 0.03, 0.16, 0, 0.38, L / 2 + 0.08);
+    B(0.03, 0.03, 0.16, 0, 0.38, L / 2 + 0.08, metal, { lod: 1 });
     const q = p(0.12, 0.38, L / 2 + 0.16);
-    cyl(group, metal, 0.015, 0.14, q[0], q[1], q[2], { rz: Math.PI / 2, ry: yaw, batch: true });
+    cyl(group, metal, 0.015, 0.14, q[0], q[1], q[2], { rz: Math.PI / 2, ry: yaw, lod: 1 });
   }
   // AABB igual ao bed() antigo (yaw 0: largura X; π/2: comprimento no X)
   const halfW = Math.abs(Math.cos(yaw)) > 0.5 ? W / 2 : L / 2;
@@ -147,16 +162,14 @@ export function placeGurney(level, o) {
   const hTop = (maxY - minY);
   for (const [lx, lz] of [[-W / 2 + 0.08, -L / 2 + 0.1], [W / 2 - 0.08, -L / 2 + 0.1], [-W / 2 + 0.08, L / 2 - 0.1], [W / 2 - 0.08, L / 2 - 0.1]]) {
     B(0.04, hTop - 0.12, 0.04, lx, (hTop - 0.12) / 2, lz);
-    if (_detail >= 1) { const q = p(lx, 0.05, lz); cyl(group, metal, 0.07, 0.04, q[0], q[1], q[2], { rx: Math.PI / 2, ry: yaw, batch: true }); }
+    { const q = p(lx, 0.05, lz); cyl(group, metal, 0.07, 0.04, q[0], q[1], q[2], { rx: Math.PI / 2, ry: yaw, lod: 1 }); }
   }
   B(W - 0.06, 0.05, L - 0.08, 0, hTop - 0.1, 0);
   if (o.sheet !== false) B(W - 0.12, 0.06, L - 0.16, 0, hTop - 0.04, 0, sheet);
-  if (_detail >= 1) {
-    B(0.03, 0.16, L * 0.7, -W / 2 + 0.04, hTop + 0.04, 0);
-    B(0.03, 0.16, L * 0.7, W / 2 - 0.04, hTop + 0.04, 0);
-    B(0.04, 0.04, 0.2, 0, hTop - 0.12, L / 2 + 0.08); // puxador
-  }
-  if (o.strap && _detail >= 1) B(W - 0.2, 0.02, 0.04, 0, hTop + 0.02, 0.1, M.leather || metal);
+  B(0.03, 0.16, L * 0.7, -W / 2 + 0.04, hTop + 0.04, 0, metal, { lod: 1 });
+  B(0.03, 0.16, L * 0.7, W / 2 - 0.04, hTop + 0.04, 0, metal, { lod: 1 });
+  B(0.04, 0.04, 0.2, 0, hTop - 0.12, L / 2 + 0.08, metal, { lod: 1 });
+  if (o.strap) B(W - 0.2, 0.02, 0.04, 0, hTop + 0.02, 0.1, M.leather || metal, { lod: 1 });
   hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low');
 }
 
@@ -175,7 +188,7 @@ export function placeIvStand(level, o) {
     for (const a of [0, 2.1, 4.2]) {
       const lx = Math.cos(a) * 0.18, lz = Math.sin(a) * 0.18;
       box(group, metal, 0.03, 0.03, 0.2, x + lx * 0.5, rootY + 0.03, rootZ + lz * 0.5, { ry: a, cast: true });
-      if (_detail >= 1) cyl(group, metal, 0.035, 0.03, x + lx, rootY + 0.03, rootZ + lz, { rx: Math.PI / 2, batch: true });
+      cyl(group, metal, 0.035, 0.03, x + lx, rootY + 0.03, rootZ + lz, { rx: Math.PI / 2, lod: 1 });
     }
   }
   const py = fallen ? rootY + 0.04 : rootY + h / 2;
@@ -184,7 +197,7 @@ export function placeIvStand(level, o) {
   const topY = fallen ? rootY + 0.04 : rootY + h - 0.05;
   const topZ = fallen ? rootZ + h - 0.05 : rootZ;
   box(group, metal, 0.28, 0.02, 0.02, x, topY, topZ, { rx, ry: fallen ? 0 : 0 });
-  if (!fallen && o.bag !== false && _detail >= 1) {
+  if (!fallen && o.bag !== false) {
     box(group, M.vial || M.glass || metal, 0.06, 0.14, 0.04, x + 0.1, topY - 0.12, topZ, { cast: true });
   }
 }
@@ -204,11 +217,7 @@ export function placeNightstand(level, o) {
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     box(group, wood, 0.05, h - 0.05, 0.05, x + sx * (w / 2 - 0.05), y + (h - 0.05) / 2, z + sz * (d / 2 - 0.05), { cast: true });
   }
-  if (_detail >= 1) {
-    const face = o.face === '-x' ? [-w / 2, 0] : o.face === '+x' ? [w / 2, 0] : o.face === '-z' ? [0, -d / 2] : [0, d / 2];
-    const fx = x + (face[0] || (alongX ? 0 : 0)), fz = z + (face[1] !== undefined ? face[1] : (d / 2));
-    box(group, M.metal, 0.08, 0.02, 0.03, x, y + h * 0.55, z + d / 2 + 0.01, { cast: false });
-  }
+  box(group, M.metal, 0.08, 0.02, 0.03, x, y + h * 0.55, z + d / 2 + 0.01, { cast: false, lod: 1 });
   hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
 }
 
@@ -221,7 +230,7 @@ export function placeTable(level, o) {
   const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
   const wood = M[o.mat] || M.wood || M.woodDark;
   box(group, wood, w, 0.05, d, x, y + h - 0.025, z, { cast: true });
-  if (_detail >= 1) box(group, wood, w - 0.06, 0.06, d - 0.06, x, y + h - 0.08, z);
+  box(group, wood, w - 0.06, 0.06, d - 0.06, x, y + h - 0.08, z, { lod: 1 });
   const inset = 0.07;
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     box(group, wood, 0.06, h - 0.05, 0.06, x + sx * (w / 2 - inset), y + (h - 0.05) / 2, z + sz * (d / 2 - inset), { cast: true });
@@ -242,7 +251,7 @@ export function placeBench(level, o) {
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     box(group, wood, 0.06, h - 0.05, 0.06, x + sx * (w / 2 - 0.06), y + (h - 0.05) / 2, z + sz * (d / 2 - 0.06), { cast: true });
   }
-  if (o.back !== false && _detail >= 0) {
+  if (o.back !== false) {
     if (alongX) box(group, wood, w, 0.45, 0.05, x, y + h + 0.2, z - d / 2 + 0.03, { cast: true });
     else box(group, wood, 0.05, 0.45, d, x - w / 2 + 0.03, y + h + 0.2, z, { cast: true });
   }
@@ -259,7 +268,7 @@ export function placeChair(level, o) {
   addL(0.42, 0.05, 0.42, 0, 0.45, 0);
   for (const [lx, lz] of [[-0.17, -0.17], [0.17, -0.17], [-0.17, 0.17], [0.17, 0.17]]) addL(0.045, 0.45, 0.045, lx, 0.225, lz);
   addL(0.42, 0.5, 0.05, 0, 0.72, -0.19);
-  if (_detail >= 1) addL(0.36, 0.04, 0.03, 0, 0.85, -0.19);
+  addL(0.36, 0.04, 0.03, 0, 0.85, -0.19, { lod: 1 });
   hit(col, x - 0.24, y, z - 0.24, x + 0.24, y + 0.5, z + 0.24, 'prop-low');
 }
 
@@ -291,14 +300,14 @@ export function placeBookcase(level, o) {
   for (let i = 1; i < n; i++) {
     const ly = y + (h * i) / n;
     box(group, wood, alongX ? w - 0.08 : w - 0.04, 0.03, alongX ? d - 0.04 : d - 0.08, x, ly, z);
-    if (_detail >= 1 && o.books !== false) {
+    if (o.books !== false) {
       const books = 3 + ((i + (x * 10 | 0)) % 3);
       for (let k = 0; k < books; k++) {
         const mat = (k + i) % 3 === 0 ? (M.leather || wood) : (k % 2 ? (M.paper || wood) : wood);
         const bw = 0.06 + seedOf(x, z, i * 10 + k) * 0.05;
         const bh = 0.16 + seedOf(x, z, i * 7 + k) * 0.1;
-        if (alongX) box(group, mat, bw, bh, d * 0.55, x - w / 2 + 0.15 + k * 0.12, ly + 0.02 + bh / 2, z + 0.02);
-        else box(group, mat, w * 0.55, bh, bw, x + 0.02, ly + 0.02 + bh / 2, z - d / 2 + 0.15 + k * 0.12);
+        if (alongX) box(group, mat, bw, bh, d * 0.55, x - w / 2 + 0.15 + k * 0.12, ly + 0.02 + bh / 2, z + 0.02, { lod: 1 });
+        else box(group, mat, w * 0.55, bh, bw, x + 0.02, ly + 0.02 + bh / 2, z - d / 2 + 0.15 + k * 0.12, { lod: 1 });
       }
     }
   }
@@ -318,11 +327,11 @@ export function placeCart(level, o) {
   const metal = M[o.mat] || M.steel || M.metal;
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     box(group, metal, 0.04, h, 0.04, x + sx * (w / 2 - 0.04), y + h / 2, z + sz * (d / 2 - 0.04), { cast: true });
-    if (_detail >= 1) cyl(group, metal, 0.05, 0.03, x + sx * (w / 2 - 0.05), y + 0.04, z + sz * (d / 2 - 0.05), { rx: Math.PI / 2, batch: true });
+    cyl(group, metal, 0.05, 0.03, x + sx * (w / 2 - 0.05), y + 0.04, z + sz * (d / 2 - 0.05), { rx: Math.PI / 2, lod: 1 });
   }
   box(group, metal, w - 0.04, 0.03, d - 0.04, x, y + 0.2, z, { cast: true });
   box(group, metal, w - 0.04, 0.03, d - 0.04, x, y + h - 0.04, z, { cast: true });
-  if (_detail >= 1) box(group, metal, w - 0.04, 0.03, d - 0.04, x, y + h * 0.55, z);
+  box(group, metal, w - 0.04, 0.03, d - 0.04, x, y + h * 0.55, z, { lod: 1 });
   hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
 }
 
@@ -337,11 +346,9 @@ export function placeSink(level, o) {
   box(group, metal, w, h - 0.08, d, x, y + (h - 0.08) / 2, z, { cast: true });
   box(group, metal, w + 0.04, 0.06, d + 0.04, x, y + h - 0.02, z, { cast: true });
   box(group, M.steelDark || metal, w * 0.7, 0.04, d * 0.6, x, y + h - 0.05, z);
-  if (_detail >= 1) {
-    cyl(group, metal, 0.02, 0.16, x, y + h + 0.08, z - d * 0.25, { seg8: true });
-    box(group, metal, 0.02, 0.02, 0.1, x, y + h + 0.16, z - d * 0.15);
-    cyl(group, metal, 0.015, 0.05, x, y + h + 0.13, z - d * 0.08, { seg8: true });
-  }
+  cyl(group, metal, 0.02, 0.16, x, y + h + 0.08, z - d * 0.25, { seg8: true, lod: 1 });
+  box(group, metal, 0.02, 0.02, 0.1, x, y + h + 0.16, z - d * 0.15, { lod: 1 });
+  cyl(group, metal, 0.015, 0.05, x, y + h + 0.13, z - d * 0.08, { seg8: true, lod: 1 });
   hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
 }
 
@@ -354,10 +361,8 @@ export function placeCrate(level, o) {
   const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
   const wood = M[o.mat] || M.wood;
   box(group, wood, w, h, d, x, y + h / 2, z, { cast: true });
-  if (_detail >= 1) {
-    box(group, M.metal, w + 0.01, 0.03, 0.03, x, y + h - 0.04, z + d / 2);
-    box(group, M.metal, w + 0.01, 0.03, 0.03, x, y + 0.04, z + d / 2);
-  }
+  box(group, M.metal, w + 0.01, 0.03, 0.03, x, y + h - 0.04, z + d / 2, { lod: 1 });
+  box(group, M.metal, w + 0.01, 0.03, 0.03, x, y + 0.04, z + d / 2, { lod: 1 });
   hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
 }
 
@@ -382,18 +387,13 @@ export function placePew(level, o) {
   box(group, pew, 0.07, 1.0, 0.06, x0 + 0.04, y + 0.5, backZ, { cast: true });
   box(group, pew, 0.07, 1.0, 0.06, x1 - 0.04, y + 0.5, backZ, { cast: true });
   box(group, pew, w - 0.04, 0.05, 0.05, cx, y + 0.98, backZ, { cast: true });
-  if (_detail === 0) {
-    box(group, pew, w - 0.12, 0.48, 0.04, cx, y + 0.72, backZ);
-  } else {
-    for (let i = 0; i < 4; i++) box(group, pew, w - 0.14, 0.08, 0.035, cx, y + 0.56 + i * 0.12, backZ, { cast: true });
-  }
+  box(group, pew, w - 0.12, 0.48, 0.04, cx, y + 0.72, backZ, { lodHide: 1 });
+  for (let i = 0; i < 4; i++) box(group, pew, w - 0.14, 0.08, 0.035, cx, y + 0.56 + i * 0.12, backZ, { cast: true, lod: 1 });
   // genuflexório (à frente, para a fileira de trás usar; + um no próprio banco)
-  if (_detail >= 1) {
-    box(group, pew, w - 0.1, 0.04, 0.16, cx, y + 0.22, z + depth + 0.08, { cast: true });
-    box(group, pew, 0.03, 0.22, 0.03, x0 + 0.12, y + 0.11, z + depth + 0.08);
-    box(group, pew, 0.03, 0.22, 0.03, x1 - 0.12, y + 0.11, z + depth + 0.08);
-  }
-  if (o.book && _detail >= 2) box(group, M.leather || pew, 0.14, 0.03, 0.1, cx + 0.3, y + 0.50, z + depth / 2, { ry: 0.2 });
+  box(group, pew, w - 0.1, 0.04, 0.16, cx, y + 0.22, z + depth + 0.08, { cast: true, lod: 1 });
+  box(group, pew, 0.03, 0.22, 0.03, x0 + 0.12, y + 0.11, z + depth + 0.08, { lod: 1 });
+  box(group, pew, 0.03, 0.22, 0.03, x1 - 0.12, y + 0.11, z + depth + 0.08, { lod: 1 });
+  if (o.book) box(group, M.leather || pew, 0.14, 0.03, 0.1, cx + 0.3, y + 0.50, z + depth / 2, { ry: 0.2, lod: 2 });
   hit(col, x0, y, z, x1, y + 0.98, z + depth, 'prop-low');
 }
 
@@ -407,18 +407,14 @@ export function placeAltar(level, o) {
   const stone = M.stone || M.marble, cloth = M.altarCloth || M.sheet;
   box(group, stone, w, h - 0.08, d, x, y + (h - 0.08) / 2, z, { cast: true });
   box(group, stone, w + 0.06, 0.08, d + 0.06, x, y + h - 0.04, z, { cast: true });
-  if (_detail >= 1) {
-    box(group, stone, w * 0.12, h * 0.6, 0.04, x - w * 0.35, y + h * 0.35, z - d / 2 - 0.01);
-    box(group, stone, w * 0.12, h * 0.6, 0.04, x + w * 0.35, y + h * 0.35, z - d / 2 - 0.01);
-  }
+  box(group, stone, w * 0.12, h * 0.6, 0.04, x - w * 0.35, y + h * 0.35, z - d / 2 - 0.01, { lod: 1 });
+  box(group, stone, w * 0.12, h * 0.6, 0.04, x + w * 0.35, y + h * 0.35, z - d / 2 - 0.01, { lod: 1 });
   // toalha com quedas
   box(group, cloth, w + 0.1, 0.03, d + 0.08, x, y + h + 0.01, z);
   box(group, cloth, w + 0.08, 0.22, 0.03, x, y + h - 0.1, z - d / 2 - 0.02);
-  if (_detail >= 1) {
-    box(group, cloth, 0.08, 0.18, 0.03, x - w * 0.2, y + h - 0.12, z - d / 2 - 0.025, { rz: 0.15 });
-    box(group, cloth, 0.06, 0.14, 0.03, x + w * 0.15, y + h - 0.1, z - d / 2 - 0.025, { rz: -0.1 });
-  }
-  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop', true);
+  box(group, cloth, 0.08, 0.18, 0.03, x - w * 0.2, y + h - 0.12, z - d / 2 - 0.025, { rz: 0.15, lod: 1 });
+  box(group, cloth, 0.06, 0.14, 0.03, x + w * 0.15, y + h - 0.1, z - d / 2 - 0.025, { rz: -0.1, lod: 1 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop', o.sight !== false);
 }
 
 /** Castiçal (base, haste, copo e vela). y = base. */
@@ -454,10 +450,8 @@ export function placePulpit(level, o) {
   const wood = M.woodDark;
   box(group, wood, w, h, d, x, y + h / 2, z, { cast: true });
   box(group, wood, w + 0.16, 0.05, d + 0.16, x, y + h + 0.02, z, { cast: true });
-  if (_detail >= 1) {
-    box(group, wood, w + 0.1, 0.12, 0.04, x, y + h + 0.1, z - d / 2 - 0.04, { rx: -0.4, cast: true });
-    box(group, M.leather || wood, 0.16, 0.03, 0.12, x, y + h + 0.12, z - 0.02, { rx: -0.35 });
-  }
+  box(group, wood, w + 0.1, 0.12, 0.04, x, y + h + 0.1, z - d / 2 - 0.04, { rx: -0.4, cast: true, lod: 1 });
+  box(group, M.leather || wood, 0.16, 0.03, 0.12, x, y + h + 0.12, z - 0.02, { rx: -0.35, lod: 1 });
   hit(col, minX, minY, minZ, maxX, maxY + 0.05, maxZ, o.tag || 'prop-low');
 }
 
@@ -476,12 +470,12 @@ export function placeCrib(level, o) {
     const px = x + sx * (w / 2 - 0.015), pz = z + sz * (d / 2 - 0.015);
     box(group, metal, sx !== 0 ? 0.03 : w, h - 0.2, sz !== 0 ? 0.03 : d, px, y + 0.55 + (h - 0.55) / 2, pz, { cast: true });
   }
-  if (_detail >= 1) {
+  {
     const bars = 5;
     for (let i = 0; i < bars; i++) {
       const t = (i + 0.5) / bars;
-      box(group, metal, 0.015, 0.35, 0.015, x - w / 2 + 0.02, y + 0.72, z - d / 2 + t * d);
-      box(group, metal, 0.015, 0.35, 0.015, x + w / 2 - 0.02, y + 0.72, z - d / 2 + t * d);
+      box(group, metal, 0.015, 0.35, 0.015, x - w / 2 + 0.02, y + 0.72, z - d / 2 + t * d, { lod: 1 });
+      box(group, metal, 0.015, 0.35, 0.015, x + w / 2 - 0.02, y + 0.72, z - d / 2 + t * d, { lod: 1 });
     }
   }
   hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low');
@@ -498,14 +492,14 @@ export function placeWheelchair(level, o) {
   const alongX = w >= d;
   box(group, seat, alongX ? w * 0.55 : w * 0.9, 0.07, alongX ? d * 0.9 : d * 0.55, x, y + h * 0.45, z, { cast: true });
   box(group, seat, alongX ? 0.05 : w * 0.9, 0.4, alongX ? d * 0.9 : 0.05, alongX ? x - w * 0.2 : x, y + h * 0.7, alongX ? z : z - d * 0.2, { cast: true });
-  if (_detail >= 1) {
+  {
     const wr = Math.min(w, d) * 0.35;
     if (alongX) {
-      cyl(group, metal, wr, 0.04, x, y + wr, z - d / 2 + 0.04, { rx: Math.PI / 2, batch: true, seg8: true });
-      cyl(group, metal, wr, 0.04, x, y + wr, z + d / 2 - 0.04, { rx: Math.PI / 2, batch: true, seg8: true });
+      cyl(group, metal, wr, 0.04, x, y + wr, z - d / 2 + 0.04, { rx: Math.PI / 2, lod: 1, seg8: true });
+      cyl(group, metal, wr, 0.04, x, y + wr, z + d / 2 - 0.04, { rx: Math.PI / 2, lod: 1, seg8: true });
     } else {
-      cyl(group, metal, wr, 0.04, x - w / 2 + 0.04, y + wr, z, { rz: Math.PI / 2, batch: true, seg8: true });
-      cyl(group, metal, wr, 0.04, x + w / 2 - 0.04, y + wr, z, { rz: Math.PI / 2, batch: true, seg8: true });
+      cyl(group, metal, wr, 0.04, x - w / 2 + 0.04, y + wr, z, { rz: Math.PI / 2, lod: 1, seg8: true });
+      cyl(group, metal, wr, 0.04, x + w / 2 - 0.04, y + wr, z, { rz: Math.PI / 2, lod: 1, seg8: true });
     }
   }
   hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low');
@@ -524,10 +518,205 @@ export function placeWindowFrame(level, o) {
   box(group, stone, w + 0.12, 0.1, t, q[0], y + h / 2, q[1], { ry: yaw, cast: true });
   box(group, stone, 0.1, h, t, ...(() => { const r = p(-w / 2, 0, 0); return [r[0], y, r[1]]; })(), { ry: yaw, cast: true });
   box(group, stone, 0.1, h, t, ...(() => { const r = p(w / 2, 0, 0); return [r[0], y, r[1]]; })(), { ry: yaw, cast: true });
-  if (_detail >= 1) {
-    box(group, stone, 0.04, h, t, ...(() => { const r = p(0, 0, 0); return [r[0], y, r[1]]; })(), { ry: yaw });
-    box(group, stone, w, 0.04, t, q[0], y, q[1], { ry: yaw });
+  box(group, stone, 0.04, h, t, ...(() => { const r = p(0, 0, 0); return [r[0], y, r[1]]; })(), { ry: yaw, lod: 1 });
+  box(group, stone, w, 0.04, t, q[0], y, q[1], { ry: yaw, lod: 1 });
+}
+
+
+/** Arquivo de aço (gavetas com puxador). AABB igual ao bloco antigo. */
+export function placeFileCabinet(level, o) {
+  tally(level, 'file');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const metal = M[o.mat] || M.doorMetal || M.steelDark || M.metal;
+  const handle = M.brass || M.metal;
+  box(group, metal, w, h, d, x, y + h / 2, z, { cast: true });
+  const n = o.drawers ?? Math.max(2, Math.min(5, Math.round(h / 0.38)));
+  const face = o.face || (w >= d ? '+z' : '+x');
+  for (let i = 0; i < n; i++) {
+    const ty = y + 0.08 + (i + 0.5) * ((h - 0.12) / n);
+    const fh = (h - 0.12) / n - 0.05;
+    if (face === '+z' || face === '-z') {
+      const fz = face === '+z' ? maxZ + 0.01 : minZ - 0.01;
+      box(group, metal, w - 0.08, fh, 0.02, x, ty, fz, { lod: 1 });
+      box(group, handle, Math.min(0.16, w * 0.4), 0.02, 0.04, x, ty, fz + (face === '+z' ? 0.03 : -0.03), { lod: 1 });
+    } else {
+      const fx = face === '+x' ? maxX + 0.01 : minX - 0.01;
+      box(group, metal, 0.02, fh, d - 0.08, fx, ty, z, { lod: 1 });
+      box(group, handle, 0.04, 0.02, Math.min(0.16, d * 0.4), fx + (face === '+x' ? 0.03 : -0.03), ty, z, { lod: 1 });
+    }
   }
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop', o.sight !== false);
+}
+
+/** Poltrona (assento, encosto, braços, pés). */
+export function placeArmchair(level, o) {
+  tally(level, 'armchair');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const leather = M[o.mat] || M.leatherDark || M.leather || M.woodDark;
+  const wood = M.woodDark || M.wood;
+  const alongX = w >= d;
+  box(group, leather, w - 0.08, 0.12, d - 0.08, x, y + h * 0.42, z, { cast: true });
+  if (alongX) {
+    box(group, leather, w - 0.06, h * 0.55, 0.08, x, y + h * 0.7, z - d / 2 + 0.05, { cast: true });
+    box(group, leather, 0.08, h * 0.35, d - 0.12, x - w / 2 + 0.05, y + h * 0.55, z + 0.02, { lod: 1 });
+    box(group, leather, 0.08, h * 0.35, d - 0.12, x + w / 2 - 0.05, y + h * 0.55, z + 0.02, { lod: 1 });
+  } else {
+    box(group, leather, 0.08, h * 0.55, d - 0.06, x - w / 2 + 0.05, y + h * 0.7, z, { cast: true });
+    box(group, leather, w - 0.12, h * 0.35, 0.08, x + 0.02, y + h * 0.55, z - d / 2 + 0.05, { lod: 1 });
+    box(group, leather, w - 0.12, h * 0.35, 0.08, x + 0.02, y + h * 0.55, z + d / 2 - 0.05, { lod: 1 });
+  }
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    box(group, wood, 0.06, h * 0.38, 0.06, x + sx * (w / 2 - 0.08), y + h * 0.19, z + sz * (d / 2 - 0.08), { lod: 1 });
+  }
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Gerador industrial (bloco, aletas, volante, tanque). AABB do cubo antigo. */
+export function placeGenerator(level, o) {
+  tally(level, 'generator');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const rust = M.rust || M.steelDark;
+  const metal = M.steelDark || M.metal;
+  box(group, rust, w, 0.16, d, x, y + 0.08, z, { cast: true });
+  box(group, rust, w * 0.78, h * 0.72, d * 0.7, x - w * 0.05, y + 0.16 + h * 0.36, z, { cast: true });
+  for (let i = 0; i < 5; i++) {
+    box(group, rust, 0.06, h * 0.5, d * 0.62, x - w * 0.32 + i * (w * 0.12), y + h * 0.5, z, { lod: 1 });
+  }
+  cyl(group, metal, Math.min(h, d) * 0.32, 0.1, x + w * 0.38, y + h * 0.45, z, { rz: Math.PI / 2, lod: 1 });
+  box(group, rust, w * 0.22, h * 0.4, d * 0.35, x + w * 0.32, y + h * 0.28, z - d * 0.2, { lod: 1 });
+  cyl(group, metal, 0.06, h * 0.55, x - w * 0.2, y + h * 0.7, z + d * 0.28, { lod: 1, seg8: true });
+  box(group, metal, w * 0.5, 0.04, d * 0.12, x, y + h * 0.9, z + d * 0.32, { lod: 2 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop', o.sight !== false);
+}
+
+/** Órgão do coro (caixa, teclado, tubos de alturas variadas). */
+export function placeOrgan(level, o) {
+  tally(level, 'organ');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const wood = M[o.mat] || M.woodDark || M.wood;
+  const gold = M.gold || M.brass || M.metal;
+  const ivory = M.sheet || M.paper || wood;
+  box(group, wood, w, h, d, x, y + h / 2, z, { cast: true });
+  box(group, wood, w + 0.04, 0.06, d + 0.04, x, y + h - 0.02, z, { lod: 1 });
+  // teclado (frente +z do corpo, raso)
+  box(group, ivory, w * 0.85, 0.03, 0.16, x, y + h * 0.62, maxZ + 0.06, { lod: 1 });
+  for (let i = 0; i < 9; i++) {
+    box(group, wood, 0.03, 0.025, 0.1, x - w * 0.35 + i * (w * 0.08), y + h * 0.64, maxZ + 0.08, { lod: 2 });
+  }
+  for (let i = 0; i < 4; i++) {
+    cyl(group, M.brass || gold, 0.015, 0.04, x - w * 0.25 + i * 0.16, y + h * 0.5, maxZ + 0.02, { lod: 2, seg8: true });
+  }
+  const n = o.pipes ?? 6;
+  for (let i = 0; i < n; i++) {
+    const ph = 0.5 + (i % 3) * 0.25;
+    const px = minX + 0.05 + i * ((w - 0.1) / Math.max(1, n - 1));
+    cyl(group, gold, 0.035, ph, px, maxY + ph / 2, z, { seg8: true });
+  }
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop', o.sight !== false);
+}
+
+/** Calandra / passadeira de rolos (lavanderia). AABB do bloco rust. */
+export function placeCalender(level, o) {
+  tally(level, 'calender');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const rust = M.rust || M.steelDark;
+  const steel = M.steel || M.metal;
+  box(group, rust, w, h * 0.72, d, x, y + h * 0.36, z, { cast: true });
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    box(group, rust, 0.1, h * 0.28, 0.1, x + sx * (w / 2 - 0.12), y + h * 0.14, z + sz * (d / 2 - 0.12), { lod: 1 });
+  }
+  box(group, rust, 0.08, h * 0.9, d + 0.04, minX + 0.06, y + h * 0.55, z, { lod: 1 });
+  box(group, rust, 0.08, h * 0.9, d + 0.04, maxX - 0.06, y + h * 0.55, z, { lod: 1 });
+  const rollers = o.rollers ?? 3;
+  for (let i = 0; i < rollers; i++) {
+    const rx = minX + w * (0.22 + i * (0.56 / Math.max(1, rollers - 1)));
+    cyl(group, steel, Math.min(0.16, d * 0.28), d * 0.92, rx, maxY + 0.1, z, { rx: Math.PI / 2 });
+  }
+  box(group, rust, w * 0.3, 0.04, d * 0.7, minX + w * 0.2, maxY + 0.02, z, { lod: 1 });
+  cyl(group, steel, 0.12, 0.04, maxX - 0.15, y + h * 0.7, maxZ + 0.08, { rz: Math.PI / 2, lod: 1, seg8: true });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop', o.sight !== false);
+}
+
+/** Mesa de autópsia (pedestal, tampo com borda e ralo, corpo opcional). Colisão cx±0.47, cz±1.07, h 0.93. */
+export function placeAutopsyTable(level, o) {
+  tally(level, 'autopsy');
+  const { group, M, col } = ctxOf(level);
+  const cx = o.cx ?? o.x, cz = o.cz ?? o.z, y = o.y ?? 0;
+  const steel = M.steel || M.metal;
+  const dark = M.steelDark || steel;
+  box(group, dark, 0.3, 0.76, 0.3, cx, y + 0.38, cz, { cast: true });
+  box(group, steel, 0.9, 0.1, 2.1, cx, y + 0.81, cz, { cast: true });
+  for (const sx of [-1, 1]) box(group, steel, 0.06, 0.07, 2.1, cx + sx * 0.45, y + 0.895, cz);
+  for (const sz of [-1, 1]) box(group, steel, 0.9, 0.07, 0.06, cx, y + 0.895, cz + sz * 1.05, { lod: 1 });
+  box(group, M.mask || dark, 0.12, 0.006, 0.12, cx, y + 0.863, cz + 0.91);
+  box(group, dark, 0.04, 0.02, 1.6, cx, y + 0.862, cz - 0.1, { lod: 1 });
+  if (o.body) {
+    box(group, M.sheet || M.linen, 0.5, 0.2, 1.65, cx, y + 0.96, cz - 0.02, { cast: true });
+    box(group, M.sheet || M.linen, 0.24, 0.24, 0.2, cx, y + 0.98, cz - 0.88, { lod: 1 });
+  }
+  hit(col, cx - 0.47, y, cz - 1.07, cx + 0.47, y + 0.93, cz + 1.07, o.tag || 'prop', false);
+}
+
+/** Incubadora / berço de vidro (armação de aço, cúpula, colchão). */
+export function placeIncubator(level, o) {
+  tally(level, 'incubator');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const w = maxX - minX, h = maxY - minY, d = maxZ - minZ;
+  const metal = M.steel || M.steelDark || M.metal;
+  const glass = M.glass || metal;
+  box(group, metal, w, 0.08, d, x, y + 0.04, z, { cast: true });
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    box(group, metal, 0.04, h - 0.08, 0.04, x + sx * (w / 2 - 0.03), y + h / 2, z + sz * (d / 2 - 0.03), { cast: true });
+  }
+  box(group, metal, w, 0.03, d, x, y + h - 0.02, z, { lod: 1 });
+  box(group, M.sheet || M.linen || metal, w * 0.7, 0.06, d * 0.65, x, y + 0.11, z, { lod: 1 });
+  // painéis de vidro (não entram no batch estático)
+  box(group, glass, 0.02, h * 0.7, d - 0.1, minX + 0.03, y + h * 0.5, z, { batch: false });
+  box(group, glass, 0.02, h * 0.7, d - 0.1, maxX - 0.03, y + h * 0.5, z, { batch: false });
+  box(group, glass, w - 0.1, h * 0.7, 0.02, x, y + h * 0.5, minZ + 0.03, { batch: false });
+  box(group, glass, w - 0.1, h * 0.7, 0.02, x, y + h * 0.5, maxZ - 0.03, { batch: false });
+  cyl(group, metal, 0.04, 0.08, x, y + h + 0.04, z, { lod: 2, seg8: true });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
+}
+
+/** Frente de gaveta do necrotério: moldura, dobradiças. Não mexe no grupo {g,open,t,z,n}. */
+export function dressDrawerFront(group, M, w, h) {
+  const steel = M.steelDark || M.steel;
+  const brass = M.brass || M.metal;
+  add(group, BOX(), steel, 0, 0, 0.028, w - 0.04, h - 0.04, 0.01, { lod: 1 });
+  add(group, BOX(), brass, -w / 2 + 0.07, h * 0.28, 0.03, 0.05, 0.08, 0.03, { lod: 1 });
+  add(group, BOX(), brass, -w / 2 + 0.07, -h * 0.28, 0.03, 0.05, 0.08, 0.03, { lod: 1 });
+}
+
+/** Barril de ferro (depósito / pátio). */
+export function placeBarrel(level, o) {
+  tally(level, 'barrel');
+  const { group, M, col } = ctxOf(level);
+  const { minX, minY, minZ, maxX, maxY, maxZ } = o;
+  const x = (minX + maxX) / 2, y = minY, z = (minZ + maxZ) / 2;
+  const h = maxY - minY, r = Math.min(maxX - minX, maxZ - minZ) / 2;
+  const rust = M[o.mat] || M.rust || M.steelDark;
+  cyl(group, rust, r, h, x, y + h / 2, z, { cast: true });
+  cyl(group, M.steelDark || rust, r + 0.01, 0.04, x, y + 0.08, z, { lod: 1 });
+  cyl(group, M.steelDark || rust, r + 0.01, 0.04, x, y + h - 0.08, z, { lod: 1 });
+  hit(col, minX, minY, minZ, maxX, maxY, maxZ, o.tag || 'prop-low', o.sight);
 }
 
 /** Contagem de malhas/triângulos (testes e smoke). */

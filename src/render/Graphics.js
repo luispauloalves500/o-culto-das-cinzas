@@ -14,7 +14,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { Perf, LIGHT_BUDGETS, DRAW_DIST } from './Perf.js';
 import { setSurfaceDetail, detailForGfx, textureBytes } from '../world/Textures.js';
-import { setPropDetail, propDetailFor } from '../world/Props.js';
+import { setPropDetail, propDetailFor, applyPropLod } from '../world/Props.js';
 import { setFireQuality, fireQualityFor, updateAllFires } from './FireFX.js';
 
 export const GFX_KEYS = ['renderScale', 'shadows', 'particles', 'bloom', 'postfx', 'antialias', 'lightBudget', 'drawDist'];
@@ -114,6 +114,7 @@ export class Graphics {
     if (this.game.materials) setSurfaceDetail(this.game.materials, detailForGfx(c));
     setFireQuality(fireQualityFor(c));
     setPropDetail(propDetailFor(c));
+    applyPropLod(this.game.scene, propDetailFor(c));
     // desempenho sem tocar em textura: orçamento de luzes, distância de desenho, taxa das sombras
     this.perf.apply(c);
     this.idleT = 1; // força um quadro novo mesmo em menu/pausa (a opção aparece na hora)
