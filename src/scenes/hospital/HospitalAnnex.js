@@ -2,6 +2,7 @@
 // e a capela com coro. Tudo procedural (caixas + canvas). Chamado por HospitalLevel.build().
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
+import { createFire, createCandleFlame } from '../../render/FireFX.js';
 
 export const UP = 0, LO = -5, UP2 = 4;
 const H_UP = 3.2, CEIL_LO = -1.8, TOP2 = 7;
@@ -112,17 +113,13 @@ function furnace(L) {
   b.sbox(0.1, LO + 2.4, 15.6, 2.2, CEIL_LO, 18.4, 'rust', NC);           // coifa / chaminé
   b.sbox(2.95, LO + 1.38, 16.2, 3.08, LO + 1.48, 17.8, 'rust', NC);     // verga de ferro
   b.sbox(0.2, LO + 0.4, 16.3, 0.3, LO + 1.4, 17.7, 'ember', NC);        // fundo em brasa
-  // fogo animado (caixas aditivas) + cinzas
+  // fogo animado (shader + brasas/fumaça) + leito de cinzas; reusa a luz já existente
   const fire = new THREE.Group(); fire.position.set(1.6, LO + 0.4, 17); b.group.add(fire);
-  const flames = [];
-  for (let i = 0; i < 7; i++) {
-    const big = i < 4;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(big ? 0.5 : 0.28, big ? 0.7 : 0.5, big ? 0.4 : 0.24), big ? M.fire : M.fireCore);
-    m.position.set((i % 3 - 1) * 0.35, 0.3, ((i * 0.37) % 1 - 0.5) * 1.0); fire.add(m); flames.push({ m, ph: i * 1.7, big });
-  }
   const bed = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 1.3), M.ember); bed.position.set(0, 0.02, 0); fire.add(bed);
   const light = new THREE.PointLight(0xff7030, 3.2, 11, 1.6); light.position.set(3.6, LO + 1.0, 17); L.game.scene.add(light);
-  L.furnace = { fire, flames, bed, light, lit: true, t: 0 };
+  const fx = createFire({ x: 0, y: 0, z: 0, scale: 1.35, parent: fire, light, dim: 0.5, base: 3.2 });
+  const flames = fx.planes.map((m, i) => ({ m, ph: i * 1.7, big: i < 2 }));
+  L.furnace = { fire, flames, bed, light, lit: true, t: 0, fx };
   for (const [x, z, s] of [[4.2, 16.5, 0.7], [3.5, 18.6, 0.5], [6.5, 15.2, 0.4]]) b.sbox(x - s, LO, z - s * 0.7, x + s, LO + 0.12, z + s * 0.7, 'ash', NC);
   // atiçador, carrinho de cadáveres, mesa do forneiro
   b.sbox(3.3, LO, 19.4, 3.36, LO + 1.6, 19.46, 'rust', NC);
@@ -272,7 +269,7 @@ function chapel(L) {
     for (let k = -2; k <= 2; k++) {
       const cx = c.x + (along === 'x' ? k * 0.16 : 0), cz = c.z + (along === 'z' ? k * 0.16 : 0);
       b.sbox(cx - 0.02, y0 + 0.9, cz - 0.02, cx + 0.02, y0 + 1.02 + (k & 1) * 0.04, cz + 0.02, 'candle', NC);
-      const f = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.07, 0.035), M.flame); f.position.set(cx, y0 + 1.08 + (k & 1) * 0.04, cz); f.visible = false; b.group.add(f); flames.push(f);
+      const f = createCandleFlame({ x: cx, y: y0 + 1.08 + (k & 1) * 0.04, z: cz, parent: b.group }); f.visible = false; flames.push(f);
     }
     L.sign(c.name, c.x + fx * (hd + 0.01), y0 + 0.62, c.z + fz * (hd + 0.01), c.face, 0.5, 0.12, { bg: '#3a2a1a', fg: '#e8d8a8' });
     L.candles[id] = { flames, lit: false, pos: { x: c.x + fx * 0.6, y: y0 + 1.0, z: c.z + fz * 0.6 } };
@@ -344,14 +341,20 @@ function nav(L) {
 export function updateAnnex(L, dt, t) {
   const F = L.furnace;
   if (F) {
-    F.fire.visible = F.lit;
-    if (F.lit) {
-      for (const f of F.flames) {
-        const s = 0.75 + 0.35 * Math.sin(t * (f.big ? 7 : 11) + f.ph) * Math.sin(t * 3.1 + f.ph * 2);
-        f.m.scale.set(1, s, 1); f.m.position.y = 0.25 + s * (f.big ? 0.32 : 0.45);
-      }
-      F.light.intensity = 2.6 + Math.sin(t * 9) * 0.4 + Math.random() * 0.5; F.light.color.setHex(0xff7030);
-    } else { F.light.intensity = 0.5; F.light.color.setHex(0x803010); }
+    if (F.fx) {
+      F.fx.setLit(F.lit);
+      if (F.lit) F.light.color.setHex(0xff7030);
+      else { F.light.intensity = 0.5; F.light.color.setHex(0x803010); }
+    } else {
+      F.fire.visible = F.lit;
+      if (F.lit) {
+        for (const f of F.flames) {
+          const s = 0.75 + 0.35 * Math.sin(t * (f.big ? 7 : 11) + f.ph) * Math.sin(t * 3.1 + f.ph * 2);
+          f.m.scale.set(1, s, 1); f.m.position.y = 0.25 + s * (f.big ? 0.32 : 0.45);
+        }
+        F.light.intensity = 2.6 + Math.sin(t * 9) * 0.4 + Math.random() * 0.5; F.light.color.setHex(0xff7030);
+      } else { F.light.intensity = 0.5; F.light.color.setHex(0x803010); }
+    }
     const z = ANNEX_ZONES[0]; z.fog = F.lit ? 0x1c0a04 : 0x0c0b0a; z.density = F.lit ? 0.09 : 0.1;
   }
   const R = L.relic;

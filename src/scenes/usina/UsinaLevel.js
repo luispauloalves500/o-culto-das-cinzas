@@ -15,6 +15,7 @@ import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
 import { buildTower, towerLights, towerNav, updateTower, TOWER_ZONES, TOWER_CHECKPOINTS } from './UsinaTower.js';
+import { createFire } from '../../render/FireFX.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -308,6 +309,7 @@ export class UsinaLevel {
       // fornalha na frente (leste): boca em brasa
       b.sbox(15, Y, z - 1.2, 16.2, Y + 2.6, z + 1.2, 'boilerIron', { tag: 'obstacle' });
       b.sbox(16.2, Y + 0.4, z - 0.5, 16.24, Y + 1.2, z + 0.5, 'ember', { collide: false });
+      createFire({ x: 16.45, y: Y + 0.35, z, scale: 0.7, parent: b.group });
       // manômetro na frente da fornalha (agulha = pressão desta caldeira)
       const gg = new THREE.Group(); gg.position.set(16.27, Y + 2.0, z - 0.7); gg.rotation.y = Math.PI / 2; b.group.add(gg);
       const face = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 14), M.gauge); face.rotation.x = Math.PI / 2; gg.add(face);

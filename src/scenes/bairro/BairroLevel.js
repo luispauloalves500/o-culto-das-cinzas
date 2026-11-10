@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { createFire } from '../../render/FireFX.js';
 
 // 14 luzes do cenário + lanterna/preenchimento do jogador + luz do ponto fraco do chefe = 16 no máximo
 const LIGHT_BUDGET = 13;
@@ -374,17 +375,12 @@ export class BairroLevel {
 
   // ---------- fogo (malhas + luz quente oscilante) ----------
   _fire(x, y, z, s) {
-    const gr = new THREE.Group(); gr.position.set(x, y, z);
-    const outer = new THREE.Mesh(new THREE.ConeGeometry(0.55 * s, 1.5 * s, 6), this.M.fire);
-    outer.position.y = 0.7 * s; gr.add(outer);
-    const core = new THREE.Mesh(new THREE.ConeGeometry(0.3 * s, 0.9 * s, 5), this.M.fireCore);
-    core.position.y = 0.45 * s; gr.add(core);
-    this.b.group.add(gr);
     const light = new THREE.PointLight(0xff6a20, 2.6 * s, 11 * s, 1.6); light.position.set(x, y + 0.9 * s, z);
     this.game.scene.add(light);
     const L = { light, fixture: null, base: 2.6 * s, fire: true };
     this.lights.all.push(L);
-    this.fires.push({ gr, outer, core, L, s, ph: Math.random() * 10 });
+    const fx = createFire({ x, y, z, scale: s, parent: this.b.group, light, dim: 0, base: 2.6 * s });
+    this.fires.push({ gr: fx.root, outer: fx.planes[0], core: fx.planes[1] || fx.planes[0], L, s, ph: Math.random() * 10, fx });
   }
 
   _lights() {
@@ -478,12 +474,7 @@ export class BairroLevel {
       const f = Math.sin(t * 9 + L.base * 7) * Math.sin(t * 5.3) > 0.95 ? 0.3 : 1;
       L.light.intensity = L.base * f * (0.9 + Math.random() * 0.1);
     }
-    for (const F of this.fires) {
-      const k = 0.8 + Math.sin(t * 11 + F.ph) * 0.12 + Math.sin(t * 23 + F.ph * 2) * 0.08;
-      F.L.light.intensity = F.L.base * (0.75 + Math.random() * 0.3);
-      F.outer.scale.set(1, k * 1.1, 1); F.core.scale.set(1, 1.2 - k * 0.3, 1);
-      F.outer.rotation.y = t * 1.3 + F.ph; F.core.rotation.y = -t * 1.9;
-    }
+    // fogo: animação (shader, brasas, luz) fica a cargo de Graphics/FireFX.updateAllFires
     for (const id in this.doors) this.doors[id].update(dt);
     for (const v of [this.valveA, this.valveB]) if (v && v.spin > 0) { const s = Math.min(v.spin, dt * 3); v.spin -= s; v.wheel.rotation.z += s * 4; }
     this._updateZone(dt);

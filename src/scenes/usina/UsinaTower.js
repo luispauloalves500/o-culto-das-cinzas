@@ -6,6 +6,7 @@
 // com portas pantográficas que só abrem com a cabine parada no andar.
 import * as THREE from 'three';
 import { createHumanoid, resetPose, poseWalk, poseIdle, part } from '../../gameplay/ProceduralRig.js';
+import { createFire } from '../../render/FireFX.js';
 
 export const MACH_Y = 7;
 export const ARENA_Y = 13.5;
@@ -408,11 +409,12 @@ export function buildTower(L) {
   const bulbMat = (M.vial || M.glass).clone(); bulbMat.transparent = true; bulbMat.opacity = 0.55;
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(BULB.r, 16, 12), bulbMat); bulb.position.set(BULB.x, BULB.y, BULB.z); b.group.add(bulb);
   const emberMat = (M.fireCore || M.ember).clone();
-  const flame = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), emberMat); flame.position.set(BULB.x, BULB.y, BULB.z); b.group.add(flame);
+  const fx = createFire({ x: BULB.x, y: BULB.y - 0.12, z: BULB.z, scale: 0.45, parent: b.group });
+  const flame = fx.root;
   const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.25, 12), M.brass || M.metal); cap.position.set(BULB.x, BULB.y - 0.42, BULB.z); b.group.add(cap);
   const shards = new THREE.Group(); shards.visible = false; b.group.add(shards);
   for (let i = 0; i < 9; i++) { const sh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.01, 0.07), bulbMat); sh.position.set(BULB.x + Math.cos(i * 1.7) * (0.4 + i * 0.08), AY + 0.02, BULB.z - 0.9 + Math.sin(i * 1.7) * 0.5); sh.rotation.y = i; shards.add(sh); }
-  tw.bulb = { bulb, flame, bulbMat, emberMat, shards, broken: false, gone: false };
+  tw.bulb = { bulb, flame, bulbMat, emberMat, shards, broken: false, gone: false, fx };
   // a cadeira de Inês: armação de ferro, capacete de fios até o teto, microfone de carvão diante da boca
   const IC = INES_CHAIR;
   b.sbox(IC.x - 0.35, AY, IC.z - 0.35, IC.x + 0.35, AY + 0.48, IC.z + 0.35, 'rust', { tag: 'obstacle' });
