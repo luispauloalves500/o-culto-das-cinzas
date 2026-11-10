@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
-import { placeTable, placeBookcase, placeFileCabinet, placeCrate, placeBarrel, placeBench, placeCart } from '../../world/Props.js';
+import { placeTable, placeBookcase, placeFileCabinet, placeCrate, placeBarrel, placeBench, placeCart, placeLoom, placeCoalPile, placeSandbags, placeClothesline } from '../../world/Props.js';
 import { createFire } from '../../render/FireFX.js';
 
 // 14 luzes do cenário + lanterna/preenchimento do jogador + luz do ponto fraco do chefe = 16 no máximo
@@ -141,7 +141,7 @@ export class BairroLevel {
     const b = this.b, Y = STREET;
     b.floor(9.5, 8, 12.5, 16, Y, 'stone', 'c2_alley');
     b.sbox(9.5, Y, 15.8, 12.5, Y + 4.5, 16.4, 'brick');
-    b.sbox(9.5, Y + 3.4, 8, 12.5, Y + 3.55, 8.3, 'woodDark', { collide: false }); // varal / viga
+    placeClothesline(this, { x0: 9.7, x1: 12.3, z: 8.15, yWire: Y + 3.4, yFloor: Y, poles: false, sheets: [[10.0, 10.9, Y + 1.8], [11.2, 12.1, Y + 2.0]] });
     placeCrate(this, { minX: 10.0, minY: Y, minZ: 14.6, maxX: 10.8, maxY: Y + 0.85, maxZ: 15.4, mat: 'woodDark', tag: 'prop-low', sight: false });
     placeBarrel(this, { minX: 11.6, minY: Y, minZ: 14.9, maxX: 12.3, maxY: Y + 0.95, maxZ: 15.6, mat: 'rust', tag: 'prop-low', sight: false });
     b.sbox(11.9, Y, 10.2, 12.4, Y + 1.6, 11.6, 'wood', { tag: 'prop' });                         // portas velhas encostadas
@@ -165,9 +165,7 @@ export class BairroLevel {
       for (let z = z0 + 0.6; z < z1 - 0.4; z += 1.4) b.sbox(x0 + 0.1, Y + h, z - 0.4, x1 - 0.1, Y + h + 0.5, z + 0.4, 'sheet', { collide: false });
     }
     // tear mecânico parado
-    b.sbox(28.5, Y, 9.4, 32.5, Y + 1.5, 11, 'metal', { tag: 'prop-low', sight: false });
-    b.sbox(28.7, Y + 1.5, 9.6, 32.3, Y + 2.4, 9.8, 'steelDark', { collide: false });
-    b.sbox(29, Y + 1.5, 10.2, 32, Y + 1.56, 10.8, 'sheet', { collide: false });
+    placeLoom(this, { minX: 28.5, minY: Y, minZ: 9.4, maxX: 32.5, maxY: Y + 1.5, maxZ: 11, tag: 'prop-low', sight: false });
     // fardos soltos e carrinho
     b.sbox(19, Y, 9, 20.4, Y + 1.0, 10.4, 'sheet', { tag: 'prop-low', sight: false });
     placeCrate(this, { minX: 33.5, minY: Y, minZ: 9, maxX: 35, maxY: Y + 0.9, maxZ: 10.2, mat: 'woodDark', tag: 'prop-low', sight: false });
@@ -238,7 +236,7 @@ export class BairroLevel {
     b.sbox(42.2, Y, 39, 43.8, Y + 1.1, 41, 'rust', { tag: 'prop-low', sight: false });
     b.sbox(42.3, Y + 1.1, 39.1, 43.7, Y + 1.35, 40.9, 'coal', { collide: false });
     // montes de carvão espalhados e entulho de uma casa desabada
-    for (const [x0, z0, x1, z1, h] of [[38.2, 33, 39.6, 35.2, 0.7], [48.4, 46, 49.8, 48.6, 0.9], [38.2, 56.4, 40, 59.8, 1.0]]) b.sbox(x0, Y, z0, x1, Y + h, z1, 'coal', { tag: 'prop-low', sight: false });
+    for (const [x0, z0, x1, z1, h] of [[38.2, 33, 39.6, 35.2, 0.7], [48.4, 46, 49.8, 48.6, 0.9], [38.2, 56.4, 40, 59.8, 1.0]]) placeCoalPile(this, { minX: x0, minY: Y, minZ: z0, maxX: x1, maxY: Y + h, maxZ: z1, tag: 'prop-low', sight: false });
     b.sbox(38, Y, 49, 41, Y + 1.8, 51, 'stone', { tag: 'prop' });
     b.sbox(38.4, Y + 1.8, 49.3, 40.2, Y + 2.4, 50.6, 'woodDark', { collide: false });
     // carroça de coque em chamas
@@ -269,9 +267,9 @@ export class BairroLevel {
     b.wallZ(38, 38, 48, Y, H_CARV, [43], 'soot', 1.4, 2.3);
     this.sign('CARVOARIA SÃO BRÁS', 38.12, Y + 2.9, 43, Math.PI / 2, 1.8, 0.3, { bg: '#2a1e14', fg: '#d8b070' });
     // montes de carvão e sacos (corredores para contornar o que vive aqui)
-    b.sbox(30.2, Y, 38.2, 32.6, Y + 1.6, 41.4, 'coal', { tag: 'prop' });
-    b.sbox(31.8, Y, 45.6, 34.4, Y + 1.2, 47.8, 'coal', { tag: 'prop-low', sight: false });
-    for (const [x, z] of [[35.2, 39], [36.2, 39], [35.7, 39.9]]) b.sbox(x - 0.4, Y, z - 0.3, x + 0.4, Y + 0.7, z + 0.3, 'sheet', { tag: 'prop-low', sight: false });
+    placeCoalPile(this, { minX: 30.2, minY: Y, minZ: 38.2, maxX: 32.6, maxY: Y + 1.6, maxZ: 41.4, tag: 'prop', sight: true });
+    placeCoalPile(this, { minX: 31.8, minY: Y, minZ: 45.6, maxX: 34.4, maxY: Y + 1.2, maxZ: 47.8, tag: 'prop-low', sight: false });
+    for (const [x, z] of [[35.2, 39], [36.2, 39], [35.7, 39.9]]) placeSandbags(this, { minX: x - 0.4, minY: Y, minZ: z - 0.3, maxX: x + 0.4, maxY: Y + 0.7, maxZ: z + 0.3, mat: 'sheet', tag: 'prop-low', sight: false });
     // balança de pesagem com a mesa do encarregado (chave pendurada no gancho)
     placeTable(this, { minX: 35.5, minY: Y, minZ: 46.6, maxX: 37.6, maxY: Y + 0.9, maxZ: 47.8, mat: 'wood', tag: 'prop-low', sight: false });
     b.sbox(36.9, Y + 0.9, 47.4, 37.0, Y + 2.0, 47.5, 'metal', { collide: false });
@@ -348,8 +346,8 @@ export class BairroLevel {
       b.sbox(x - 0.85, Y, z - 0.85, x + 0.85, Y + 0.5, z + 0.85, 'rust', { collide: false });
     }
     // montes de coque nos cantos
-    b.sbox(34.2, Y, 93.4, 37.4, Y + 1.4, 95.8, 'coal', { tag: 'prop-low', sight: false });
-    b.sbox(52.6, Y, 93.4, 55.8, Y + 1.4, 95.8, 'coal', { tag: 'prop-low', sight: false });
+    placeCoalPile(this, { minX: 34.2, minY: Y, minZ: 93.4, maxX: 37.4, maxY: Y + 1.4, maxZ: 95.8, tag: 'prop-low', sight: false });
+    placeCoalPile(this, { minX: 52.6, minY: Y, minZ: 93.4, maxX: 55.8, maxY: Y + 1.4, maxZ: 95.8, tag: 'prop-low', sight: false });
     // caixote com o recado e a porta de serviço (saída leste)
     placeCrate(this, { minX: 54.2, minY: Y, minZ: 90, maxX: 55.8, maxY: Y + 0.9, maxZ: 91.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(55.9, Y, 86.2, 55.98, Y + 2.3, 87.8, 'doorMetal', { collide: false });

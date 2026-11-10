@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { createHumanoid, resetPose, poseWalk, poseIdle, part } from '../../gameplay/ProceduralRig.js';
 import { createFire } from '../../render/FireFX.js';
-import { placeCrate } from '../../world/Props.js';
+import { placeCrate, placeBatteryBank, placeInesChair } from '../../world/Props.js';
 
 export const MACH_Y = 7;
 export const ARENA_Y = 13.5;
@@ -315,11 +315,7 @@ export function buildTower(L) {
   tw.drum = drum;
   b.sbox(S.maxX + 0.1, ARENA_Y - 0.8, 74, WINCH.minX + 0.6, ARENA_Y - 0.6, 74.4, 'steel', { collide: false });
   // banco de baterias (acumuladores ácidos) + faca de força
-  b.sbox(BATTERIES.minX, MY, BATTERIES.minZ, BATTERIES.maxX, MY + 1.0, BATTERIES.maxZ, 'woodDark', { tag: 'prop-low', sight: false });
-  for (let x = BATTERIES.minX + 0.3; x < BATTERIES.maxX - 0.2; x += 0.55) {
-    b.sbox(x - 0.2, MY + 1.0, 68.25, x + 0.2, MY + 1.42, 68.75, M.vial || 'glass', { collide: false });
-    b.sbox(x - 0.04, MY + 1.42, 68.45, x + 0.04, MY + 1.5, 68.55, 'brass', { collide: false });
-  }
+  placeBatteryBank(L, { minX: BATTERIES.minX, minY: MY, minZ: BATTERIES.minZ, maxX: BATTERIES.maxX, maxY: MY + 1.0, maxZ: BATTERIES.maxZ, tag: 'prop-low', sight: false });
   b.sbox(KNIFE.x - 0.5, MY + 1.0, 68.1, KNIFE.x + 0.5, MY + 2.2, 68.3, 'woodDark', { collide: false });
   const knife = new THREE.Group(); knife.position.set(KNIFE.x, MY + 1.6, 68.42); b.group.add(knife);
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.06), M.brass || M.metal); blade.position.x = 0.2; knife.add(blade);
@@ -418,9 +414,7 @@ export function buildTower(L) {
   tw.bulb = { bulb, flame, bulbMat, emberMat, shards, broken: false, gone: false, fx };
   // a cadeira de Inês: armação de ferro, capacete de fios até o teto, microfone de carvão diante da boca
   const IC = INES_CHAIR;
-  b.sbox(IC.x - 0.35, AY, IC.z - 0.35, IC.x + 0.35, AY + 0.48, IC.z + 0.35, 'rust', { tag: 'obstacle' });
-  const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, 0.08), M.rust);
-  chairBack.position.set(IC.x - Math.sin(IC.yaw) * 0.33, AY + 0.98, IC.z - Math.cos(IC.yaw) * 0.33); chairBack.rotation.y = IC.yaw; b.group.add(chairBack);
+  placeInesChair(L, { x: IC.x, y: AY, z: IC.z, yaw: IC.yaw, tag: 'obstacle' });
   const helmet = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.14, 12, 1, true), M.brass || M.metal);
   helmet.position.set(IC.x - Math.sin(IC.yaw) * 0.12, AY + 1.62, IC.z - Math.cos(IC.yaw) * 0.12); b.group.add(helmet);
   const wire = new THREE.Mesh(new THREE.BoxGeometry(0.03, ARENA_TOP - AY - 1.7, 0.03), M.leatherDark); wire.position.set(helmet.position.x, (AY + 1.7 + ARENA_TOP) / 2, helmet.position.z); b.group.add(wire);

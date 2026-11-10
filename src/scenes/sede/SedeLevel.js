@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
-import { placeTable, placeBench, placeChair, placeBookcase, placeFileCabinet, placeCrate, placeAltar, placeCross } from '../../world/Props.js';
+import { placeTable, placeBench, placeChair, placeBookcase, placeFileCabinet, placeCrate, placeAltar, placeCross, placeTypewriter, dressGrate, dressWinchBase } from '../../world/Props.js';
 
 // luzes do cenário visíveis + hemisférica + preenchimento/lanterna do jogador ≤ 16
 const LIGHT_BUDGET = 12;
@@ -210,7 +210,7 @@ export class SedeLevel {
     // mesas de datilografia, arquivos de aço e o regimento emoldurado na parede do fundo
     placeTable(this, { minX: 11.6, minY: Y, minZ: 33.2, maxX: 13.4, maxY: Y + 0.8, maxZ: 35.0, mat: 'woodDark', tag: 'prop-low', sight: false });
     placeTable(this, { minX: 7.0, minY: Y, minZ: 33.6, maxX: 8.8, maxY: Y + 0.8, maxZ: 35.2, mat: 'woodDark', tag: 'prop-low', sight: false });
-    b.sbox(12.0, Y + 0.8, 33.5, 12.6, Y + 1.05, 34.0, 'metal', { collide: false }); // máquina de escrever
+    placeTypewriter(this, { x: 12.3, y: Y + 0.8, z: 33.75 });
     for (const x of [6.4, 7.4]) placeFileCabinet(this, { minX: x, minY: Y, minZ: 36.6, maxX: x + 0.9, maxY: Y + 1.9, maxZ: 37.8, mat: 'doorMetal', face: '+z', tag: 'prop', sight: true });
     placeBookcase(this, { minX: 12.4, minY: Y, minZ: 36.8, maxX: 13.8, maxY: Y + 2.1, maxZ: 37.8, mat: 'woodDark', tag: 'prop', sight: true });
     b.sbox(9.3, Y + 1.2, 37.86, 10.9, Y + 2.3, 37.9, 'woodDark', { collide: false });
@@ -253,10 +253,11 @@ export class SedeLevel {
     this.grate = new THREE.Group(); this.grate.name = 'grade_cripta';
     for (let x = 24.1; x <= 25.95; x += 0.25) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.6, 0.05), this.M.rust); m.position.set(x + 0.025, Y + 1.3, 58.0); this.grate.add(m); }
     for (const y of [0.25, 1.3, 2.4]) { const m = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.06, 0.07), this.M.rust); m.position.set(25, Y + y, 58.0); this.grate.add(m); }
+    dressGrate(this.grate, this.M, { x0: 24.1, x1: 25.95, yC: Y + 1.3, z: 58.0, h: 2.6 });
     b.group.add(this.grate); this.grateT = 0; this.grateRaise = 0;
     this.sign('CRIPTA — O SACRISTÃO', 25, Y + 3.0, 57.88, Math.PI, 1.8, 0.24, { bg: '#2a1010', fg: '#d0a060' });
     // sarilho da grade, à esquerda: tambor de corrente, manivela e o selo de latão com a CHAMA
-    b.sbox(22.3, Y, 57.4, 23.5, Y + 0.9, 57.95, 'stone', { tag: 'prop-low', sight: false });
+    dressWinchBase(this, { minX: 22.3, minY: Y, minZ: 57.4, maxX: 23.5, maxY: Y + 0.9, maxZ: 57.95, tag: 'prop-low', sight: false });
     this.winch = new THREE.Group(); this.winch.position.set(22.9, Y + 1.15, 57.6);
     const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.9, 10), this.M.rust); drum.rotation.z = Math.PI / 2; this.winch.add(drum);
     this.crank = new THREE.Group(); this.crank.position.set(-0.5, 0, 0); this.winch.add(this.crank);

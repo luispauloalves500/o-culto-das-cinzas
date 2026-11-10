@@ -14,7 +14,7 @@ import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
-import { placeTable, placeBookcase } from '../../world/Props.js';
+import { placeTable, placeBookcase, dressBoiler } from '../../world/Props.js';
 import { buildTower, towerLights, towerNav, updateTower, TOWER_ZONES, TOWER_CHECKPOINTS } from './UsinaTower.js';
 import { createFire } from '../../render/FireFX.js';
 
@@ -306,6 +306,7 @@ export class UsinaLevel {
       const cyl = new THREE.Mesh(new THREE.CylinderGeometry(BOILER_R, BOILER_R, 12, 18), M.boilerIron);
       cyl.rotation.z = Math.PI / 2; cyl.position.set(9, Y + 2.1, z); b.group.add(cyl);
       for (const x of [4, 7, 10, 13]) { const r = new THREE.Mesh(new THREE.TorusGeometry(BOILER_R + 0.02, 0.05, 6, 18), M.rust); r.rotation.y = Math.PI / 2; r.position.set(x, Y + 2.1, z); b.group.add(r); }
+      dressBoiler(this, { x: 9, y: Y + 2.1, z, length: 12, r: BOILER_R });
       this.game.col.addBox(3, Y, z - BOILER_R, 15, Y + 3.9, z + BOILER_R, { tag: 'obstacle', blocksSight: true });
       // fornalha na frente (leste): boca em brasa
       b.sbox(15, Y, z - 1.2, 16.2, Y + 2.6, z + 1.2, 'boilerIron', { tag: 'obstacle' });
