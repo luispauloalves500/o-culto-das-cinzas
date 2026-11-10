@@ -127,7 +127,15 @@ export function createTextures() {
       g.fillRect(r() * s, s * 0.52 + r() * 8, 6 + r() * 14, 3 + r() * 6);
     }
     grime(g, s, r, 140, 'rgba(40,32,15,A)', 7);
-    drips(g, s, r, 14, 'rgba(60,45,20,A)');
+    drips(g, s, r, 18, 'rgba(60,45,20,A)');
+    // infiltração no encontro com o teto (faixas úmidas descendo)
+    for (let i = 0; i < 5; i++) {
+      const x = r() * s, w = 8 + r() * 18;
+      const grd = g.createLinearGradient(x, 0, x, s * 0.45);
+      grd.addColorStop(0, `rgba(50,42,28,${0.28 + r() * 0.2})`);
+      grd.addColorStop(1, 'rgba(50,42,28,0)');
+      g.fillStyle = grd; g.fillRect(x, 0, w, s * 0.5);
+    }
     film(g, s, r, 0.04);
   }, 7, { bump: true });
 
@@ -142,11 +150,21 @@ export function createTextures() {
     film(g, s, r, 0.05);
   }, 11, { bump: true });
 
-  T.ceiling = make(64, (g, s, r) => {
+  T.ceiling = make(128, (g, s, r) => {
     g.fillStyle = '#5b584b'; g.fillRect(0, 0, s, s);
-    grime(g, s, r, 80, 'rgba(10,10,5,A)', 6);
+    grime(g, s, r, 140, 'rgba(10,10,5,A)', 10);
+    // manchas de infiltração (água parada no contrapiso, descendo em leque)
+    for (let i = 0; i < 7; i++) {
+      const x = r() * s, y = r() * s * 0.45, rad = 10 + r() * 22;
+      const grd = g.createRadialGradient(x, y, 1, x, y, rad);
+      grd.addColorStop(0, `rgba(${40 + r() * 30 | 0},${38 + r() * 16 | 0},${24},0.45)`);
+      grd.addColorStop(1, 'rgba(40,36,24,0)');
+      g.fillStyle = grd; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
+      g.fillStyle = `rgba(50,42,28,${0.12 + r() * 0.18})`;
+      g.fillRect(x - 1.2, y, 2 + r() * 2, s * (0.25 + r() * 0.55));
+    }
     g.strokeStyle = 'rgba(0,0,0,.5)'; g.strokeRect(.5, .5, s - 1, s - 1);
-    drips(g, s, r, 6, 'rgba(20,18,10,A)');
+    drips(g, s, r, 16, 'rgba(30,26,16,A)');
     film(g, s, r, 0.05);
   }, 13, { bump: true });
 
@@ -353,14 +371,20 @@ export function installWorldDetail(materials, detailTex) {
       shader.uniforms.uDetailAmt = { value: 0.5 };
       m.userData.detailUniforms = shader.uniforms;
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vWp;')
-        .replace('#include <project_vertex>', 'vec4 wp = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nwp = instanceMatrix * wp;\n#endif\nvWp = (modelMatrix * wp).xyz;\n#include <project_vertex>');
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWp;\nvarying vec3 vWn;')
+        .replace('#include <project_vertex>', 'vec4 wp = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nwp = instanceMatrix * wp;\n#endif\nvWp = (modelMatrix * wp).xyz;\nvWn = mat3(modelMatrix) * objectNormal;\n#include <project_vertex>');
       shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vWp; uniform sampler2D uDetail; uniform float uDetailAmt;')
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWp; varying vec3 vWn; uniform sampler2D uDetail; uniform float uDetailAmt;')
         .replace('#include <map_fragment>', `#include <map_fragment>
           if (uDetailAmt > 0.001) {
-            float d1 = texture2D(uDetail, vWp.xz * 0.35).r;
-            float d2 = texture2D(uDetail, vWp.xz * 1.65 + vWp.y * 0.31).g;
+            vec3 n = abs(normalize(vWn));
+            n /= max(n.x + n.y + n.z, 0.0001);
+            float d1 = texture2D(uDetail, vWp.zy * 0.35).r * n.x
+                     + texture2D(uDetail, vWp.xz * 0.35).r * n.y
+                     + texture2D(uDetail, vWp.xy * 0.35).r * n.z;
+            float d2 = texture2D(uDetail, vWp.zy * 1.65).g * n.x
+                     + texture2D(uDetail, vWp.xz * 1.65 + vWp.y * 0.31).g * n.y
+                     + texture2D(uDetail, vWp.xy * 1.65).g * n.z;
             float d = (d1 * 0.62 + d2 * 0.38) * 2.0 - 1.0;
             diffuseColor.rgb *= 1.0 + d * uDetailAmt * 0.18;
           }`);

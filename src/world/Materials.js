@@ -111,6 +111,14 @@ export function createMaterials() {
     belt: B(T.concrete, { color: 0x2a2624 }),
   };
   M.textures = T;
+  const SURF = {
+    stone: 'tile wall wallLower ceiling concrete brick chapelWall stone ash morgueWall morgueFloor marble slime museumWall bone mortar cantaria stationTile coal soot',
+    metal: 'metal rust doorMetal steel steelDark boilerIron belt axeMetal brass',
+    wood: 'wood woodDark door pew parquet scorched',
+  };
+  for (const [surf, keys] of Object.entries(SURF)) {
+    for (const k of keys.split(' ')) { if (M[k]) M[k].userData.surface = surf; }
+  }
   installWorldDetail(M, T.detail);
   return M;
 }
