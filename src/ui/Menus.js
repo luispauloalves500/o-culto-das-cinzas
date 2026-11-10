@@ -73,6 +73,11 @@ export class Menus {
     eco.onchange = () => { s.set('ecoMenus', eco.checked); syncGfx(); };
     this.syncGfx = syncGfx; syncGfx();
     fov.oninput = () => { s.set('fov', +fov.value); $('optFovV').textContent = fov.value; g.camera.fov = +fov.value; g.camera.updateProjectionMatrix(); };
+    const bright = $('optBright');
+    if (bright) {
+      const sb = () => { const v = +s.get('brightness') || 1; bright.value = String(v); $('optBrightV').textContent = Math.round(v * 100) + '%'; g.canvas.style.filter = v === 1 ? '' : `brightness(${v})`; };
+      sb(); bright.oninput = () => { s.set('brightness', +bright.value); sb(); };
+    }
     shake.onchange = () => s.set('shake', shake.checked);
     fps.onchange = () => s.set('showFps', fps.checked);
     const cine = $('optCine'); if (cine) { cine.checked = s.get('cinematics') !== false; cine.onchange = () => s.set('cinematics', cine.checked); }

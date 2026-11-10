@@ -1487,6 +1487,7 @@ test('Trilha: volume da música é uma opção persistida (padrão 0,6)', () => 
 
 // ---------- pt46u/pt47u: opções gráficas, partículas, despawn e aberturas de capítulo ----------
 const GFX = await import('../../src/render/Graphics.js');
+const GAMEJS = await import('../../src/core/Game.js');
 const ATMO = await import('../../src/render/Atmosphere.js');
 const TEX = await import('../../src/world/Textures.js');
 const { CHAPTER_INTROS, buildIntroShots, safePoint } = await import('../../src/gameplay/ChapterIntro.js');
@@ -1846,6 +1847,27 @@ test('Combate (pt61u): impacto por superfície, decal/cápsula/flash em pool e A
   assert.equal(c._decalPool.length, 0);
   assert.equal(c.bulletHole({ x: 0, y: 0, z: 0 }, hit), null);
   assert.ok(TEX.installWorldDetail.toString().includes('vWp.zy') && TEX.installWorldDetail.toString().includes('vWn'));
+});
+
+test('Desempenho (pt62u): troca de capítulo não descarta geometria/material compartilhado', () => {
+  const { shouldDisposeResource } = GAMEJS;
+  const shared = new THREE.BoxGeometry(1, 1, 1); shared.userData.shared = true;
+  const unique = new THREE.BoxGeometry(1, 1, 1);
+  assert.equal(shouldDisposeResource(shared), false);
+  assert.equal(shouldDisposeResource(unique), true);
+  const mat = new THREE.MeshLambertMaterial(); const keep = new Set([mat]);
+  assert.equal(shouldDisposeResource(mat, keep), false);
+  assert.equal(shouldDisposeResource(new THREE.MeshLambertMaterial(), keep), true);
+  assert.equal(shouldDisposeResource(null), false);
+});
+
+test('Entrada (pt62u): Tab e setas só são bloqueados durante o jogo, não no menu', () => {
+  const block = (on, code) => !!(on && ['Tab', 'Space', 'F3', 'ArrowUp', 'ArrowDown'].includes(code));
+  assert.equal(block(true, 'Tab'), true);
+  assert.equal(block(false, 'Tab'), false);
+  assert.equal(block(false, 'ArrowUp'), false);
+  assert.equal(block(true, 'KeyE'), false);
+  assert.equal(DS2.brightness, 1);
 });
 
 test('Desempenho: agrupamento estático não descarta geometria compartilhada', () => {
