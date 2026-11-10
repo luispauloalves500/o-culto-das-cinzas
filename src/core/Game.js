@@ -54,6 +54,14 @@ import { Graphics } from '../render/Graphics.js';
 
 const STEP = 1 / 60;
 
+/** não descarta geo/material compartilhado (fábrica de props, decals, etc.) na troca de capítulo */
+export function shouldDisposeResource(obj, sharedSet = null) {
+  if (!obj) return false;
+  if (obj.userData?.shared) return false;
+  if (sharedSet && sharedSet.has(obj)) return false;
+  return true;
+}
+
 export class Game {
   constructor(canvas) {
     this.canvas = canvas;
@@ -107,9 +115,13 @@ export class Game {
   // ---------- mundo ----------
   _disposeWorld() {
     if (!this.scene) return;
+    const sharedMat = new Set(Object.values(this.materials || {}));
     this.scene.traverse((o) => {
-      if (o.geometry) o.geometry.dispose();
-      if (o.isMesh && o.material && !Object.values(this.materials).includes(o.material) && o.material.dispose) o.material.dispose();
+      if (shouldDisposeResource(o.geometry)) o.geometry.dispose();
+      const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+      for (const m of mats) {
+        if (m && m.dispose && shouldDisposeResource(m, sharedMat)) m.dispose();
+      }
     });
     this.scene = null;
   }
@@ -192,6 +204,7 @@ export class Game {
     this.state = 'playing';
     this.menus.hideAll(); this.hud.show(true);
     this.input.clear();
+    this.input.blockKeys = true;
     this.audio.setAmbience(true);
     if (this.requireLock) this.input.requestLock();
     this.last = performance.now(); this.acc = 0;
@@ -302,7 +315,7 @@ export class Game {
   }
   pause() {
     if (this.state !== 'playing') return;
-    this.state = 'paused'; this.input.clear(); this.input.exitLock();
+    this.state = 'paused'; this.input.clear(); this.input.exitLock(); this.input.blockKeys = false;
     this.audio.setAmbience(false);
     this.menus.show('pause');
   }
@@ -311,21 +324,23 @@ export class Game {
     this._enterPlay();
   }
   toMenu() {
-    this.state = 'menu'; this.input.exitLock(); this.hud.show(false); this.audio.setAmbience(false); this.audio.setIntensity(0);
+    this.state = 'menu'; this.input.exitLock(); this.input.blockKeys = false; this.hud.show(false);
+    this.audio.setAmbience(false); this.audio.setIntensity(0);
+    this._disposeWorld();
     this.menus.show('menu');
   }
   openDocument(id, back = 'playing') {
     this.readerBack = back;
-    this.state = 'reading'; this.input.clear(); this.input.exitLock();
+    this.state = 'reading'; this.input.clear(); this.input.exitLock(); this.input.blockKeys = false;
     this.menus.showDocument(id);
     this.audio.play('pickup', null);
   }
   openInventory() {
-    this.state = 'inventory'; this.input.clear(); this.input.exitLock();
+    this.state = 'inventory'; this.input.clear(); this.input.exitLock(); this.input.blockKeys = false;
     this.menus.showInventory();
   }
   openMap() {
-    this.state = 'map'; this.input.clear(); this.input.exitLock();
+    this.state = 'map'; this.input.clear(); this.input.exitLock(); this.input.blockKeys = false;
     this.menus.showMap();
   }
   closeOverlay() {

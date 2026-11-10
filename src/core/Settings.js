@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS = {
   // corpos de inimigos somem depois de N segundos (0 = nunca)
   corpseTime: 20,
   cinematics: true,
+  brightness: 1,
 };
 
 export class Settings {

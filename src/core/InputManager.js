@@ -18,9 +18,11 @@ export class InputManager {
     this.padDown = new Set(); this.padPressed = new Set();
     this.padMove = { x: 0, y: 0 }; this.padLook = { x: 0, y: 0 };
     this.enabled = true;
+    // só bloqueia Tab/Espaço/setas durante o jogo; no menu/opções o teclado precisa funcionar
+    this.blockKeys = false;
 
     window.addEventListener('keydown', (e) => {
-      if (['Tab', 'Space', 'F3', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+      if (this.blockKeys && ['Tab', 'Space', 'F3', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
       if (!this.down.has(e.code)) this.pressed.add(e.code);
       this.down.add(e.code);
     });

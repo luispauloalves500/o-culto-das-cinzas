@@ -258,6 +258,9 @@ export class CombatSystem {
       CombatSystem._casingMat = new THREE.MeshLambertMaterial({ color: 0xb08a3a, emissive: 0x1a1004 });
       CombatSystem._sprayMat = new THREE.MeshBasicMaterial({ color: 0x6a0804, transparent: true, opacity: 0.75, depthWrite: false, side: THREE.DoubleSide });
       CombatSystem._flashMat = new THREE.MeshBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+      for (const m of [...Object.values(CombatSystem._decalMat), CombatSystem._casingMat, CombatSystem._sprayMat, CombatSystem._flashMat]) {
+        if (m) m.userData.shared = true;
+      }
     }
     const bloodMap = this.game.materials?.textures?.blood || this.game.materials?.bloodDecal?.map;
     if (bloodMap && CombatSystem._sprayMat) CombatSystem._sprayMat.map = bloodMap;
