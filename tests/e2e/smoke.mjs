@@ -169,6 +169,49 @@ try {
   check('Armários GLB (pt56u/pt57u): modelo no cenário, portas gêmeas abrem ~110° e interação E registrada',
     cab.n >= 6 && cab.body && cab.opened && cab.ang > 1.5 && cab.interact, JSON.stringify(cab));
 
+  const texfx = await page.evaluate(() => {
+    const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
+    const T = g.materials.textures;
+    out.tileW = T.tile.image.width; out.wallW = T.wall.image.width;
+    out.bump = !!(T.tile.bump && g.materials.tile.bumpMap);
+    out.detail = !!T.detail; out.worldDetail = !!g.materials.tile.userData.worldDetail;
+    out.texBytes = g.gfx.debug().texBytes;
+    const scan = () => {
+      let fires = 0, flameSh = 0, haze = 0, hazeOn = 0, candles = 0;
+      g.scene.traverse((o) => {
+        if (o.name === 'fireFX') fires++;
+        if (o.name === 'fireFlame' && o.material?.type === 'ShaderMaterial') flameSh++;
+        if (o.name === 'fireHaze') { haze++; if (o.visible && o.parent?.visible) hazeOn++; }
+        if (o.name === 'candleFlame') candles++;
+      });
+      return { fires, flameSh, haze, hazeOn, candles };
+    };
+    const prev = $('optPreset').value;
+    const pick = (v) => { $('optPreset').value = v; $('optPreset').dispatchEvent(new Event('change')); for (let i = 0; i < 3; i++) g.step(1 / 60); g.gfx.render(g.scene, g.camera); };
+    pick('media');
+    g.renderer.info.reset?.();
+    const t0 = performance.now();
+    for (let i = 0; i < 60; i++) { g.step(1 / 60); g.gfx.render(g.scene, g.camera); }
+    out.ms60 = +(performance.now() - t0).toFixed(1);
+    out.calls = g.renderer.info.render.calls;
+    out.media = { ...scan(), ...g.gfx.debug().fireQ, detail: g.gfx.debug().detail, draws: g.gfx.debug().draws };
+    pick('baixa');
+    out.baixa = { ...scan(), ...g.gfx.debug().fireQ, bump: g.materials.tile.bumpScale, texW: T.tile.image.width, minF: T.tile.minFilter, magF: T.tile.magFilter };
+    pick('alta');
+    out.alta = { ...scan(), hazeFlag: g.gfx.debug().fireQ.haze };
+    pick('baixa');
+    if (prev && prev !== 'baixa') { $('optPreset').value = prev; $('optPreset').dispatchEvent(new Event('change')); }
+    return out;
+  }).catch((e) => ({ err: String(e) }));
+  check('Texturas e fogo (pt58u): mapas 128 com bump/detalhe, VRAM limitada, shader de chama, haze só em Alta, Baixa leve e sem mudar resolução do mapa',
+    !texfx.err && texfx.tileW === 128 && texfx.wallW === 128 && texfx.bump && texfx.detail && texfx.worldDetail
+    && texfx.texBytes > 0 && texfx.texBytes < 6e6
+    && texfx.media.fires >= 1 && texfx.media.flameSh >= 2 && texfx.media.hazeOn === 0 && texfx.media.embers > 0
+    && texfx.baixa.hazeOn === 0 && texfx.baixa.embers === 0 && texfx.baixa.texW === 128
+    && texfx.alta.hazeOn >= 1 && texfx.alta.hazeFlag === true
+    && texfx.baixa.bump < 0.03 && texfx.calls > 0,
+    JSON.stringify(texfx));
+
   check('Inimigos GLB (pt55u): ataque no esqueleto (clipe de golpe pela fase do ataque) e enfermeiro com faca presa ao osso RightHand',
     /^Pose_atk_/.test(eglb.atkClip || '') && eglb.atkT > 1 && eglb.atkT < 2 && eglb.knife && eglb.enfAtk === 'Pose_atk_stab', JSON.stringify({ c: eglb.atkClip, t: eglb.atkT, k: eglb.knife, e: eglb.enfAtk }));
   // pt48u: otimizações que não mexem nas texturas

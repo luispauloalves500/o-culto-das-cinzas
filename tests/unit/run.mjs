@@ -20,6 +20,8 @@ import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
 import { prepareClips, makeIdleClips } from '../../src/gameplay/EliasModel.js';
 import { restPoseFor, POSE_DEFS, ATTACK_DEFS } from '../../src/models/MixamoPoses.js';
 import { ARMARIO_URL, ARMARIO_NATIVE, cabinetsEnabled } from '../../src/world/Cabinets.js';
+import { detailForGfx, setSurfaceDetail, installWorldDetail, textureBytes } from '../../src/world/Textures.js';
+import { FIRE_QUALITY, fireQualityFor } from '../../src/render/FireFX.js';
 import { makeKnife } from '../../src/models/EnemyWeapons.js';
 import { ENEMY_MODELS, attackPhase, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
 
@@ -1653,6 +1655,36 @@ test('Armário GLB (pt56u/pt57u): otimizado, no manifesto, sem animações; face
   assert.equal(ARMARIO_URL, './models/armario.glb');
   assert.ok(ARMARIO_NATIVE.h > 1.8 && ARMARIO_NATIVE.w > 0.5);
   assert.equal(cabinetsEnabled(), false); // Node
+});
+
+test('Texturas (pt58u): detalhe/bump crescem com a predefinição e Baixa continua leve', () => {
+  const b = detailForGfx({ renderScale: 0.5 }), m = detailForGfx({ renderScale: 0.75 });
+  const a = detailForGfx({ renderScale: 1 }), u = detailForGfx({ renderScale: 1.25 });
+  assert.ok(b.detail < m.detail && m.detail < a.detail && a.detail <= u.detail);
+  assert.ok(b.bump < m.bump && b.detail <= 0.2, 'Baixa quase sem overlay');
+  const mat = new THREE.MeshLambertMaterial({ map: new THREE.DataTexture(new Uint8Array(4), 1, 1) });
+  mat.bumpMap = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+  mat.userData.baseBump = 0.042; mat.bumpScale = 0.042;
+  const detail = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+  installWorldDetail({ mat }, detail);
+  assert.equal(mat.userData.worldDetail, true);
+  setSurfaceDetail({ mat }, b);
+  assert.ok(Math.abs(mat.bumpScale - 0.018) < 1e-6);
+  const dummy = { image: { width: 128, height: 128 }, bump: { image: { width: 128, height: 128 } }, isTexture: true };
+  const bytes = textureBytes({ tile: dummy, detail: { image: { width: 128, height: 128 } } });
+  assert.ok(bytes > 128 * 128 * 4 * 1.33 * 2 && bytes < 128 * 128 * 4 * 1.33 * 4);
+});
+
+test('Fogo (pt58u): Baixa sem brasas/fumaça/haze; Alta/Ultra com haze; shader com ruído no tempo', () => {
+  const baixa = fireQualityFor({ particles: 'baixa', renderScale: 0.5 });
+  const media = fireQualityFor({ particles: 'media', renderScale: 0.75 });
+  const alta = fireQualityFor({ particles: 'alta', renderScale: 1 });
+  const ultra = fireQualityFor({ particles: 'alta', renderScale: 1.25 });
+  assert.equal(baixa.haze, false); assert.equal(baixa.embers, 0); assert.equal(baixa.smoke, 0); assert.equal(baixa.planes, 2);
+  assert.equal(media.haze, false); assert.ok(media.embers > 0 && media.smoke > 0);
+  assert.equal(alta.haze, true); assert.equal(ultra.haze, true); assert.ok(ultra.embers >= alta.embers);
+  assert.equal(FIRE_QUALITY.baixa.haze, false);
+  assert.ok(GFX.GFX_PRESETS.baixa.lightBudget <= GFX.GFX_PRESETS.media.lightBudget);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);
