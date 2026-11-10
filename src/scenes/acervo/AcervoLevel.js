@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
-import { placeTable, placeBookcase, placeCrate } from '../../world/Props.js';
+import { placeTable, placeBookcase, placeCrate, placeFormalinTank, dressShowcase } from '../../world/Props.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -242,9 +242,7 @@ export class AcervoLevel {
     }
     // tanques de formol (verde), um com a tampa aberta
     for (const z of [28.2, 30.4, 32.6, 34.8]) {
-      b.sbox(42.2, Y, z, 43.8, Y + 2.0, z + 1.6, 'glass', { tag: 'prop' });
-      const liquid = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.5, 1.4), new THREE.MeshLambertMaterial({ color: 0x4a6a30, transparent: true, opacity: 0.55, emissive: 0x0c1a04 }));
-      liquid.position.set(43, Y + 0.8, z + 0.8); b.group.add(liquid);
+      placeFormalinTank(this, { minX: 42.2, minY: Y, minZ: z, maxX: 43.8, maxY: Y + 2.0, maxZ: z + 1.6, tag: 'prop', sight: true, open: z === 28.2 });
     }
     // armário de ferramentas (livro de registros em cima) e maca de embalsamar
     placeTable(this, { minX: 30.2, minY: Y, minZ: 37.8, maxX: 31.4, maxY: Y + 0.9, maxZ: 39.6, mat: 'woodDark', tag: 'prop-low', sight: false });
@@ -310,6 +308,7 @@ export class AcervoLevel {
       const gm = new THREE.Mesh(new THREE.BoxGeometry(hx * 2, top - 0.7, hx * 2), M.showcase || M.glass); gm.position.set(c.x, Y + (0.7 + top) / 2, c.z); gm.renderOrder = 2; b.group.add(gm);
       for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.sbox(c.x + sx * hx - 0.06, Y + 0.7, c.z + sz * hx - 0.06, c.x + sx * hx + 0.06, Y + top, c.z + sz * hx + 0.06, 'brass', { collide: false });
       b.sbox(c.x - hx - 0.04, Y + top, c.z - hx - 0.04, c.x + hx + 0.04, Y + top + 0.12, c.z + hx + 0.04, 'brass', { collide: false });
+      dressShowcase(this, { x: c.x, z: c.z, hx, hz: hx, y0: Y + 0.7, y1: Y + top });
       // peça exposta (silhueta) e as rachaduras (aparecem a cada choque)
       const ex = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.3), c.id === 'rc_nw' ? (M.brass || M.gold) : c.id === 'rc_ne' ? (M.wax || M.paper) : (M.bone || M.ash || M.stone));
       ex.position.set(c.x, Y + 1.2, c.z); b.group.add(ex);
@@ -481,6 +480,7 @@ export class AcervoLevel {
     // moldura de latão
     for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.sbox(v.x + sx * hx - 0.03, Y + base, v.z + sz * hz - 0.03, v.x + sx * hx + 0.03, Y + top, v.z + sz * hz + 0.03, 'brass', { collide: false });
     b.sbox(v.x - hx, Y + top, v.z - hz, v.x + hx, Y + top + 0.05, v.z + hz, 'brass', { collide: false });
+    dressShowcase(this, { x: v.x, z: v.z, hx, hz, y0: Y + base, y1: Y + top });
     // cacos no chão (aparecem quando quebra)
     const sg = new THREE.Group();
     for (let i = 0; i < 9; i++) {

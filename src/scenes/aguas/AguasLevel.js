@@ -9,7 +9,7 @@ import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
-import { placeBed, placeTable, placeCrate } from '../../world/Props.js';
+import { placeBed, placeTable, placeCrate, dressElectricalPanel } from '../../world/Props.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -271,6 +271,7 @@ export class AguasLevel {
     this.panelLamp = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), new THREE.MeshBasicMaterial({ color: 0x401010 })); this.panelLamp.position.set(0.17, 0.65, 0.95); g.add(this.panelLamp);
     g.position.set(24.15, Y + 1.25, 25); b.group.add(g);
     b.col.addBox(24, Y, 23.8, 24.3, Y + 2.05, 26.2, { tag: 'prop', blocksSight: true });
+    dressElectricalPanel(this, { minX: 24.0, minY: Y + 0.45, minZ: 23.8, maxX: 24.3, maxY: Y + 2.05, maxZ: 26.2, mat: 'steelDark', face: '+x' });
     this.sign('BOMBA 1 · BOMBA 2 · COMPORTA', 24.32, Y + 2.25, 25, Math.PI / 2, 2.2, 0.22, { bg: '#2a1a14', fg: '#e0b090' });
     // antecâmara: armários, prancheta e banco
     placeCabinet(this, { id: 'aguas_cab', minX: 41.4, minY: Y, minZ: 22.4, maxX: 42, maxY: Y + 2.0, maxZ: 24.6, face: '-x', label: 'armário' });

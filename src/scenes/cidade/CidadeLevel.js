@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
-import { placeCrate, placeTable, placeBookcase, placeBench } from '../../world/Props.js';
+import { placeCrate, placeTable, placeBookcase, placeBench, placeTrashCan, placeSandbags, placeClothesline, placeDisplayCase } from '../../world/Props.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -174,7 +174,7 @@ export class CidadeLevel {
     b.sbox(7.6, Y, 15.5, 9.3, Y + 1.35, 19.6, 'rust', { tag: 'obstacle', cast: true });
     b.sbox(7.7, Y + 1.35, 16.6, 9.2, Y + 1.5, 18.6, 'ash', { collide: false });
     placeCrate(this, { minX: 5.0, minY: Y, minZ: 29.0, maxX: 6.2, maxY: Y + 0.8, maxZ: 30.2, mat: 'woodDark', tag: 'prop-low', sight: false });
-    b.sbox(8.6, Y, 41.0, 9.6, Y + 1.0, 42.0, 'metal', { tag: 'prop-low', sight: false });   // lixeira
+    placeTrashCan(this, { minX: 8.6, minY: Y, minZ: 41.0, maxX: 9.6, maxY: Y + 1.0, maxZ: 42.0, mat: 'metal', tag: 'prop-low', sight: false });
     // montes de cinza junto aos muros
     for (const [x, z, w] of [[4.3, 13, 1.2], [9.6, 24, 1.4], [4.4, 37, 1.0], [9.5, 45, 1.2]]) b.sbox(x - w / 2, Y, z - w, x + w / 2, Y + 0.2, z + w, 'ash', { collide: false });
     // lampiões a gás (postes)
@@ -182,7 +182,7 @@ export class CidadeLevel {
     // BARRICADA: o bonde da Linha 2 tombado de lado atravessa a rua, com sacos e uma carroça
     b.sbox(4, Y, 46, 10, Y + 2.7, 48.6, 'rust', { tag: 'obstacle', cast: true });
     for (let x = 4.6; x < 9.6; x += 1.4) b.sbox(x, Y + 1.0, 45.96, x + 0.9, Y + 1.8, 46.0, 'glass', { collide: false }); // janelas viradas
-    b.sbox(4, Y, 44.6, 6.4, Y + 0.8, 45.6, 'pantsGray', { tag: 'prop-low', sight: false });  // sacos de areia
+    placeSandbags(this, { minX: 4, minY: Y, minZ: 44.6, maxX: 6.4, maxY: Y + 0.8, maxZ: 45.6, mat: 'pantsGray', tag: 'prop-low', sight: false });
     b.sbox(8.4, Y, 44.4, 10, Y + 1.4, 46, 'woodDark', { tag: 'obstacle' });                   // carroça
     this.sign('LINHA 2 — PRAÇA DO RELÓGIO', 7, Y + 2.2, 45.95, Math.PI, 2.6, 0.26, { bg: '#2a2016', fg: '#d0a060' });
   }
@@ -206,7 +206,7 @@ export class CidadeLevel {
     // mesinha da entrada, cadeira de espera e a vitrine de frascos quebrada
     placeTable(this, { minX: 2.4, minY: Y, minZ: 18.4, maxX: 3.6, maxY: Y + 0.85, maxZ: 19.6, mat: 'wood', tag: 'prop-low', sight: false });
     placeCrate(this, { minX: 2.6, minY: Y, minZ: 26.4, maxX: 3.4, maxY: Y + 0.5, maxZ: 27.2, mat: 'wood', tag: 'prop-low', sight: false });
-    b.sbox(0.6, Y, 27.2, 3.0, Y + 1.0, 27.8, 'glass', { tag: 'prop-low', sight: false });
+    placeDisplayCase(this, { minX: 0.6, minY: Y, minZ: 27.2, maxX: 3.0, maxY: Y + 1.0, maxZ: 27.8, tag: 'prop-low', sight: false });
     // relógio de parede, parado
     this.clockFace(1.0, Y + 2.6, 18.12, 0.3, 0);
   }
@@ -220,8 +220,8 @@ export class CidadeLevel {
     b.wallZ(18, 30, 40, Y, Y + H_SHOP, [], 'wall');
     b.wallX(40, 10, 18, Y, Y + H_SHOP, [14], 'wall');
     // vitrines de vidro (duas, deixando o corredor da porta) e a bancada do relojoeiro
-    b.sbox(11.4, Y, 30.6, 12.4, Y + 1.0, 34.0, 'glass', { tag: 'prop-low', sight: false });
-    b.sbox(11.4, Y, 36.0, 12.4, Y + 1.0, 39.4, 'glass', { tag: 'prop-low', sight: false });
+    placeDisplayCase(this, { minX: 11.4, minY: Y, minZ: 30.6, maxX: 12.4, maxY: Y + 1.0, maxZ: 34.0, tag: 'prop-low', sight: false });
+    placeDisplayCase(this, { minX: 11.4, minY: Y, minZ: 36.0, maxX: 12.4, maxY: Y + 1.0, maxZ: 39.4, tag: 'prop-low', sight: false });
     placeTable(this, { minX: 16.9, minY: Y, minZ: 31.0, maxX: 17.9, maxY: Y + 0.95, maxZ: 35.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(17.1, Y + 0.95, 31.4, 17.4, Y + 1.2, 31.8, 'brass', { collide: false }); // lupa/torno
     // parede de relógios (todos às 3h07) e o relógio de pé no canto
@@ -241,9 +241,7 @@ export class CidadeLevel {
     // caixotes e um varal com lençóis cinzentos
     placeCrate(this, { minX: 16.4, minY: Y, minZ: 43.4, maxX: 17.8, maxY: Y + 1.1, maxZ: 44.8, mat: 'woodDark', tag: 'obstacle', sight: false });
     placeCrate(this, { minX: 10.6, minY: Y, minZ: 46.4, maxX: 11.8, maxY: Y + 0.9, maxZ: 47.6, mat: 'woodDark', tag: 'prop-low', sight: false });
-    for (const x of [10.8, 17.6]) b.sbox(x - 0.04, Y, 41.96, x + 0.04, Y + 2.4, 42.04, 'metal', { collide: false });
-    b.sbox(10.8, Y + 2.3, 41.99, 17.6, Y + 2.32, 42.01, 'metal', { collide: false });
-    for (const x of [12, 14.2, 16.1]) b.sbox(x, Y + 1.3, 41.98, x + 1.2, Y + 2.3, 42.02, 'sheet', { collide: false });
+    placeClothesline(this, { x0: 10.8, x1: 17.6, z: 42.0, yWire: Y + 2.31, yFloor: Y, poles: true, sheets: [[12, 13.2, Y + 1.3], [14.2, 15.4, Y + 1.3], [16.1, 17.3, Y + 1.3]] });
   }
 
   // ---------- PRAÇA DO RELÓGIO x0..30 z50..76 ----------
