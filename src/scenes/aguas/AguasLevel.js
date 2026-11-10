@@ -9,6 +9,7 @@ import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { placeBed, placeTable, placeCrate } from '../../world/Props.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -240,8 +241,8 @@ export class AguasLevel {
     b.sbox(H.minX - 0.2, Y, H.minZ, H.minX, Y + 3, H.maxZ, 'wallLower');
     b.sbox(H.maxX, Y, H.minZ, H.maxX + 0.2, Y + 3, H.maxZ, 'wallLower');
     b.sbox(H.minX - 0.2, Y, H.maxZ, H.maxX + 0.2, Y + 3, H.maxZ + 0.2, 'wallLower');
-    b.sbox(1.2, Y, 26.4, 3.2, Y + 0.6, 27.8, 'woodDark', { tag: 'prop-low', sight: false }); // catre
-    b.sbox(5.6, Y, 26.9, 7.8, Y + 0.9, 27.8, 'woodDark', { tag: 'prop-low', sight: false }); // bancada
+    placeBed(this, { x: 2.2, y: Y, z: 27.1, yaw: Math.PI / 2, length: 2.0, width: 1.2 });
+    placeTable(this, { minX: 5.6, minY: Y, minZ: 26.9, maxX: 7.8, maxY: Y + 0.9, maxZ: 27.8, mat: 'woodDark', tag: 'prop-low', sight: false });
     this.fuseBox = b.box(7.7, Y + 1.0, 24.2, 7.98, Y + 1.6, 25.2, 'metal', { collide: false }); // caixa de reserva
   }
 
@@ -273,8 +274,8 @@ export class AguasLevel {
     this.sign('BOMBA 1 · BOMBA 2 · COMPORTA', 24.32, Y + 2.25, 25, Math.PI / 2, 2.2, 0.22, { bg: '#2a1a14', fg: '#e0b090' });
     // antecâmara: armários, prancheta e banco
     placeCabinet(this, { id: 'aguas_cab', minX: 41.4, minY: Y, minZ: 22.4, maxX: 42, maxY: Y + 2.0, maxZ: 24.6, face: '-x', label: 'armário' });
-    b.sbox(39.9, Y, 26.2, 41.4, Y + 0.85, 27.8, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(31, Y, 26.8, 33.4, Y + 0.45, 27.6, 'wood', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 39.9, minY: Y, minZ: 26.2, maxX: 41.4, maxY: Y + 0.85, maxZ: 27.8, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 31, minY: Y, minZ: 26.8, maxX: 33.4, maxY: Y + 0.45, maxZ: 27.6, mat: 'wood', tag: 'prop-low', sight: false });
     this.sign('SALÃO DAS BOMBAS', 36, Y + 3.0, 27.88, Math.PI, 1.8, 0.26, { bg: '#1e2420', fg: '#c8d8c0' });
   }
 
@@ -366,7 +367,7 @@ export class AguasLevel {
     b.wallX(68, 26, 40, U, U + 4, [33], 'concrete', 2.2, 3.0);
     b.sbox(26, U - 0.6, 60, 40, U - 0.3, 68, 'concrete', { collide: false });
     // cofre das turbinas (bancada), manômetros e o grande portão
-    b.sbox(36.6, U, 66.4, 39.8, U + 0.95, 67.8, 'steelDark', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 36.6, minY: U, minZ: 66.4, maxX: 39.8, maxY: U + 0.95, maxZ: 67.8, mat: 'steelDark', tag: 'prop-low', sight: false });
     for (const x of [27.4, 39]) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 10), this.M.paper); m.rotation.x = Math.PI / 2; m.position.set(x, U + 2.2, 67.85); b.group.add(m); }
     // poço de inspeção: grade sobre a água das turbinas
     for (let x = 31; x < 35; x += 0.3) b.sbox(x, U - 0.02, 63, x + 0.06, U + 0.01, 65, 'rust', { collide: false });
@@ -442,7 +443,7 @@ export class AguasLevel {
     b.sbox(D.maxX, U - 0.5, D.minZ, D.maxX + 0.2, U + 3, D.maxZ, 'brick');
     b.sbox(D.minX - 0.2, U - 0.5, D.maxZ, D.maxX + 0.2, U + 3, D.maxZ + 0.2, 'brick');
     for (let x = D.minX + 0.3; x < D.maxX - 0.2; x += 0.3) b.sbox(x, U, D.maxZ - 0.15, x + 0.05, U + 2.6, D.maxZ - 0.1, 'rust', { collide: false });
-    b.sbox(33.6, U, 95.5, 34.38, U + 0.7, 96.3, 'woodDark', { tag: 'prop-low', sight: false }); // caixote da remessa
+    placeCrate(this, { minX: 33.6, minY: U, minZ: 95.5, maxX: 34.38, maxY: U + 0.7, maxZ: 96.3, mat: 'woodDark', tag: 'prop-low', sight: false });
     this.sign('DESCARGA — RIO DAS CINZAS', 33, U + 2.6, 90.15, 0, 2.4, 0.3, { bg: '#1c1c14', fg: '#d8c890' });
   }
 

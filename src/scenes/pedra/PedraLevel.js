@@ -14,6 +14,7 @@ import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { placeCrate, placeCart, placeBookcase, placeTable } from '../../world/Props.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -208,8 +209,8 @@ export class PedraLevel {
     for (const x of [LADDER.x - 0.32, LADDER.x + 0.32]) b.sbox(x - 0.03, Y, 0.12, x + 0.03, Y + 8.8, 0.2, 'rust', { collide: false });
     for (let y = 0.3; y < 8.8; y += 0.34) b.sbox(LADDER.x - 0.32, Y + y, 0.14, LADDER.x + 0.32, Y + y + 0.03, 0.18, 'rust', { collide: false });
     // caixotes e o que caiu da reserva técnica pelo alçapão
-    b.sbox(19.9, Y, 4.2, 21.3, Y + 0.9, 5.6, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(14.3, Y, 4.6, 15.4, Y + 0.7, 5.8, 'wood', { tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 19.9, minY: Y, minZ: 4.2, maxX: 21.3, maxY: Y + 0.9, maxZ: 5.6, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 14.3, minY: Y, minZ: 4.6, maxX: 15.4, maxY: Y + 0.7, maxZ: 5.8, mat: 'wood', tag: 'prop-low', sight: false });
     b.sbox(16.6, Y + 0.002, 1.0, 17.3, Y + 0.02, 1.6, 'paper', { collide: false });
     this.sign('CIA. DO METROPOLITANO — POÇO DE SERVIÇO 3', 18, Y + 2.7, 5.88, Math.PI, 2.8, 0.26, { bg: '#1a1712', fg: '#cbbf98' });
     this.sign('SERVIÇO →', 21.88, Y + 2.5, 3, -Math.PI / 2, 0.9, 0.2, { bg: '#1a1712', fg: '#cbbf98' });
@@ -230,11 +231,7 @@ export class PedraLevel {
     }
     // carrinho de ferramentas (o pé de cabra fica em cima)
     const C = TOOL_CART;
-    b.sbox(C.x - 0.45, Y + 0.25, C.z - 0.8, C.x + 0.45, Y + 0.85, C.z + 0.8, 'rust', { tag: 'prop-low', sight: false });
-    for (const [dx, dz] of [[-0.35, -0.65], [0.35, -0.65], [-0.35, 0.65], [0.35, 0.65]]) {
-      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.06, 10), this.M.steelDark || this.M.rust);
-      w.rotation.z = Math.PI / 2; w.position.set(C.x + dx, Y + 0.13, C.z + dz); b.group.add(w);
-    }
+    placeCart(this, { minX: C.x - 0.45, minY: Y, minZ: C.z - 0.8, maxX: C.x + 0.45, maxY: Y + 0.85, maxZ: C.z + 0.8, mat: 'rust', tag: 'prop-low', sight: false });
     b.sbox(C.x - 0.4, Y + 0.85, C.z + 0.3, C.x + 0.1, Y + 1.0, C.z + 0.7, 'woodDark', { collide: false });
     this.sign('CIA. METROPOLITANO — FERRAMENTAS', C.x + 0.46, Y + 0.55, C.z, Math.PI / 2, 1.4, 0.18, { bg: '#2a2010', fg: '#d0b070' });
     // trilho estreito de vagonete no chão, rumo ao ossuário
@@ -263,7 +260,7 @@ export class PedraLevel {
       for (let y = 0.5; y < 3.6; y += 0.45) { this._skull(x, Y + y, z - 0.37, 0.8); this._skull(x, Y + y, z + 0.37, 0.8); }
     }
     // estante do livro do coveiro (entrada)
-    b.sbox(16.95, Y, 17.15, 17.55, Y + 1.05, 17.75, 'woodDark', { tag: 'prop-low', sight: false });
+    placeBookcase(this, { minX: 16.95, minY: Y, minZ: 17.15, maxX: 17.55, maxY: Y + 1.05, maxZ: 17.75, mat: 'woodDark', tag: 'prop-low', sight: false });
     // ossos no chão: fêmures e costelas espalhados (visual) sobre as manchas que estalam
     const rnd = mulberry(77);
     for (const P of BONE_PATCHES) {
@@ -589,7 +586,7 @@ export class PedraLevel {
     b.sbox(60.8, y0 + 1.6, C.minZ, 65.2, y0 + 2.5, C.minZ + 0.05, 'blueprint', { collide: false });
     this.signalLamp = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), M.lampRed || M.lampOff); this.signalLamp.position.set(64.6, y0 + 2.2, C.minZ + 0.08); b.group.add(this.signalLamp);
     // mesa do sinaleiro (guia de remoção + livro de registros) e placa esmaltada das agulhas
-    b.sbox(64.4, y0, 47.6, 65.8, y0 + 0.85, 49.2, 'woodDark', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 64.4, minY: y0, minZ: 47.6, maxX: 65.8, maxY: y0 + 0.85, maxZ: 49.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(64.6, y0 + 0.86, 48.2, 65.1, y0 + 0.88, 48.6, 'paper', { collide: false });
     placeCabinet(this, { id: 'pedra_cab', minX: 60.2, minY: y0, minZ: 47.8, maxX: 61.0, maxY: y0 + 1.6, maxZ: 49.4, face: '+z', label: 'armário' });
     this.sign('AGULHAS: N = NORMAL (ALAVANCA EMPURRADA) · R = REVERSA (PUXADA)', 63, y0 + 2.62, C.minZ + 0.06, 0, 4.2, 0.18, { bg: '#e8e0c8', fg: '#20180c' });

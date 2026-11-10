@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { placeTable, placeBookcase, placeCrate } from '../../world/Props.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -222,7 +223,7 @@ export class AcervoLevel {
     this.sign('ALA DE CONSERVAÇÃO — SOMENTE PESSOAL', 29.88, Y + 2.9, 33, -Math.PI / 2, 2.4, 0.26, { bg: '#1a1410', fg: '#d8b880' });
     this.sign('Nº DE INVENTÁRIO', 29.86, Y + 2.0, 35.4, -Math.PI / 2, 1.2, 0.18, { bg: '#1a1410', fg: '#d8b880' });
     // estante do guia e cordão de veludo
-    b.sbox(14.4, Y, 43.3, 15.6, Y + 1.0, 43.9, 'woodDark', { tag: 'prop-low', sight: false });
+    placeBookcase(this, { minX: 14.4, minY: Y, minZ: 43.3, maxX: 15.6, maxY: Y + 1.0, maxZ: 43.9, mat: 'woodDark', tag: 'prop-low', sight: false });
     this.sign('SALÃO DE EXPOSIÇÃO PERMANENTE', 15, Y + 4.2, 43.88, Math.PI, 3.2, 0.32, { bg: '#20160c', fg: '#e0c890' });
   }
 
@@ -235,7 +236,7 @@ export class AcervoLevel {
     b.sbox(C.maxX, Y, C.minZ, C.maxX + 0.2, Y + 3.6, C.maxZ, 'wallLower');
     b.wallX(40, C.minX, C.maxX, Y, Y + 3.6, [37], 'wallLower', 1.3, 2.3);
     // mesa de restauro com frascos e a lupa
-    b.sbox(34, Y, 29, 38, Y + 0.9, 30.5, 'steel', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 34, minY: Y, minZ: 29, maxX: 38, maxY: Y + 0.9, maxZ: 30.5, mat: 'steel', tag: 'prop-low', sight: false });
     for (let i = 0; i < 5; i++) {
       const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.22, 8), M.glass); jar.position.set(34.4 + i * 0.7, Y + 1.01, 29.4); b.group.add(jar);
     }
@@ -246,8 +247,8 @@ export class AcervoLevel {
       liquid.position.set(43, Y + 0.8, z + 0.8); b.group.add(liquid);
     }
     // armário de ferramentas (livro de registros em cima) e maca de embalsamar
-    b.sbox(30.2, Y, 37.8, 31.4, Y + 0.9, 39.6, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(33, Y, 38.6, 35.4, Y + 0.85, 39.6, 'steel', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 30.2, minY: Y, minZ: 37.8, maxX: 31.4, maxY: Y + 0.9, maxZ: 39.6, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 33, minY: Y, minZ: 38.6, maxX: 35.4, maxY: Y + 0.85, maxZ: 39.6, mat: 'steel', tag: 'prop-low', sight: false });
     this.sign('CONSERVAÇÃO E RESTAURO', 37, Y + 2.7, 26.12, 0, 2.2, 0.24, { bg: '#141a14', fg: '#c8d8b0' });
     this.sign('DEPÓSITO', 37, Y + 2.6, 39.88, Math.PI, 1.2, 0.22, { bg: '#141a14', fg: '#c8d8b0' });
   }
@@ -262,12 +263,12 @@ export class AcervoLevel {
     b.sbox(S.minX - 0.2, Y + 3.6, S.minZ - 0.1, S.maxX + 0.2, Y + 5, S.minZ + 0.1, 'brick');
     b.wallX(54, S.minX - 0.2, S.maxX + 0.2, Y, Y + 5, [COLLECTOR_DOOR.x], 'brick', 2.0, 3.0);
     // caixotes empilhados
-    b.sbox(34, Y, 44.6, 36.5, Y + 1.4, 47, 'woodDark', { tag: 'prop' });
-    b.sbox(34.3, Y + 1.4, 45, 36, Y + 2.3, 46.6, 'wood', { tag: 'prop' });
-    b.sbox(38, Y, 46.5, 40.5, Y + 1.2, 49, 'wood', { tag: 'prop' });
-    b.sbox(42.8, Y, 45, 43.8, Y + 2.6, 49, 'woodDark', { tag: 'prop' });
+    placeCrate(this, { minX: 34, minY: Y, minZ: 44.6, maxX: 36.5, maxY: Y + 1.4, maxZ: 47, mat: 'woodDark', tag: 'prop', sight: true });
+    placeCrate(this, { minX: 34.3, minY: Y + 1.4, minZ: 45, maxX: 36, maxY: Y + 2.3, maxZ: 46.6, mat: 'wood', tag: 'prop', sight: true });
+    placeCrate(this, { minX: 38, minY: Y, minZ: 46.5, maxX: 40.5, maxY: Y + 1.2, maxZ: 49, mat: 'wood', tag: 'prop', sight: true });
+    placeCrate(this, { minX: 42.8, minY: Y, minZ: 45, maxX: 43.8, maxY: Y + 2.6, maxZ: 49, mat: 'woodDark', tag: 'prop', sight: true });
     // a remessa nº 31: caixote aberto, tampa no chão, palha
-    b.sbox(30.3, Y, 49, 31.3, Y + 0.9, 50.4, 'woodDark', { tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 30.3, minY: Y, minZ: 49, maxX: 31.3, maxY: Y + 0.9, maxZ: 50.4, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(30.2, Y, 50.6, 31.2, Y + 0.06, 52.0, 'wood', { collide: false });
     b.sbox(30.4, Y + 0.7, 49.1, 31.2, Y + 0.85, 50.3, 'ash', { collide: false });
     // arco de ferro e a placa de latão da Galeria
@@ -407,10 +408,9 @@ export class AcervoLevel {
     b.sbox(R.maxX, Y, R.minZ, R.maxX + 0.2, Y + 3.4, R.maxZ, 'brick');
     b.sbox(R.minX - 0.2, Y, R.maxZ, R.maxX + 0.2, Y + 3.4, R.maxZ + 0.2, 'brick');
     // estantes com caixas de peças e a escrivaninha do Colecionador (catálogo)
-    b.sbox(34.05, Y, 75.4, 34.7, Y + 2.6, 79.6, 'woodDark', { tag: 'prop' });
-    b.sbox(39.3, Y, 78.4, 39.95, Y + 2.6, 83.6, 'woodDark', { tag: 'prop' });
-    for (let i = 0; i < 4; i++) b.sbox(34.1, Y + 0.5 + i * 0.6, 75.6 + (i % 2) * 1.6, 34.6, Y + 0.85 + i * 0.6, 76.6 + (i % 2) * 1.6, i % 2 ? 'wood' : 'paper', { collide: false });
-    b.sbox(38.4, Y, 75.0, 39.9, Y + 0.85, 76.4, 'woodDark', { tag: 'prop-low', sight: false });
+    placeBookcase(this, { minX: 34.05, minY: Y, minZ: 75.4, maxX: 34.7, maxY: Y + 2.6, maxZ: 79.6, mat: 'woodDark', tag: 'prop', sight: true });
+    placeBookcase(this, { minX: 39.3, minY: Y, minZ: 78.4, maxX: 39.95, maxY: Y + 2.6, maxZ: 83.6, mat: 'woodDark', tag: 'prop', sight: true });
+    placeTable(this, { minX: 38.4, minY: Y, minZ: 75.0, maxX: 39.9, maxY: Y + 0.85, maxZ: 76.4, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(38.3, Y + 0.85, 74.95, 40, Y + 0.9, 76.45, 'leatherDark', { collide: false });
     // alçapão aberto no chão (borda de ferro, escuridão e o topo da escada de serviço)
     b.sbox(35.9, Y + 0.0, 81.9, 38.1, Y + 0.06, 82.0, 'rust', { collide: false });

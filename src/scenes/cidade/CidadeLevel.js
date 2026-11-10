@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { placeCrate, placeTable, placeBookcase, placeBench } from '../../world/Props.js';
 
 const LIGHT_BUDGET = 12;
 export const GROUND = 0;
@@ -136,7 +137,7 @@ export class CidadeLevel {
     // fundo do beco: prédio desabado (paredão de tijolo e entulho)
     b.sbox(4, Y, -0.6, 10, Y + 6, 0, 'brick');
     b.sbox(4.2, Y, 0, 6.4, Y + 1.0, 1.4, 'concrete', { tag: 'prop-low', sight: false });
-    b.sbox(8.8, Y, 0, 10, Y + 0.6, 1.0, 'woodDark', { tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 8.8, minY: Y, minZ: 0, maxX: 10, maxY: Y + 0.6, maxZ: 1.0, mat: 'woodDark', tag: 'prop-low', sight: false });
     // bueiro aberto por onde Elias saiu das catacumbas (tampa de ferro ao lado)
     const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.04, 12), this.M.coal); ring.position.set(7, Y + 0.02, 2.2); b.group.add(ring);
     const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.05, 12), new THREE.MeshBasicMaterial({ color: 0x030303 })); hole.position.set(7, Y + 0.03, 2.2); b.group.add(hole);
@@ -172,7 +173,7 @@ export class CidadeLevel {
     // carro abandonado, coberto de cinza, e entulho
     b.sbox(7.6, Y, 15.5, 9.3, Y + 1.35, 19.6, 'rust', { tag: 'obstacle', cast: true });
     b.sbox(7.7, Y + 1.35, 16.6, 9.2, Y + 1.5, 18.6, 'ash', { collide: false });
-    b.sbox(5.0, Y, 29.0, 6.2, Y + 0.8, 30.2, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
+    placeCrate(this, { minX: 5.0, minY: Y, minZ: 29.0, maxX: 6.2, maxY: Y + 0.8, maxZ: 30.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(8.6, Y, 41.0, 9.6, Y + 1.0, 42.0, 'metal', { tag: 'prop-low', sight: false });   // lixeira
     // montes de cinza junto aos muros
     for (const [x, z, w] of [[4.3, 13, 1.2], [9.6, 24, 1.4], [4.4, 37, 1.0], [9.5, 45, 1.2]]) b.sbox(x - w / 2, Y, z - w, x + w / 2, Y + 0.2, z + w, 'ash', { collide: false });
@@ -203,8 +204,8 @@ export class CidadeLevel {
     b.sbox(-1.05, Y + 1.05, 21.1, -0.55, Y + 1.35, 21.9, 'metal', { collide: false });
     b.sbox(-1.0, Y + 1.05, 24.4, -0.6, Y + 1.25, 24.9, 'brass', { collide: false });
     // mesinha da entrada, cadeira de espera e a vitrine de frascos quebrada
-    b.sbox(2.4, Y, 18.4, 3.6, Y + 0.85, 19.6, 'wood', { tag: 'prop-low', sight: false });
-    b.sbox(2.6, Y, 26.4, 3.4, Y + 0.5, 27.2, 'wood', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 2.4, minY: Y, minZ: 18.4, maxX: 3.6, maxY: Y + 0.85, maxZ: 19.6, mat: 'wood', tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 2.6, minY: Y, minZ: 26.4, maxX: 3.4, maxY: Y + 0.5, maxZ: 27.2, mat: 'wood', tag: 'prop-low', sight: false });
     b.sbox(0.6, Y, 27.2, 3.0, Y + 1.0, 27.8, 'glass', { tag: 'prop-low', sight: false });
     // relógio de parede, parado
     this.clockFace(1.0, Y + 2.6, 18.12, 0.3, 0);
@@ -221,11 +222,11 @@ export class CidadeLevel {
     // vitrines de vidro (duas, deixando o corredor da porta) e a bancada do relojoeiro
     b.sbox(11.4, Y, 30.6, 12.4, Y + 1.0, 34.0, 'glass', { tag: 'prop-low', sight: false });
     b.sbox(11.4, Y, 36.0, 12.4, Y + 1.0, 39.4, 'glass', { tag: 'prop-low', sight: false });
-    b.sbox(16.9, Y, 31.0, 17.9, Y + 0.95, 35.2, 'woodDark', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 16.9, minY: Y, minZ: 31.0, maxX: 17.9, maxY: Y + 0.95, maxZ: 35.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(17.1, Y + 0.95, 31.4, 17.4, Y + 1.2, 31.8, 'brass', { collide: false }); // lupa/torno
     // parede de relógios (todos às 3h07) e o relógio de pé no canto
     for (let i = 0; i < 6; i++) this.clockFace(17.88, Y + 1.7 + (i % 2) * 0.75, 36.0 + Math.floor(i / 2) * 1.2, 0.26, -Math.PI / 2);
-    b.sbox(10.5, Y, 39.0, 11.3, Y + 2.4, 39.8, 'woodDark', { tag: 'prop' });
+    placeBookcase(this, { minX: 10.5, minY: Y, minZ: 39.0, maxX: 11.3, maxY: Y + 2.4, maxZ: 39.8, mat: 'woodDark', tag: 'prop', sight: true });
     this.clockFace(10.9, Y + 1.9, 38.98, 0.24, Math.PI);
     this.sign('CONSERTOS — PRONTOS ÀS 3H', 14, Y + 2.9, 30.12, 0, 2.2, 0.26, { bg: '#2a2010', fg: '#e0c070' });
   }
@@ -238,8 +239,8 @@ export class CidadeLevel {
     b.wallX(50, 10, 18, Y, Y + 4.5, [14], 'brick', 1.8, 2.9);
     b.sbox(12.9, Y + 2.9, 49.7, 15.1, Y + 3.2, 50.3, 'stone', { collide: false }); // verga do arco
     // caixotes e um varal com lençóis cinzentos
-    b.sbox(16.4, Y, 43.4, 17.8, Y + 1.1, 44.8, 'woodDark', { tag: 'obstacle' });
-    b.sbox(10.6, Y, 46.4, 11.8, Y + 0.9, 47.6, 'woodDark', { tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 16.4, minY: Y, minZ: 43.4, maxX: 17.8, maxY: Y + 1.1, maxZ: 44.8, mat: 'woodDark', tag: 'obstacle', sight: false });
+    placeCrate(this, { minX: 10.6, minY: Y, minZ: 46.4, maxX: 11.8, maxY: Y + 0.9, maxZ: 47.6, mat: 'woodDark', tag: 'prop-low', sight: false });
     for (const x of [10.8, 17.6]) b.sbox(x - 0.04, Y, 41.96, x + 0.04, Y + 2.4, 42.04, 'metal', { collide: false });
     b.sbox(10.8, Y + 2.3, 41.99, 17.6, Y + 2.32, 42.01, 'metal', { collide: false });
     for (const x of [12, 14.2, 16.1]) b.sbox(x, Y + 1.3, 41.98, x + 1.2, Y + 2.3, 42.02, 'sheet', { collide: false });
@@ -272,7 +273,7 @@ export class CidadeLevel {
     b.sbox(22.6, Y + 2.4, 54.8, 25.4, Y + 2.55, 57.2, 'rust', { collide: false });
     this.sign('JORNAIS · REVISTAS', 24, Y + 2.1, 54.98, Math.PI, 1.8, 0.24, { bg: '#c9c2a4', fg: '#3a1010' });
     // bancos de pedra
-    for (const [x, z] of [[3, 57], [26, 71], [3, 72]]) b.sbox(x - 1.0, Y, z - 0.3, x + 1.0, Y + 0.48, z + 0.3, 'stone', { tag: 'prop-low', sight: false });
+    for (const [x, z] of [[3, 57], [26, 71], [3, 72]]) placeBench(this, { minX: x - 1.0, minY: Y, minZ: z - 0.3, maxX: x + 1.0, maxY: Y + 0.48, maxZ: z + 0.3, mat: 'stone', tag: 'prop-low', sight: false, back: false });
     // lampiões da praça
     for (const [x, z] of [[2.5, 52.5], [27.5, 52.5], [2.5, 74], [27.5, 74]]) {
       b.sbox(x - 0.06, Y, z - 0.06, x + 0.06, Y + 3.8, z + 0.06, 'metal', { tag: 'prop' });
@@ -321,8 +322,8 @@ export class CidadeLevel {
     this.bell = bell;
     this.sign('VIGIA DE VÉSPERA · MDCCCXC', 15, Y + 3.4, 75.98, Math.PI, 3.2, 0.32, { bg: '#2a2622', fg: '#c8b080' });
     // térreo: atril com o livro de rondas e o livro de registros; correntes do pêndulo descendo pelo poço
-    b.sbox(14.2, Y, 80.8, 15.0, Y + 1.0, 81.5, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(15.6, Y, 80.8, 16.4, Y + 0.85, 81.5, 'woodDark', { tag: 'prop-low', sight: false });
+    placeBookcase(this, { minX: 14.2, minY: Y, minZ: 80.8, maxX: 15.0, maxY: Y + 1.0, maxZ: 81.5, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 15.6, minY: Y, minZ: 80.8, maxX: 16.4, maxY: Y + 0.85, maxZ: 81.5, mat: 'woodDark', tag: 'prop-low', sight: false });
     for (const x of [14.4, 15.6]) b.sbox(x - 0.02, Y + 1.2, 79.98, x + 0.02, GY - 0.3, 80.02, 'metal', { collide: false });
     this.sign('CASA DAS MÁQUINAS ↑', 17.75, GY + 2.7, 83.58, Math.PI, 1.6, 0.26, { bg: '#2a2622', fg: '#c8b080' });
   }
@@ -407,10 +408,10 @@ export class CidadeLevel {
     b.group.add(this.pendulum);
     this.pendAngle = 0; this.mechT = 0; this.mechRunning = false;
     // bancada do sineiro (leste) onde fica a roda de escape; prateleiras e caixotes
-    b.sbox(22.2, GY, 91.4, 25.6, GY + 0.9, 92.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(25.4, GY, 85, 26, GY + 2.2, 89, 'woodDark', { sight: false });
-    b.sbox(4.4, GY, 85.2, 5.6, GY + 0.8, 86.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(4.0, GY, 98.6, 6.4, GY + 1.2, 100, 'woodDark', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 22.2, minY: GY, minZ: 91.4, maxX: 25.6, maxY: GY + 0.9, maxZ: 92.4, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeBookcase(this, { minX: 25.4, minY: GY, minZ: 85, maxX: 26, maxY: GY + 2.2, maxZ: 89, mat: 'woodDark', tag: 'prop', sight: false });
+    placeCrate(this, { minX: 4.4, minY: GY, minZ: 85.2, maxX: 5.6, maxY: GY + 0.8, maxZ: 86.4, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 4.0, minY: GY, minZ: 98.6, maxX: 6.4, maxY: GY + 1.2, maxZ: 100, mat: 'woodDark', tag: 'prop-low', sight: false });
     // contrapeso pendurado e a corrente na parede oeste
     b.sbox(4.4, GY + 3.0, 91.6, 5.2, GY + 4.4, 92.4, 'metal', { collide: false });
     b.sbox(4.78, GY + 4.4, 91.98, 4.82, top, 92.02, 'metal', { collide: false });
