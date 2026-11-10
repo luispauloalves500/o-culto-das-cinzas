@@ -175,7 +175,7 @@ try {
   const texfx = await page.evaluate(() => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
     const T = g.materials.textures;
-    out.tileW = T.tile.image.width; out.wallW = T.wall.image.width;
+    out.tileW = T.tile.image.width; out.wallW = T.wall.image.width; out.ceilingW = T.ceiling.image.width;
     out.bump = !!(T.tile.bump && g.materials.tile.bumpMap);
     out.detail = !!T.detail; out.worldDetail = !!g.materials.tile.userData.worldDetail;
     out.texBytes = g.gfx.debug().texBytes;
@@ -207,7 +207,7 @@ try {
     return out;
   }).catch((e) => ({ err: String(e) }));
   check('Texturas e fogo (pt58u): mapas 128 com bump/detalhe, VRAM limitada, shader de chama, haze só em Alta, Baixa leve e sem mudar resolução do mapa',
-    !texfx.err && texfx.tileW === 128 && texfx.wallW === 128 && texfx.bump && texfx.detail && texfx.worldDetail
+    !texfx.err && texfx.tileW === 128 && texfx.wallW === 128 && texfx.ceilingW === 128 && texfx.bump && texfx.detail && texfx.worldDetail
     && texfx.texBytes > 0 && texfx.texBytes < 6e6
     && texfx.media.fires >= 1 && texfx.media.flameSh >= 2 && texfx.media.hazeOn === 0 && texfx.media.embers > 0
     && texfx.baixa.hazeOn === 0 && texfx.baixa.embers === 0 && texfx.baixa.texW === 128
@@ -223,6 +223,14 @@ try {
     && gfx.geom.batches >= 100 && gfx.geom.batches < 280 && gfx.geom.tris > 8000 && gfx.geom.tris < 800000 && gfx.geom.batched > gfx.geom.batches
     && gfx.lodMedia?.n >= 20 && gfx.lodMedia.n === gfx.lodBaixa.n && gfx.lodBaixa.vis < gfx.lodUltra.vis,
     JSON.stringify({ geom: gfx.geom, props: gfx.propStats, lod: { media: gfx.lodMedia, ultra: gfx.lodUltra, baixa: gfx.lodBaixa } }));
+
+  check('Atmosfera (pt61u): névoa volumétrica, feixes e cinza por predefinição, Baixa vazia e orçamento de geometria',
+    gfx.def.atmoQ?.fog > 0 && gfx.def.atmoQ?.rays > 0 && gfx.def.atmoQ?.ash > 0
+    && gfx.def.atmo?.fog > 0
+    && gfx.baixa.atmoQ?.fog === 0 && gfx.baixa.atmoQ?.rays === 0 && gfx.baixa.atmoQ?.ash === 0 && gfx.baixa.dust === 0
+    && gfx.ultra.atmoQ?.fog >= gfx.def.atmoQ.fog && gfx.ultra.atmoQ?.rays >= gfx.def.atmoQ.rays && gfx.ultra.atmoQ?.ash >= gfx.def.atmoQ.ash
+    && gfx.geom.batches < 280 && gfx.geom.tris < 800000,
+    JSON.stringify({ def: gfx.def.atmo, atmoQ: { d: gfx.def.atmoQ, b: gfx.baixa.atmoQ, u: gfx.ultra.atmoQ }, geom: gfx.geom, dust: { d: gfx.def.dust, b: gfx.baixa.dust, u: gfx.ultra.dust } }));
 
   check('Inimigos GLB (pt55u): ataque no esqueleto (clipe de golpe pela fase do ataque) e enfermeiro com faca presa ao osso RightHand',
     /^Pose_atk_/.test(eglb.atkClip || '') && eglb.atkT > 1 && eglb.atkT < 2 && eglb.knife && eglb.enfAtk === 'Pose_atk_stab', JSON.stringify({ c: eglb.atkClip, t: eglb.atkT, k: eglb.knife, e: eglb.enfAtk }));

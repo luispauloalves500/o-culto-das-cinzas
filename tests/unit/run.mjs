@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { CollisionWorld } from '../../src/world/CollisionWorld.js';
 import { Navigation } from '../../src/world/Navigation.js';
 import { migrateSave, createEmptySave, SaveManager, SAVE_KEY, SAVE_VERSION, makeChapter2Save, CH1_KEY_ITEMS } from '../../src/core/SaveManager.js';
-import { CombatSystem, testVolume, rayVsVolume } from '../../src/gameplay/CombatSystem.js';
+import { CombatSystem, testVolume, rayVsVolume, surfaceOf } from '../../src/gameplay/CombatSystem.js';
 import { WEAPONS, weaponDamage, wearMult, wearCost, conditionLabel } from '../../src/data/weapons.js';
 import { Inventory } from '../../src/gameplay/Inventory.js';
 import { DOCUMENTS } from '../../src/data/documents.js';
@@ -1487,6 +1487,8 @@ test('Trilha: volume da música é uma opção persistida (padrão 0,6)', () => 
 
 // ---------- pt46u/pt47u: opções gráficas, partículas, despawn e aberturas de capítulo ----------
 const GFX = await import('../../src/render/Graphics.js');
+const ATMO = await import('../../src/render/Atmosphere.js');
+const TEX = await import('../../src/world/Textures.js');
 const { CHAPTER_INTROS, buildIntroShots, safePoint } = await import('../../src/gameplay/ChapterIntro.js');
 const { fadeAt, FADE_IN, FADE_OUT } = await import('../../src/gameplay/Cutscene.js');
 test('Gráficos: 4 predefinições completas, crescentes em custo, e detectPreset reconhece cada uma', () => {
@@ -1797,6 +1799,53 @@ test('Adereços (pt60u): peças de cenário com AABB e API intactas (pia, tear, 
   assert.equal(level.propStats.formol, 1);
   assert.equal(level.propStats.boiler, 1);
   assert.equal(level.propStats.inesChair, 1);
+});
+
+
+test('Atmosfera (pt61u): qualidade por predefinição — Baixa vazia, Ultra completa', () => {
+  const b = ATMO.atmoQualityFor(GFX.GFX_PRESETS.baixa);
+  const m = ATMO.atmoQualityFor(GFX.GFX_PRESETS.media);
+  const a = ATMO.atmoQualityFor(GFX.GFX_PRESETS.alta);
+  const u = ATMO.atmoQualityFor(GFX.GFX_PRESETS.ultra);
+  assert.equal(b.fog, 0); assert.equal(b.rays, 0); assert.equal(b.ash, 0);
+  assert.ok(m.fog >= 3 && m.rays >= 3 && m.ash >= 80);
+  assert.ok(a.fog >= m.fog && a.rays >= m.rays && a.ash >= m.ash);
+  assert.ok(u.fog >= a.fog && u.rays >= a.rays && u.ash >= a.ash);
+  assert.equal(GFX.PARTICLE_LEVELS.baixa.decals, 0);
+  assert.ok(GFX.PARTICLE_LEVELS.alta.decals > GFX.PARTICLE_LEVELS.media.decals);
+});
+
+test('Combate (pt61u): impacto por superfície, decal/cápsula/flash em pool e AABB do raio intacta', () => {
+  const col = new CollisionWorld();
+  col.addBox(0, 0, 2, 2, 2, 2.2, { tag: 'wall', ref: { material: { userData: { surface: 'metal' } } } });
+  const hit = col.raycastHit({ x: 1, y: 1, z: 0 }, { x: 0, y: 0, z: 1 }, 10);
+  assert.ok(hit && Math.abs(hit.t - 2) < 1e-6, 't=' + hit?.t);
+  assert.equal(hit.nz, -1);
+  assert.equal(col.raycast({ x: 1, y: 1, z: 0 }, { x: 0, y: 0, z: 1 }, 10), hit.t);
+  assert.equal(surfaceOf(hit.box), 'metal');
+  assert.equal(surfaceOf({ ref: { material: { userData: { surface: 'wood' } } } }), 'wood');
+  const scene = { add() {} };
+  const c = new CombatSystem({ scene });
+  c.setQuality(GFX.PARTICLE_LEVELS.media);
+  assert.equal(c._decalPool.length, 16);
+  const hole = c.bulletHole({ x: 1, y: 1, z: 2 }, hit, 'metal');
+  assert.ok(hole && hole.visible && hole.name === 'bulletDecal');
+  const casing = c.ejectCasing({ x: 0, y: 1.4, z: 0 }, { x: 0, z: 1 });
+  assert.ok(casing && casing.visible);
+  const flash = c.muzzleFlash({ x: 0, y: 1.4, z: 0 }, { x: 0, z: 1 });
+  assert.ok(flash && flash.visible);
+  c.impact({ x: 1, y: 1, z: 2 }, 'metal', 8);
+  c.impact({ x: 1, y: 1, z: 2 }, 'wood', 6);
+  c.blood({ x: 0, y: 1, z: 0 }, 8, { x: 1, z: 0 });
+  c.update(1 / 60);
+  const fx = c.fxDebug();
+  assert.ok(fx.decals >= 1 && fx.casings >= 1 && fx.flash, JSON.stringify(fx));
+  const hole2 = c.bulletHole({ x: 1.1, y: 1, z: 2 }, hit, 'metal');
+  assert.equal(c._decalPool.length, 16, 'pool não cresce');
+  c.setQuality(GFX.PARTICLE_LEVELS.baixa);
+  assert.equal(c._decalPool.length, 0);
+  assert.equal(c.bulletHole({ x: 0, y: 0, z: 0 }, hit), null);
+  assert.ok(TEX.installWorldDetail.toString().includes('vWp.zy') && TEX.installWorldDetail.toString().includes('vWn'));
 });
 
 test('Desempenho: agrupamento estático não descarta geometria compartilhada', () => {
