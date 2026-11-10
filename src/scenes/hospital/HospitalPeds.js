@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet } from '../../world/Cabinets.js';
+import { placeBench, placeWheelchair, placeCrib, placeTable, placeBookcase, placeNightstand, placeBed } from '../../world/Props.js';
 
 export const UP2 = 4, ROOF = 7.3;
 const TOP2 = 7, TOP3 = 10.4, HOUSE_TOP = 10;
@@ -77,8 +78,8 @@ function rooms(L) {
   M.drawing = M.drawing || new THREE.MeshLambertMaterial({ color: 0xd8d0b8, side: THREE.DoubleSide });
   const toys = [M.toyRed, M.toyBlue, M.toyYellow];
   // CORREDOR z22..26: cadeiras de rodas, banco, desenhos de criança nas paredes, cavalinho
-  b.sbox(13.0, ROOF, 24.6, 14.6, ROOF + 0.45, 25.6, 'woodDark', PL);
-  b.sbox(30.2, ROOF, 25.1, 31.0, ROOF + 0.9, 25.8, 'metal', PL);
+  placeBench(L, { minX: 13.0, minY: ROOF, minZ: 24.6, maxX: 14.6, maxY: ROOF + 0.45, maxZ: 25.6, mat: 'woodDark' });
+  placeWheelchair(L, { minX: 30.2, minY: ROOF, minZ: 25.1, maxX: 31.0, maxY: ROOF + 0.9, maxZ: 25.8 });
   b.sbox(35.6, ROOF, 22.3, 36.4, ROOF + 0.9, 23.0, 'metal', PL);
   for (let i = 0; i < 9; i++) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.24), M.drawing);
@@ -97,7 +98,7 @@ function rooms(L) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.14), toys[i % 3]);
     m.position.set(17.6 + ((i * 53) % 40) / 10, ROOF + 0.07 + (i % 4 === 0 ? 0.14 : 0), 14.8 + ((i * 29) % 65) / 10); m.rotation.y = i; b.group.add(m);
   }
-  b.sbox(21.2, ROOF, 14.15, 22.85, ROOF + 0.9, 14.9, 'woodDark', PL);              // estante da caixinha
+  placeBookcase(L, { minX: 21.2, minY: ROOF, minZ: 14.15, maxX: 22.85, maxY: ROOF + 0.9, maxZ: 14.9, mat: 'woodDark' });
   // caixinha de música
   const mb = new THREE.Group(); mb.position.set(MUSIC_BOX.x, ROOF + 0.9, MUSIC_BOX.z);
   const mbody = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.16), M.toyBlue); mbody.position.y = 0.06; mb.add(mbody);
@@ -128,24 +129,22 @@ function rooms(L) {
   L.padlock = { chain, lock, broken: brokenLock };
   // BERÇÁRIO x23..31 z14..22: berços em fileiras, um deles com o facão cravado
   for (const x of [24.6, 27.0, 29.4]) for (const z of [15.6, 18.4]) {
-    b.sbox(x - 0.4, ROOF, z - 0.6, x + 0.4, ROOF + 0.55, z + 0.6, 'sheet', PL);
-    for (const dx of [-0.38, 0.38]) b.sbox(x + dx - 0.02, ROOF + 0.55, z - 0.6, x + dx + 0.02, ROOF + 0.95, z + 0.6, 'metal', NC);
-    for (const dz of [-0.58, 0.58]) b.sbox(x - 0.4, ROOF + 0.55, z + dz - 0.02, x + 0.4, ROOF + 0.95, z + dz + 0.02, 'metal', NC);
+    placeCrib(L, { minX: x - 0.4, minY: ROOF, minZ: z - 0.6, maxX: x + 0.4, maxY: ROOF + 0.95, maxZ: z + 0.6 });
   }
   for (const [x, z, r] of [[27.2, 16.0, 0.5], [25.6, 20.4, 2.1]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = r; m.position.set(x, ROOF + 0.012, z); b.group.add(m);
   }
   // POSTO DE ENFERMAGEM x31..36 z14..22: balcão, armário, mesa do livro de registros
   b.sbox(31.2, ROOF, 19.6, 34.4, ROOF + 1.0, 20.3, 'woodDark', PL);
-  b.sbox(33.8, ROOF, 14.2, 35.8, ROOF + 0.9, 15.1, 'wood', PL);
+  placeTable(L, { minX: 33.8, minY: ROOF, minZ: 14.2, maxX: 35.8, maxY: ROOF + 0.9, maxZ: 15.1, mat: 'wood' });
   placeCabinet(L, { id: 'peds_nurse', minX: 31.2, minY: ROOF, minZ: 14.2, maxX: 32.0, maxY: ROOF + 1.9, maxZ: 16.4, face: '+x', label: 'armário' });
   // POSTO DE SEGURANÇA x36..41 z14..22: mesa, armário de armas arrombado, monitores mortos
   b.sbox(37.0, ROOF, 17.6, 38.8, ROOF + 0.85, 18.6, 'woodDark', PL);
   const guns = placeCabinet(L, { id: 'peds_guns', minX: 39.9, minY: ROOF, minZ: 19.6, maxX: 40.85, maxY: ROOF + 1.9, maxZ: 21.6, face: '-x', label: 'armário de armas', interactive: false }); guns.setOpen(true, true);
   for (const z of [17.7, 18.2]) b.sbox(37.2, ROOF + 0.85, z, 37.6, ROOF + 1.2, z + 0.35, 'steelDark', NC);
   // QUARTO 7 x12..16 z14..22: caminha, desenhos por toda parede, a fita vermelha
-  b.sbox(12.2, ROOF, 14.3, 13.2, ROOF + 0.45, 16.1, 'sheet', PL);
-  b.sbox(12.2, ROOF, 20.6, 13.4, ROOF + 0.7, 21.8, 'woodDark', PL);             // criado-mudo
+  placeBed(L, { x: 12.7, y: ROOF, z: 15.2, yaw: 0, length: 1.8, width: 0.9 });
+  placeNightstand(L, { minX: 12.2, minY: ROOF, minZ: 20.6, maxX: 13.4, maxY: ROOF + 0.7, maxZ: 21.8, mat: 'woodDark' });
   for (let i = 0; i < 26; i++) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.22), M.drawing);
     const onX = i % 2 === 0;

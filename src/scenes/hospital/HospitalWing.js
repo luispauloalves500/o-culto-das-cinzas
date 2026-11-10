@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet } from '../../world/Cabinets.js';
+import { placeGurney, placeBench, placeTable, placeNightstand } from '../../world/Props.js';
 
 export const UP = 0, UP2 = 4, ROOF = 7.3;
 const H_UP = 3.2, TOP2 = 7, CEIL_ARENA = -0.8, HOUSE_TOP = 10;
@@ -86,9 +87,8 @@ function wing(L) {
     b.sbox(x - 0.02, UP2 + 1.0, 38.24, x + 0.02, UP2 + 2.3, 38.26, 'woodDark', NC);
   }
   // corredor: macas, placas
-  b.sbox(29.4, UP2, 28.2, 31.4, UP2 + 0.8, 28.85, 'metal', PL);
-  b.sbox(29.5, UP2 + 0.8, 28.25, 31.3, UP2 + 0.9, 28.8, 'sheet', NC);
-  b.sbox(18.0, UP2, 26.15, 19.6, UP2 + 0.45, 26.7, 'woodDark', PL);
+  placeGurney(L, { minX: 29.4, minY: UP2, minZ: 28.2, maxX: 31.4, maxY: UP2 + 0.8, maxZ: 28.85 });
+  placeBench(L, { minX: 18.0, minY: UP2, minZ: 26.15, maxX: 19.6, maxY: UP2 + 0.45, maxZ: 26.7, mat: 'woodDark' });
   L.sign('CENTRO CIRÚRGICO — ALA SUPERIOR', 26, UP2 + 2.62, 26.13, 0, 1.8, 0.2, { bg: '#c9c2a4' });
   L.sign('ESTERILIZAÇÃO', 20, UP2 + 2.45, 28.87, Math.PI, 0.9, 0.14, { bg: '#c9c2a4' });
   L.sign('SALA 2', 27.5, UP2 + 2.45, 28.87, Math.PI, 0.6, 0.14, { bg: '#c9c2a4' });
@@ -101,7 +101,7 @@ function wing(L) {
   }
   b.sbox(16.5, UP2, 35.2, 17.1, UP2 + 2.0, 38.2, 'metal', P);
   for (let i = 0; i < 4; i++) b.sbox(16.55, UP2 + 0.4 + i * 0.45, 35.3, 17.05, UP2 + 0.44 + i * 0.45, 38.1, 'steel', NC);
-  b.sbox(21.2, UP2, 33.6, 23.6, UP2 + 0.85, 34.5, 'steel', PL);                      // bancada
+  placeTable(L, { minX: 21.2, minY: UP2, minZ: 33.6, maxX: 23.6, maxY: UP2 + 0.85, maxZ: 34.5, mat: 'steel' });
   // SALA 2 x24..31 z29..36: mesa cirúrgica, foco, carrinho
   b.sbox(26.9, UP2, 31.6, 28.1, UP2 + 0.8, 33.8, 'steelDark', PL);
   b.sbox(26.8, UP2 + 0.8, 31.5, 28.2, UP2 + 0.92, 33.9, 'sheet', NC);
@@ -117,7 +117,7 @@ function wing(L) {
     b.sbox(35.84, UP2, z - 0.5, 35.9, UP2 + 1.0, z + 0.5, 'metal', NC);
     b.sbox(33.6, UP2, z + 0.75, 35.9, UP2 + 2.2, z + 0.8, 'curtain', NC);
   }
-  b.sbox(34.7, UP2, 37.3, 35.9, UP2 + 0.9, 38.2, 'woodDark', PL);                    // criado-mudo do livro
+  placeNightstand(L, { minX: 34.7, minY: UP2, minZ: 37.3, maxX: 35.9, maxY: UP2 + 0.9, maxZ: 38.2, mat: 'woodDark' });
   // EXPURGO (secreto) x24..31 z36..38.4: pia, ossada do zelador, prateleira
   b.sbox(24.2, UP2, 37.6, 25.6, UP2 + 0.9, 38.3, 'steel', PL);
   b.sbox(26.4, UP2, 37.7, 28.6, UP2 + 0.9, 38.3, 'woodDark', PL);

@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet } from '../../world/Cabinets.js';
+import { placeBed, placeGurney, placeWheelchair, placeSink, placeIvStand, placeTable, placeCart, placeBookcase } from '../../world/Props.js';
 
 export const UP2 = 4;
 const H_UP = 3.2, TOP2 = 7;
@@ -56,22 +57,20 @@ function shell(L) {
 
 function rooms(L) {
   const b = L.b, M = L.M;
-  // CORREDOR: maca virada, cadeira de rodas, pegadas pequenas de cinza
-  b.sbox(30.4, UP2, 13.15, 32.6, UP2 + 0.85, 13.85, 'sheet', PL);
-  b.sbox(36.6, UP2, 12.9, 37.5, UP2 + 0.9, 13.7, 'metal', PL);
+  placeGurney(L, { minX: 30.4, minY: UP2, minZ: 13.15, maxX: 32.6, maxY: UP2 + 0.85, maxZ: 13.85 });
+  placeWheelchair(L, { minX: 36.6, minY: UP2, minZ: 12.9, maxX: 37.5, maxY: UP2 + 0.9, maxZ: 13.7 });
   for (let i = 0; i < 10; i++) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.16), M.ash); m.rotation.x = -Math.PI / 2;
     m.position.set(19 + i * 1.6, UP2 + 0.012, 12.3 + (i % 2) * 0.25); b.group.add(m);
   }
   // SALA DE PARTO x14..22 z2..11: mesa obstétrica, perneiras, foco cirúrgico, bandeja, incubadora, pia
-  b.sbox(17.4, UP2, 4.8, 19.6, UP2 + 0.95, 6.4, 'sheet', PL);
-  b.sbox(17.6, UP2 + 0.95, 4.9, 19.4, UP2 + 1.05, 5.4, 'leatherDark', NC);
+  placeBed(L, { x: 18.5, y: UP2, z: 5.6, yaw: Math.PI / 2, length: 2.2, width: 1.0, maternity: true });
   for (const x of [17.6, 19.4]) b.sbox(x - 0.03, UP2 + 0.95, 6.3, x + 0.03, UP2 + 1.5, 6.36, 'steel', NC);
   const lampDisk = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.15, 12), M.steel); lampDisk.position.set(18.5, TOP2 - 0.7, 5.6); b.group.add(lampDisk);
   b.sbox(18.47, TOP2 - 0.65, 5.57, 18.53, TOP2, 5.63, 'steel', NC);
-  b.sbox(15.2, UP2, 8.2, 16.0, UP2 + 0.9, 9.0, 'steel', PL);                          // bandeja de instrumentos
+  placeCart(L, { minX: 15.2, minY: UP2, minZ: 8.2, maxX: 16.0, maxY: UP2 + 0.9, maxZ: 9.0, mat: 'steel' });
   b.sbox(14.2, UP2, 2.3, 15.4, UP2 + 1.1, 3.1, 'glass', P);                            // incubadora
-  b.sbox(20.6, UP2, 2.2, 21.8, UP2 + 0.9, 2.9, 'steel', PL);                           // pia
+  placeSink(L, { minX: 20.6, minY: UP2, minZ: 2.2, maxX: 21.8, maxY: UP2 + 0.9, maxZ: 2.9, mat: 'steel' });
   for (const [x, z, r] of [[18.4, 7.0, 0.3], [16.2, 6.0, 1.7], [20.6, 4.6, 2.6]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = r; m.position.set(x, UP2 + 0.013, z); b.group.add(m);
   }
@@ -79,8 +78,7 @@ function rooms(L) {
   b.sbox(20.25, UP2, 5.25, 20.95, UP2 + 0.05, 5.95, 'steelDark', NC);
   // ALOJAMENTO CONJUNTO x22..31 z2..11: três leitos com bercinhos ao lado
   for (const x of [23.6, 26.5, 29.4]) {
-    b.sbox(x - 0.5, UP2, 2.2, x + 0.5, UP2 + 0.6, 4.2, 'sheet', PL);
-    b.sbox(x - 0.5, UP2 + 0.6, 2.2, x + 0.5, UP2 + 1.0, 2.35, 'metal', NC);
+    placeBed(L, { x, y: UP2, z: 3.2, yaw: 0, length: 2.0, width: 1.0, maternity: true });
     b.sbox(x + 0.7, UP2, 2.4, x + 1.3, UP2 + 0.8, 3.2, 'glass', PL);
   }
   b.sbox(23.55, UP2 + 0.2, 4.2, 23.65, UP2 + 0.3, 4.32, 'steelDark', NC);              // eixo da manivela (vazio, se coletada)
@@ -88,8 +86,8 @@ function rooms(L) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = r; m.position.set(x, UP2 + 0.013, z); b.group.add(m);
   }
   // POSTO OBSTÉTRICO x31..38 z2..11: balcão, mesa do livro, quadro de chaves
-  b.sbox(31.2, UP2, 3.0, 32.0, UP2 + 1.0, 8.5, 'woodDark', PL);
-  b.sbox(35.6, UP2, 2.2, 37.8, UP2 + 0.85, 3.2, 'wood', PL);
+  placeBookcase(L, { minX: 31.2, minY: UP2, minZ: 3.0, maxX: 32.0, maxY: UP2 + 1.0, maxZ: 8.5, mat: 'woodDark' });
+  placeTable(L, { minX: 35.6, minY: UP2, minZ: 2.2, maxX: 37.8, maxY: UP2 + 0.85, maxZ: 3.2, mat: 'wood' });
   placeCabinet(L, { id: 'mat_cab', minX: 37.4, minY: UP2, minZ: 8.4, maxX: 37.95, maxY: UP2 + 1.9, maxZ: 10.6, face: '-x', label: 'armário' });
   b.sbox(37.9, UP2 + 1.0, 5.3, 37.98, UP2 + 1.8, 6.7, 'woodDark', NC);                 // quadro de chaves
   for (let i = 0; i < 4; i++) b.sbox(37.86, UP2 + 1.6, 5.5 + i * 0.32, 37.9, UP2 + 1.62, 5.52 + i * 0.32, 'steel', NC);
