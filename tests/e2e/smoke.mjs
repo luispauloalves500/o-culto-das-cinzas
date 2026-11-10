@@ -98,10 +98,11 @@ try {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
     const D = () => g.gfx.debug();
     const geom = () => { let meshes = 0, tris = 0, batches = 0, batched = 0; g.scene.traverse((o) => { if (!o.isMesh) return; meshes++; const ix = o.geometry.index; tris += ((ix ? ix.count : o.geometry.attributes.position?.count || 0) / 3) | 0; if (o.name === 'staticBatch') { batches++; batched += o.userData.staticBatch || 0; } }); return { meshes, tris, batches, batched }; };
-    out.geom = geom(); out.propStats = g.level.propStats || {};
+    const lodCount = () => { let n = 0, vis = 0; g.scene.traverse((o) => { if (o.userData?.propLod || o.userData?.propLodHide != null) { n++; if (o.visible) vis++; } }); return { n, vis }; };
+    out.geom = geom(); out.propStats = g.level.propStats || {}; out.lodMedia = lodCount();
     out.def = D(); out.defPreset = $('optPreset').value;
     const pick = (v) => { $('optPreset').value = v; $('optPreset').dispatchEvent(new Event('change')); for (let i = 0; i < 3; i++) g.step(1 / 60); g.gfx.render(g.scene, g.camera); return D(); };
-    out.ultra = pick('ultra'); out.alta = pick('alta'); out.baixa = pick('baixa');
+    out.ultra = pick('ultra'); out.lodUltra = lodCount(); out.alta = pick('alta'); out.baixa = pick('baixa'); out.lodBaixa = lodCount();
     out.saved = JSON.parse(localStorage.getItem('ocdc_settings_v1'));
     $('optBloom').checked = true; $('optBloom').dispatchEvent(new Event('change'));
     out.custom = { preset: $('optPreset').value, d: D() };
@@ -216,8 +217,11 @@ try {
 
   check('Adereços (pt59u): camas, capela e móveis detalhados no Cap. 1, fusão estática e orçamento de triângulos',
     gfx.propStats?.bed >= 10 && gfx.propStats?.pew >= 8 && gfx.propStats?.altar >= 1 && gfx.propStats?.gurney >= 2
-    && gfx.geom.batches >= 100 && gfx.geom.batches < 280 && gfx.geom.tris > 8000 && gfx.geom.tris < 800000 && gfx.geom.batched > gfx.geom.batches,
-    JSON.stringify({ geom: gfx.geom, props: gfx.propStats }));
+    && gfx.propStats?.generator >= 1 && gfx.propStats?.organ >= 1 && gfx.propStats?.calender >= 1
+    && gfx.propStats?.autopsy >= 3 && gfx.propStats?.incubator >= 4 && gfx.propStats?.file >= 3
+    && gfx.geom.batches >= 100 && gfx.geom.batches < 280 && gfx.geom.tris > 8000 && gfx.geom.tris < 800000 && gfx.geom.batched > gfx.geom.batches
+    && gfx.lodMedia?.n >= 20 && gfx.lodMedia.n === gfx.lodBaixa.n && gfx.lodBaixa.vis < gfx.lodUltra.vis,
+    JSON.stringify({ geom: gfx.geom, props: gfx.propStats, lod: { media: gfx.lodMedia, ultra: gfx.lodUltra, baixa: gfx.lodBaixa } }));
 
   check('Inimigos GLB (pt55u): ataque no esqueleto (clipe de golpe pela fase do ataque) e enfermeiro com faca presa ao osso RightHand',
     /^Pose_atk_/.test(eglb.atkClip || '') && eglb.atkT > 1 && eglb.atkT < 2 && eglb.knife && eglb.enfAtk === 'Pose_atk_stab', JSON.stringify({ c: eglb.atkClip, t: eglb.atkT, k: eglb.knife, e: eglb.enfAtk }));

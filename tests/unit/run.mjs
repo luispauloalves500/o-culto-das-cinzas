@@ -22,7 +22,7 @@ import { restPoseFor, POSE_DEFS, ATTACK_DEFS } from '../../src/models/MixamoPose
 import { ARMARIO_URL, ARMARIO_NATIVE, cabinetsEnabled } from '../../src/world/Cabinets.js';
 import { detailForGfx, setSurfaceDetail, installWorldDetail, textureBytes } from '../../src/world/Textures.js';
 import { FIRE_QUALITY, fireQualityFor } from '../../src/render/FireFX.js';
-import { placeBed, placePew, placeTable, setPropDetail, countGeometry, sharedGeoCount, propDetailFor } from '../../src/world/Props.js';
+import { placeBed, placePew, placeTable, placeAutopsyTable, placeFileCabinet, placeGenerator, setPropDetail, applyPropLod, countGeometry, sharedGeoCount, propDetailFor } from '../../src/world/Props.js';
 import { makeKnife } from '../../src/models/EnemyWeapons.js';
 import { ENEMY_MODELS, attackPhase, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
 
@@ -1716,6 +1716,40 @@ test('Adereços (pt59u): cama e banco de capela com geometria compartilhada, col
   assert.equal(propDetailFor({ renderScale: 0.5 }), 0);
   assert.equal(propDetailFor({ renderScale: 0.75 }), 1);
   assert.equal(propDetailFor({ renderScale: 1 }), 2);
+});
+
+test('Adereços (pt59u): LOD ao trocar o preset, mesa de autópsia e arquivo de aço com AABB intacta', () => {
+  setPropDetail(2);
+  const mat = new THREE.MeshLambertMaterial();
+  const M = { metal: mat, steel: mat, steelDark: mat, sheet: mat, mask: mat, doorMetal: mat, brass: mat, rust: mat, linen: mat };
+  const boxes = [];
+  const col = { addBox(...a) { boxes.push(a); return {}; } };
+  const group = new THREE.Group();
+  const level = { b: { group }, M, game: { col }, propStats: {} };
+  placeAutopsyTable(level, { cx: 10, y: -5, cz: 4, body: true });
+  placeFileCabinet(level, { minX: 0, minY: 0, minZ: 0, maxX: 0.8, maxY: 1.6, maxZ: 1.0, mat: 'doorMetal', face: '+z' });
+  placeGenerator(level, { minX: 29, minY: 0, minZ: 19.2, maxX: 32.2, maxY: 2.0, maxZ: 23.2 });
+  const aut = boxes[0];
+  assert.ok(Math.abs(aut[0] - (10 - 0.47)) < 1e-6 && Math.abs(aut[3] - (10 + 0.47)) < 1e-6);
+  assert.ok(Math.abs(aut[2] - (4 - 1.07)) < 1e-6 && Math.abs(aut[5] - (4 + 1.07)) < 1e-6);
+  assert.ok(Math.abs(aut[1] + 5) < 1e-6 && Math.abs(aut[4] - (-5 + 0.93)) < 1e-6);
+  const file = boxes[1];
+  assert.deepEqual(file.slice(0, 6), [0, 0, 0, 0.8, 1.6, 1.0]);
+  const gen = boxes[2];
+  assert.deepEqual(gen.slice(0, 6), [29, 0, 19.2, 32.2, 2.0, 23.2]);
+  assert.equal(level.propStats.autopsy, 1);
+  assert.equal(level.propStats.file, 1);
+  assert.equal(level.propStats.generator, 1);
+  const lod = [];
+  group.traverse((o) => { if (o.userData.propLod || o.userData.propLodHide != null) lod.push(o); });
+  assert.ok(lod.length >= 4, 'peças com LOD: ' + lod.length);
+  applyPropLod(group, 0);
+  assert.ok(lod.every((o) => o.visible === ((o.userData.propLod || 0) <= 0 && (o.userData.propLodHide == null || 0 < o.userData.propLodHide))));
+  const hid = lod.filter((o) => !o.visible).length;
+  applyPropLod(group, 2);
+  const hid2 = lod.filter((o) => !o.visible).length;
+  assert.ok(hid > hid2, 'Baixa esconde mais detalhe que Ultra: ' + hid + ' vs ' + hid2);
+  assert.ok(lod.every((o) => o.userData.batchable === false), 'peças de LOD fora da fusão estática');
 });
 
 test('Desempenho: agrupamento estático não descarta geometria compartilhada', () => {
