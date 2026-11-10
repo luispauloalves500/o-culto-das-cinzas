@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
-import { placeBed, placeGurney, placeIvStand, placeNightstand, placeTable, placeBench, placeBookcase, placeCrate, placeCart, placeSink, placeGenerator, placeAutopsyTable, dressDrawerFront } from '../../world/Props.js';
+import { placeBed, placeGurney, placeIvStand, placeNightstand, placeTable, placeBench, placeBookcase, placeCrate, placeCart, placeSink, placeGenerator, placeAutopsyTable, dressDrawerFront, dressElectricalPanel } from '../../world/Props.js';
 import { buildAnnex, updateAnnex, ANNEX_CHECKPOINTS, ANNEX_ZONES } from './HospitalAnnex.js';
 import { buildWing, updateWing, WING_CHECKPOINTS, WING_ZONES } from './HospitalWing.js';
 import { buildPeds, updatePeds, PEDS_CHECKPOINTS, PEDS_ZONES } from './HospitalPeds.js';
@@ -182,9 +182,9 @@ export class HospitalLevel {
     placeGenerator(this, { minX: 29, minY: 0, minZ: 19.2, maxX: 32.2, maxY: 2.0, maxZ: 23.2, tag: 'prop', sight: true });
     b.sbox(29.4, 2.0, 20, 29.8, H_UP, 20.4, 'metal', { collide: false }); // exaustor
     b.sbox(28.1, 2.6, 14.2, 37.9, 2.8, 14.5, 'rust', { collide: false });  // tubulação
-    b.sbox(37.7, 1.0, 15.5, 37.95, 1.9, 16.5, 'metal', { collide: false }); // painel do fusível
-    b.sbox(37.65, 0.9, 17.5, 37.95, 2.0, 20.5, 'hazard', { collide: false }); // quadro de disjuntores
-    b.sbox(37.6, 0, 21.5, 37.95, 1.6, 22.6, 'metal', { collide: false });   // base da alavanca
+    dressElectricalPanel(this, { minX: 37.7, minY: 1.0, minZ: 15.5, maxX: 37.95, maxY: 1.9, maxZ: 16.5, mat: 'metal', face: '-x' });
+    dressElectricalPanel(this, { minX: 37.65, minY: 0.9, minZ: 17.5, maxX: 37.95, maxY: 2.0, maxZ: 20.5, mat: 'hazard', face: '-x' });
+    dressElectricalPanel(this, { minX: 37.6, minY: 0, minZ: 21.5, maxX: 37.95, maxY: 1.6, maxZ: 22.6, mat: 'metal', face: '-x' });
     // disjuntores (I, II, III) e alavanca principal: objetos móveis
     this.breakers = [];
     for (let i = 0; i < 3; i++) {

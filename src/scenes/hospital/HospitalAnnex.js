@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
 import { createFire, createCandleFlame } from '../../render/FireFX.js';
-import { placeTable, placeCart, placeBench, placeBookcase, placePew, placeAltar, placeCandlestick, placeCross, placePulpit, placeWindowFrame, placeCrate, placeCalender, placeOrgan, placeFileCabinet, placeArmchair } from '../../world/Props.js';
+import { placeTable, placeCart, placeBench, placeBookcase, placePew, placeAltar, placeCandlestick, placeCross, placePulpit, placeWindowFrame, placeCrate, placeCalender, placeOrgan, placeFileCabinet, placeArmchair, placeClothesline, placeTypewriter } from '../../world/Props.js';
 
 export const UP = 0, LO = -5, UP2 = 4;
 const H_UP = 3.2, CEIL_LO = -1.8, TOP2 = 7;
@@ -72,10 +72,7 @@ function laundry(L) {
   placeCart(L, { minX: 4.4, minY: LO, minZ: 11.2, maxX: 5.2, maxY: LO + 0.85, maxZ: 12.0, mat: 'metal' });
   b.sbox(4.45, LO + 0.6, 11.25, 5.15, LO + 0.9, 11.95, 'bandageDirty', NC);
   // varal com lençóis pendurados (escondem quem está atrás)
-  b.sbox(3.8, LO + 2.75, 8.18, 9.6, LO + 2.78, 8.22, 'metal', NC);
-  for (const [x0, x1, low] of [[4.2, 5.4, 0.7], [5.9, 7.1, 0.55], [7.6, 8.8, 0.8]]) {
-    b.sbox(x0, LO + low, 8.17, x1, LO + 2.75, 8.23, 'sheet', { collide: false, tile: 1 });
-  }
+  placeClothesline(L, { x0: 3.8, x1: 9.6, z: 8.2, yWire: LO + 2.76, yFloor: LO, poles: false, sheets: [[4.2, 5.4, LO + 0.7], [5.9, 7.1, LO + 0.55], [7.6, 8.8, LO + 0.8]] });
   // duto de roupa suja vindo da enfermaria
   b.sbox(10.8, LO + 1.5, 2.1, 11.9, CEIL_LO, 3.2, 'metal', { tag: 'prop', cast: true });
   b.sbox(10.6, LO, 2.1, 11.95, LO + 0.5, 3.6, 'sheet', { tag: 'prop-low', sight: false, tile: 1 });
@@ -168,7 +165,7 @@ function admin(L) {
   b.wallZ(14, 14, 22, H_UP, TOP2); b.wallX(14, 14, 24, H_UP, UP2); b.wallX(14, 14, 24, UP2, TOP2, [18.6]);
   for (const x0 of [15.4, 20]) {
     placeTable(L, { minX: x0, minY: UP2, minZ: 15.6, maxX: x0 + 1.8, maxY: UP2 + 0.76, maxZ: 16.6, mat: 'woodDark' });
-    b.sbox(x0 + 0.5, UP2 + 0.76, 15.8, x0 + 1.0, UP2 + 0.96, 16.2, 'metal', NC);   // máquina de escrever
+    placeTypewriter(L, { x: x0 + 0.75, y: UP2 + 0.76, z: 16.0 });
   }
   for (const z of [18, 19, 20]) placeFileCabinet(L, { minX: 14.1, minY: UP2, minZ: z, maxX: 14.7, maxY: UP2 + 1.4, maxZ: z + 0.9, mat: 'metal', face: '+x', tag: 'prop', sight: true });
   placeBookcase(L, { minX: 22.6, minY: UP2, minZ: 14.1, maxX: 23.9, maxY: UP2 + 2.0, maxZ: 15.0, mat: 'woodDark', tag: 'prop', sight: true });

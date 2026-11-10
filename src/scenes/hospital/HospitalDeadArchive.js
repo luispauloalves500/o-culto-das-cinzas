@@ -4,7 +4,7 @@
 // Só geometria/portas/luzes/navegação; a lógica fica em HospitalDeadArchiveScript.js.
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
-import { placeBookcase, placeTable, placeAltar, placeCrate } from '../../world/Props.js';
+import { placeBookcase, placeTable, placeAltar, placeCrate, placeFont } from '../../world/Props.js';
 
 export const LO = -5;
 const CEIL_LO = -1.8;
@@ -81,9 +81,7 @@ function rooms(L) {
   // trilhos no chão
   for (const z of [-2.85, -2.35]) b.sbox(36.6, LO, z - 0.02, 42.6, LO + 0.03, z + 0.02, 'steel', NC);
   // SALA DE BATISMO: pia batismal de pedra cheia de cinza, velas, pequenas pulseiras penduradas
-  b.sbox(FONT.x - 0.6, LO, FONT.z - 0.6, FONT.x + 0.6, LO + 0.9, FONT.z + 0.6, 'stone', PL);
-  const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.04, 14), M.ash); ash.position.set(FONT.x, LO + 0.88, FONT.z); b.group.add(ash);
-  L.fontAsh = ash; // escurece depois da revelação RN 0
+  L.fontAsh = placeFont(L, { x: FONT.x, y: LO, z: FONT.z, tag: 'prop-low', sight: false }).ash;
   placeAltar(L, { minX: 38.2, minY: LO, minZ: -6.4, maxX: 39.4, maxY: LO + 0.9, maxZ: -5.6, mat: 'woodDark', tag: 'prop-low', sight: false });
   for (const [x, z] of [[38.4, -6.2], [39.2, -6.2], [42.8, -6.3], [43.6, -3.4]]) {
     b.sbox(x - 0.03, LO + (x < 40 ? 0.9 : 0), z - 0.03, x + 0.03, LO + (x < 40 ? 1.08 : 0.2), z + 0.03, 'candle', NC);
