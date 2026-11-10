@@ -49,6 +49,11 @@ export function rayVsVolume(o, d, v) {
   return v.type === 'sphere' ? rayVsSphere(o, d, v) : rayVsCapsule(o, d, v);
 }
 
+/** superfície do colisor para FX de impacto (metal / madeira / pedra) */
+export function surfaceOf(box) {
+  return box?.ref?.material?.userData?.surface || box?.ref?.userData?.surface || 'stone';
+}
+
 export class CombatSystem {
   constructor(game) {
     this.game = game;
@@ -60,7 +65,13 @@ export class CombatSystem {
     // partículas (sangue / faíscas / cinza) com pool fixo; tamanho do pool e quantidade por emissão seguem a
     // opção gráfica "Partículas" (src/render/Graphics.js → setQuality)
     this.mult = 1; this.pools = true;
+    this._col = new THREE.Color();
+    this._v = new THREE.Vector3();
+    this._q = new THREE.Quaternion();
+    this._fwd = new THREE.Vector3();
     this._buildPool(200);
+    this._fx = { decals: 16, casings: 8, sprays: 8 };
+    this._buildFx();
     const q = game.gfx?.current?.part; if (q) this.setQuality(q);
   }
 
@@ -85,6 +96,10 @@ export class CombatSystem {
   setQuality(q) {
     this.mult = q.mult ?? 1; this.pools = q.pools !== false;
     if (q.pool && q.pool !== this.maxP) this._buildPool(q.pool);
+    const fx = { decals: q.decals ?? (this.pools ? 16 : 0), casings: q.casings ?? (this.pools ? 8 : 0), sprays: q.sprays ?? (this.pools ? 8 : 0) };
+    if (fx.decals !== this._fx.decals || fx.casings !== this._fx.casings || fx.sprays !== this._fx.sprays || !this._decalPool) {
+      this._fx = fx; this._buildFx();
+    }
   }
   /** quantas partículas uma emissão de n gera nesta qualidade (fração acumulada: nada se perde em média) */
   scaled(n) {
@@ -154,7 +169,7 @@ export class CombatSystem {
       const p = this.parts[this.pi];
       const k = this.pi * 3;
       this.pPos[k] = pos.x; this.pPos[k + 1] = pos.y; this.pPos[k + 2] = pos.z;
-      const c = new THREE.Color(color);
+      const c = this._col.set(color);
       this.pCol[k] = c.r; this.pCol[k + 1] = c.g; this.pCol[k + 2] = c.b;
       p.vx = (Math.random() - 0.5) * speed; p.vy = Math.random() * speed * 0.8; p.vz = (Math.random() - 0.5) * speed;
       p.life = 0.5 + Math.random() * 0.5;
@@ -162,9 +177,18 @@ export class CombatSystem {
     }
     if (n > 0) { this._colDirty = true; this._live = true; this.points.visible = true; }
   }
-  blood(pos, n = 14) { this.emit(pos, n, 0x6a0804, 3.2); }
+  blood(pos, n = 14, dir = null) {
+    this.emit(pos, n, 0x6a0804, 3.2);
+    this._bloodSpray(pos, dir, Math.max(1, this.scaled(Math.ceil(n / 4))));
+  }
   sparks(pos, n = 12) { this.emit(pos, n, 0xffc060, 5); }
   splash(pos, n = 18) { this.emit({ x: pos.x, y: (pos.y ?? 0) + 0.2, z: pos.z }, n, 0x7a908a, 3.6); }
+  /** impacto de bala conforme a superfície: faíscas (metal), lascas (madeira), poeira (pedra) */
+  impact(pos, surface = 'stone', n) {
+    if (surface === 'metal') this.emit(pos, n ?? 14, 0xffc060, 6.2);
+    else if (surface === 'wood') this.emit(pos, n ?? 10, 0x6a4a30, 3.4);
+    else this.emit(pos, n ?? 12, 0xb0aa98, 2.6);
+  }
 
   debugSphere(p, r, color) {
     let m = this._dbgPool[this._dbgUsed];
@@ -205,5 +229,171 @@ export class CombatSystem {
     this.points.geometry.attributes.position.needsUpdate = true;
     if (this._colDirty) { this.points.geometry.attributes.color.needsUpdate = true; this._colDirty = false; }
     if (!alive) { this._live = false; this.points.visible = false; }
+    this._updateFx(dt);
+  }
+
+  // ---------- pt61u: decals, cápsulas, respingos e muzzle flash (pools fixos) ----------
+  _buildFx() {
+    const sc = this.game.scene;
+    const drop = (list) => {
+      if (!list) return;
+      for (const o of list) { o.mesh?.parent?.remove(o.mesh); (o.parent && o.parent.remove?.(o)); }
+    };
+    drop(this._decalPool); drop(this._casingPool); drop(this._sprayPool);
+    if (this._flash) { this._flash.parent?.remove(this._flash); this._flash = null; }
+    this._decalPool = []; this._casingPool = []; this._sprayPool = [];
+    this._decalI = 0; this._casingI = 0; this._sprayI = 0;
+    this._fxLive = false;
+    if (!sc?.add || !this.pools) return;
+    if (!CombatSystem._decalGeo) { CombatSystem._decalGeo = new THREE.PlaneGeometry(0.12, 0.12); CombatSystem._decalGeo.userData.shared = true; }
+    if (!CombatSystem._casingGeo) { CombatSystem._casingGeo = new THREE.CylinderGeometry(0.012, 0.014, 0.045, 6); CombatSystem._casingGeo.userData.shared = true; CombatSystem._casingGeo.rotateZ(Math.PI / 2); }
+    if (!CombatSystem._sprayGeo) { CombatSystem._sprayGeo = new THREE.PlaneGeometry(0.28, 0.28); CombatSystem._sprayGeo.userData.shared = true; }
+    if (!CombatSystem._flashGeo) { CombatSystem._flashGeo = new THREE.PlaneGeometry(0.22, 0.22); CombatSystem._flashGeo.userData.shared = true; }
+    if (!CombatSystem._decalMat) {
+      CombatSystem._decalMat = {
+        metal: new THREE.MeshBasicMaterial({ color: 0x1a1a18, transparent: true, opacity: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }),
+        wood: new THREE.MeshBasicMaterial({ color: 0x2a1a10, transparent: true, opacity: 0.85, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }),
+        stone: new THREE.MeshBasicMaterial({ color: 0x2a2824, transparent: true, opacity: 0.8, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }),
+      };
+      CombatSystem._casingMat = new THREE.MeshLambertMaterial({ color: 0xb08a3a, emissive: 0x1a1004 });
+      CombatSystem._sprayMat = new THREE.MeshBasicMaterial({ color: 0x6a0804, transparent: true, opacity: 0.75, depthWrite: false, side: THREE.DoubleSide });
+      CombatSystem._flashMat = new THREE.MeshBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+    }
+    const bloodMap = this.game.materials?.textures?.blood || this.game.materials?.bloodDecal?.map;
+    if (bloodMap && CombatSystem._sprayMat) CombatSystem._sprayMat.map = bloodMap;
+    for (let i = 0; i < (this._fx.decals || 0); i++) {
+      const m = new THREE.Mesh(CombatSystem._decalGeo, CombatSystem._decalMat.stone);
+      m.visible = false; m.name = 'bulletDecal'; m.userData.castOrig = false; sc.add(m);
+      this._decalPool.push({ mesh: m, life: 0 });
+    }
+    for (let i = 0; i < (this._fx.casings || 0); i++) {
+      const m = new THREE.Mesh(CombatSystem._casingGeo, CombatSystem._casingMat);
+      m.visible = false; m.name = 'casing'; m.userData.castOrig = false; sc.add(m);
+      this._casingPool.push({ mesh: m, life: 0, vx: 0, vy: 0, vz: 0, wx: 0, wy: 0, floorY: 0, sleeping: true });
+    }
+    for (let i = 0; i < (this._fx.sprays || 0); i++) {
+      const mat = CombatSystem._sprayMat.clone();
+      const m = new THREE.Mesh(CombatSystem._sprayGeo, mat);
+      m.visible = false; m.name = 'bloodSpray'; m.userData.castOrig = false; sc.add(m);
+      this._sprayPool.push({ mesh: m, life: 0, max: 0.4 });
+    }
+    const flash = new THREE.Mesh(CombatSystem._flashGeo, CombatSystem._flashMat);
+    flash.visible = false; flash.name = 'muzzleFlash'; flash.userData.castOrig = false; flash.frustumCulled = false;
+    sc.add(flash); this._flash = flash; this._flashLife = 0;
+  }
+
+  bulletHole(pos, hit, surface = 'stone') {
+    if (!this._decalPool?.length) return null;
+    const s = surfaceOf(hit?.box) || surface;
+    const slot = this._decalPool[this._decalI % this._decalPool.length];
+    this._decalI++;
+    const m = slot.mesh;
+    m.material = CombatSystem._decalMat[s] || CombatSystem._decalMat.stone;
+    const nx = hit?.nx ?? 0, ny = hit?.ny ?? 1, nz = hit?.nz ?? 0;
+    m.position.set(pos.x + nx * 0.012, pos.y + ny * 0.012, pos.z + nz * 0.012);
+    m.lookAt(pos.x + nx, pos.y + ny, pos.z + nz);
+    m.scale.setScalar(0.85 + Math.random() * 0.5);
+    m.rotateZ(Math.random() * Math.PI);
+    m.visible = true;
+    slot.life = 1;
+    this._fxLive = true;
+    return m;
+  }
+
+  ejectCasing(pos, dir) {
+    if (!this._casingPool?.length) return null;
+    const c = this._casingPool[this._casingI % this._casingPool.length];
+    this._casingI++;
+    const fx = dir?.x ?? 0, fz = dir?.z ?? 1;
+    // ejeção para a direita da mira, um pouco para cima e para trás
+    const rx = fz, rz = -fx;
+    c.mesh.position.set(pos.x + rx * 0.08, pos.y, pos.z + rz * 0.08);
+    c.vx = rx * (1.6 + Math.random() * 1.2) + (Math.random() - 0.5) * 0.4;
+    c.vy = 2.2 + Math.random() * 1.4;
+    c.vz = rz * (1.6 + Math.random() * 1.2) + (Math.random() - 0.5) * 0.4;
+    c.wx = (Math.random() - 0.5) * 18; c.wy = (Math.random() - 0.5) * 22;
+    c.floorY = (this.game.player?.pos?.y ?? pos.y - 1.4);
+    c.life = 2.4; c.sleeping = false;
+    c.mesh.visible = true; c.mesh.rotation.set(Math.random(), Math.random(), Math.random());
+    this._fxLive = true;
+    return c.mesh;
+  }
+
+  muzzleFlash(pos, dir) {
+    const m = this._flash; if (!m || !this.pools) return null;
+    m.position.set(pos.x, pos.y, pos.z);
+    if (dir) {
+      this._fwd.set((pos.x || 0) + (dir.x || 0), pos.y, (pos.z || 0) + (dir.z || 0));
+      m.lookAt(this._fwd);
+    }
+    m.scale.setScalar(0.9 + Math.random() * 0.5);
+    m.material.opacity = 0.95;
+    m.visible = true;
+    this._flashLife = 0.06;
+    this._fxLive = true;
+    return m;
+  }
+
+  _bloodSpray(pos, dir, n) {
+    if (!this._sprayPool?.length || n <= 0) return;
+    const k = Math.min(n, this._sprayPool.length);
+    for (let i = 0; i < k; i++) {
+      const s = this._sprayPool[this._sprayI % this._sprayPool.length];
+      this._sprayI++;
+      const ox = (dir?.x ?? 0) * 0.15 + (Math.random() - 0.5) * 0.25;
+      const oy = (Math.random() - 0.2) * 0.2;
+      const oz = (dir?.z ?? 0) * 0.15 + (Math.random() - 0.5) * 0.25;
+      s.mesh.position.set(pos.x + ox, pos.y + oy, pos.z + oz);
+      s.mesh.scale.setScalar(0.6 + Math.random() * 0.7);
+      s.mesh.material.opacity = 0.8;
+      s.mesh.visible = true;
+      s.life = s.max = 0.28 + Math.random() * 0.18;
+    }
+    this._fxLive = true;
+  }
+
+  _updateFx(dt) {
+    if (!this._fxLive) return;
+    let live = 0;
+    if (this._flashLife > 0 && this._flash) {
+      this._flashLife -= dt;
+      this._flash.material.opacity = Math.max(0, this._flashLife / 0.06);
+      this._flash.scale.multiplyScalar(1 + dt * 8);
+      if (this._flashLife <= 0) this._flash.visible = false; else live++;
+    }
+    const cam = this.game.camera;
+    for (const s of this._sprayPool) {
+      if (!s.mesh.visible) continue;
+      s.life -= dt;
+      if (s.life <= 0) { s.mesh.visible = false; continue; }
+      s.mesh.material.opacity = 0.8 * (s.life / s.max);
+      s.mesh.scale.multiplyScalar(1 + dt * 1.8);
+      if (cam) s.mesh.lookAt(cam.position);
+      live++;
+    }
+    for (const c of this._casingPool) {
+      if (!c.mesh.visible || c.sleeping) { if (c.mesh.visible) live++; continue; }
+      c.life -= dt;
+      c.vy -= 18 * dt;
+      c.mesh.position.x += c.vx * dt; c.mesh.position.y += c.vy * dt; c.mesh.position.z += c.vz * dt;
+      c.mesh.rotation.x += c.wx * dt; c.mesh.rotation.y += c.wy * dt;
+      if (c.mesh.position.y <= c.floorY) {
+        c.mesh.position.y = c.floorY;
+        c.vy *= -0.35; c.vx *= 0.55; c.vz *= 0.55;
+        if (Math.abs(c.vy) < 0.55) { c.sleeping = true; c.vy = c.vx = c.vz = 0; }
+      }
+      if (c.life <= 0) { c.mesh.visible = false; c.sleeping = true; continue; }
+      live++;
+    }
+    // decals ficam até serem reaproveitados (não gastam update)
+    if (this._decalPool) for (const d of this._decalPool) if (d.mesh.visible) live++;
+    this._fxLive = live > 0;
+  }
+
+  fxDebug() {
+    const vis = (list) => list ? list.filter((o) => o.mesh.visible).length : 0;
+    let parts = 0;
+    if (this._live) for (let i = 0; i < this.maxP; i++) if (this.parts[i].life > 0) parts++;
+    return { parts, decals: vis(this._decalPool), casings: vis(this._casingPool), sprays: vis(this._sprayPool), flash: !!(this._flash?.visible) };
   }
 }

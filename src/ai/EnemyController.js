@@ -227,7 +227,7 @@ export class Enemy {
     if ((this.def.aquatic || this.def.exhibit || this.def.wakeOnNoise) && this.dormant) this.wake();
     this.hp -= dmg;
     g.audio.play('hit', this.pos, { heavy });
-    g.combat.blood(point || { x: this.pos.x, y: this.pos.y + 1.3, z: this.pos.z }, heavy ? 22 : 14);
+    g.combat.blood(point || { x: this.pos.x, y: this.pos.y + 1.3, z: this.pos.z }, heavy ? 22 : 14, from);
     this.flinch = 0.25;
     // empurrão
     const dx = this.pos.x - from.x, dz = this.pos.z - from.z, d = Math.hypot(dx, dz) || 1;

@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from './ProceduralRig.js';
 import { WEAPONS, weaponDamage, wearCost, conditionLabel } from '../data/weapons.js';
 import { EliasModel, RETARGET } from './EliasModel.js';
+import { surfaceOf } from './CombatSystem.js';
 
 const STATES = ['free', 'attack', 'dodge', 'block', 'aim', 'reload', 'repair', 'hit', 'grabbed', 'heal', 'dead', 'locked', 'climb'];
 // escalada (Cap. 8): velocidades na escada de mão e folga da cabeça no topo (sai quando a cintura passa da borda)
@@ -475,6 +476,8 @@ export class PlayerController {
     if (m) this.axe.muzzle.getWorldPosition(m);
     const from = m || new THREE.Vector3(this.pos.x + fx * 0.6, this.pos.y + 1.4, this.pos.z + fz * 0.6);
     this.muzzle.position.copy(from); this.muzzle.intensity = 6;
+    g.combat.muzzleFlash(from, { x: fx, z: fz });
+    g.combat.ejectCasing(from, { x: fx, z: fz });
     g.audio.play('shot', this.pos);
     g.cameraCtl.addShake(0.3);
     g.perception.noise(this.pos, S.noise, 'gunshot');
@@ -490,9 +493,14 @@ export class PlayerController {
     }
     // errou: a bala acerta a parede mais próxima
     const eye = new THREE.Vector3(this.pos.x, this.pos.y + 1.4, this.pos.z), d = new THREE.Vector3(fx, 0, fz);
-    const t = g.col.raycast(eye, d, S.range, (b) => b.tag !== 'prop-low');
+    const wall = g.col.raycastHit(eye, d, S.range, (b) => b.tag !== 'prop-low');
     this.lastShot = { hit: null };
-    if (t < S.range) { const at = eye.addScaledVector(d, t - 0.05); g.combat.sparks(at, 10); g.audio.play('clang', at, { pitch: 1.6 }); }
+    if (wall) {
+      const at = eye.addScaledVector(d, wall.t - 0.05);
+      const surf = surfaceOf(wall.box);
+      g.combat.impact(at, surf, 10); g.combat.bulletHole(at, wall, surf);
+      g.audio.play('clang', at, { pitch: surf === 'metal' ? 1.7 : surf === 'wood' ? 0.85 : 1.25 });
+    }
   }
 
   /** tiro da mira manual: raio do ombro pela retícula, parede bloqueia, cabeça vale mais */
@@ -511,9 +519,12 @@ export class PlayerController {
       return;
     }
     this.lastShot = { hit: null, manual: true };
-    if (wallT < S.range) {
-      const at = o.clone().addScaledVector(d, wallT - 0.05);
-      g.combat.sparks(at, 10); g.audio.play('clang', at, { pitch: 1.6 });
+    const wall = g.col.raycastHit(o, d, S.range, (b) => b.tag !== 'prop-low');
+    if (wall) {
+      const at = { x: o.x + d.x * (wall.t - 0.05), y: o.y + d.y * (wall.t - 0.05), z: o.z + d.z * (wall.t - 0.05) };
+      const surf = surfaceOf(wall.box);
+      g.combat.impact(at, surf, 10); g.combat.bulletHole(at, wall, surf);
+      g.audio.play('clang', at, { pitch: surf === 'metal' ? 1.7 : surf === 'wood' ? 0.85 : 1.25 });
     }
   }
 

@@ -82,29 +82,40 @@ export class CollisionWorld {
     return hits;
   }
 
-  /** Raio contra AABBs (slab test). Retorna distância do primeiro impacto ou Infinity. */
-  raycast(o, d, maxDist, filter = null) {
-    let best = Infinity;
+  /** Raio contra AABBs (slab test). Retorna { t, box, nx, ny, nz } ou null. */
+  raycastHit(o, d, maxDist, filter = null) {
+    let best = Infinity, box = null, nx = 0, ny = 0, nz = 0;
     for (const b of this.boxes) {
       if (!b.enabled) continue;
       if (filter && !filter(b)) continue;
-      let tmin = -Infinity, tmax = Infinity;
+      let tmin = -Infinity, tmax = Infinity, hitAx = 'x', hitInv = 1;
+      let miss = false;
       for (const ax of ['x', 'y', 'z']) {
         if (Math.abs(d[ax]) < 1e-9) {
-          if (o[ax] < b.min[ax] || o[ax] > b.max[ax]) { tmin = Infinity; break; }
+          if (o[ax] < b.min[ax] || o[ax] > b.max[ax]) { miss = true; break; }
         } else {
-          let t1 = (b.min[ax] - o[ax]) / d[ax], t2 = (b.max[ax] - o[ax]) / d[ax];
-          if (t1 > t2) { const tt = t1; t1 = t2; t2 = tt; }
-          if (t1 > tmin) tmin = t1;
+          const inv = 1 / d[ax];
+          let t1 = (b.min[ax] - o[ax]) * inv, t2 = (b.max[ax] - o[ax]) * inv, inv1 = inv;
+          if (t1 > t2) { const tt = t1; t1 = t2; t2 = tt; inv1 = -inv; }
+          if (t1 > tmin) { tmin = t1; hitAx = ax; hitInv = inv1; }
           if (t2 < tmax) tmax = t2;
-          if (tmin > tmax) { tmin = Infinity; break; }
+          if (tmin > tmax) { miss = true; break; }
         }
       }
-      if (tmin === Infinity || tmax < 0) continue;
+      if (miss || tmax < 0) continue;
       const t = Math.max(0, tmin);
-      if (t <= maxDist && t < best) best = t;
+      if (t <= maxDist && t < best) {
+        best = t; box = b;
+        nx = ny = nz = 0;
+        const s = hitInv >= 0 ? -1 : 1;
+        if (hitAx === 'x') nx = s; else if (hitAx === 'y') ny = s; else nz = s;
+      }
     }
-    return best;
+    return box ? { t: best, box, nx, ny, nz } : null;
+  }
+  /** Raio contra AABBs (slab test). Retorna distância do primeiro impacto ou Infinity. */
+  raycast(o, d, maxDist, filter = null) {
+    return this.raycastHit(o, d, maxDist, filter)?.t ?? Infinity;
   }
 
   segmentClear(a, b, filter = null) {
