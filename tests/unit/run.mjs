@@ -22,6 +22,7 @@ import { restPoseFor, POSE_DEFS, ATTACK_DEFS } from '../../src/models/MixamoPose
 import { ARMARIO_URL, ARMARIO_NATIVE, cabinetsEnabled } from '../../src/world/Cabinets.js';
 import { detailForGfx, setSurfaceDetail, installWorldDetail, textureBytes } from '../../src/world/Textures.js';
 import { FIRE_QUALITY, fireQualityFor } from '../../src/render/FireFX.js';
+import { placeBed, placePew, placeTable, setPropDetail, countGeometry, sharedGeoCount, propDetailFor } from '../../src/world/Props.js';
 import { makeKnife } from '../../src/models/EnemyWeapons.js';
 import { ENEMY_MODELS, attackPhase, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
 
@@ -1685,6 +1686,48 @@ test('Fogo (pt58u): Baixa sem brasas/fumaça/haze; Alta/Ultra com haze; shader c
   assert.equal(alta.haze, true); assert.equal(ultra.haze, true); assert.ok(ultra.embers >= alta.embers);
   assert.equal(FIRE_QUALITY.baixa.haze, false);
   assert.ok(GFX.GFX_PRESETS.baixa.lightBudget <= GFX.GFX_PRESETS.media.lightBudget);
+});
+
+test('Adereços (pt59u): cama e banco de capela com geometria compartilhada, colisão AABB e orçamento de tris', () => {
+  setPropDetail(1);
+  const mat = new THREE.MeshLambertMaterial();
+  const M = { metal: mat, sheet: mat, pew: mat, wood: mat, woodDark: mat, gold: mat, candle: mat, stone: mat, altarCloth: mat };
+  const boxes = [];
+  const col = { addBox(...a) { boxes.push(a); return {}; } };
+  const group = new THREE.Group();
+  const level = { b: { group }, M, game: { col }, propStats: {} };
+  placeBed(level, { x: 0, y: 0, z: 0, yaw: 0, variant: 1 });
+  placeBed(level, { x: 3, y: 0, z: 0, yaw: Math.PI / 2, variant: 2 });
+  placePew(level, { x0: 0, x1: 3.6, z: 0, y: 0, depth: 0.5 });
+  placeTable(level, { minX: 0, minY: 0, minZ: 0, maxX: 1.6, maxY: 0.8, maxZ: 0.8, mat: 'wood' });
+  const g = countGeometry(group);
+  assert.ok(g.meshes >= 20, 'várias peças por adereço: ' + g.meshes);
+  assert.ok(g.tris < 2500, 'orçamento de tris de 4 props: ' + g.tris);
+  assert.ok(sharedGeoCount() >= 2, 'caixa/cilindro em cache');
+  // duas camas reutilizam a mesma geometria unitária
+  const geos = new Set(); group.traverse((o) => { if (o.isMesh) geos.add(o.geometry); });
+  assert.ok(geos.size <= 4, 'geometrias compartilhadas, não uma por peça: ' + geos.size);
+  const bedBox = boxes[0];
+  assert.ok(Math.abs(bedBox[0] + 0.475) < 0.02 && Math.abs(bedBox[3] - 0.475) < 0.02, 'largura 0,95');
+  assert.ok(Math.abs(bedBox[2] + 1) < 0.02 && Math.abs(bedBox[5] - 1) < 0.02, 'comprimento 2');
+  assert.ok(Math.abs(bedBox[4] - 0.62) < 1e-6, 'altura de colisão 0,62: ' + bedBox[4]);
+  assert.equal(level.propStats.bed, 2);
+  assert.equal(level.propStats.pew, 1);
+  assert.equal(propDetailFor({ renderScale: 0.5 }), 0);
+  assert.equal(propDetailFor({ renderScale: 0.75 }), 1);
+  assert.equal(propDetailFor({ renderScale: 1 }), 2);
+});
+
+test('Desempenho: agrupamento estático não descarta geometria compartilhada', () => {
+  const scene = new THREE.Scene(), tex = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+  const mat = new THREE.MeshLambertMaterial({ map: tex });
+  const shared = new THREE.BoxGeometry(1, 1, 1); shared.userData.shared = true;
+  for (let i = 0; i < 3; i++) {
+    const o = new THREE.Mesh(shared, mat); o.position.set(i * 2, 1, 1); o.userData.batchable = true; scene.add(o);
+  }
+  const p = new Perf({ scene, settings: { get: () => true } });
+  assert.equal(p.batchStatic(scene), 3);
+  assert.ok(shared.userData.shared && shared.attributes.position, 'geo compartilhada segue viva');
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

@@ -97,6 +97,8 @@ try {
   const gfx = await page.evaluate(() => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
     const D = () => g.gfx.debug();
+    const geom = () => { let meshes = 0, tris = 0, batches = 0, batched = 0; g.scene.traverse((o) => { if (!o.isMesh) return; meshes++; const ix = o.geometry.index; tris += ((ix ? ix.count : o.geometry.attributes.position?.count || 0) / 3) | 0; if (o.name === 'staticBatch') { batches++; batched += o.userData.staticBatch || 0; } }); return { meshes, tris, batches, batched }; };
+    out.geom = geom(); out.propStats = g.level.propStats || {};
     out.def = D(); out.defPreset = $('optPreset').value;
     const pick = (v) => { $('optPreset').value = v; $('optPreset').dispatchEvent(new Event('change')); for (let i = 0; i < 3; i++) g.step(1 / 60); g.gfx.render(g.scene, g.camera); return D(); };
     out.ultra = pick('ultra'); out.alta = pick('alta'); out.baixa = pick('baixa');
@@ -211,6 +213,11 @@ try {
     && texfx.alta.hazeOn >= 1 && texfx.alta.hazeFlag === true
     && texfx.baixa.bump < 0.03 && texfx.calls > 0,
     JSON.stringify(texfx));
+
+  check('Adereços (pt59u): camas, capela e móveis detalhados no Cap. 1, fusão estática e orçamento de triângulos',
+    gfx.propStats?.bed >= 10 && gfx.propStats?.pew >= 8 && gfx.propStats?.altar >= 1 && gfx.propStats?.gurney >= 2
+    && gfx.geom.batches >= 100 && gfx.geom.batches < 280 && gfx.geom.tris > 8000 && gfx.geom.tris < 800000 && gfx.geom.batched > gfx.geom.batches,
+    JSON.stringify({ geom: gfx.geom, props: gfx.propStats }));
 
   check('Inimigos GLB (pt55u): ataque no esqueleto (clipe de golpe pela fase do ataque) e enfermeiro com faca presa ao osso RightHand',
     /^Pose_atk_/.test(eglb.atkClip || '') && eglb.atkT > 1 && eglb.atkT < 2 && eglb.knife && eglb.enfAtk === 'Pose_atk_stab', JSON.stringify({ c: eglb.atkClip, t: eglb.atkT, k: eglb.knife, e: eglb.enfAtk }));

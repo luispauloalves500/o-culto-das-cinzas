@@ -360,6 +360,13 @@ O GDD previa o **"Retorno do Vigia"** como chefe do Cap. 7, mas neste jogo o Vig
 - **Fogo compartilhado** (`src/render/FireFX.js`): incinerador, tochas do Bairro, bocas das caldeiras e a lâmpada da Primeira Cinza usam sprites com shader de ruído animado, gradiente e flicker; em Média+ há brasas e fumaça; o heat haze (plano ondulado barato, não um passo de tela cheia) só liga em Alta/Ultra. As velas da capela usam o mesmo shader em escala pequena. **Nenhuma luz extra** — o flicker reusa as PointLights já orçadas pelo `Perf.js`.
 - *(unit: detalhe/bump por predefinição, Baixa leve, qualidade do fogo sem haze em Baixa. smoke: mapas 128 + bump + detail, VRAM aproximada < 6 MB, shader de chama presente, haze só em Alta, resolução do mapa inalterada na Baixa.)*
 
+### Adereços mais detalhados (pt59u)
+
+- **Fábrica de props** (`src/world/Props.js`): camas, macas, suportes de soro, criados-mudos, mesas, bancos, estantes, carrinhos, pias, caixotes, berços, cadeiras de rodas, bancos de capela, altar, cruz, castiçais, púlpito e moldura de vitral. Geometria compartilhada (caixa/cilindro unitários em cache), peças `batchable` para a fusão estática, variação barata por semente (lençol amassado, cobertor puxado, livros) e menos detalhe na predefinição Baixa (sem rodas, ripas ou genuflexório extras). A resolução das texturas e o fogo (pt58u) não mudam.
+- **Cap. 1**: camas da enfermaria, quarentena, maternidade e Quarto 7 com estrutura tubular, cabeceira, colchão, lençol e travesseiro; macas com rodas e grades; capela com bancos de ripas e genuflexório, altar com toalha, cruz, castiçais, púlpito e molduras nos vitrais; armários com puxador de barra, dobradiças, fresta, prateleiras e conteúdo visível ao abrir; portas com maçaneta de alavanca e dobradiças; luminárias com canopla e haste.
+- A colisão AABB, as interações, os pickups e os saves permanecem os mesmos.
+- *(unit: cama/banco com geo compartilhada e AABB 0,95×2×0,62; fusão não descarta geo compartilhada. smoke: dezenas de camas e 8 bancos de capela no Cap. 1, batches e triângulos dentro do orçamento.)*
+
 ### Sobre modelos e texturas
 
 Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, não foram usados GLB/texturas de terceiros: **o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).
