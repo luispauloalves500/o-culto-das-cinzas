@@ -219,6 +219,7 @@ try {
     gfx.propStats?.bed >= 10 && gfx.propStats?.pew >= 8 && gfx.propStats?.altar >= 1 && gfx.propStats?.gurney >= 2
     && gfx.propStats?.generator >= 1 && gfx.propStats?.organ >= 1 && gfx.propStats?.calender >= 1
     && gfx.propStats?.autopsy >= 3 && gfx.propStats?.incubator >= 4 && gfx.propStats?.file >= 3
+    && gfx.propStats?.font >= 1 && gfx.propStats?.typewriter >= 2 && gfx.propStats?.clothesline >= 1 && gfx.propStats?.panel >= 3
     && gfx.geom.batches >= 100 && gfx.geom.batches < 280 && gfx.geom.tris > 8000 && gfx.geom.tris < 800000 && gfx.geom.batched > gfx.geom.batches
     && gfx.lodMedia?.n >= 20 && gfx.lodMedia.n === gfx.lodBaixa.n && gfx.lodBaixa.vis < gfx.lodUltra.vis,
     JSON.stringify({ geom: gfx.geom, props: gfx.propStats, lod: { media: gfx.lodMedia, ultra: gfx.lodUltra, baixa: gfx.lodBaixa } }));

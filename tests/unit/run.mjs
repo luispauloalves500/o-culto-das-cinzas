@@ -22,7 +22,7 @@ import { restPoseFor, POSE_DEFS, ATTACK_DEFS } from '../../src/models/MixamoPose
 import { ARMARIO_URL, ARMARIO_NATIVE, cabinetsEnabled } from '../../src/world/Cabinets.js';
 import { detailForGfx, setSurfaceDetail, installWorldDetail, textureBytes } from '../../src/world/Textures.js';
 import { FIRE_QUALITY, fireQualityFor } from '../../src/render/FireFX.js';
-import { placeBed, placePew, placeTable, placeAutopsyTable, placeFileCabinet, placeGenerator, setPropDetail, applyPropLod, countGeometry, sharedGeoCount, propDetailFor } from '../../src/world/Props.js';
+import { placeBed, placePew, placeTable, placeAutopsyTable, placeFileCabinet, placeGenerator, placeLoom, placeFont, placeFormalinTank, placeCoalPile, placeTrashCan, placeBatteryBank, placeInesChair, placeTypewriter, dressBoiler, dressGrate, setPropDetail, applyPropLod, countGeometry, sharedGeoCount, propDetailFor } from '../../src/world/Props.js';
 import { makeKnife } from '../../src/models/EnemyWeapons.js';
 import { ENEMY_MODELS, attackPhase, pickClip, fitScale, enemyModelsEnabled, attachEnemyModel } from '../../src/models/EnemyModels.js';
 
@@ -1750,6 +1750,53 @@ test('Adereços (pt59u): LOD ao trocar o preset, mesa de autópsia e arquivo de 
   const hid2 = lod.filter((o) => !o.visible).length;
   assert.ok(hid > hid2, 'Baixa esconde mais detalhe que Ultra: ' + hid + ' vs ' + hid2);
   assert.ok(lod.every((o) => o.userData.batchable === false), 'peças de LOD fora da fusão estática');
+});
+
+test('Adereços (pt60u): peças de cenário com AABB e API intactas (pia, tear, tanque, carvão, lixeira, baterias, cadeira, máquina, caldeira, grade)', () => {
+  setPropDetail(1);
+  const mat = new THREE.MeshLambertMaterial();
+  const M = { metal: mat, steelDark: mat, rust: mat, woodDark: mat, wood: mat, sheet: mat, linen: mat, stone: mat, ash: mat, coal: mat, glass: mat, vial: mat, brass: mat, boilerIron: mat, paper: mat, leatherDark: mat, pantsGray: mat };
+  const boxes = [];
+  const col = { addBox(...a) { boxes.push(a); return {}; } };
+  const group = new THREE.Group();
+  const level = { b: { group }, M, game: { col }, propStats: {} };
+  const font = placeFont(level, { x: 41, y: -5, z: -5.2 });
+  assert.ok(font.ash && font.ash.isMesh, 'cinza da pia (fontAsh)');
+  assert.ok(Math.abs(font.ash.position.y - (-5 + 0.88)) < 1e-6);
+  const fb = boxes[0];
+  assert.deepEqual(fb.slice(0, 6).map((n) => +n.toFixed(4)), [40.4, -5, -5.8, 41.6, -4.1, -4.6]);
+  const n0 = boxes.length;
+  placeTypewriter(level, { x: 0, y: 1, z: 0 });
+  assert.equal(boxes.length, n0, 'máquina de escrever sem colisão');
+  placeLoom(level, { minX: 28.5, minY: 0, minZ: 9.4, maxX: 32.5, maxY: 1.5, maxZ: 11 });
+  assert.deepEqual(boxes.at(-1).slice(0, 6), [28.5, 0, 9.4, 32.5, 1.5, 11]);
+  placeFormalinTank(level, { minX: 42.2, minY: 0, minZ: 28.2, maxX: 43.8, maxY: 2.0, maxZ: 29.8, open: true });
+  assert.deepEqual(boxes.at(-1).slice(0, 6), [42.2, 0, 28.2, 43.8, 2.0, 29.8]);
+  placeCoalPile(level, { minX: 38.2, minY: 0, minZ: 33, maxX: 39.6, maxY: 0.7, maxZ: 35.2, tag: 'prop-low', sight: false });
+  assert.deepEqual(boxes.at(-1).slice(0, 6), [38.2, 0, 33, 39.6, 0.7, 35.2]);
+  placeTrashCan(level, { minX: 8.6, minY: 0, minZ: 41, maxX: 9.6, maxY: 1.0, maxZ: 42 });
+  assert.deepEqual(boxes.at(-1).slice(0, 6), [8.6, 0, 41, 9.6, 1.0, 42]);
+  placeBatteryBank(level, { minX: 11.2, minY: 7, minZ: 68.1, maxX: 16.2, maxY: 8, maxZ: 68.9 });
+  assert.deepEqual(boxes.at(-1).slice(0, 6), [11.2, 7, 68.1, 16.2, 8, 68.9]);
+  placeInesChair(level, { x: 10.2, y: 13.5, z: 85.6, yaw: Math.PI * 0.85, tag: 'obstacle' });
+  const ch = boxes.at(-1);
+  assert.ok(Math.abs(ch[0] - (10.2 - 0.35)) < 1e-6 && Math.abs(ch[3] - (10.2 + 0.35)) < 1e-6);
+  assert.ok(Math.abs(ch[1] - 13.5) < 1e-6 && Math.abs(ch[4] - (13.5 + 0.48)) < 1e-6);
+  const before = boxes.length;
+  dressBoiler(level, { x: 9, y: 2.1, z: 29, length: 12, r: 1.8 });
+  assert.equal(boxes.length, before, 'dressBoiler não cria colisor (fogo/válvula ficam no cenário)');
+  const grate = new THREE.Group();
+  dressGrate(grate, M, { x0: 24.1, x1: 25.95, yC: 1.3, z: 58, h: 2.6 });
+  assert.ok(grate.children.length >= 4, 'ponteiras presas ao grupo da grade');
+  grate.position.y = 2.5;
+  grate.updateMatrixWorld(true);
+  const tip = grate.children[0];
+  assert.ok(Math.abs(tip.getWorldPosition(new THREE.Vector3()).y - (tip.position.y + 2.5)) < 1e-5, 'filhos sobem com a grade');
+  assert.equal(level.propStats.font, 1);
+  assert.equal(level.propStats.loom, 1);
+  assert.equal(level.propStats.formol, 1);
+  assert.equal(level.propStats.boiler, 1);
+  assert.equal(level.propStats.inesChair, 1);
 });
 
 test('Desempenho: agrupamento estático não descarta geometria compartilhada', () => {
