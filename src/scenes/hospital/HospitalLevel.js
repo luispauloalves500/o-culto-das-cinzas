@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
+import { placeBed, placeGurney, placeIvStand, placeNightstand, placeTable, placeBench, placeBookcase, placeCrate } from '../../world/Props.js';
 import { buildAnnex, updateAnnex, ANNEX_CHECKPOINTS, ANNEX_ZONES } from './HospitalAnnex.js';
 import { buildWing, updateWing, WING_CHECKPOINTS, WING_ZONES } from './HospitalWing.js';
 import { buildPeds, updatePeds, PEDS_CHECKPOINTS, PEDS_ZONES } from './HospitalPeds.js';
@@ -144,16 +145,8 @@ export class HospitalLevel {
   }
 
   // ---------- adereços ----------
-  bed(x, z, rot = 0) {
-    const b = this.b, M = this.M;
-    const [w, l] = rot ? [2.0, 0.95] : [0.95, 2.0];
-    const x0 = x - w / 2, x1 = x + w / 2, z0 = z - l / 2, z1 = z + l / 2;
-    b.sbox(x0, 0.32, z0, x1, 0.4, z1, 'metal', { collide: false, cast: true });
-    b.sbox(x0 + 0.04, 0.4, z0 + 0.04, x1 - 0.04, 0.58, z1 - 0.04, 'sheet', { collide: false, cast: true, tile: 1 });
-    for (const [lx, lz] of [[x0, z0], [x1 - 0.05, z0], [x0, z1 - 0.05], [x1 - 0.05, z1 - 0.05]]) b.sbox(lx, 0, lz, lx + 0.05, 0.4, lz + 0.05, 'metal', { collide: false });
-    // cabeceira
-    if (rot) b.sbox(x0, 0, z0, x0 + 0.06, 1.0, z1, 'metal', { collide: false }); else b.sbox(x0, 0, z0, x1, 1.0, z0 + 0.06, 'metal', { collide: false });
-    this.game.col.addBox(x0, 0, z0, x1, 0.62, z1, { tag: 'prop-low', blocksSight: false });
+  bed(x, z, rot = 0, y = 0) {
+    placeBed(this, { x, y, z, yaw: rot ? Math.PI / 2 : 0, variant: (Math.abs(x * 13 + z * 7) | 0) % 3 });
   }
   yShift(y) { return y; }
 
@@ -165,27 +158,26 @@ export class HospitalLevel {
     for (const z of [-1.2, 4.5, 7.6]) this.bed(1.1, z);
     this.bed(1.1, 1.5); // cama do Elias
     this.bed(10.8, 2.6); this.bed(10.8, 5.6);
-    b.sbox(1.9, 0, 2.7, 2.4, 0.6, 3.2, 'wood', { ...PL, cast: true });        // criado-mudo
-    b.sbox(6, 0, -2.85, 8.2, 0.85, -2.1, 'wood', { ...PL, cast: true });       // escrivaninha (livro de registros)
+    placeNightstand(this, { minX: 1.9, minY: 0, minZ: 2.7, maxX: 2.4, maxY: 0.6, maxZ: 3.2, mat: 'wood' });
+    placeTable(this, { minX: 6, minY: 0, minZ: -2.85, maxX: 8.2, maxY: 0.85, maxZ: -2.1, mat: 'wood' });
     placeCabinet(this, { id: 'ward_w', minX: 0.2, minY: 0, minZ: 8.6, maxX: 0.75, maxY: 1.8, maxZ: 9.8, face: '+x', label: 'armário' });
     placeCabinet(this, { id: 'ward_e', minX: 11.2, minY: 0, minZ: 7.4, maxX: 11.8, maxY: 1.9, maxZ: 9.6, face: '-x', label: 'armário' });
     // caixa do machado na parede sul (lado da enfermaria)
     b.sbox(3.5, 0.9, 9.72, 4.7, 2.0, 9.9, 'axeMetal', { collide: false });
     b.sbox(3.6, 1.0, 9.69, 4.6, 1.9, 9.72, 'glass', { collide: false });
     // suportes de soro
-    for (const [x, z] of [[2.2, -0.3], [2.2, 5.5], [9.9, 3.6]]) { b.sbox(x, 0, z, x + 0.04, 1.8, z + 0.04, 'metal', { collide: false }); b.sbox(x - 0.1, 1.7, z, x + 0.14, 1.74, z + 0.04, 'metal', { collide: false }); }
+    for (const [x, z] of [[2.2, -0.3], [2.2, 5.5], [9.9, 3.6]]) placeIvStand(this, { x, y: 0, z });
     // --- Corredor
-    b.sbox(15, 0, 13.1, 17, 0.8, 13.8, 'metal', { ...PL, cast: true }); // maca
-    b.sbox(15.1, 0.8, 13.15, 16.9, 0.9, 13.75, 'sheet', { collide: false });
-    b.sbox(28, 0, 10.2, 30, 0.45, 10.6, 'wood', PL);                   // banco
+    placeGurney(this, { minX: 15, minY: 0, minZ: 13.1, maxX: 17, maxY: 0.8, maxZ: 13.8 });
+    placeBench(this, { minX: 28, minY: 0, minZ: 10.2, maxX: 30, maxY: 0.45, maxZ: 10.6, mat: 'wood' });
     placeCabinet(this, { id: 'cor_cab', minX: 36.5, minY: 0, minZ: 13.2, maxX: 37.4, maxY: 1.6, maxZ: 13.85, face: '-z', label: 'armário' });
     // --- Depósito
     for (const [x0, x1] of [[14.2, 14.9], [23.1, 23.8]]) {
       b.sbox(x0, 0, 15.6, x1, 2.2, 21, 'metal', { ...P, cast: true });
     }
-    b.sbox(18, 0, 21, 20.2, 0.85, 21.8, 'wood', PL);                    // bancada do fusível
-    b.sbox(16.5, 0, 17, 17.4, 0.8, 17.9, 'wood', { ...PL, cast: true }); // caixotes
-    b.sbox(20.5, 0, 16.2, 21.3, 0.7, 17, 'wood', PL);
+    placeTable(this, { minX: 18, minY: 0, minZ: 21, maxX: 20.2, maxY: 0.85, maxZ: 21.8, mat: 'wood' });
+    placeCrate(this, { minX: 16.5, minY: 0, minZ: 17, maxX: 17.4, maxY: 0.8, maxZ: 17.9, mat: 'wood' });
+    placeCrate(this, { minX: 20.5, minY: 0, minZ: 16.2, maxX: 21.3, maxY: 0.7, maxZ: 17, mat: 'wood' });
     // --- Sala de máquinas
     b.sbox(29, 0, 19.2, 32.2, 2.0, 23.2, 'rust', { ...P, cast: true });   // gerador
     b.sbox(29.4, 2.0, 20, 29.8, H_UP, 20.4, 'metal', { collide: false }); // exaustor
@@ -210,12 +202,12 @@ export class HospitalLevel {
     b.sbox(36.6, 0, 23.1, 37.9, 1.2, 23.9, 'metal', P);
     // --- Subsolo: hall
     b.sbox(12.2, LO + 2.4, 13.6, 40, LO + 2.6, 13.85, 'rust', { collide: false });
-    b.sbox(25, LO, 10.2, 27, LO + 0.8, 10.9, 'metal', PL);            // maca
+    placeGurney(this, { minX: 25, minY: LO, minZ: 10.2, maxX: 27, maxY: LO + 0.8, maxZ: 10.9 });
     b.sbox(34, LO, 13.1, 35.5, LO + 1.2, 13.85, 'metal', P);
     // Arquivo
     for (const x of [27, 34.4]) b.sbox(x, LO, 3, x + 0.6, LO + 2.0, 8, 'metal', { ...P, cast: true });
-    b.sbox(30, LO, 2.3, 32, LO + 0.8, 3.1, 'wood', PL);                 // mesa
-    b.sbox(29.4, LO, 6.6, 30.2, LO + 0.6, 7.4, 'wood', PL);              // caixas
+    placeTable(this, { minX: 30, minY: LO, minZ: 2.3, maxX: 32, maxY: LO + 0.8, maxZ: 3.1, mat: 'wood' });
+    placeCrate(this, { minX: 29.4, minY: LO, minZ: 6.6, maxX: 30.2, maxY: LO + 0.6, maxZ: 7.4, mat: 'wood' });
     // corredor cirúrgico
     b.sbox(23.2, LO, 16.2, 23.85, LO + 0.85, 18.2, 'metal', PL);
     // --- Arena: mesas e pilares (obstáculos da investida)
@@ -269,8 +261,16 @@ export class HospitalLevel {
     const light = new THREE.PointLight(color, intensity, dist, 1.6);
     light.position.set(x, y - 0.25, z);
     this.game.scene.add(light);
-    const fixture = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.25), opts.mat || this.M.lampOn);
-    fixture.position.set(x, y - 0.05, z);
+    if (this.M.metal) {
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.035, 0.22), this.M.metal);
+      canopy.position.set(x, y + 0.03, z); canopy.userData.batchable = true; canopy.matrixAutoUpdate = false; canopy.updateMatrix();
+      this.b.group.add(canopy);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.14, 6), this.M.metal);
+      stem.position.set(x, y - 0.05, z); stem.userData.batchable = true; stem.matrixAutoUpdate = false; stem.updateMatrix();
+      this.b.group.add(stem);
+    }
+    const fixture = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.4), opts.mat || this.M.lampOn);
+    fixture.position.set(x, y - 0.14, z);
     this.b.group.add(fixture);
     const L = { light, fixture, base: intensity, flicker: !!opts.flicker, power: !!opts.power, onMat: opts.mat || this.M.lampOn };
     this.lights.all.push(L);
@@ -457,9 +457,8 @@ export class HospitalLevel {
     for (const x of [21.5, 24.5]) b.sbox(x - 0.02, 0, -3, x + 0.02, 1.9, -0.9, 'curtain', { collide: false });
     for (const x of [19.9, 27.1]) b.sbox(x - 0.02, 0, 6.9, x + 0.02, 1.9, 9.2, 'curtain', { collide: false });
     placeCabinet(this, { id: 'east_sheets', minX: 16.2, minY: 0, minZ: 4.6, maxX: 16.8, maxY: 1.8, maxZ: 6.6, face: '+x', label: 'armário de lençóis' });
-    b.sbox(28.6, 0, -2.8, 29.8, 0.9, -2.1, 'wood', { tag: 'prop-low', sight: false });    // mesinha do prontuário
-    // suporte de soro tombado
-    b.sbox(22, 0.02, 3.2, 23.7, 0.06, 3.26, 'metal', { collide: false });
+    placeTable(this, { minX: 28.6, minY: 0, minZ: -2.8, maxX: 29.8, maxY: 0.9, maxZ: -2.1, mat: 'wood' });
+    placeIvStand(this, { x: 22.8, y: 0, z: 3.23, fallen: true });
     // fita de quarentena no vão da porta (lado de dentro)
     b.sbox(23.3, 1.25, 9.7, 24.7, 1.32, 9.74, 'hazard', { collide: false });
     this.sign('QUARENTENA · ALA LESTE', 24, 2.75, 10.13, 0, 1.6, 0.24, { bg: '#7a1c12', fg: '#e9dcc0' });
@@ -536,7 +535,7 @@ export class HospitalLevel {
     b.sbox(17, LO + 1.2, 9.4, 17.6, LO + 1.25, 9.85, 'steel', { collide: false });
     for (const [x, z] of [[21, 4.4], [21, 8]]) b.sbox(x - 0.2, LO + 0.005, z - 0.2, x + 0.2, LO + 0.012, z + 0.2, 'mask', { collide: false });
     // mesa do livro de entradas
-    b.sbox(16.4, LO, 1.4, 17.2, LO + 0.85, 3.0, 'woodDark', { tag: 'prop-low', sight: false, cast: true });
+    placeTable(this, { minX: 16.4, minY: LO, minZ: 1.4, maxX: 17.2, maxY: LO + 0.85, maxZ: 3.0, mat: 'woodDark' });
     for (const [x, z, sz] of [[19.6, 2.6, 1.2], [22.6, 6.4, 0.9], [21.4, 0.9, 0.8], [17.7, 8.2, 0.7]]) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), M.bloodDecal); m.rotation.x = -Math.PI / 2; m.rotation.z = x; m.position.set(x, LO + 0.013, z); b.group.add(m);
     }
@@ -548,7 +547,7 @@ export class HospitalLevel {
       b.sbox(x - 0.02, LO + 2.2, z - 0.02, x + 0.02, CEIL_LO, z + 0.02, 'metal', { collide: false });
       b.sbox(x - 0.2, LO + 0.6, z - 0.15, x + 0.2, LO + 2.2, z + 0.15, 'sheet', { collide: false, cast: true, tile: 1 });
     }
-    b.sbox(22.2, LO, -2.9, 23.8, LO + 0.8, -2.2, 'wood', { tag: 'prop-low', sight: false, cast: true }); // caixote do Morais
+    placeCrate(this, { minX: 22.2, minY: LO, minZ: -2.9, maxX: 23.8, maxY: LO + 0.8, maxZ: -2.2, mat: 'wood' });
     b.sbox(19.1, LO + 1.2, -2.9, 19.5, LO + 1.24, -0.4, 'woodDark', { collide: false });                // prateleira
   }
 }

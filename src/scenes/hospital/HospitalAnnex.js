@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { Door } from '../../world/Doors.js';
 import { createFire, createCandleFlame } from '../../render/FireFX.js';
+import { placeTable, placeCart, placeBench, placeBookcase, placePew, placeAltar, placeCandlestick, placeCross, placePulpit, placeWindowFrame, placeCrate } from '../../world/Props.js';
 
 export const UP = 0, LO = -5, UP2 = 4;
 const H_UP = 3.2, CEIL_LO = -1.8, TOP2 = 7;
@@ -68,12 +69,11 @@ function laundry(L) {
     const r = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 8), M.steel);
     r.rotation.x = Math.PI / 2; r.position.set(x, LO + 1.1, 2.75); b.group.add(r);
   }
-  // mesa de dobrar + carrinhos de roupa
-  b.sbox(9.6, LO, 4.4, 11.7, LO + 0.88, 6.1, 'steel', PL);
+  placeTable(L, { minX: 9.6, minY: LO, minZ: 4.4, maxX: 11.7, maxY: LO + 0.88, maxZ: 6.1, mat: 'steel' });
   b.sbox(9.8, LO + 0.88, 4.6, 10.6, LO + 0.98, 5.3, 'sheet', NC);
-  b.sbox(8.4, LO, 7.1, 9.3, LO + 0.85, 7.8, 'metal', PL);
+  placeCart(L, { minX: 8.4, minY: LO, minZ: 7.1, maxX: 9.3, maxY: LO + 0.85, maxZ: 7.8, mat: 'metal' });
   b.sbox(8.45, LO + 0.6, 7.15, 9.25, LO + 0.95, 7.75, 'sheet', { collide: false, tile: 1 });
-  b.sbox(4.4, LO, 11.2, 5.2, LO + 0.85, 12.0, 'metal', PL);
+  placeCart(L, { minX: 4.4, minY: LO, minZ: 11.2, maxX: 5.2, maxY: LO + 0.85, maxZ: 12.0, mat: 'metal' });
   b.sbox(4.45, LO + 0.6, 11.25, 5.15, LO + 0.9, 11.95, 'bandageDirty', NC);
   // varal com lençóis pendurados (escondem quem está atrás)
   b.sbox(3.8, LO + 2.75, 8.18, 9.6, LO + 2.78, 8.22, 'metal', NC);
@@ -125,7 +125,7 @@ function furnace(L) {
   b.sbox(3.3, LO, 19.4, 3.36, LO + 1.6, 19.46, 'rust', NC);
   b.sbox(6.6, LO, 18.2, 8.4, LO + 0.8, 19.6, 'steel', PL);
   b.sbox(6.7, LO + 0.8, 18.3, 8.3, LO + 1.0, 19.5, 'sheet', { collide: false, tile: 1 });
-  b.sbox(8.6, LO, 14.4, 9.8, LO + 0.82, 15.6, 'woodDark', PL);
+  placeTable(L, { minX: 8.6, minY: LO, minZ: 14.4, maxX: 9.8, maxY: LO + 0.82, maxZ: 15.6, mat: 'woodDark' });
   L.sign('INCINERADOR — PERIGO', 5, LO + 2.6, 19.87, Math.PI, 1.6, 0.24, { bg: '#7a1c12', fg: '#f0e0b0' });
   L.sign('INCINERADOR', 6, LO + 2.62, 14.13, Math.PI, 1.0, 0.2, { bg: '#4a3a2a', fg: '#e0d0b0' });
 }
@@ -161,8 +161,8 @@ function admin(L) {
     b.sbox(x - 0.45, UP2 + 1.2, 25.86, x + 0.45, UP2 + 2.2, 25.9, 'woodDark', NC);
     b.sbox(x - 0.36, UP2 + 1.3, 25.84, x + 0.36, UP2 + 2.1, 25.86, 'leatherDark', NC);
   }
-  b.sbox(29.2, UP2, 25.3, 30.8, UP2 + 0.45, 25.85, 'woodDark', PL);   // banco de espera
-  b.sbox(16.6, UP2, 25.3, 18.2, UP2 + 0.45, 25.85, 'woodDark', PL);
+  placeBench(L, { minX: 29.2, minY: UP2, minZ: 25.3, maxX: 30.8, maxY: UP2 + 0.45, maxZ: 25.85, mat: 'woodDark' });
+  placeBench(L, { minX: 16.6, minY: UP2, minZ: 25.3, maxX: 18.2, maxY: UP2 + 0.45, maxZ: 25.85, mat: 'woodDark' });
   L.sign('ADMINISTRAÇÃO', 19, UP2 + 2.62, 22.13, 0, 1.2, 0.2, { bg: '#c9c2a4' });
   L.sign('SECRETARIA', 19, UP2 + 2.45, 22.13, 0, 0.8, 0.14, { bg: '#c9c2a4' });
   L.sign('DIRETORIA', 33, UP2 + 2.45, 22.13, 0, 0.8, 0.14, { bg: '#c9c2a4' });
@@ -171,7 +171,7 @@ function admin(L) {
   b.ceiling(14, 14, 24, 22, TOP2);
   b.wallZ(14, 14, 22, H_UP, TOP2); b.wallX(14, 14, 24, H_UP, UP2); b.wallX(14, 14, 24, UP2, TOP2, [18.6]);
   for (const x0 of [15.4, 20]) {
-    b.sbox(x0, UP2, 15.6, x0 + 1.8, UP2 + 0.76, 16.6, 'woodDark', PL);
+    placeTable(L, { minX: x0, minY: UP2, minZ: 15.6, maxX: x0 + 1.8, maxY: UP2 + 0.76, maxZ: 16.6, mat: 'woodDark' });
     b.sbox(x0 + 0.5, UP2 + 0.76, 15.8, x0 + 1.0, UP2 + 0.96, 16.2, 'metal', NC);   // máquina de escrever
   }
   for (const z of [18, 19, 20]) b.sbox(14.1, UP2, z, 14.7, UP2 + 1.4, z + 0.9, 'metal', P); // arquivos
@@ -183,11 +183,10 @@ function admin(L) {
   b.floor(28, 14, 38, 22, UP2, 'wood', 'diretoria');
   b.ceiling(28, 14, 38, 22, TOP2);
   b.wallZ(38, 14, 22, H_UP, TOP2); b.wallX(14, 28, 38, H_UP, TOP2);
-  b.sbox(31.4, UP2, 15.3, 34.6, UP2 + 0.78, 16.4, 'woodDark', PL);
+  placeTable(L, { minX: 31.4, minY: UP2, minZ: 15.3, maxX: 34.6, maxY: UP2 + 0.78, maxZ: 16.4, mat: 'woodDark' });
   b.sbox(32.6, UP2, 14.3, 33.4, UP2 + 1.1, 14.9, 'leatherDark', PL);       // poltrona
-  b.sbox(37.2, UP2, 16.6, 37.9, UP2 + 2.2, 21.6, 'woodDark', P);           // estante
-  for (let i = 0; i < 4; i++) b.sbox(37.15, UP2 + 0.4 + i * 0.5, 16.7, 37.2, UP2 + 0.75 + i * 0.5, 21.5, 'leather', NC);
-  b.sbox(36, UP2, 14.6, 37.2, UP2 + 0.86, 15.7, 'woodDark', PL);           // mesinha do livro
+  placeBookcase(L, { minX: 37.2, minY: UP2, minZ: 16.6, maxX: 37.9, maxY: UP2 + 2.2, maxZ: 21.6, mat: 'woodDark', tag: 'prop' });
+  placeTable(L, { minX: 36, minY: UP2, minZ: 14.6, maxX: 37.2, maxY: UP2 + 0.86, maxZ: 15.7, mat: 'woodDark' });
   const rug = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.2), M.altarCloth); rug.rotation.x = -Math.PI / 2; rug.position.set(33, UP2 + 0.01, 18.4); b.group.add(rug);
   // retrato do diretor com o rosto raspado
   const tex = canvasTex(64, 80, (g, w, h) => {
@@ -213,16 +212,17 @@ function chapel(L) {
   // degrau do altar, altar e relicário
   b.floor(2.5, 21.9, 9.5, 23.9, UP + 0.2, 'stone', 'altarStep');
   b.sbox(2.5, UP, 21.9, 9.5, UP + 0.2, 23.9, 'stone', NC);
-  b.sbox(4.2, UP + 0.2, 22.7, 7.8, UP + 1.15, 23.5, 'stone', { tag: 'prop', cast: true });
-  b.sbox(4.1, UP + 0.75, 22.62, 7.9, UP + 1.18, 23.58, 'altarCloth', NC);
+  placeAltar(L, { minX: 4.2, minY: UP + 0.2, minZ: 22.7, maxX: 7.8, maxY: UP + 1.15, maxZ: 23.5, tag: 'prop' });
   const rel = new THREE.Group(); rel.position.set(6, UP + 1.18, 23.1); b.group.add(rel);
   const base = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.26, 0.32), M.gold); base.position.y = 0.13; rel.add(base);
   const lidPivot = new THREE.Group(); lidPivot.position.set(0, 0.26, 0.16); rel.add(lidPivot);
   const lid = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.08, 0.34), M.gold); lid.position.set(0, 0.04, -0.17); lidPivot.add(lid);
-  const cross = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.04), M.gold); cross.position.set(0, 0.12, -0.17); lidPivot.add(cross);
+  const crossA = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.16, 0.03), M.gold); crossA.position.set(0, 0.14, -0.17); lidPivot.add(crossA);
+  const crossB = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.03), M.gold); crossB.position.set(0, 0.18, -0.17); lidPivot.add(crossB);
   L.relic = { group: rel, lid: lidPivot, open: false, t: 0 };
   // castiçais altos e o emblema do culto (sol de cinzas) sobre a imagem raspada
-  for (const x of [3.2, 8.8]) { b.sbox(x - 0.05, UP + 0.2, 23.4, x + 0.05, UP + 1.9, 23.5, 'gold', NC); b.sbox(x - 0.04, UP + 1.9, 23.42, x + 0.04, UP + 2.1, 23.48, 'candle', NC); }
+  for (const x of [3.2, 8.8]) placeCandlestick(L, { x, y: UP + 0.2, z: 23.45, h: 1.7 });
+  placeCross(L, { x: 6, y: 5.15, z: 23.86, scale: 1.15, yaw: 0, mat: 'gold' });
   const emb = canvasTex(128, 128, (g, w) => {
     g.fillStyle = '#2a2420'; g.fillRect(0, 0, w, w);
     g.strokeStyle = '#8a7a5a'; g.lineWidth = 3;
@@ -245,18 +245,14 @@ function chapel(L) {
     });
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.8), new THREE.MeshBasicMaterial({ map: t, color: 0x9098b0 }));
     glass.rotation.y = Math.PI / 2; glass.position.set(0.12, 3.6, 16.2 + i * 3); b.group.add(glass);
+    placeWindowFrame(L, { x: 0.12, y: 3.6, z: 16.2 + i * 3, w: 1.15, h: 2.95, t: 0.1, yaw: Math.PI / 2 });
     b.sbox(0.1, 2.15, 15.6 + i * 3, 0.2, 2.2, 16.8 + i * 3, 'stone', NC);
   }
-  // bancos (pews): dois blocos com corredor central
+  // bancos (pews): assento, ripas, laterais e genuflexório; corredor central
   for (const z of [16.4, 17.8, 19.2, 20.6]) for (const [x0, x1] of [[1.0, 4.6], [7.0, 9.6]]) {
-    b.sbox(x0, UP + 0.42, z, x1, UP + 0.48, z + 0.45, 'pew', NC);
-    b.sbox(x0, UP + 0.48, z + 0.4, x1, UP + 0.98, z + 0.48, 'pew', NC);
-    for (const x of [x0, x1 - 0.06]) b.sbox(x, UP, z, x + 0.06, UP + 0.98, z + 0.48, 'pew', NC);
-    L.game.col.addBox(x0, UP, z, x1, UP + 0.98, z + 0.5, { tag: 'prop-low', blocksSight: false });
+    placePew(L, { x0, x1, z, y: UP, depth: 0.5, book: z === 19.2 });
   }
-  // púlpito/estante com o hinário
-  b.sbox(2.7, UP, 21.0, 3.3, UP + 1.05, 21.5, 'woodDark', PL);
-  b.sbox(2.6, UP + 1.05, 20.95, 3.4, UP + 1.1, 21.55, 'woodDark', NC);
+  placePulpit(L, { minX: 2.7, minY: UP, minZ: 21.0, maxX: 3.3, maxY: UP + 1.05, maxZ: 21.5 });
   // suportes de velas com placas
   L.candles = {};
   for (const id in CANDLES) {
@@ -264,11 +260,14 @@ function chapel(L) {
     const along = Math.abs(fx) > 0.5 ? 'z' : 'x';
     const hw = 0.45, hd = 0.22, y0 = id === 'dimas' ? UP + 0.2 : UP;
     const [x0, x1, z0, z1] = along === 'z' ? [c.x - hd, c.x + hd, c.z - hw, c.z + hw] : [c.x - hw, c.x + hw, c.z - hd, c.z + hd];
-    b.sbox(x0, y0, z0, x1, y0 + 0.9, z1, 'woodDark', PL);
+    b.sbox(x0, y0, z0, x1, y0 + 0.82, z1, 'woodDark', PL);
+    b.sbox(x0 - 0.03, y0 + 0.82, z0 - 0.03, x1 + 0.03, y0 + 0.9, z1 + 0.03, 'woodDark', NC);
+    b.sbox(x0 + 0.04, y0 + 0.88, z0 + 0.04, x1 - 0.04, y0 + 0.91, z1 - 0.04, 'gold', NC);
     const flames = [];
     for (let k = -2; k <= 2; k++) {
       const cx = c.x + (along === 'x' ? k * 0.16 : 0), cz = c.z + (along === 'z' ? k * 0.16 : 0);
-      b.sbox(cx - 0.02, y0 + 0.9, cz - 0.02, cx + 0.02, y0 + 1.02 + (k & 1) * 0.04, cz + 0.02, 'candle', NC);
+      b.sbox(cx - 0.025, y0 + 0.9, cz - 0.025, cx + 0.025, y0 + 0.94, cz + 0.025, 'gold', NC);
+      b.sbox(cx - 0.018, y0 + 0.94, cz - 0.018, cx + 0.018, y0 + 1.02 + (k & 1) * 0.04, cz + 0.018, 'candle', NC);
       const f = createCandleFlame({ x: cx, y: y0 + 1.08 + (k & 1) * 0.04, z: cz, parent: b.group }); f.visible = false; flames.push(f);
     }
     L.sign(c.name, c.x + fx * (hd + 0.01), y0 + 0.62, c.z + fz * (hd + 0.01), c.face, 0.5, 0.12, { bg: '#3a2a1a', fg: '#e8d8a8' });
