@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { placeTable, placeBookcase, placeFileCabinet, placeCrate, placeBarrel, placeBench, placeCart } from '../../world/Props.js';
 import { createFire } from '../../render/FireFX.js';
 
 // 14 luzes do cenário + lanterna/preenchimento do jogador + luz do ponto fraco do chefe = 16 no máximo
@@ -128,8 +129,8 @@ export class BairroLevel {
     // carroça abandonada, barris e caixotes (obstáculos baixos: não tapam a visão)
     b.sbox(20, Y, 5.4, 23, Y + 1.0, 6.4, 'wood', { tag: 'prop-low', sight: false });
     b.sbox(20.4, Y, 5.2, 20.8, Y + 0.6, 6.6, 'woodDark', { collide: false });
-    b.sbox(27, Y, 1.5, 27.8, Y + 0.9, 2.3, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(14, Y, 0.3, 14.7, Y + 0.85, 1.0, 'rust', { tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 27, minY: Y, minZ: 1.5, maxX: 27.8, maxY: Y + 0.9, maxZ: 2.3, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeBarrel(this, { minX: 14, minY: Y, minZ: 0.3, maxX: 14.7, maxY: Y + 0.85, maxZ: 1.0, mat: 'rust', tag: 'prop-low', sight: false });
     // cartazes
     this.sign('RUA DOS TECELÕES', 4, Y + 2.8, 0.08, 0, 1.6, 0.26, { bg: '#1e2a3a', fg: '#d8d2b8' });
     this.sign('TOQUE DE RECOLHER APÓS A SIRENE', 16.5, Y + 1.7, 0.08, 0, 1.5, 0.3, { bg: '#c9c2a4', fg: '#6a1010' });
@@ -141,8 +142,8 @@ export class BairroLevel {
     b.floor(9.5, 8, 12.5, 16, Y, 'stone', 'c2_alley');
     b.sbox(9.5, Y, 15.8, 12.5, Y + 4.5, 16.4, 'brick');
     b.sbox(9.5, Y + 3.4, 8, 12.5, Y + 3.55, 8.3, 'woodDark', { collide: false }); // varal / viga
-    b.sbox(10.0, Y, 14.6, 10.8, Y + 0.85, 15.4, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
-    b.sbox(11.6, Y, 14.9, 12.3, Y + 0.95, 15.6, 'rust', { tag: 'prop-low', sight: false });     // barril
+    placeCrate(this, { minX: 10.0, minY: Y, minZ: 14.6, maxX: 10.8, maxY: Y + 0.85, maxZ: 15.4, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeBarrel(this, { minX: 11.6, minY: Y, minZ: 14.9, maxX: 12.3, maxY: Y + 0.95, maxZ: 15.6, mat: 'rust', tag: 'prop-low', sight: false });
     b.sbox(11.9, Y, 10.2, 12.4, Y + 1.6, 11.6, 'wood', { tag: 'prop' });                         // portas velhas encostadas
   }
 
@@ -160,7 +161,7 @@ export class BairroLevel {
     for (const x of [20, 28, 32, 36]) b.sbox(x - 0.6, Y + 1.4, 7.88, x + 0.6, Y + 2.4, 7.9, 'glass', { collide: false });
     // prateleiras com fardos de algodão (altas: bloqueiam a visão, criam corredores para se esconder)
     for (const [x0, z0, x1, z1, h, mat] of [[20.5, 13, 22, 22, 3.2, 'woodDark'], [26, 14, 28, 21, 2.6, 'wood'], [31, 13, 32.5, 17, 2.6, 'woodDark']]) {
-      b.sbox(x0, Y, z0, x1, Y + h, z1, mat, { tag: 'prop' });
+      placeBookcase(this, { minX: x0, minY: Y, minZ: z0, maxX: x1, maxY: Y + h, maxZ: z1, mat, tag: 'prop', sight: true, books: false });
       for (let z = z0 + 0.6; z < z1 - 0.4; z += 1.4) b.sbox(x0 + 0.1, Y + h, z - 0.4, x1 - 0.1, Y + h + 0.5, z + 0.4, 'sheet', { collide: false });
     }
     // tear mecânico parado
@@ -169,15 +170,15 @@ export class BairroLevel {
     b.sbox(29, Y + 1.5, 10.2, 32, Y + 1.56, 10.8, 'sheet', { collide: false });
     // fardos soltos e carrinho
     b.sbox(19, Y, 9, 20.4, Y + 1.0, 10.4, 'sheet', { tag: 'prop-low', sight: false });
-    b.sbox(33.5, Y, 9, 35, Y + 0.9, 10.2, 'woodDark', { tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 33.5, minY: Y, minZ: 9, maxX: 35, maxY: Y + 0.9, maxZ: 10.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(24.8, Y, 22.6, 26.6, Y + 1.1, 23.8, 'sheet', { tag: 'prop-low', sight: false });
     // escritório do capataz
     b.wallX(18, 34, 40, Y, H_DEP, [37], 'wall', 1.4, 2.3);
     b.wallZ(34, 18, 24, Y, H_DEP, [], 'wall');
     b.sbox(34.2, Y + 1.2, 19.6, 34.3, Y + 2.1, 21.6, 'glass', { collide: false }); // janela interna (visual)
-    b.sbox(37.6, Y, 20.4, 39.8, Y + 0.85, 21.6, 'wood', { tag: 'prop-low', sight: false }); // mesa
-    b.sbox(38.3, Y, 22.8, 39.8, Y + 0.9, 23.8, 'woodDark', { tag: 'prop-low', sight: false }); // aparador (livro)
-    b.sbox(34.3, Y, 22.9, 36.8, Y + 0.8, 23.8, 'woodDark', { tag: 'prop-low', sight: false }); // arquivo baixo
+    placeTable(this, { minX: 37.6, minY: Y, minZ: 20.4, maxX: 39.8, maxY: Y + 0.85, maxZ: 21.6, mat: 'wood', tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 38.3, minY: Y, minZ: 22.8, maxX: 39.8, maxY: Y + 0.9, maxZ: 23.8, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeFileCabinet(this, { minX: 34.3, minY: Y, minZ: 22.9, maxX: 36.8, maxY: Y + 0.8, maxZ: 23.8, mat: 'woodDark', face: '-z', tag: 'prop-low', sight: false, drawers: 2 });
     b.sbox(39.6, Y + 1.3, 19, 39.8, Y + 2.3, 20.4, 'blueprint', { collide: false }); // quadro de turnos
     this.sign('CAPATAZ', 37, Y + 2.55, 17.88, Math.PI, 0.8, 0.2);
     this.sign('CARGA', 39.88, Y + 3.3, 14, -Math.PI / 2, 1.0, 0.24, { bg: '#3a2a10', fg: '#e0c070' });
@@ -199,11 +200,11 @@ export class BairroLevel {
     // ponto do bonde: poste, placa e banco
     b.sbox(44.6, Y, 26.9, 44.75, Y + 2.8, 27.05, 'metal', { tag: 'prop' });
     this.sign('PONTO DO BONDE · LINHA 4', 44.2, Y + 2.6, 26.86, Math.PI, 1.3, 0.28, { bg: '#e0d8b0', fg: '#1c2a40' });
-    b.sbox(44.8, Y, 24.6, 45.6, Y + 0.5, 26.4, 'wood', { tag: 'prop-low', sight: false });
+    placeBench(this, { minX: 44.8, minY: Y, minZ: 24.6, maxX: 45.6, maxY: Y + 0.5, maxZ: 26.4, mat: 'wood', tag: 'prop-low', sight: false });
     // caixotes de carga
-    b.sbox(40.6, Y, 9, 42, Y + 1.2, 10.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(44.4, Y, 12, 45.8, Y + 1.4, 13.6, 'wood', { tag: 'prop-low', sight: false });
-    b.sbox(40.6, Y, 19, 41.6, Y + 0.9, 20, 'rust', { tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 40.6, minY: Y, minZ: 9, maxX: 42, maxY: Y + 1.2, maxZ: 10.4, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 44.4, minY: Y, minZ: 12, maxX: 45.8, maxY: Y + 1.4, maxZ: 13.6, mat: 'wood', tag: 'prop-low', sight: false });
+    placeBarrel(this, { minX: 40.6, minY: Y, minZ: 19, maxX: 41.6, maxY: Y + 0.9, maxZ: 20, mat: 'rust', tag: 'prop-low', sight: false });
   }
 
   // ---------- RUA DO CARVÃO x38..50 z30..60 ----------
@@ -241,7 +242,7 @@ export class BairroLevel {
     b.sbox(38, Y, 49, 41, Y + 1.8, 51, 'stone', { tag: 'prop' });
     b.sbox(38.4, Y + 1.8, 49.3, 40.2, Y + 2.4, 50.6, 'woodDark', { collide: false });
     // carroça de coque em chamas
-    b.sbox(47, Y, 52, 49.5, Y + 1.0, 54, 'woodDark', { tag: 'prop-low', sight: false, cast: true });
+    placeCrate(this, { minX: 47, minY: Y, minZ: 52, maxX: 49.5, maxY: Y + 1.0, maxZ: 54, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(47.2, Y + 1.0, 52.2, 49.3, Y + 1.25, 53.8, 'coal', { collide: false });
     this._fire(48.2, Y + 1.2, 53, 0.8);
     // postes de lampião a gás
@@ -272,7 +273,7 @@ export class BairroLevel {
     b.sbox(31.8, Y, 45.6, 34.4, Y + 1.2, 47.8, 'coal', { tag: 'prop-low', sight: false });
     for (const [x, z] of [[35.2, 39], [36.2, 39], [35.7, 39.9]]) b.sbox(x - 0.4, Y, z - 0.3, x + 0.4, Y + 0.7, z + 0.3, 'sheet', { tag: 'prop-low', sight: false });
     // balança de pesagem com a mesa do encarregado (chave pendurada no gancho)
-    b.sbox(35.5, Y, 46.6, 37.6, Y + 0.9, 47.8, 'wood', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 35.5, minY: Y, minZ: 46.6, maxX: 37.6, maxY: Y + 0.9, maxZ: 47.8, mat: 'wood', tag: 'prop-low', sight: false });
     b.sbox(36.9, Y + 0.9, 47.4, 37.0, Y + 2.0, 47.5, 'metal', { collide: false });
     b.sbox(36.5, Y + 1.95, 47.3, 37.3, Y + 2.0, 47.6, 'metal', { collide: false });
     // prateleira com pás e lampiões
@@ -310,8 +311,8 @@ export class BairroLevel {
     this.valveA = this._valve(36.75, Y + 1.25, 75.6, Math.PI / 2);
     this.valveB = this._valve(55.8, Y + 1.25, 63, -Math.PI / 2);
     // mesa do fornalheiro (diário) e caixote do livro de registro junto à porta da casa das fornalhas
-    b.sbox(51.5, Y, 60.3, 54, Y + 0.85, 61.2, 'wood', { tag: 'prop-low', sight: false });
-    b.sbox(47, Y, 76.8, 48.4, Y + 0.9, 77.8, 'woodDark', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 51.5, minY: Y, minZ: 60.3, maxX: 54, maxY: Y + 0.85, maxZ: 61.2, mat: 'wood', tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 47, minY: Y, minZ: 76.8, maxX: 48.4, maxY: Y + 0.9, maxZ: 77.8, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(38.6, Y, 65.8, 39, Y + 1.0, 67.4, 'woodDark', { tag: 'prop-low', sight: false });
     this.sign('CASA DAS FORNALHAS', 45, Y + 3.2, 77.86, Math.PI, 1.8, 0.3, { bg: '#2a1a10', fg: '#e08040' });
     this.sign('ALIVIE AS VÁLVULAS ANTES DE ABRIR', 45, Y + 3.6, 77.86 - 0.01, Math.PI, 2.0, 0.22, { bg: '#c9c2a4', fg: '#7a1010' });
@@ -350,7 +351,7 @@ export class BairroLevel {
     b.sbox(34.2, Y, 93.4, 37.4, Y + 1.4, 95.8, 'coal', { tag: 'prop-low', sight: false });
     b.sbox(52.6, Y, 93.4, 55.8, Y + 1.4, 95.8, 'coal', { tag: 'prop-low', sight: false });
     // caixote com o recado e a porta de serviço (saída leste)
-    b.sbox(54.2, Y, 90, 55.8, Y + 0.9, 91.2, 'woodDark', { tag: 'prop-low', sight: false });
+    placeCrate(this, { minX: 54.2, minY: Y, minZ: 90, maxX: 55.8, maxY: Y + 0.9, maxZ: 91.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(55.9, Y, 86.2, 55.98, Y + 2.3, 87.8, 'doorMetal', { collide: false });
     b.sbox(55.84, Y + 1.0, 87.5, 55.9, Y + 1.1, 87.65, 'metal', { collide: false });
     this.sign('SAÍDA — RUA DA FUNDIÇÃO', 55.86, Y + 2.65, 87, -Math.PI / 2, 1.6, 0.26, { bg: '#1e2a3a', fg: '#d8d2b8' });

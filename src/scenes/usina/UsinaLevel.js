@@ -14,6 +14,7 @@ import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { placeCabinet, updateCabinets } from '../../world/Cabinets.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { placeTable, placeBookcase } from '../../world/Props.js';
 import { buildTower, towerLights, towerNav, updateTower, TOWER_ZONES, TOWER_CHECKPOINTS } from './UsinaTower.js';
 import { createFire } from '../../render/FireFX.js';
 
@@ -211,8 +212,8 @@ export class UsinaLevel {
     b.wallX(H.maxZ, YARD.minX, H.maxX, Y, Y + 2.8, [], 'brick');
     b.wallZ(H.maxX, H.minZ, H.maxZ, Y, Y + 2.8, [H.door.z], 'brick', 1.1, 2.2);
     b.ceiling(YARD.minX, H.minZ, H.maxX, H.maxZ, Y + 2.8, 'ceiling');
-    b.sbox(1.2, Y, 10.6, 2.6, Y + 0.85, 11.8, 'woodDark', { tag: 'prop-low', sight: false });  // mesa
-    b.sbox(1.1, Y, 8.2, 1.8, Y + 1.6, 8.7, 'wood', { tag: 'prop-low', sight: false });         // estante
+    placeTable(this, { minX: 1.2, minY: Y, minZ: 10.6, maxX: 2.6, maxY: Y + 0.85, maxZ: 11.8, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeBookcase(this, { minX: 1.1, minY: Y, minZ: 8.2, maxX: 1.8, maxY: Y + 1.6, maxZ: 8.7, mat: 'wood', tag: 'prop-low', sight: false });
     this.sign('GUARITA', H.maxX + 0.12, Y + 2.45, 9.0, Math.PI / 2, 0.8, 0.2, { bg: '#1a1712', fg: '#cbbf98' });
   }
 
@@ -414,7 +415,7 @@ export class UsinaLevel {
     sw.rotation.z = -0.2; this.mainSwitch = sw;
     this.sign('TRANSMISSÃO — TORRE', Bd.x - 0.36, Y + 2.65, Bd.z + 0.4, -Math.PI / 2, 1.4, 0.2, { bg: '#2a1a0c', fg: '#f0c070' });
     // mesa do chefe de turno
-    b.sbox(2.4, Y, 64.2, 5.2, Y + 0.85, 65.6, 'woodDark', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 2.4, minY: Y, minZ: 64.2, maxX: 5.2, maxY: Y + 0.85, maxZ: 65.6, mat: 'woodDark', tag: 'prop-low', sight: false });
     this.sign('SALA DA TURBINA', 15, Y + 4.2, H.minZ + 0.12, 0, 2.6, 0.3, { bg: '#2a1a0c', fg: '#f0c070' });
     this.sign('TORRE DE TRANSMISSÃO ↑', 13, Y + 2.9, H.maxZ - 0.12, Math.PI, 2.2, 0.22, { bg: '#1a1712', fg: '#cbbf98' });
   }

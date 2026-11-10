@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { createHumanoid, resetPose, poseWalk, poseIdle, part } from '../../gameplay/ProceduralRig.js';
 import { createFire } from '../../render/FireFX.js';
+import { placeCrate } from '../../world/Props.js';
 
 export const MACH_Y = 7;
 export const ARENA_Y = 13.5;
@@ -329,8 +330,8 @@ export function buildTower(L) {
   tw.knifeLampMat = kLampMat;
   L.sign('FORÇA DO MONTA-CARGAS', KNIFE.x, MY + 2.45, 68.15, 0, 1.2, 0.18, { bg: '#2a1a0c', fg: '#f0c070' });
   // caixotes: diário de Helena (oeste) e livro de registros (leste)
-  b.sbox(8.2, MY, 75.0, 9.4, MY + 0.65, 75.9, 'woodDark', { tag: 'prop-low', sight: false });
-  b.sbox(16.8, MY, 71.0, 17.9, MY + 0.8, 72.0, 'woodDark', { tag: 'prop-low', sight: false });
+  placeCrate(L, { minX: 8.2, minY: MY, minZ: 75.0, maxX: 9.4, maxY: MY + 0.65, maxZ: 75.9, mat: 'woodDark', tag: 'prop-low', sight: false });
+  placeCrate(L, { minX: 16.8, minY: MY, minZ: 71.0, maxX: 17.9, maxY: MY + 0.8, maxZ: 72.0, mat: 'woodDark', tag: 'prop-low', sight: false });
   // trapos e uma maleta aberta ao lado de Helena (curativos)
   b.sbox(9.4, MY, 73.2, 10.0, MY + 0.06, 73.8, 'linen', { collide: false });
   L.sign('CASA DE MÁQUINAS — Nº 3', 13, MY + 3.4, T.minZ + 0.12, 0, 1.8, 0.24, { bg: '#1a1712', fg: '#cbbf98' });

@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { LevelBuilder } from '../../world/LevelBuilder.js';
 import { Door } from '../../world/Doors.js';
 import { HospitalLevel } from '../hospital/HospitalLevel.js';
+import { placeTable, placeBench, placeChair, placeBookcase, placeFileCabinet, placeCrate, placeAltar, placeCross } from '../../world/Props.js';
 
 // luzes do cenário visíveis + hemisférica + preenchimento/lanterna do jogador ≤ 16
 const LIGHT_BUDGET = 12;
@@ -103,8 +104,8 @@ export class SedeLevel {
     this.sign('LINHA 4 — LARGO DO VÉU', 5.4, Y + 2.45, 3.66, 0, 1.8, 0.24, { bg: '#2a2016', fg: '#d0a060' });
     // poste do ponto final e bancos de pedra
     b.sbox(11.9, Y, 4.4, 12.1, Y + 3.6, 4.6, 'metal', { tag: 'prop' });
-    b.sbox(15, Y, 4.6, 17.4, Y + 0.5, 5.2, 'stone', { tag: 'prop-low', sight: false });
-    b.sbox(18.8, Y, 1.2, 20.2, Y + 0.9, 2.4, 'woodDark', { tag: 'prop-low', sight: false }); // caixote
+    placeBench(this, { minX: 15, minY: Y, minZ: 4.6, maxX: 17.4, maxY: Y + 0.5, maxZ: 5.2, mat: 'stone', tag: 'prop-low', sight: false, back: false });
+    placeCrate(this, { minX: 18.8, minY: Y, minZ: 1.2, maxX: 20.2, maxY: Y + 0.9, maxZ: 2.4, mat: 'woodDark', tag: 'prop-low', sight: false });
     // FACHADA DA SEDE (z = 12): pedra clara, colunas, frontão e as portas de bronze no centro (x = 12)
     b.wallX(12, 0, 24, Y, Y + 9, [12], 'marble', 2.4, 3.2);
     for (const x of [7, 10, 14, 17]) b.sbox(x - 0.35, Y, 11.3, x + 0.35, Y + 6.2, 11.9, 'marble', { tag: 'prop' });
@@ -132,12 +133,12 @@ export class SedeLevel {
     b.wallZ(30, 4, 12, Y, Y + H_LODGE, [], 'wall');
     b.wallX(4, 24, 30, Y, Y + H_LODGE, [], 'wall');
     // balcão do porteiro, cadeira, quadro de fitas e o livro de registros
-    b.sbox(27.6, Y, 4.4, 29.8, Y + 1.0, 6.2, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(28.2, Y, 6.6, 28.9, Y + 0.5, 7.3, 'wood', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 27.6, minY: Y, minZ: 4.4, maxX: 29.8, maxY: Y + 1.0, maxZ: 6.2, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeChair(this, { x: 28.55, y: Y, z: 6.95, mat: 'wood' });
     b.sbox(29.86, Y + 1.4, 6.8, 29.9, Y + 2.4, 9.0, 'woodDark', { collide: false });
     for (let z = 7.0; z < 8.9; z += 0.3) b.sbox(29.8, Y + 1.6, z, 29.84, Y + 2.1, z + 0.05, 'altarCloth', { collide: false }); // fitas
     this.sign('SÓ COM A FITA', 29.82, Y + 2.6, 7.9, -Math.PI / 2, 1.2, 0.2, { bg: '#2a2016', fg: '#c84030' });
-    b.sbox(28.6, Y, 10.0, 29.8, Y + 0.95, 11.2, 'woodDark', { tag: 'prop-low', sight: false }); // estante do livro de registros
+    placeBookcase(this, { minX: 28.6, minY: Y, minZ: 10.0, maxX: 29.8, maxY: Y + 0.95, maxZ: 11.2, mat: 'woodDark', tag: 'prop-low', sight: false });
   }
 
   // ---------- SALÃO NOBRE x6..30 z12..30, pé-direito 7 ----------
@@ -168,8 +169,8 @@ export class SedeLevel {
       b.sbox(6.16, Y + 2.8, z - 0.55, 6.2, Y + 4.2, z + 0.55, 'veil', { collide: false });
     }
     // bancos de espera e a tranca das portas de bronze (lado de dentro)
-    b.sbox(6.3, Y, 13.5, 7.3, Y + 0.5, 16, 'pew', { tag: 'prop-low', sight: false });
-    b.sbox(28.7, Y, 19, 29.7, Y + 0.5, 23, 'pew', { tag: 'prop-low', sight: false });
+    placeBench(this, { minX: 6.3, minY: Y, minZ: 13.5, maxX: 7.3, maxY: Y + 0.5, maxZ: 16, mat: 'pew', tag: 'prop-low', sight: false });
+    placeBench(this, { minX: 28.7, minY: Y, minZ: 19, maxX: 29.7, maxY: Y + 0.5, maxZ: 23, mat: 'pew', tag: 'prop-low', sight: false });
     this.mainBar = b.box(10.6, Y + 1.3, 12.12, 13.4, Y + 1.5, 12.3, 'woodDark', { collide: false });
     // painel do portão do arquivo: três discos de latão (esq. → dir.) e a alavanca
     this.sign('ARQUIVO — SÓ O ARQUIVISTA', 24, Y + 3.5, 29.88, Math.PI, 2.4, 0.28, { bg: '#2a2622', fg: '#c8b080' });
@@ -207,11 +208,11 @@ export class SedeLevel {
     b.wallZ(14, 30, 38, Y, Y + H_SEC, [], 'wall');
     b.wallX(38, 6, 14, Y, Y + H_SEC, [], 'wall');
     // mesas de datilografia, arquivos de aço e o regimento emoldurado na parede do fundo
-    b.sbox(11.6, Y, 33.2, 13.4, Y + 0.8, 35.0, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(7.0, Y, 33.6, 8.8, Y + 0.8, 35.2, 'woodDark', { tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 11.6, minY: Y, minZ: 33.2, maxX: 13.4, maxY: Y + 0.8, maxZ: 35.0, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 7.0, minY: Y, minZ: 33.6, maxX: 8.8, maxY: Y + 0.8, maxZ: 35.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     b.sbox(12.0, Y + 0.8, 33.5, 12.6, Y + 1.05, 34.0, 'metal', { collide: false }); // máquina de escrever
-    for (const x of [6.4, 7.4]) b.sbox(x, Y, 36.6, x + 0.9, Y + 1.9, 37.8, 'doorMetal', { tag: 'prop' });
-    b.sbox(12.4, Y, 36.8, 13.8, Y + 2.1, 37.8, 'woodDark', { tag: 'prop' });
+    for (const x of [6.4, 7.4]) placeFileCabinet(this, { minX: x, minY: Y, minZ: 36.6, maxX: x + 0.9, maxY: Y + 1.9, maxZ: 37.8, mat: 'doorMetal', face: '+z', tag: 'prop', sight: true });
+    placeBookcase(this, { minX: 12.4, minY: Y, minZ: 36.8, maxX: 13.8, maxY: Y + 2.1, maxZ: 37.8, mat: 'woodDark', tag: 'prop', sight: true });
     b.sbox(9.3, Y + 1.2, 37.86, 10.9, Y + 2.3, 37.9, 'woodDark', { collide: false });
     this.sign('REGIMENTO', 10.1, Y + 2.45, 37.88, Math.PI, 1.0, 0.16, { bg: '#2a2622', fg: '#c8b080' });
   }
@@ -240,16 +241,14 @@ export class SedeLevel {
     // estantes altas (tapam a visão), corredor central x 22.5..26.5, passagens em z 48.4..50
     for (const x of [17.6, 20.6, 28.4, 31.4]) {
       for (const [z0, z1] of [[43, 48.4], [50, 55.4]]) {
-        b.sbox(x - 0.4, Y, z0, x + 0.4, Y + 2.9, z1, 'woodDark', { tag: 'prop' });
-        for (let k = 0; k < 4; k++) b.sbox(x - 0.42, Y + 0.3 + k * 0.7, z0 + 0.1, x + 0.42, Y + 0.6 + k * 0.7, z1 - 0.1, k % 2 ? 'paper' : 'leather', { collide: false });
+        placeBookcase(this, { minX: x - 0.4, minY: Y, minZ: z0, maxX: x + 0.4, maxY: Y + 2.9, maxZ: z1, mat: 'woodDark', tag: 'prop', sight: true });
       }
     }
     // fichário de gavetas no fundo leste (letra V) e a mesa de leitura com o livro de registros
-    b.sbox(34.6, Y, 54.4, 35.8, Y + 1.6, 57.6, 'doorMetal', { tag: 'prop' });
-    for (let z = 54.6; z < 57.4; z += 0.45) b.sbox(34.56, Y + 0.3, z, 34.6, Y + 1.4, z + 0.35, 'brass', { collide: false });
+    placeFileCabinet(this, { minX: 34.6, minY: Y, minZ: 54.4, maxX: 35.8, maxY: Y + 1.6, maxZ: 57.6, mat: 'doorMetal', face: '-x', tag: 'prop', sight: true, drawers: 6 });
     this.sign('E — V', 34.55, Y + 1.8, 56, -Math.PI / 2, 0.8, 0.16, { bg: '#2a2622', fg: '#c8b080' });
-    b.sbox(15.0, Y, 41.0, 16.6, Y + 0.8, 42.4, 'woodDark', { tag: 'prop-low', sight: false });
-    b.sbox(26.4, Y, 44.0, 27.4, Y + 0.8, 45.2, 'woodDark', { tag: 'prop-low', sight: false }); // mesa de leitura do corredor
+    placeTable(this, { minX: 15.0, minY: Y, minZ: 41.0, maxX: 16.6, maxY: Y + 0.8, maxZ: 42.4, mat: 'woodDark', tag: 'prop-low', sight: false });
+    placeTable(this, { minX: 26.4, minY: Y, minZ: 44.0, maxX: 27.4, maxY: Y + 0.8, maxZ: 45.2, mat: 'woodDark', tag: 'prop-low', sight: false });
     // grade da cripta: barras (sobem com o sarilho) e o selo da chama
     this.grate = new THREE.Group(); this.grate.name = 'grade_cripta';
     for (let x = 24.1; x <= 25.95; x += 0.25) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.6, 0.05), this.M.rust); m.position.set(x + 0.025, Y + 1.3, 58.0); this.grate.add(m); }
@@ -305,11 +304,9 @@ export class SedeLevel {
       }
     }
     // altar ao norte, com a toalha vermelha e velas
-    b.sbox(22.4, Y, 87.6, 27.6, Y + 1.1, 89.4, 'stone', { tag: 'prop-low', sight: false });
-    b.sbox(22.3, Y + 1.1, 87.5, 27.7, Y + 1.14, 89.5, 'altarCloth', { collide: false });
+    placeAltar(this, { minX: 22.4, minY: Y, minZ: 87.6, maxX: 27.6, maxY: Y + 1.1, maxZ: 89.4, mat: 'stone', tag: 'prop-low', sight: false });
     for (const x of [22.8, 23.4, 26.6, 27.2]) b.sbox(x - 0.04, Y + 1.14, 89.0, x + 0.04, Y + 1.44, 89.08, 'candle', { collide: false });
-    b.sbox(24.2, Y + 1.14, 89.1, 25.8, Y + 3.2, 89.3, 'woodDark', { collide: false });             // cruz/retábulo
-    b.sbox(23.6, Y + 2.5, 89.1, 26.4, Y + 2.7, 89.3, 'woodDark', { collide: false });
+    placeCross(this, { x: 25.0, y: Y + 1.14 + 1.05, z: 89.2, scale: 3, mat: 'woodDark' });
     this.sign('IN CINERE VITA', 25, Y + 3.6, 89.85, Math.PI, 1.8, 0.24, { bg: '#2a1010', fg: '#d0a060' });
     // galeria das catacumbas (a saída rumo ao centro antigo)
     b.floor(36, 85, 40, 87, Y, 'stone', 'c3_gallery');
