@@ -23,10 +23,23 @@ export class Door {
     if (this.axis === 'x') this.pivot.position.x -= this.width / 2;
     else this.pivot.position.z -= this.width / 2;
     if (this.kind === 'sliding') this.pivot.position.copy(new THREE.Vector3(o.x, o.y, o.z)), this.panel.position.set(0, this.height / 2, 0);
-    // janelinha / maçaneta
-    const knob = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.16), ctx.materials.metal);
-    knob.position.set(this.axis === 'x' ? this.width - 0.18 : 0, 1.0, this.axis === 'x' ? 0 : this.width - 0.18);
-    if (this.kind !== 'sliding') this.pivot.add(knob);
+    // maçaneta de alavanca + placa e dobradiças (no painel, acompanham o movimento)
+    const metal = ctx.materials.metal || ctx.materials.steel;
+    if (this.kind !== 'sliding' && metal) {
+      const hx = this.width / 2 - 0.2, hy = 1.0 - this.height / 2, hz = th / 2 + 0.02;
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.012), metal);
+      plate.position.set(hx, hy, hz); this.panel.add(plate);
+      const stem = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.04), metal);
+      stem.position.set(hx, hy, hz + 0.02); this.panel.add(stem);
+      const lever = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.02), metal);
+      lever.position.set(hx - 0.05, hy, hz + 0.04); this.panel.add(lever);
+      for (const dy of [-this.height * 0.28, this.height * 0.22]) {
+        const hg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.08, 6), metal);
+        hg.rotation.x = Math.PI / 2;
+        hg.position.set(-(this.width / 2) + 0.02, dy, 0);
+        this.panel.add(hg);
+      }
+    }
     this.pivot.add(this.panel);
     ctx.group.add(this.pivot);
     this.collider = ctx.col.addBox(0, 0, 0, 0, 0, 0, { tag: 'door', ref: this });

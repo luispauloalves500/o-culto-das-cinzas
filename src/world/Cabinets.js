@@ -3,6 +3,7 @@
 // procedurais na face frontal giram na dobradiça (estilo armário médico/hospitalar).
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const ARMARIO_URL = './models/armario.glb';
 /** tamanho nativo do mesh otimizado (m) */
@@ -25,6 +26,22 @@ export function preloadCabinets() { if (cabinetsEnabled()) loadCabinetModel().ca
 
 const FACE_YAW = { '+z': 0, '-z': Math.PI, '+x': Math.PI / 2, '-x': -Math.PI / 2 };
 
+function bake(parts, mat, shadow = true) {
+  const geos = [];
+  for (const p of parts) {
+    p.updateMatrix();
+    const g = p.geometry.clone();
+    g.applyMatrix4(p.matrix);
+    geos.push(g);
+  }
+  const geo = mergeGeometries(geos, false);
+  for (const g of geos) g.dispose();
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = shadow;
+  return m;
+}
+
+
 /**
  * Armário: AABB do cenário + face das portas ('+x'|'-x'|'+z'|'-z').
  * Colisão = caixa fechada (sempre). Abrir/fechar: portas gêmeas ~110° na dobradiça.
@@ -45,28 +62,58 @@ export class Cabinet {
     this.root.rotation.y = FACE_YAW[this.face] ?? 0;
     this.orient = new THREE.Group(); this.root.add(this.orient);
 
-    // interior escuro (visível com as portas abertas)
-    const inn = new THREE.Mesh(new THREE.BoxGeometry(this.frontW * 0.92, this.height * 0.92, this.depth * 0.85),
-      new THREE.MeshLambertMaterial({ color: 0x0c0e10 }));
-    inn.position.z = -this.depth * 0.02; inn.castShadow = false; this.orient.add(inn);
-    for (const y of [-0.15, 0.2].map((f) => f * this.height)) {
-      const sh = new THREE.Mesh(new THREE.BoxGeometry(this.frontW * 0.88, 0.025, this.depth * 0.7),
-        new THREE.MeshLambertMaterial({ color: 0x1a1e22 }));
-      sh.position.set(0, y, -this.depth * 0.05); this.orient.add(sh);
+    // interior escuro + prateleiras e conteúdo (uma malha só, para não inflar draw calls)
+    const innMat = new THREE.MeshLambertMaterial({ color: 0x0c0e10 });
+    const shelfMat = ctx.materials?.steelDark || ctx.materials?.metal || innMat;
+    const innParts = [];
+    const inn = new THREE.Mesh(new THREE.BoxGeometry(this.frontW * 0.92, this.height * 0.92, this.depth * 0.85), innMat);
+    inn.position.z = -this.depth * 0.02; innParts.push(inn);
+    const shelfYs = [-0.28, -0.02, 0.24].map((f) => f * this.height);
+    for (const y of shelfYs) {
+      const sh = new THREE.Mesh(new THREE.BoxGeometry(this.frontW * 0.88, 0.025, this.depth * 0.7), shelfMat);
+      sh.position.set(0, y, -this.depth * 0.05); innParts.push(sh);
     }
+    // itens nas prateleiras (lençóis, caixas, frascos) — variação barata por id
+    const seed = Math.abs(Math.sin((o.id || '').length * 12.9 + this.cx * 7.1) * 43758.5);
+    const itemMats = [ctx.materials?.sheet, ctx.materials?.leather, ctx.materials?.paper, ctx.materials?.steel].filter(Boolean);
+    if (itemMats.length) {
+      for (let i = 0; i < 5; i++) {
+        const sh = shelfYs[i % shelfYs.length];
+        const ix = ((i * 0.31 + seed) % 1 - 0.5) * this.frontW * 0.55;
+        const iz = -this.depth * (0.1 + (i % 3) * 0.08);
+        const it = new THREE.Mesh(new THREE.BoxGeometry(0.1 + (i % 2) * 0.06, 0.08 + (i % 3) * 0.05, 0.08), itemMats[i % itemMats.length]);
+        it.position.set(ix, sh + 0.06, iz); innParts.push(it);
+      }
+    }
+    const cavity = innParts.shift();
+    this.orient.add(cavity);
+    this.orient.add(bake(innParts, shelfMat, false));
 
-    // portas gêmeas (procedurais) na face +Z local
+    // portas gêmeas (procedurais) na face +Z local: painel com fresta, puxador e dobradiças, fundidos
     const doorMat = ctx.materials?.metal || ctx.materials?.steelDark || new THREE.MeshStandardMaterial({ color: 0x6a7278, metalness: 0.7, roughness: 0.4 });
-    const dW = this.frontW * 0.495, dH = this.height * 0.96, dT = 0.028;
+    const steel = ctx.materials?.steel || doorMat;
+    const dW = this.frontW * 0.488, dH = this.height * 0.96, dT = 0.028;
     const zFront = this.depth / 2 + 0.01;
     this.doors = [-1, 1].map((side) => {
       const pivot = new THREE.Group();
       pivot.position.set(side * this.frontW * 0.5, 0, zFront);
+      const parts = [];
       const panel = new THREE.Mesh(new THREE.BoxGeometry(dW, dH, dT), doorMat);
-      panel.position.set(-side * dW / 2, 0, dT / 2); panel.castShadow = true;
-      const knob = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.05), ctx.materials?.steel || doorMat);
-      knob.position.set(-side * 0.08, 0, dT + 0.02); panel.add(knob);
-      pivot.add(panel); this.orient.add(pivot);
+      panel.position.set(-side * dW / 2, 0, dT / 2); parts.push(panel);
+      const inset = new THREE.Mesh(new THREE.BoxGeometry(dW * 0.78, dH * 0.72, 0.012), doorMat);
+      inset.position.set(-side * dW / 2, 0.02, dT + 0.004); parts.push(inset);
+      // puxador em barra vertical + placa
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.16, 0.01), steel);
+      plate.position.set(-side * 0.09, 0, dT + 0.02); parts.push(plate);
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.14, 6), steel);
+      bar.position.set(-side * 0.09, 0, dT + 0.04); parts.push(bar);
+      // dobradiças no eixo (x local ≈ 0)
+      for (const hy of [-dH * 0.32, dH * 0.32]) {
+        const hg = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.07, 6), steel);
+        hg.rotation.z = Math.PI / 2; hg.position.set(-side * 0.01, hy, dT / 2); parts.push(hg);
+      }
+      pivot.add(bake(parts, doorMat, true));
+      this.orient.add(pivot);
       return { pivot, side, base: 0 };
     });
 
