@@ -16,6 +16,7 @@ import { Perf, LIGHT_BUDGETS, DRAW_DIST } from './Perf.js';
 import { setSurfaceDetail, detailForGfx, textureBytes } from '../world/Textures.js';
 import { setPropDetail, propDetailFor, applyPropLod } from '../world/Props.js';
 import { setFireQuality, fireQualityFor, updateAllFires } from './FireFX.js';
+import { Atmosphere, atmoQualityFor } from './Atmosphere.js';
 
 export const GFX_KEYS = ['renderScale', 'shadows', 'particles', 'bloom', 'postfx', 'antialias', 'lightBudget', 'drawDist'];
 export const GFX_PRESETS = {
@@ -34,9 +35,9 @@ export const SHADOW_LEVELS = {
 };
 // partículas: multiplicador de emissão, tamanho do pool, poeira/cinza no ar e poças de sangue sob os corpos
 export const PARTICLE_LEVELS = {
-  baixa: { mult: 0.5, pool: 120, dust: 0, pools: false },
-  media: { mult: 1, pool: 200, dust: 160, pools: true },
-  alta: { mult: 1.6, pool: 360, dust: 380, pools: true },
+  baixa: { mult: 0.5, pool: 120, dust: 0, pools: false, decals: 0, casings: 0, sprays: 0 },
+  media: { mult: 1, pool: 200, dust: 160, pools: true, decals: 16, casings: 8, sprays: 8 },
+  alta: { mult: 1.6, pool: 360, dust: 380, pools: true, decals: 24, casings: 12, sprays: 12 },
 };
 // cor da poeira por capítulo: pó de hospital, fuligem, incenso, cinza da cidade, gotas, pó de museu, cal, cinza
 const DUST = { 1: 0xb8b2a0, 2: 0x6a5a50, 3: 0xc8a878, 4: 0x9a9a98, 5: 0x8aa0a0, 6: 0xc0b8a0, 7: 0xd8d4c8, 8: 0xff9a5a };
@@ -86,6 +87,7 @@ export class Graphics {
     this.game = game; this.renderer = game.renderer;
     this.stats = { renders: 0, composerRenders: 0, shadowCasters: 0, worldCasters: 0, dust: 0, aniso: 1, reselects: 0 };
     this.dust = null; this.t = 0; this._pickT = 0;
+    this.atmo = new Atmosphere(game);
     this.maxAniso = this.renderer.capabilities?.getMaxAnisotropy?.() || 1;
     this.perf = new Perf(game);
     this.apply();
@@ -109,6 +111,7 @@ export class Graphics {
     // partículas
     this.game.combat?.setQuality?.(c.part);
     this._buildDust();
+    this.atmo?.setQuality?.(atmoQualityFor(c));
     // texturas (anisotropia + detalhe/bump por predefinição; o mapa em si não muda de resolução)
     this._applyAniso();
     if (this.game.materials) setSurfaceDetail(this.game.materials, detailForGfx(c));
@@ -262,6 +265,7 @@ export class Graphics {
     this._pickT -= dt;
     if (this._pickT <= 0) { this._pickT = 0.4; if (this.current.shadow.lights) this._applyShadowLights(); }
     this._updateDust(dt);
+    this.atmo?.update(dt, this.t);
     updateAllFires(dt, this.t, this.game.camera);
   }
 
@@ -282,7 +286,8 @@ export class Graphics {
       particles: c.particles, pool: this.game.combat?.maxP ?? null, bloom: !!this.bloom, grade: !!this.grade, fxaa: !!this.fxaa, composer: !!this.composer,
       size: this.renderer.getSize(new THREE.Vector2()).toArray(), lightBudget: c.lightBudget, drawDist: c.drawDist, ...this.stats, perf: this.perf.debug(),
       texBytes: textureBytes(this.game.materials?.textures) | 0,
-      detail: detailForGfx(c), fireQ: fireQualityFor(c),
+      detail: detailForGfx(c), fireQ: fireQualityFor(c), atmoQ: atmoQualityFor(c),
+      atmo: this.atmo?.debug?.(), combatFx: this.game.combat?.fxDebug?.(),
       draws: this.renderer.info?.render?.calls ?? 0 };
   }
 }
