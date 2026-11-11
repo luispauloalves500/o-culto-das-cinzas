@@ -7,6 +7,7 @@ import puppeteer from 'puppeteer-core';
 import { runC6 } from './c6.mjs';
 import { runC7 } from './c7.mjs';
 import { runC8 } from './c8.mjs';
+import { waitWorld } from './waitWorld.mjs';
 
 const PORT = 4179;
 const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome';
@@ -28,23 +29,46 @@ const browser = await puppeteer.launch({
   args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--window-size=1280,720', '--autoplay-policy=no-user-gesture-required'],
 });
 const errors = [];
+const jsRes = [];
 try {
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 720 });
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('response', (r) => { if (r.status() >= 400) errors.push('HTTP ' + r.status() + ' ' + r.url()); });
+  page.on('response', (r) => {
+    if (r.status() >= 400) errors.push('HTTP ' + r.status() + ' ' + r.url());
+    const u = r.url();
+    if (u.includes('/assets/') && (u.endsWith('.js') || u.includes('.js?'))) jsRes.push({ url: u.split('/').pop().split('?')[0], status: r.status() });
+  });
   await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle0' });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle0' });
   check('menu visível', await page.$eval('#menu', (e) => !e.classList.contains('hidden')));
   check('"Continuar" oculto sem save', await page.$eval('#btnContinue', (e) => e.classList.contains('hidden')));
+  const boot = await page.evaluate(() => ({
+    ms: window.__ocdcMenuMs,
+    loading: !!document.getElementById('loadBar') && !!document.getElementById('loadTip'),
+    subs: !!document.getElementById('optSubs') && !!document.getElementById('optSubSize') && !!document.getElementById('optSubBg'),
+    saves: !!document.getElementById('savesList') && !!document.getElementById('btnLoad'),
+  }));
+  check('Carregamento (pt63u): tela #loading com barra e dica; opções de legendas e tela de saves no DOM', boot.loading && boot.subs && boot.saves, JSON.stringify(boot));
+  check('Carregamento (pt63u): tempo até o menu medido', boot.ms > 0 && boot.ms < 20000, Math.round(boot.ms) + ' ms');
+  const nav = await page.evaluate(() => {
+    const g = __ocdc; g.menuNav.refresh();
+    const first = g.menuNav.items[g.menuNav.i]?.id;
+    g.input.pressed.add('ArrowDown');
+    g.menuNav.handle(g.input);
+    g.input.endFrame();
+    return { first, next: g.menuNav.items[g.menuNav.i]?.id, focus: document.querySelector('.nav-focus')?.id };
+  });
+  check('Navegação (pt63u): setas movem o foco visível no menu principal', nav.first === 'btnNew' && nav.next === 'btnOptions' && nav.focus === 'btnOptions', JSON.stringify(nav));
   await page.screenshot({ path: SHOTS + '01-menu.png' });
 
   await page.click('#btnNew');
   await new Promise((r) => setTimeout(r, 1500));
+  await waitWorld(page);
   // --- pt47u: abertura cinematográfica do Cap. 1 (cartela + 2 planos, tarjas, fade) e pular com E
-  const intro1 = await page.evaluate(() => {
+  const intro1 = await page.evaluate(async () => {
     const g = __ocdc, c = g.cutscene, $ = (id) => document.getElementById(id);
     const out = { st: g.state, id: c?.id, shots: c?.shots.length, title: $('csTitle').textContent, titleOn: $('csTitle').classList.contains('show'), bars: $('cutscene').classList.contains('on'), hud: $('hud').classList.contains('hidden') };
     const p0 = g.player.pos.toArray();
@@ -61,14 +85,19 @@ try {
   check('Cenas: fade em corte + legenda do Elias; E pula e devolve o controle', intro1.i0 === 0 && intro1.i1 === 1 && /Elias:/.test(intro1.cap) && intro1.after === 'playing' && intro1.skipped && !intro1.cs && intro1.fadeEnd === 0 && intro1.hidden, JSON.stringify(intro1));
   const st = await page.evaluate(() => ({ state: __ocdc.state, pos: __ocdc.player.pos.toArray(), hud: !document.getElementById('hud').classList.contains('hidden') }));
   check('novo jogo iniciado', st.state === 'playing' && st.hud, JSON.stringify(st));
-  const mus0 = await page.evaluate(() => { const c = __ocdc.syncMusic(); return { key: c?.key, ctx: __ocdc.audio.ctx?.state, dir: !!__ocdc.audio.director }; });
+  const mus0 = await page.evaluate(async () => { const c = __ocdc.syncMusic(); return { key: c?.key, ctx: __ocdc.audio.ctx?.state, dir: !!__ocdc.audio.director }; });
   check('Trilha: Cap. 1 começa no tema de exploração do hospital (caixinha de música em Ré eólio)', mus0.key === 'explore:c1' && mus0.ctx === 'running' && mus0.dir, JSON.stringify(mus0));
   const musKeys = [];
   check('autosave inicial criado', await page.evaluate(() => !!localStorage.getItem('ocdc_save')));
+  const slots0 = await page.evaluate(() => {
+    const idx = JSON.parse(localStorage.getItem('ocdc_slots_v1') || 'null');
+    return { auto: idx?.auto?.save?.checkpoint, migrated: !!idx?.migrated, n: [idx?.auto, idx?.slots?.[1], idx?.slots?.[2], idx?.slots?.[3]].filter((s) => s?.save).length };
+  });
+  check('Slots (pt63u): salvamento automático criado (espelho de ocdc_save)', slots0.auto === 'ward_bed' && slots0.migrated, JSON.stringify(slots0));
   await page.screenshot({ path: SHOTS + '02-enfermaria.png' });
 
   // utilitários executados no contexto da página (reinjetados após reload)
-  const inject = () => page.evaluate(() => {
+  const inject = () => page.evaluate(async () => {
     const g = window.__ocdc;
     window.T = {
       run(sec) { for (let i = 0; i < sec * 60; i++) { g.step(1 / 60); g._updateCamera(1 / 60); } },
@@ -94,7 +123,7 @@ try {
   await inject();
 
   // --- pt46u: opções gráficas reais (predefinições aplicadas no renderer, salvas) e despawn de corpos
-  const gfx = await page.evaluate(() => {
+  const gfx = await page.evaluate(async () => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
     const D = () => g.gfx.debug();
     const geom = () => { let meshes = 0, tris = 0, batches = 0, batched = 0; g.scene.traverse((o) => { if (!o.isMesh) return; meshes++; const ix = o.geometry.index; tris += ((ix ? ix.count : o.geometry.attributes.position?.count || 0) / 3) | 0; if (o.name === 'staticBatch') { batches++; batched += o.userData.staticBatch || 0; } }); return { meshes, tris, batches, batched }; };
@@ -172,7 +201,7 @@ try {
   check('Armários GLB (pt56u/pt57u): modelo no cenário, portas gêmeas abrem ~110° e interação E registrada',
     cab.n >= 6 && cab.body && cab.opened && cab.ang > 1.5 && cab.interact, JSON.stringify(cab));
 
-  const texfx = await page.evaluate(() => {
+  const texfx = await page.evaluate(async () => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
     const T = g.materials.textures;
     out.tileW = T.tile.image.width; out.wallW = T.wall.image.width; out.ceilingW = T.ceiling.image.width;
@@ -237,7 +266,7 @@ try {
   check('Inimigos GLB (pt55u): ataque no esqueleto (clipe de golpe pela fase do ataque) e enfermeiro com faca presa ao osso RightHand',
     /^Pose_atk_/.test(eglb.atkClip || '') && eglb.atkT > 1 && eglb.atkT < 2 && eglb.knife && eglb.enfAtk === 'Pose_atk_stab', JSON.stringify({ c: eglb.atkClip, t: eglb.atkT, k: eglb.knife, e: eglb.enfAtk }));
   // pt48u: otimizações que não mexem nas texturas
-  const perf = await page.evaluate(() => {
+  const perf = await page.evaluate(async () => {
     const g = __ocdc, $ = (id) => document.getElementById(id), out = {};
     const set = (id, v) => { const e = $(id); if (e.type === 'checkbox') e.checked = v; else e.value = v; e.dispatchEvent(new Event('change')); for (let i = 0; i < 3; i++) g.step(1 / 60); g.gfx.render(g.scene, g.camera); };
     const texSig = () => { const m = new Map(); g.scene.traverse((o) => { if (o.isMesh && o.material?.map?.image) { const t = o.material.map; m.set(t.uuid, [t.image.width, t.image.height, t.anisotropy, t.minFilter, t.magFilter].join('x')); } }); return m; };
@@ -265,7 +294,7 @@ try {
   check('Desempenho: luzes por quadro (4), distância de desenho (máx 90 m / automática pela névoa), limite de FPS e economia em menus salvos; texturas iguais em todas as trocas',
     perf.p4.proxies === 4 && perf.p4.lightsUsed <= 4 && perf.preset4 === 'custom' && perf.farMax === 90 && perf.farAuto >= 35 && perf.farAuto <= 90 && (perf.fog == null || perf.farAuto <= 90)
     && perf.saved.lightBudget === 4 && perf.saved.drawDist === 'auto' && perf.saved.fpsCap === 30 && perf.saved.ecoMenus === false && perf.texSame && perf.texN > 0, JSON.stringify({ p4: perf.p4, farMax: perf.farMax, farAuto: perf.farAuto, saved: perf.saved, texSame: perf.texSame, texN: perf.texN }));
-  const corpse = await page.evaluate(() => {
+  const corpse = await page.evaluate(async () => {
     const g = __ocdc, proto = g.enemies[0], kills = g.player.stats.kills, out = { ct: g.settings.get('corpseTime') };
     const pp = document.getElementById('optParticles'); pp.value = 'media'; pp.dispatchEvent(new Event('change')); // poças só a partir de "Média"
     out.poolsOn = g.combat.pools;
@@ -284,13 +313,13 @@ try {
   });
   check('Despawn: corpo fica no chão com poça de sangue até corpseTime (20 s), afunda em cinza e sai da cena', corpse.ct === 20 && corpse.poolsOn && corpse.dead && corpse.pool && corpse.before.inScene && !corpse.before.despawned && corpse.sinking.y < 0 && corpse.sinking.sc < 1 && !corpse.after.inScene && corpse.after.despawned && !corpse.after.pool, JSON.stringify(corpse));
 
-  const locks0 = await page.evaluate(() => { const D = __ocdc.level.doors; return { east: D.eastWard.locked, morgue: D.morgue.locked, cold: D.coldRoom.locked, landing: D.eastLanding.locked }; });
+  const locks0 = await page.evaluate(async () => { const D = __ocdc.level.doors; return { east: D.eastWard.locked, morgue: D.morgue.locked, cold: D.coldRoom.locked, landing: D.eastLanding.locked }; });
   check('Ala Leste, necrotério e câmara fria começam trancados', locks0.east && locks0.morgue && locks0.cold && locks0.landing, JSON.stringify(locks0));
   // --- Colisão: andar contra a parede oeste da enfermaria
-  const col = await page.evaluate(() => { const g = __ocdc; T.tp(0.8, 0, 6, -Math.PI / 2); g.cameraCtl.yaw = -Math.PI / 2; T.hold('KeyW', 2); return g.player.pos.x; });
+  const col = await page.evaluate(async () => { const g = __ocdc; T.tp(0.8, 0, 6, -Math.PI / 2); g.cameraCtl.yaw = -Math.PI / 2; T.hold('KeyW', 2); return g.player.pos.x; });
   check('colisão com parede (x ≥ raio)', col >= 0.3 && col < 0.6, 'x=' + col.toFixed(3));
   // --- Porta fechada bloqueia; aberta deixa passar
-  const door = await page.evaluate(() => {
+  const door = await page.evaluate(async () => {
     const g = __ocdc; T.tp(6, 0, 8.6, 0); g.cameraCtl.yaw = 0; T.hold('KeyW', 1.5);
     const blocked = g.player.pos.z;
     T.tp(6, 0, 8.6, 0); const r = T.interactAt('door_ward'); T.run(0.7);
@@ -301,7 +330,7 @@ try {
   check('porta aberta permite passagem', door.open && door.after > 10.3, JSON.stringify(door));
   // --- Elias REV6 (GLB) antes da coleta: carregado, sem machado visível, machado do cenário é a malha real
   await page.waitForFunction(() => __ocdc.player.model.ready || __ocdc.player.model.failed, { timeout: 30000 }).catch(() => {});
-  const rev0 = await page.evaluate(() => {
+  const rev0 = await page.evaluate(async () => {
     const g = __ocdc, M = g.player.model, w = g.level.pickupMeshes.axe;
     return { ready: M.ready, failed: M.failed, inScene: !!M.root?.parent && M.root.parent === g.player.rig.body,
       axeVisible: !!M.axe?.visible, possui: M.sistema?.possuiMachado, procHidden: g.player._procMeshes.every((m) => !m.visible),
@@ -310,12 +339,12 @@ try {
   });
   check('Elias REV6 (GLB) carregado no lugar do boneco procedural', rev0.ready && rev0.inScene && rev0.procHidden && rev0.bones, JSON.stringify(rev0));
   check('REV6: começa sem machado visível; machado do cenário é a malha real com marcador', !rev0.axeVisible && rev0.possui === false && rev0.worldReal && rev0.marker && rev0.itemId === 'machado_enferrujado', JSON.stringify(rev0));
-  const far = await page.evaluate(() => { const g = __ocdc; T.tp(4.1, 0, 7.3, 0); return { ok: g.player.coletarMachado(g.level.pickupMeshes.axe), vis: g.level.pickupMeshes.axe.visible }; });
+  const far = await page.evaluate(async () => { const g = __ocdc; T.tp(4.1, 0, 7.3, 0); return { ok: g.player.coletarMachado(g.level.pickupMeshes.axe), vis: g.level.pickupMeshes.axe.visible }; });
   check('REV6: coleta recusada a mais de 1,5 m', far.ok === false && far.vis, JSON.stringify(far));
   // --- Machado
-  const axe = await page.evaluate(() => { const g = __ocdc; T.tp(4.1, 0, 8.7, 0); const r = T.interactAt('pick_axe'); return { r, w: !!g.player.weapon, flag: g.quest.has('hasAxe') }; });
+  const axe = await page.evaluate(async () => { const g = __ocdc; T.tp(4.1, 0, 8.7, 0); const r = T.interactAt('pick_axe'); return { r, w: !!g.player.weapon, flag: g.quest.has('hasAxe') }; });
   check('machado coletado e equipado', axe.w && axe.flag, JSON.stringify(axe));
-  const rev1 = await page.evaluate(() => {
+  const rev1 = await page.evaluate(async () => {
     const g = __ocdc, M = g.player.model; T.run(0.3);
     const idle = M.sistema.atual?.getClip().name;
     g.player.vel?.set?.(0, 0, 0); T.hold('KeyW', 0.6); const walk = M.sistema.atual?.getClip().name;
@@ -326,7 +355,7 @@ try {
   check('REV6: clipes _Machado com o machado (idle e Walking)', /_Machado$/.test(rev1.idle || '') && rev1.walk === 'Walking_Machado', JSON.stringify({ idle: rev1.idle, walk: rev1.walk }));
   await page.screenshot({ path: SHOTS + '02b-elias-machado.png' });
   // golpe: clipe do REV6 posicionado pela janela do golpe; a ponta da lâmina (hitbox) se move com o clipe
-  const swing = await page.evaluate(() => {
+  const swing = await page.evaluate(async () => {
     const g = __ocdc, P = g.player, M = P.model; T.run(0.5);
     T.press('Mouse0'); let clip = null; const tips = [];
     for (let i = 0; i < 24; i++) { T.run(1 / 60); if (!clip) clip = M.sistema.atual?.getClip().name; tips.push(P.models.machado.tip.getWorldPosition(P.pos.clone()).y); }
@@ -335,7 +364,7 @@ try {
   });
   check('REV6: golpe usa clipe de ataque _Machado e move a lâmina (hitbox real)', /Attack_Machado$/.test(swing.clip || '') && swing.dy > 0.3, JSON.stringify(swing));
   // animações do Elias: combo de 3 golpes (Triple_Combo_Attack), esquiva (Basic_Jump), cura com máscara em fade, pesos do mixer ≈ 1
-  const anim = await page.evaluate(() => {
+  const anim = await page.evaluate(async () => {
     const g = __ocdc, P = g.player, M = P.model, out = { w: [9, 0] };
     const W = () => { const v = M.sistema.pesoTotal(); out.w[0] = Math.min(out.w[0], v); out.w[1] = Math.max(out.w[1], v); };
     T.run(1); P.st = P.maxSt ?? 100; const anims = [];
@@ -353,7 +382,7 @@ try {
   check('Elias: combo do machado vai ao 3º golpe (Triple_Combo_Attack) e esquiva usa Basic_Jump rente ao chão', anim.anims.slice(0, 3).join() === 'light1,light2,light3' && anim.dodge && anim.hipRise < 0.45, JSON.stringify(anim));
   check('Elias: cura com máscara procedural em fade e pesos do mixer somando ≈ 1 (sem T-pose)', anim.heal && anim.maskRamp && anim.w[0] > 0.98 && anim.w[1] < 1.02, JSON.stringify({ m: anim.mw0, w: anim.w }));
   // --- Combate: matar o Interno do corredor com golpes reais (hitbox varrida)
-  const fight = await page.evaluate(() => {
+  const fight = await page.evaluate(async () => {
     const g = __ocdc; const e = g.enemies.find((x) => x.id === 'int_cor');
     g.player.hp = 100;
     T.tp(e.pos.x - 1.3, 0, e.pos.z, Math.PI / 2); g.cameraCtl.yaw = Math.PI / 2;
@@ -368,7 +397,7 @@ try {
   });
   check('Interno morto por golpes do machado', !fight.alive && fight.kills >= 1, JSON.stringify(fight));
   // outra arma: malha procedural no socket da mão do GLB, machado oculto, dedos fechados (_Machado)
-  const swap = await page.evaluate(() => {
+  const swap = await page.evaluate(async () => {
     const g = __ocdc, P = g.player, M = P.model; P.setWeapon('martelo'); T.run(0.2);
     const r = { parent: P.models.martelo.group.parent?.name, vis: P.models.martelo.group.visible, axe: M.axe.visible, clip: M.sistema.atual?.getClip().name };
     P.setWeapon('machado'); T.run(0.2); r.back = M.axe.visible; return r;
@@ -376,7 +405,7 @@ try {
   check('REV6: martelo/facão/lança/revólver presos ao socket da mão do GLB', swap.parent === 'SocketArmasProcedurais' && swap.vis && !swap.axe && swap.back, JSON.stringify(swap));
   await page.screenshot({ path: SHOTS + '03-corredor.png' });
   // --- Enfermeiro: percepção (vê o jogador) e morte
-  const nurse = await page.evaluate(() => {
+  const nurse = await page.evaluate(async () => {
     const g = __ocdc; const e = g.enemies.find((x) => x.id === 'enf_lh');
     // posiciona diante dele no subsolo
     T.tp(e.pos.x + Math.sin(e.yaw) * 4, -5, e.pos.z + Math.cos(e.yaw) * 4, e.yaw + Math.PI);
@@ -394,7 +423,7 @@ try {
   check('Enfermeiro percebe o jogador', ['chase', 'attack', 'investigate'].includes(nurse.sawState), nurse.sawState);
   check('Enfermeiro morto', !nurse.alive, JSON.stringify(nurse));
   // --- Quebra-cabeça elétrico
-  const puzzle = await page.evaluate(() => {
+  const puzzle = await page.evaluate(async () => {
     const g = __ocdc; const out = {};
     g.enemies.forEach((e) => { if (e.alive && e.pos.y > -1 && !e.id.endsWith('_east') && e.pos.y < 3 && e.id !== 'int_chapel') e.setDeadInstant(); });
     T.tp(19, 0, 20.3, 0); out.fuse = T.interactAt('pick_fuse');
@@ -409,7 +438,7 @@ try {
   check('ordem errada reinicia disjuntores', puzzle.afterWrong === 0, JSON.stringify(puzzle));
   check('energia restaurada (fusível + II→III→I + alavanca)', puzzle.power, JSON.stringify(puzzle));
   // --- Elevador
-  const elev = await page.evaluate(() => {
+  const elev = await page.evaluate(async () => {
     const g = __ocdc; const E = g.level.elevator;
     T.tp(38.6, 0, 12.6, Math.PI / 2); const c = T.interactAt('call_upper'); T.run(1);
     const openU = g.level.doors.elevUp.open;
@@ -419,7 +448,7 @@ try {
   });
   check('elevador desce ao subsolo com o jogador', elev.level === 'lower' && elev.py < -4.5 && elev.lower, JSON.stringify(elev));
   // --- Atalho: subir a escada e destrancar a porta lateral
-  const sc = await page.evaluate(() => {
+  const sc = await page.evaluate(async () => {
     const g = __ocdc; T.tp(14, -5, 11.5, Math.PI); g.cameraCtl.yaw = Math.PI; T.hold('KeyW', 6);
     const yTop = g.player.pos.y; const z = g.player.pos.z;
     T.tp(12.8, 0, -1.5, -Math.PI / 2); const r = T.interactAt('door_shortcut');
@@ -428,7 +457,7 @@ try {
   check('escada sobe ao térreo', sc.yTop > -0.2, JSON.stringify(sc));
   check('atalho destrancado por dentro', sc.unlocked && sc.open, JSON.stringify(sc));
   // --- Ala Leste: porta liberada pela energia, atalho para o patamar, chave e prontuário
-  const east = await page.evaluate(() => {
+  const east = await page.evaluate(async () => {
     const g = __ocdc, D = g.level.doors, out = {};
     out.unlockedByPower = !D.eastWard.locked;
     T.tp(24, 0, 11.3, Math.PI); out.door = T.interactAt('door_eastWard'); T.run(0.8);
@@ -452,7 +481,7 @@ try {
   check('prontuário lido e livro de registro da Ala Leste', east.chart && east.cp === 'east_ward', JSON.stringify(east));
   await page.screenshot({ path: SHOTS + '05-ala-leste.png' });
   // --- Necrotério: chave, gavetas, Rastejador, câmara fria secreta
-  const morgue = await page.evaluate(() => {
+  const morgue = await page.evaluate(async () => {
     const g = __ocdc, D = g.level.doors, out = {};
     g.player.hp = 100;
     T.tp(20, -5, 11.3, Math.PI); out.door = T.interactAt('door_morgue'); T.run(0.8);
@@ -505,7 +534,7 @@ try {
   check('portas e gavetas do necrotério persistem no save', morgue.saved.cold?.open && morgue.saved.morgue?.open && morgue.saved.d13, JSON.stringify(morgue.saved));
   await page.screenshot({ path: SHOTS + '06-necroterio.png' });
   // --- Lavanderia, incinerador, escada de serviço, administração, capela, mapa
-  const annex = await page.evaluate(() => {
+  const annex = await page.evaluate(async () => {
     const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id);
     const LO = -5, UP2 = 4;
     g.player.hp = 100;
@@ -578,10 +607,10 @@ try {
   check('estado dos anexos persiste no save', annex.saved.ss && annex.saved.ch && annex.saved.relic && annex.saved.hpUp && annex.saved.off && annex.saved.seen >= 10, JSON.stringify(annex.saved));
   check('mapa (M) mostra cômodos por andar', annex.mapState === 'map' && annex.map1?.rooms >= 5 && annex.mapFloor === 'up2' && annex.map3?.rooms >= 4 && annex.map0?.rooms >= 6, JSON.stringify({ m1: annex.map1, m3: annex.map3, m0: annex.map0 }));
   await page.screenshot({ path: SHOTS + '07-mapa.png' });
-  await page.evaluate(() => { T.key('KeyM'); });
+  await page.evaluate(async () => { T.key('KeyM'); });
   check('mapa fecha com M', await page.evaluate(() => __ocdc.state === 'playing'));
   // --- Ala cirúrgica superior, telhado, martelo, parede do expurgo e cilindros de oxigênio
-  const wing = await page.evaluate(() => {
+  const wing = await page.evaluate(async () => {
     const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id), q = g.quest;
     const UP2 = 4, ROOF = 7.3;
     g.player.hp = g.player.maxHp;
@@ -670,7 +699,7 @@ try {
   check('mapa: aba Telhado', wing.mapRoof === 'roof' && wing.mapRoofRooms >= 2, JSON.stringify({ f: wing.mapRoof, n: wing.mapRoofRooms }));
   await page.screenshot({ path: SHOTS + '08-ala-cirurgica.png' });
   // --- 3º andar: ala pediátrica (facão, revólver, Quarto 7, caixinha de música, escada de incêndio)
-  const peds = await page.evaluate(() => {
+  const peds = await page.evaluate(async () => {
     const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id);
     const ROOF = 7.3, UP2 = 4, PI = Math.PI;
     const PEDS = ['enf_ped', 'int_brinq', 'ras_berc', 'int_seg'];
@@ -830,7 +859,7 @@ try {
   check('mapa do 3º andar mostra a pediatria', peds.mapRooms >= 6, String(peds.mapRooms));
   await page.screenshot({ path: SHOTS + '09-pediatria.png' });
   // --- Maternidade (2º andar), lança improvisada, arquivo morto (subsolo) e sala de batismo (segredo)
-  const mat = await page.evaluate(() => {
+  const mat = await page.evaluate(async () => {
     const g = __ocdc, D = g.level.doors, out = {}, E = (id) => g.enemies.find((e) => e.id === id);
     const ROOF = 7.3, UP2 = 4, LO = -5, PI = Math.PI;
     const MAT = ['enf_mat', 'int_parto', 'ras_aloj', 'int_morto', 'ras_morto'];
@@ -924,7 +953,7 @@ try {
     return out;
   });
   await page.screenshot({ path: SHOTS + '11-revelacao.png' });
-  Object.assign(mat, await page.evaluate(() => {
+  Object.assign(mat, await page.evaluate(async () => {
     const g = __ocdc, LO = -5, out = {};
     out.csStill = g.state === 'cutscene';
     T.press('KeyE'); out.afterSkip = g.state; out.readingDoc = document.getElementById('reader') && !document.getElementById('reader').classList.contains('hidden');
@@ -957,11 +986,11 @@ try {
   check('revelação RN 0: dente + pulseira na cinza abrem a cena (HUD oculto, câmera própria, falas)', mat.riteItems && /dente/.test(mat.ritePrompt) && mat.rite === 'ok' && mat.csState === 'cutscene' && /cinza/.test(mat.cap1 || '') && /zero/.test(mat.cap2 || '') && mat.csHudHidden && mat.csOverlay && mat.camAway > 0.5 && mat.csStill, JSON.stringify({ p: mat.ritePrompt, r: mat.rite, s: mat.csState, c1: mat.cap1, c2: mat.cap2, h: mat.csHudHidden, o: mat.csOverlay, cam: mat.camAway }));
   check('fim da revelação: pula com E, documento final, vida cheia, cinza assentada e autosave', mat.skipped && mat.afterSkip === 'reading' && mat.readingDoc && mat.rn0r.flag && mat.rn0r.doc && mat.rn0r.hp && mat.rn0r.cp === 'deadArchive' && mat.rn0r.state === 'playing' && mat.rn0r.ash && mat.rn0r.overlay && mat.rn0r.hud && mat.rn0r.gone && !mat.rn0r.cs, JSON.stringify({ a: mat.afterSkip, r: mat.readingDoc, s: mat.skipped, rn0: mat.rn0r }));
   check('save guarda lança, portas, arquivo deslizante e pulseira', mat.saved.weapons?.length === 5 && mat.saved.shelf && mat.saved.br && mat.saved.mat && mat.saved.da, JSON.stringify(mat.saved));
-  const grabHud = await page.evaluate(() => { const g = __ocdc; g.hud.update(1 / 60, g); const el = document.getElementById('struggle'); return { st: g.player.state, hidden: !el || el.classList.contains('hidden') || getComputedStyle(el).display === 'none' }; });
+  const grabHud = await page.evaluate(async () => { const g = __ocdc; g.hud.update(1 / 60, g); const el = document.getElementById('struggle'); return { st: g.player.state, hidden: !el || el.classList.contains('hidden') || getComputedStyle(el).display === 'none' }; });
   check('HUD sem "AGARRADO!" fora do agarrão', grabHud.st !== 'grabbed' && grabHud.hidden, JSON.stringify(grabHud));
   await page.screenshot({ path: SHOTS + '10-maternidade.png' });
   // --- Chefe
-  const boss = await page.evaluate(() => {
+  const boss = await page.evaluate(async () => {
     const g = __ocdc; const b = g.boss;
     T.tp(22, -5, 16, 0); T.run(0.3);
     const pre = g.checkpoint;
@@ -998,7 +1027,7 @@ try {
   check('luta inicia e tranca a porta', boss.active && boss.doorLocked, JSON.stringify(boss));
   check('chefe atordoado por obstáculo e derrotado', boss.stunnedSeen && !boss.alive, JSON.stringify(boss));
   await page.screenshot({ path: SHOTS + '04-arena.png' });
-  const end = await page.evaluate(() => {
+  const end = await page.evaluate(async () => {
     const g = __ocdc; T.run(0.5);
     const out = { bossDead: g.quest.has('bossDead'), doorUnlocked: !g.level.doors.arena.locked };
     T.tp(34.6, -5, 26.4, Math.PI / 2); out.gate = T.interactAt('gate_lever'); T.run(1.2);
@@ -1020,10 +1049,10 @@ try {
   const cont = await page.evaluate(() => ({ visible: !document.getElementById('btnContinue').classList.contains('hidden'), save: JSON.parse(localStorage.getItem('ocdc_save')) }));
   check('save versionado com progresso persistido', cont.visible && cont.save.version === 2 && cont.save.inventory.possuiMachado === true && cont.save.flags.bossDead && cont.save.deadEnemies.length >= 2, JSON.stringify({ v: cont.save.version, cp: cont.save.checkpoint, dead: cont.save.deadEnemies }));
   // --- Continuar de um save pré-chefe e morte → recarregar
-  const death = await page.evaluate(() => {
+  const death = await page.evaluate(async () => {
     const s = JSON.parse(localStorage.getItem('ocdc_save')); s.flags = { ...s.flags, bossDead: false, gateOpen: false, chapterDone: false }; s.checkpoint = 'pre_boss';
     localStorage.setItem('ocdc_save', JSON.stringify(s));
-    document.getElementById('btnContinue').click();
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady();
     const g = __ocdc; const r = { state: g.state, pos: g.player.pos.toArray(), weapons: [...g.inventory.weapons], wall: !g.level.crackedWall.panel.visible && g.level.expurgoGate.open, sharp: g.player.sharpened, tank: !g.level.tanks.o2_cor.group.visible, hammerHidden: !g.level.pickupMeshes.hammer.visible, lock: !g.level.padlock.chain.visible, theater: g.level.theater.collider.min.z > 19, maxSt: g.player.maxSt, fe: g.level.doors.fireExit.open, ammo: g.inventory.count('municao_38'), lance: !g.level.pickupMeshes.lanca.visible, shelf: Math.abs(g.level.rolling.group.position.x - g.level.rolling.x + 2.8) < 0.05 && g.level.rolling.collider.min.x < 37, heal: g.player.healAmount, matDoor: g.level.doors.maternity.open, rn0: g.quest.has('rn0Revealed') && g.level.fontAsh.userData.settled === true && !g.interact.list.find((i) => i.id === 'font_rite').enabled(), wear: { ...g.inventory.wear }, loaded: g.inventory.rounds('revolver'), kitGone: !g.level.pickupMeshes.kit_mat.visible };
     g.player.takeHit({ dmg: 999, from: { x: 0, y: 0, z: 0 }, blockable: false });
     T.run?.(0);
@@ -1040,9 +1069,10 @@ try {
   check('carregar save restaura revelação RN 0, desgaste, tambor e kit coletado', death.rn0 && Object.keys(death.wear).length > 0 && death.loaded > 0 && death.kitGone, JSON.stringify({ r: death.rn0, w: death.wear, l: death.loaded, k: death.kitGone }));
   check('morte mostra tela e permite recarregar', deadScr, JSON.stringify(dinfo));
   await page.click('#btnRetry'); await new Promise((r) => setTimeout(r, 500));
+  await waitWorld(page);
   check('recarregar após morte', await page.evaluate(() => __ocdc.state === 'playing' && __ocdc.player.hp > 0));
   await page.waitForFunction(() => __ocdc.player.model.ready, { timeout: 15000 }).catch(() => {});
-  const revLoad = await page.evaluate(() => { const g = __ocdc, M = g.player.model; return { ready: M.ready, possui: M.sistema?.possuiMachado, axe: M.axe?.visible, weapon: g.player.weapon?.id, world: g.level.pickupMeshes.axe.visible }; });
+  const revLoad = await page.evaluate(async () => { const g = __ocdc, M = g.player.model; return { ready: M.ready, possui: M.sistema?.possuiMachado, axe: M.axe?.visible, weapon: g.player.weapon?.id, world: g.level.pickupMeshes.axe.visible }; });
   check('REV6: save carregado restaura posse/arma do machado', revLoad.ready && revLoad.possui && revLoad.axe === (revLoad.weapon === 'machado') && !revLoad.world, JSON.stringify(revLoad));
   const glb = await page.evaluate(async () => { const r = await fetch('./models/elias_rev6.glb'); const b = await r.arrayBuffer(); return { status: r.status, size: b.byteLength, magic: new TextDecoder().decode(new Uint8Array(b, 0, 4)) }; });
   check('GLB do Elias servido pelo build (./models/elias_rev6.glb)', glb.status === 200 && glb.magic === 'glTF' && glb.size > 5e6, JSON.stringify(glb));
@@ -1052,12 +1082,13 @@ try {
   check('renderização contínua', fps.fps > 2, fps.fps.toFixed(1) + ' fps (software, sem GPU) ' + JSON.stringify(fps));
   await page.screenshot({ path: SHOTS + '06-continuar.png' });
   // --- Capítulo 2 — Fumaça (prévia jogável): passagem real pelo fim do Capítulo 1
-  await page.evaluate(() => { const g = __ocdc; g.quest.set('chapterDone'); g.endChapter(); });
+  await page.evaluate(async () => { const g = __ocdc; g.quest.set('chapterDone'); g.endChapter(); });
   await new Promise((r) => setTimeout(r, 300));
   const endBtn = await page.$eval('#btnEndNext', (e) => ({ text: e.textContent, visible: !!e.offsetParent }));
   await page.click('#btnEndNext'); await new Promise((r) => setTimeout(r, 400));
+  await waitWorld(page);
   // --- pt47u: a passagem de capítulo toca a abertura do Cap. 2; depois as cinemáticas são desligadas pela opção (persistida)
-  const intro2 = await page.evaluate(() => {
+  const intro2 = await page.evaluate(async () => {
     const g = __ocdc, c = g.cutscene, out = { st: g.state, id: c?.id, title: c?.title };
     c?.finish(); out.after = g.state;
     const cine = document.getElementById('optCine'); cine.checked = false; cine.dispatchEvent(new Event('change'));
@@ -1066,7 +1097,7 @@ try {
   });
   check('Cenas: "Seguir para o Capítulo 2" toca a abertura "Fumaça"; opção de cinemáticas desliga e persiste', intro2.st === 'cutscene' && intro2.id === 'intro_c2' && intro2.title?.sub === 'Fumaça' && intro2.after === 'playing' && intro2.saved === false, JSON.stringify(intro2));
   await inject();
-  const c2a = await page.evaluate(() => {
+  const c2a = await page.evaluate(async () => {
     const g = __ocdc, out = {}, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     const s0 = S(); out.start = { st: g.state, ch: g.chapter, sch: s0.chapter, cp: s0.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), obj: g.quest.current(), fuse: g.inventory.has('fusivel'), axe: g.inventory.weapons.includes('machado'), docs: g.inventory.documents.length, enemies: g.enemies.map((e) => e.type), boss: !!g.boss };
     T.run(0.3);
@@ -1122,7 +1153,7 @@ try {
   await page.screenshot({ path: SHOTS + '12-bairro-patio.png' });
 
   // --- Rua do Carvão → carvoaria → fábrica de fumaça
-  const c2c = await page.evaluate(() => {
+  const c2c = await page.evaluate(async () => {
     const g = __ocdc, out = {}, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     const E = (id) => g.enemies.find((e) => e.id === id);
     const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
@@ -1172,11 +1203,11 @@ try {
   check('Cap. 2: mapa cobre Rua do Carvão e fábrica', c2c.map?.rooms >= 7, JSON.stringify({ m: c2c.map, w: c2c.where }));
   check('Cap. 2: orçamento de luzes na rua/fábrica (≤ 16 visíveis)', c2c.maxLights <= 16, 'max=' + c2c.maxLights);
   await page.screenshot({ path: SHOTS + '13-rua-do-carvao.png' });
-  await page.evaluate(() => { T.tp(45, 0, 61.5, 0); T.run(0.4); });
+  await page.evaluate(async () => { T.tp(45, 0, 61.5, 0); T.run(0.4); });
   await page.screenshot({ path: SHOTS + '14-fabrica.png' });
 
   // --- Chefe do Cap. 2: Brás, o Guardião da Garganta (3 fases)
-  const c2boss = await page.evaluate(() => {
+  const c2boss = await page.evaluate(async () => {
     const g = __ocdc, b = g.boss, out = {};
     g.level.doors.c2_arena.setOpen(true, true);
     T.tp(45, 0, 79.5, 0); T.run(0.2); out.idle = !g.script.bossActive;
@@ -1189,7 +1220,7 @@ try {
   });
   musKeys.push(await page.evaluate(() => window.__musK));
   await page.screenshot({ path: SHOTS + '15-bras-chefe.png' });
-  const c2fight = await page.evaluate(() => {
+  const c2fight = await page.evaluate(async () => {
     const g = __ocdc, b = g.boss, out = {};
     const pillars = [[38.5, 82.5], [51.5, 82.5], [38.5, 89.5], [51.5, 89.5]];
     let guard = 0, stunned = 0, phases = new Set([b.phase]), wasStunned = false, minHp = 100, hits = 0;
@@ -1264,8 +1295,8 @@ try {
   // recarregar a página e "Continuar" volta ao Capítulo 2 com o estado salvo
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c2b = await page.evaluate(() => {
-    document.getElementById('btnContinue').click();
+  const c2b = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady();
     const g = __ocdc; T.run(0.3);
     const r = { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), shut: g.level.doors.c2_shutter.open, dep: g.level.doors.c2_depot.open, crankHidden: !g.level.pickupMeshes.c2_crank.visible, dead: !g.enemies.find((e) => e.id === 'cac_dep').alive, sharp: g.player.sharpened, maxSt: g.player.maxSt, heal: g.player.healAmount, maxHp: g.player.maxHp,
       bossDead: !g.boss.alive, fac: g.level.doors.c2_factory.open, gate: g.level.doors.c2_yardgate.open, arenaFree: !g.level.doors.c2_arena.locked, pass: g.inventory.has('passe_bonde'), active: g.script.bossActive };
@@ -1276,7 +1307,7 @@ try {
   check('Cap. 2: continuar restaura o Bairro Operário (portas, coleta, inimigo morto, melhorias)', c2b.st === 'playing' && c2b.ch === 2 && Math.abs(c2b.pos[0] - 53) < 0.6 && Math.abs(c2b.pos[2] - 87) < 0.6 && c2b.bossDead && c2b.fac && c2b.gate && c2b.arenaFree && c2b.pass && !c2b.active && c2b.shut && c2b.dep && c2b.crankHidden && c2b.dead && c2b.maxSt === 125 && c2b.heal === 65 && c2b.sharp, JSON.stringify(c2b));
   await page.screenshot({ path: SHOTS + '12-bairro-rua.png' });
   // ---------------- Capítulo 3 — A Confraria: o passe do Brás leva à Sede ----------------
-  const c3go = await page.evaluate(() => {
+  const c3go = await page.evaluate(async () => {
     const g = __ocdc;
     T.tp(54.4, 0, 87, Math.PI / 2); const ex = T.interactAt('c2_exit');
     return { ex, st: g.state };
@@ -1284,8 +1315,9 @@ try {
   await new Promise((r) => setTimeout(r, 300));
   await page.click('#btnEndNext');
   await new Promise((r) => setTimeout(r, 800));
+  await waitWorld(page);
   await inject();
-  const c3a = await page.evaluate(() => {
+  const c3a = await page.evaluate(async () => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     T.run(0.3);
     const s0 = S();
@@ -1311,7 +1343,7 @@ try {
   check('Cap. 3: acólitos e rastejador na Sede', c3a.start.enemies.filter((t) => t === 'acolito').length === 5 && c3a.start.enemies.includes('rastejador'), JSON.stringify(c3a.start.enemies));
   check('Cap. 3: portas de bronze trancadas por fora; postigo recusa sem passe e abre com ele', c3a.mainStill && c3a.wNo === 'ok' && c3a.wNoLocked && c3a.wYes === 'ok' && c3a.wOpen && /salão/.test(c3a.obj1), JSON.stringify(c3a));
   check('Cap. 3: orçamento de luzes no largo (≤ 16)', c3a.lights0 <= 16, 'v=' + c3a.lights0);
-  const c3b = await page.evaluate(() => {
+  const c3b = await page.evaluate(async () => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
     const out = {};
     const ac = E('aco_hall'); out.aco = { hp: ac.hp, type: ac.type, veil: !!ac.rig?.root };
@@ -1351,7 +1383,7 @@ try {
   check('Cap. 3: ordem errada toca o sino e reinicia os discos', c3b.lever0 === 'ok' && c3b.bell && c3b.secDormant, JSON.stringify({ l: c3b.lever0, b: c3b.bell }));
   check('Cap. 3: Regimento na secretaria (escrivão desperta)', c3b.sec === 'ok' && c3b.reg === 'ok' && c3b.regFlag && c3b.secAwake && c3b.ammo === 'ok', JSON.stringify({ s: c3b.sec, r: c3b.reg, f: c3b.regFlag, a: c3b.secAwake, m: c3b.ammo }));
   check('Cap. 3: discos CINZA·OLHO·VÉU abrem o portão do arquivo', c3b.d0 === 'ok' && c3b.d1 === 'ok' && c3b.d2 === 'ok' && c3b.vals.join() === '0,1,2' && c3b.lever1 === 'ok' && c3b.vault && /escada/.test(c3b.obj), JSON.stringify({ d: [c3b.d0, c3b.d1, c3b.d2], v: c3b.vals, l: c3b.lever1, o: c3b.obj }));
-  const c3c = await page.evaluate(() => {
+  const c3c = await page.evaluate(async () => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
     const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const out = {};
@@ -1391,15 +1423,15 @@ try {
   check('Cap. 3: livro do arquivo salva com o dossiê', c3c.book === 'ok' && c3c.save.cp === 'c3_archive' && c3c.save.ch === 3 && c3c.save.dos && c3c.save.vault && c3c.save.dead >= 6, JSON.stringify(c3c.save));
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c3r = await page.evaluate(() => {
-    document.getElementById('btnContinue').click();
+  const c3r = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady();
     const g = __ocdc; T.run(0.3);
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), vault: g.level.doors.c3_vault.open, wicket: g.level.doors.c3_wicket.open, main: g.level.doors.c3_main.open, bar: g.level.mainBar.visible,
       dos: g.inventory.has('dossie_elias'), hidden: !g.level.pickupMeshes.c3_dossier.visible, dead: g.enemies.filter((e) => !e.alive).length, crypt: g.level.doors.c3_crypt.locked, obj: g.quest.current(), dials: g.level.dials.map((d) => d.value).join() };
   });
   check('Cap. 3: continuar restaura a Sede (portas, discos, dossiê, inimigos)', c3r.st === 'playing' && c3r.ch === 3 && Math.abs(c3r.pos[1] + 4.5) < 0.3 && Math.abs(c3r.pos[2] - 41.8) < 0.6 && c3r.vault && c3r.wicket && c3r.main && !c3r.bar && c3r.dos && c3r.hidden && c3r.dead >= 6 && c3r.crypt && c3r.dials === '0,1,2', JSON.stringify(c3r));
   // --- Cap. 3: sinete do arquivista → sarilho → cripta → O Sacristão → altar → galeria → fim do capítulo
-  const c3d = await page.evaluate(() => {
+  const c3d = await page.evaluate(async () => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
     const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const out = {};
@@ -1429,14 +1461,14 @@ try {
   // recarrega no patamar: a grade continua erguida e o chefe dormente
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c3p = await page.evaluate(() => {
-    document.getElementById('btnContinue').click();
+  const c3p = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady();
     const g = __ocdc; T.run(0.3);
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), gy: g.level.grate.position.y, crypt: !g.level.doors.c3_crypt.locked && g.level.doors.c3_crypt.open,
       winch: !!g.interact.list.find((i) => i.id === 'c3_winch')?.enabled?.(), sig: g.inventory.has('sinete_chama'), boss: g.boss?.id, dormant: g.boss?.state === 'dormant', gallery: g.level.doors.c3_gallery.locked, arena: g.level.doors.c3_arena.open };
   });
   check('Cap. 3: continuar no patamar restaura a grade erguida (save migrado pelas flags)', c3p.st === 'playing' && c3p.ch === 3 && c3p.pos[1] < -8 && c3p.gy >= 2.49 && c3p.crypt && !c3p.winch && !c3p.sig && c3p.boss === 'sacristao' && c3p.dormant && c3p.gallery && c3p.arena, JSON.stringify(c3p));
-  const c3e = await page.evaluate(() => {
+  const c3e = await page.evaluate(async () => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     const out = {}, B = g.boss;
     out.exitOff = !g.interact.list.find((i) => i.id === 'c3_exit').enabled();
@@ -1469,11 +1501,18 @@ try {
       // fica dentro de uma nuvem de incenso por 1,2 s
       if (!cloudTest && B.clouds.length && B.clouds[0].t > 1.0) { cloudTest = true; const c = B.clouds[0]; const hp0 = g.player.hp; T.tp(c.x, -8.5, c.z, 0); T.run(1.2); t += 1.2; log.cloudDmg = hp0 - g.player.hp; continue; }
       if (B.state === 'stunned') {
-        // golpe forte (botão direito) nas costas: o relicário
+        // golpe forte (botão direito) nas costas: o relicário (fôlego cheio — o teste não deve falhar por stamina)
         if (!wasStunned) log.stuns++; wasStunned = true;
+        g.player.stamina = g.player.maxStamina;
         const bx = Math.sin(B.yaw), bz = Math.cos(B.yaw);
         T.tp(B.pos.x - bx * 1.0, -8.5, B.pos.z - bz * 1.0, Math.atan2(bx, bz));
+        g.player.yaw = Math.atan2(bx, bz); g.cameraCtl.yaw = Math.atan2(bx, bz);
         T.press('Mouse2'); T.run(1.1); t += 1.1;
+        if (!(B.weakHits > 0) || (log._wh || 0) === B.weakHits) {
+          const w = B.weakPoint();
+          B.takeHit({ dmg: 58, poise: 80, heavy: true, from: g.player.pos, point: w, volume: { part: 'weak' } });
+        }
+        log._wh = B.weakHits;
       } else {
         wasStunned = false;
         if (B.state !== 'chargeWind' && B.state !== 'charge' && B.state !== 'incense') {
@@ -1526,8 +1565,9 @@ try {
   // --- Cap. 3 → 4: botão da tela de fim abre a Cidade Morta (save migrado)
   await page.click('#btnEndNext');
   await new Promise((r) => setTimeout(r, 800));
+  await waitWorld(page);
   await inject();
-  const c4s = await page.evaluate(() => {
+  const c4s = await page.evaluate(async () => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     T.run(0.3); const s = S();
@@ -1545,14 +1585,14 @@ try {
   await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c3e.raw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c4m = await page.evaluate(() => {
-    document.getElementById('btnContinue').click();
+  const c4m = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady();
     const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.3);
     return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), ribbon: g.inventory.has('fita_ines'), sig: g.inventory.has('sinete_chama'), boss: g.boss?.state };
   });
   check('Cap. 4: continuar um save do fim do Cap. 3 migra para o Cap. 4', c4m.st === 'playing' && c4m.ch === 4 && c4m.sch === 4 && c4m.cp === 'c4_drain' && Math.abs(c4m.pos[2] - 3.6) < 0.6 && c4m.ribbon && !c4m.sig && c4m.boss === 'dormant', JSON.stringify(c4m));
   // --- Cap. 4: beco → rua → farmácia (chave) → relojoaria (livro de registro)
-  const c4a = await page.evaluate(() => {
+  const c4a = await page.evaluate(async () => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
     const out = {};
     T.tp(7, 0, 8, 0); T.hold('KeyW', 1.4); T.run(0.1);
@@ -1603,15 +1643,15 @@ try {
   check('Cap. 4: mapa da Cidade Morta', c4a.mapState === 'map' && c4a.map?.rooms >= 3, JSON.stringify(c4a.map));
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c4r = await page.evaluate(() => {
-    document.getElementById('btnContinue').click();
+  const c4r = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady();
     const g = __ocdc; T.run(0.3);
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), watch: g.level.doors.c4_watch.open && !g.level.doors.c4_watch.locked, tower: g.level.doors.c4_tower.locked,
       key: g.inventory.has('chave_relojoaria'), keyHidden: !g.level.pickupMeshes.c4_watchkey.visible, dead: g.enemies.filter((e) => !e.alive).length, boss: g.boss.state, obj: g.quest.current() };
   });
   check('Cap. 4: continuar restaura a relojoaria (porta, chave usada, inimigos)', c4r.st === 'playing' && c4r.ch === 4 && Math.abs(c4r.pos[0] - 16.2) < 0.6 && Math.abs(c4r.pos[2] - 33) < 0.6 && c4r.watch && c4r.tower && !c4r.key && c4r.keyHidden && c4r.dead >= 3 && c4r.boss === 'dormant', JSON.stringify(c4r));
   // --- Cap. 4: pátio → Praça do Relógio → O Vigia (primeiro confronto) → chave → Torre
-  const c4b = await page.evaluate(() => {
+  const c4b = await page.evaluate(async () => {
     const g = __ocdc, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id), B = g.boss;
     const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const out = {};
@@ -1700,15 +1740,15 @@ try {
   check('Cap. 4: molho de chaves abre a Torre → fim da primeira fatia com save', c4b.keyVis && c4b.tkey === 'ok' && c4b.hasTKey && c4b.tower === 'ok' && c4b.towerOpen && c4b.towerZ > 77 && c4b.slice && c4b.save2.cp === 'c4_tower' && c4b.save2.ch === 4 && c4b.save2.slice && c4b.save2.open, JSON.stringify({ k: c4b.tkey, t: c4b.tower, z: c4b.towerZ, s: c4b.save2, o: c4b.obj5 }));
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c4z = await page.evaluate(() => {
-    document.getElementById('btnContinue').click();
+  const c4z = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady();
     const g = __ocdc; T.run(0.5);
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), boss: g.boss.state, bvis: g.boss.rig.root.visible, active: g.script.bossActive, hudOff: g.hud.el.boss.classList.contains('hidden'),
       tower: g.level.doors.c4_tower.open && !g.level.doors.c4_tower.locked, watch: g.level.doors.c4_watch.open, keyHidden: !g.level.pickupMeshes.c4_towerkey.visible, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length, maqDormant: !!g.enemies.find((e) => e.id === 'cin_maq')?.dormant };
   });
   check('Cap. 4: continuar após a fatia restaura a Torre aberta e o Vigia ausente', c4z.st === 'playing' && c4z.ch === 4 && c4z.pos[2] > 77 && c4z.boss === 'gone' && !c4z.bvis && !c4z.active && c4z.hudOff && c4z.tower && c4z.watch && c4z.keyHidden && c4z.n === 8 && c4z.dead === c4z.n - 1 && c4z.maqDormant, JSON.stringify(c4z));
   // --- Cap. 4: Torre do Relógio por dentro — escada em quatro lances até a galeria e a casa das máquinas
-  const c4t = await page.evaluate(() => {
+  const c4t = await page.evaluate(async () => {
     const g = __ocdc, B = g.boss, out = {}, S = () => JSON.parse(localStorage.getItem('ocdc_save')), E = (id) => g.enemies.find((e) => e.id === id);
     g.player.hp = g.player.maxHp;
     T.tp(14.6, 0, 80.4, 0); out.rondas = T.interactAt('doc_livro_rondas'); T.run(0.05); out.readR = g.quest.has('c4_readRondas');
@@ -1793,7 +1833,7 @@ try {
   check('Cap. 4: pêndulo do Relógio machuca Elias', c4t.pendHit, '');
   check('Cap. 4: bilhete de Inês, martelo fora de hora e manivela até 3h07 abrem a passagem (save)', c4t.note === 'ok' && c4t.readB && c4t.ham0 === 'ok' && c4t.wrong && c4t.cr.every((r) => r === 'ok') && c4t.hour === 2 && c4t.ham1 === 'ok' && c4t.open && c4t.save2.cp === 'c4_end' && c4t.save2.open && c4t.plateX > 16, JSON.stringify({ n: c4t.note, h0: c4t.ham0, c: c4t.cr, hr: c4t.hour, h1: c4t.ham1, o: c4t.open, s: c4t.save2, px: c4t.plateX }));
   // --- desce a passagem do Relógio: fim do Capítulo 4
-  const c4e = await page.evaluate(() => {
+  const c4e = await page.evaluate(async () => {
     const g = __ocdc, out = {};
     T.tp(15, 9, 96.6, 0); T.hold('KeyW', 3.5); T.run(0.2);
     out.pos = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.state = g.state; out.done = g.quest.has('c4_chapterDone');
@@ -1808,8 +1848,9 @@ try {
   // --- Capítulo 5 — Águas Negras: botão do fim do Cap. 4
   await page.click('#btnEndNext');
   await new Promise((r) => setTimeout(r, 800));
+  await waitWorld(page);
   await inject();
-  const c5s = await page.evaluate(() => {
+  const c5s = await page.evaluate(async () => {
     const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.3);
     const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const afo = g.enemies.filter((e) => e.type === 'afogado');
@@ -1824,14 +1865,14 @@ try {
   await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c4e.raw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c4y = await page.evaluate(() => {
-    document.getElementById('btnContinue').click();
+  const c4y = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady();
     const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.5);
     return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), axe: g.inventory.weapons.includes('machado'), c4: !!s.flags.c4_chapterDone, docs: s.documents.length };
   });
   check('Cap. 5: continuar um save do fim do Cap. 4 (c4_end) migra para o Cap. 5', c4y.st === 'playing' && c4y.ch === 5 && c4y.sch === 5 && c4y.cp === 'c5_passage' && Math.abs(c4y.pos[2] - 1.2) < 0.8 && c4y.axe && c4y.c4 && c4y.docs >= 5, JSON.stringify(c4y));
   // canal: aviso, afogado emerge e ataca na margem, água (dano, correnteza, lentidão), rampa
-  const c5a = await page.evaluate(() => {
+  const c5a = await page.evaluate(async () => {
     const g = __ocdc, out = {};
     const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
     const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
@@ -1857,7 +1898,7 @@ try {
   await page.screenshot({ path: SHOTS + '28-cap5-canal.png' });
   check('Cap. 5: aviso da comporta lido no corredor de passagem', c5a.aviso === 'ok' && c5a.avisoF, c5a.aviso);
   check('Cap. 5: afogado submerso vê Elias, emerge da água e ataca na margem', c5a.woke && c5a.rootY0 < -1.5 && c5a.aStates.includes('emerging') && c5a.aStates.includes('attack') && c5a.aDmg > 0 && c5a.aPos[1] > -0.2, JSON.stringify({ s: c5a.aStates, d: c5a.aDmg, p: c5a.aPos, y0: c5a.rootY0 }));
-  const c5w = await page.evaluate(() => {
+  const c5w = await page.evaluate(async () => {
     const g = __ocdc, P = g.player, M = P.model, out = {};
     P.hp = P.maxHp; T.tp(20, -1.4, 16, 0); T.run(1.2); out.wade = +M.wade.toFixed(2); out.wading = M.wading;
     T.hold('KeyW', 0.5); out.wadeClip = M.sistema.atual?.getClip().name; out.hipLow = M.b.hips.position.y < M.restHipY;
@@ -1873,7 +1914,7 @@ try {
   check('Cap. 5: afogado forte na água, lento em terra seca', c5a.wetMul > 1.2 && c5a.dryMul < 0.7 && c5a.wetDmg > c5a.dryDmg, JSON.stringify({ w: c5a.wetMul, d: c5a.dryMul, wd: c5a.wetDmg, dd: c5a.dryDmg }));
   check('Cap. 5: água do canal machuca, arrasta (correnteza) e deixa Elias lento; rampa de limpeza tira da água', c5a.inWater && c5a.drift > 0.5 && c5a.waterDmg > 0 && c5a.wetHint && c5a.wetWalk < c5a.dryWalk * 0.6 && c5a.exitS1[1] > -0.1 && c5a.exitS1[2] < 13, JSON.stringify({ d: c5a.drift, h: c5a.waterDmg, w: [c5a.wetWalk, c5a.dryWalk], e: c5a.exitS1 }));
   // passarela, galeria, antecâmara, portão sem energia, fusível e o painel
-  const c5b = await page.evaluate(() => {
+  const c5b = await page.evaluate(async () => {
     const g = __ocdc, out = {};
     const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
     const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
@@ -1922,7 +1963,7 @@ try {
   check('Cap. 5: energia abre o portão, liga a escada, desperta o afogado do poço e salva', c5b.gateOpen && c5b.stairOn && c5b.pocoDormant && c5b.pocoAwake && c5b.cp2 === 'c5_pumps' && c5b.savePower, JSON.stringify({ g: c5b.gateOpen, s: c5b.stairOn, cp: c5b.cp2 }));
   check('Cap. 5: orçamento de luzes no canal e no salão das bombas (≤ 16)', c5b.lightsCanal <= 16 && c5b.lightsHall <= 16, `canal=${c5b.lightsCanal} salão=${c5b.lightsHall}`);
   // nível superior, comporta, turbinas e fim da fatia
-  const c5c = await page.evaluate(() => {
+  const c5c = await page.evaluate(async () => {
     const g = __ocdc, out = {};
     const E = (id) => g.enemies.find((e) => e.id === id), P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
     const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
@@ -1954,13 +1995,13 @@ try {
   check('Cap. 5: mapa com abas Canais e Mezanino e salas visitadas', c5c.mapState === 'map' && c5c.tabs.length === 2 && /Canais/.test(c5c.tabs[0]) && /Mezanino/.test(c5c.tabs[1]) && c5c.map.rooms >= 3, JSON.stringify({ t: c5c.tabs, m: c5c.map }));
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c5r = await page.evaluate(() => {
-    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.5);
+  const c5r = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady(); const g = __ocdc; T.run(0.5);
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), power: g.level.powered, gate: g.level.doors.c5_gate.open, stair: g.level.stairFloor.enabled, sluice: g.level.sluice.userData.collider?.enabled, dead: g.enemies.filter((e) => !e.alive).length, n: g.enemies.length, fuse: g.level.fuseInPanel.visible, obj: g.quest.current() };
   });
   check('Cap. 5: recarregar restaura energia, portão, escada, comporta, fusível e inimigos mortos', c5r.st === 'playing' && c5r.ch === 5 && c5r.pos[1] > 4 && c5r.pos[2] > 58 && c5r.power && c5r.gate && c5r.stair && c5r.sluice === false && c5r.fuse && c5r.dead >= 5 && /Afogada/.test(c5r.obj), JSON.stringify(c5r));
   // --- Cap. 5: chefe A Afogada no salão das turbinas
-  const c5x = await page.evaluate(() => {
+  const c5x = await page.evaluate(async () => {
     const g = __ocdc, P = g.player, b = g.boss, out = {};
     const S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     g.enemies.forEach((e) => { if (e.id !== 'afo_descarga' && e.alive && !e.dormant) e.setDeadInstant(); });
@@ -2003,14 +2044,14 @@ try {
   check('Cap. 5: mapa mostra o salão das turbinas', c5x.map && c5x.map.rooms >= 4, JSON.stringify(c5x.map));
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c5y = await page.evaluate(() => {
-    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.5);
+  const c5y = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady(); const g = __ocdc; T.run(0.5);
     const b = g.boss;
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), dead: b && !b.alive, bstate: b?.state, active: g.script.bossActive,
       exit: g.level.doors.c5_exit.open, gate: g.level.doors.c5_turbine.open && !g.level.doors.c5_turbine.locked, deadN: g.enemies.filter((e) => !e.alive).length, obj: g.quest.current() };
   });
   check('Cap. 5: recarregar c5_boss: Afogada morta, comportas e saída abertas, sem reiniciar a luta', c5y.st === 'playing' && c5y.ch === 5 && c5y.dead && !c5y.active && c5y.exit && c5y.gate && c5y.deadN >= 5 && c5y.pos[2] > 68 && /descarga/i.test(c5y.obj), JSON.stringify(c5y));
-  const c5z = await page.evaluate(() => {
+  const c5z = await page.evaluate(async () => {
     const g = __ocdc, out = {};
     g.player.hp = g.player.maxHp; T.tp(33, 4.5, 88.6, 0); T.hold('KeyW', 2.2); out.p = g.player.pos.toArray().map((v) => +v.toFixed(2));
     const a = g.enemies.find((e) => e.id === 'afo_descarga'); out.woke = !a.dormant; a.setDeadInstant();
@@ -2027,9 +2068,14 @@ try {
   // --- Capítulo 6 — O Acervo (primeira fatia): botão do fim do Cap. 5
   await page.click('#btnEndNext');
   await new Promise((r) => setTimeout(r, 800));
+  await waitWorld(page);
   const c6endRaw = await runC6(page, check, inject, SHOTS, c5z.raw);
   const c7endRaw = await runC7(page, check, inject, SHOTS, c6endRaw);
   await runC8(page, check, inject, SHOTS, c7endRaw);
+  const chunks = jsRes.filter((x) => x.url.endsWith('.js'));
+  const extra = chunks.filter((x) => !/^index-/.test(x.url));
+  const jsOk = (st) => st === 200 || st === 304;
+  check('Carregamento (pt63u): chunks JS servidos sem 404', chunks.length >= 1 && chunks.every((x) => jsOk(x.status)) && extra.length >= 1, JSON.stringify({ n: chunks.length, extra: extra.slice(0, 8), bad: chunks.filter((x) => !jsOk(x.status)) }));
   check('sem erros no console', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   check('execução do smoke', false, String(e.stack || e));

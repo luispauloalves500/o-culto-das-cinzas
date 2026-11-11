@@ -1,9 +1,10 @@
 // Ponto de entrada: estilos, criação do jogo, captura de erros e gancho de depuração para testes.
 import './styles/main.css';
 import { Game } from './core/Game.js';
-import { preloadElias } from './gameplay/EliasModel.js';
-import { preloadEnemyModels } from './models/EnemyModels.js';
-import { preloadCabinets } from './world/Cabinets.js';
+import { prefetchWorld } from './scenes/worlds.js';
+import { prefetchChapterAssets } from './assets/preload.js';
+
+const bootT0 = performance.now();
 
 function showFatal(msg) {
   const el = document.getElementById('fatal');
@@ -17,10 +18,9 @@ try {
   const game = new Game(document.getElementById('game'));
   // gancho usado pelos testes automatizados (smoke) e para depuração no console
   window.__ocdc = game;
-  // baixa o Elias REV6 (GLB ~7,5 MB) já no menu; a partida não espera por ele
-  preloadElias();
-  preloadEnemyModels();
-preloadCabinets();
+  window.__ocdcMenuMs = performance.now() - bootT0;
+  // prefetch do Cap. 1 depois do menu aparecer, para não atrasar o networkidle do carregamento inicial
+  setTimeout(() => { prefetchWorld(1); prefetchChapterAssets(1); }, 1200);
 } catch (e) {
   showFatal('Não foi possível iniciar o WebGL / jogo:\n' + (e?.stack || e));
 }

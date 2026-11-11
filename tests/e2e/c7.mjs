@@ -1,12 +1,13 @@
 // Bloco do smoke para o Capítulo 7 — Sob a Pedra (capítulo completo). Usado pelo smoke completo (depois do fim do Cap. 6)
 // e pelo smoke-c7.mjs (só este capítulo, a partir de um save c6_end). Tudo pelos sistemas reais via window.__ocdc.
+import { waitWorld } from './waitWorld.mjs';
 export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c6endRaw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  await page.evaluate(() => {
+  await page.evaluate(async () => {
     const g = __ocdc; window.__toasts = [];
-    document.getElementById('btnContinue').click(); T.run(0.3);
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady(); T.run(0.3);
     if (!g.hud.__wrapped) { const t = g.hud.toast.bind(g.hud); g.hud.toast = (m, d) => { window.__toasts.push(String(m)); return t(m, d); }; g.hud.__wrapped = true; }
     window.T.lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     window.T.E = (id) => g.enemies.find((e) => e.id === id);
@@ -15,7 +16,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   });
 
   // ---------- início: poço da escada ----------
-  const a = await page.evaluate(() => {
+  const a = await page.evaluate(async () => {
     const g = __ocdc, s = T.S(), out = {};
     const emp = g.enemies.filter((e) => e.type === 'emparedado');
     Object.assign(out, { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: T.P(), obj: g.quest.current(), n: g.enemies.length,
@@ -33,7 +34,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   check('Cap. 7: alçapão trancado por cima, porta de serviço sem fechadura deste lado, livro de registros (save) e bandagem', a.ladder === 'ok' && /alçapão/.test(a.ladderT) && a.svc === 'ok' && a.svcLocked && a.book === 'ok' && a.bookCp === 'c7_ladder' && a.band === 'ok', JSON.stringify({ l: a.ladder, s: a.svc, sl: a.svcLocked, b: a.book, cp: a.bookCp, bd: a.band }));
 
   // ---------- galeria de pedra → grade rangente → ossuário ----------
-  const b = await page.evaluate(() => {
+  const b = await page.evaluate(async () => {
     const g = __ocdc, out = {}, D = g.level.doors;
     T.tp(18, 0, 5, 0); T.hold('KeyW', 1.6); out.gal = g.level.zone; out.p0 = T.P();
     T.tp(18, 0, 14.8, 0); T.hold('KeyW', 1.0); out.blocked = +g.player.pos.z.toFixed(2);
@@ -54,7 +55,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   check('Cap. 7: entrar andando no ossuário (save c7_ossuario, eco 1,6×) não acorda os nichos; livro do coveiro', b.inOss && b.cp === 'c7_ossuary' && b.zone === 'c7_ossuario' && b.dorm2 === 8 && b.ac >= 1.5 && b.reg === 'ok' && b.readReg && /grade do fundo/.test(b.obj) && b.lights <= 16, JSON.stringify(b));
 
   // ---------- ossos que estalam e o emparedado cego ----------
-  const c = await page.evaluate(() => {
+  const c = await page.evaluate(async () => {
     const g = __ocdc, out = {}, L = g.level;
     // mancha central: andar estala (ruído 'bones'), mas de longe dos nichos ninguém acorda
     T.tp(18, 0, 21.6, 0); window.__noise = []; const orig = g.perception.noise.bind(g.perception);
@@ -85,7 +86,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   check('Cap. 7: emparedado é cego — com Elias parado e em silêncio ele vai ao barulho, não a Elias; um golpe o atrai', c.e3st2 !== 'attack' && c.e3d > 2 && c.e3moved > 0.8 && c.hp >= 99 && c.e3lk2 !== null && c.e3lk2 < 1.5, JSON.stringify({ s2: c.e3st2, d: c.e3d, m: c.e3moved, s3: c.e3st3, lk: c.e3lk2, hp: c.hp }));
 
   // ---------- grade do fundo (cadeado de crânio) → cripta → jazigo ----------
-  const d = await page.evaluate(() => {
+  const d = await page.evaluate(async () => {
     const g = __ocdc, out = {}, L = g.level, D = L.doors;
     T.tp(18, 0, 34.4, 0); out.og = T.interactAt('door_c7_ossGate'); out.ogLocked = D.c7_ossGate.locked && !D.c7_ossGate.open; out.saw = g.quest.has('c7_sawGate'); out.obj1 = g.quest.current();
     T.tp(18, 0, 35.2, 0); T.hold('KeyW', 0.8); out.ogBlock = +g.player.pos.z.toFixed(2);
@@ -121,7 +122,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   check('Cap. 7: a chave do coveiro-mor abre a grade do fundo', d.og2 === 'ok' && d.ogOpen && /túnel/.test(d.obj3) && d.lights <= 16, JSON.stringify({ o: d.og2, ob: d.obj3, l: d.lights }));
 
   // ---------- túnel → Estação Sé Velha → atalho → trilhos (fim da fatia) ----------
-  const e = await page.evaluate(() => {
+  const e = await page.evaluate(async () => {
     const g = __ocdc, out = {}, L = g.level, D = L.doors;
     T.tp(18, 0, 37.2, 0); T.hold('KeyW', 1.5); T.tp(18, 0, 42.6, 0); T.hold('KeyW', 1.5); out.p0 = T.P();
     out.onPlat = g.quest.has('c7_onPlatform'); out.cp = T.S().checkpoint; out.zone = L.zone;
@@ -156,8 +157,8 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   // ---------- recarregar c7_slice: estado restaurado ----------
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const z = await page.evaluate(() => {
-    document.getElementById('btnContinue').click(); const g = __ocdc, L = g.level, D = L.doors; T.run(0.4);
+  const z = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady(); const g = __ocdc, L = g.level, D = L.doors; T.run(0.4);
     const E = (id) => g.enemies.find((e) => e.id === id);
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), done: g.quest.has('c7_sliceDone'),
       og: !D.c7_ossGate.locked && D.c7_ossGate.open, svc: !D.c7_service.locked, jaz: L.jazigo.open && !!L.jazigo.collider,
@@ -167,7 +168,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   check('Cap. 7: recarregar c7_slice restaura trilhos, grade aberta, atalho, jazigo aberto, nichos quebrados e mortos', z.st === 'playing' && z.ch === 7 && z.pos[1] < -0.8 && z.pos[0] > 44 && z.done && z.og && z.svc && z.jaz && z.dead3 && z.dead4 && z.n2 && z.nC && z.n1 && z.crow && /grade acorrentada/.test(z.obj), JSON.stringify(z));
 
   // ---------- grade acorrentada → Linha Velha (cascalho, nichos) ----------
-  const ext = () => page.evaluate(() => {
+  const ext = () => page.evaluate(async () => {
     const g = __ocdc;
     if (!g.hud.__wrapped) { const t = g.hud.toast.bind(g.hud); g.hud.toast = (m, d) => { (window.__toasts = window.__toasts || []).push(String(m)); return t(m, d); }; g.hud.__wrapped = true; }
     window.T.lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
@@ -176,7 +177,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
     window.T.P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
   });
   await ext();
-  const f = await page.evaluate(() => {
+  const f = await page.evaluate(async () => {
     const g = __ocdc, out = {}, L = g.level, q = g.quest;
     window.__toasts = []; window.__noise = [];
     const orig = g.perception.noise.bind(g.perception);
@@ -210,7 +211,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   check('Cap. 7: Linha Velha — faixa limpa sem ruído; cascalho range e acorda o emparedado do nicho ao lado', f.inLine && f.zone === 'c7_linha' && f.p1[0] > 53 && f.gravelClean === 0 && f.emp6dorm2 && f.ac > 1.2 && f.gravel >= 1 && f.gravelR >= 4 && f.crunch && f.woke6 && f.ammoR === 'ok' && f.lights <= 16, JSON.stringify(f));
 
   // ---------- grade levadiça e cabine de sinalização (agulhas + sinal) ----------
-  const h = await page.evaluate(() => {
+  const h = await page.evaluate(async () => {
     const g = __ocdc, out = {}, L = g.level, q = g.quest, D = L.doors;
     T.tp(75.6, -1, 52.6, Math.PI / 2); T.hold('KeyW', 1.4); out.portBlock = +g.player.pos.x.toFixed(2); out.sawPort = q.has('c7_sawPort');
     out.obj = q.current();
@@ -241,7 +242,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   check('Cap. 7: agulhas R·N·R + SINAL erguem a grade levadiça (colisor desliga)', h.l1 === 'ok' && h.l3 === 'ok' && h.code === 'R·N·R' && h.sig2 === 'ok' && h.portOpen && h.lights <= 16, JSON.stringify({ l: [h.l1, h.l3], c: h.code, s: h.sig2, o: h.portOpen, lamp: h.lamp, li: h.lights }));
 
   // ---------- Estação Sob a Pedra: o Vigia Caiado ----------
-  const k = await page.evaluate(() => {
+  const k = await page.evaluate(async () => {
     const g = __ocdc, out = {}, L = g.level, q = g.quest, sc = g.script, B = g.boss;
     T.tp(75.4, -1, 52.6, Math.PI / 2); T.hold('KeyW', 0.5); out.stCp = T.S().checkpoint; out.atSt = q.has('c7_atStation');
     out.dormant = B.state === 'dormant'; out.notTarget = !g.targets().includes(B);
@@ -290,7 +291,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   check('Cap. 7: morte real do Vigia Caiado (save c7_boss, barra some, grade volta a subir, chave no corpo)', k.kill === 'dead' && k.dead && k.cp === 'c7_boss' && k.barHidden && k.portUp && k.keyVis && /escada|corpo/.test(k.obj) && k.lights <= 16, JSON.stringify({ k: k.kill, d: k.dead, cp: k.cp, b: k.barHidden, p: k.portUp, kv: k.keyVis, o: k.obj, l: k.lights }));
 
   // ---------- chave, ata e escada de serviço: fim do capítulo ----------
-  const m = await page.evaluate(() => {
+  const m = await page.evaluate(async () => {
     const g = __ocdc, out = {}, L = g.level, q = g.quest, D = L.doors, $ = (id) => document.getElementById(id);
     T.tp(99, -1, 63.2, 0); out.locked = T.interactAt('door_c7_stairs'); out.stillLocked = D.c7_stairs.locked;
     const kp = g.interact.list.find((i) => i.id === 'pick_c7_stairKey').pos; out.keyAtBody = Math.hypot(kp.x - g.boss.pos.x, kp.z - g.boss.pos.z) < 1.2;
@@ -305,7 +306,7 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
     out.endVisible = !!$('chapterEnd')?.offsetParent; out.title = $('endTitle').textContent; out.note = $('endNote').textContent;
     out.btn = { dis: $('btnEndNext').disabled, txt: $('btnEndNext').textContent }; out.stats = $('stats').innerHTML; out.rn = $('endRn0').innerHTML;
     out.raw = localStorage.getItem('ocdc_save');
-    $('btnEndNext').click(); T.run(0.2); out.stAfter = g.state; out.chAfter = g.chapter; out.sAfter = T.S(); out.sAfter = { ch: out.sAfter.chapter, cp: out.sAfter.checkpoint };
+    $('btnEndNext').click(); await __ocdc.whenReady(); T.run(0.2); out.stAfter = g.state; out.chAfter = g.chapter; out.sAfter = T.S(); out.sAfter = { ch: out.sAfter.chapter, cp: out.sAfter.checkpoint };
     return out;
   });
   await page.screenshot({ path: SHOTS + '46-cap7-fim.png' });
@@ -317,9 +318,9 @@ export async function runC7(page, check, inject, SHOTS, c6endRaw) {
   await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), m.raw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  await page.evaluate(() => { const g = __ocdc; g._buildWorld(JSON.parse(localStorage.getItem('ocdc_save'))); g._enterPlay(); T.run(0.4); });
+  await page.evaluate(async () => { const g = __ocdc; await g._buildWorld(JSON.parse(localStorage.getItem('ocdc_save'))); g._enterPlay(); T.run(0.4); });
   await ext();
-  const y = await page.evaluate(() => {
+  const y = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, D = L.doors, q = g.quest;
     const out = { st: g.state, ch: g.chapter, pos: T.P(), dead: g.boss.state === 'dead' && !g.boss.alive, notTarget: !g.targets().includes(g.boss),
       port: !L.portcullis.collider.enabled, wall: L.vigiaWall.broken, line: L.lineGate.open, stairs: !D.c7_stairs.locked,

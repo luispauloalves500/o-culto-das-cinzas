@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { CollisionWorld } from '../../src/world/CollisionWorld.js';
 import { Navigation } from '../../src/world/Navigation.js';
-import { migrateSave, createEmptySave, SaveManager, SAVE_KEY, SAVE_VERSION, makeChapter2Save, CH1_KEY_ITEMS } from '../../src/core/SaveManager.js';
+import { migrateSave, createEmptySave, SaveManager, SAVE_KEY, SAVE_VERSION, SLOTS_KEY, SLOT_IDS, makeChapter2Save, CH1_KEY_ITEMS } from '../../src/core/SaveManager.js';
 import { CombatSystem, testVolume, rayVsVolume, surfaceOf } from '../../src/gameplay/CombatSystem.js';
 import { WEAPONS, weaponDamage, wearMult, wearCost, conditionLabel } from '../../src/data/weapons.js';
 import { Inventory } from '../../src/gameplay/Inventory.js';
@@ -16,6 +16,11 @@ import * as THREE from 'three';
 import { fogFar, shadowInterval, selectLights, batchKey, Perf, freezeRig, LIGHT_BUDGETS, BATCH_CELL } from '../../src/render/Perf.js';
 import { attackClipTime, ATTACK_CLIPS, ACTION_CLIPS, CONFIG_MACHADO, CLIP } from '../../src/gameplay/rev6/configMachado.js';
 import { readFileSync } from 'node:fs';
+import { describeSave, formatPlayTime, locationName, chapterTitle, loadingTip } from '../../src/data/saveMeta.js';
+import { moveIndex, nudgeRange } from '../../src/ui/MenuNav.js';
+import { WORLD_LOADERS, worldLoaderCount } from '../../src/scenes/worlds.js';
+import { chapterAssetKinds } from '../../src/assets/preload.js';
+import { DEFAULT_SETTINGS } from '../../src/core/Settings.js';
 import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
 import { prepareClips, makeIdleClips } from '../../src/gameplay/EliasModel.js';
 import { restPoseFor, POSE_DEFS, ATTACK_DEFS } from '../../src/models/MixamoPoses.js';
@@ -1881,6 +1886,75 @@ test('Desempenho: agrupamento estático não descarta geometria compartilhada', 
   const p = new Perf({ scene, settings: { get: () => true } });
   assert.equal(p.batchStatic(scene), 3);
   assert.ok(shared.userData.shared && shared.attributes.position, 'geo compartilhada segue viva');
+});
+
+
+test('Slots (pt63u): migra o save único para o espaço 1 sem perder progresso; Continuar lê o mais recente', () => {
+  const mem = new Map();
+  const storage = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, v), removeItem: (k) => mem.delete(k) };
+  const legacy = createEmptySave();
+  legacy.chapter = 2; legacy.checkpoint = 'c2_depot'; legacy.playTime = 125; legacy.flags.ch1Done = true; legacy.savedAt = '2026-01-01T12:00:00.000Z';
+  mem.set(SAVE_KEY, JSON.stringify(legacy));
+  const sm = new SaveManager(storage);
+  assert.equal(sm.hasSave(), true);
+  const slot1 = sm.load(1);
+  assert.ok(slot1, 'espaço 1 recebeu o save antigo');
+  assert.equal(slot1.chapter, 2); assert.equal(slot1.checkpoint, 'c2_depot'); assert.equal(slot1.flags.ch1Done, true);
+  assert.equal(sm.load('auto').checkpoint, 'c2_depot');
+  assert.equal(sm.load().checkpoint, 'c2_depot');
+  const s2 = createEmptySave(); s2.chapter = 3; s2.checkpoint = 'c3_hall'; s2.playTime = 300;
+  assert.ok(sm.writeSlot(2, s2));
+  const list = sm.list();
+  assert.equal(list.length, 4);
+  assert.equal(SLOT_IDS.length, 3);
+  assert.equal(list.filter((s) => s.save).length, 3);
+  sm.deleteSlot(2);
+  assert.equal(sm.load(2), null);
+  assert.equal(sm.load(1).checkpoint, 'c2_depot');
+});
+
+test('Slots (pt63u): ficha do save tem capítulo, local, tempo e data', () => {
+  const s = createEmptySave(); s.chapter = 5; s.checkpoint = 'c5_pumps'; s.playTime = 3720; s.savedAt = '2026-11-11T20:00:00.000Z';
+  const d = describeSave(s, 1);
+  assert.equal(d.empty, false);
+  assert.match(d.chapter, /Capítulo 5/);
+  assert.equal(d.location, 'Casa de bombas');
+  assert.equal(locationName('ward_bed'), 'Enfermaria');
+  assert.match(chapterTitle(8), /Última Chama/);
+  assert.match(d.playTime, /h/);
+  assert.equal(formatPlayTime(65), '1min 05s');
+  assert.match(d.savedAt, /\d/);
+  assert.ok(loadingTip(0).length > 8);
+});
+
+test('Legendas (pt63u): opções padrão ligadas, com tamanho e fundo', () => {
+  assert.equal(DEFAULT_SETTINGS.subtitles, true);
+  assert.equal(DEFAULT_SETTINGS.subtitleSize, 'media');
+  assert.equal(DEFAULT_SETTINGS.subtitleBg, true);
+});
+
+test('Navegação (pt63u): índice cíclico, slider e seletor de itens visíveis', () => {
+  assert.equal(moveIndex(4, 0, 1), 1);
+  assert.equal(moveIndex(4, 0, -1), 3);
+  assert.equal(moveIndex(1, 0, 1), 0);
+  const ev = [];
+  const el = { tagName: 'INPUT', type: 'range', min: '0', max: '1', step: '0.1', value: '0.5', dispatchEvent(e) { ev.push(e.type); } };
+  assert.ok(nudgeRange(el, 1));
+  assert.equal(+el.value, 0.6);
+  assert.ok(ev.includes('input') && ev.includes('change'));
+});
+
+test('Carregamento (pt63u): code-split dos 8 capítulos e GLBs só do capítulo pedido', () => {
+  assert.equal(worldLoaderCount(), 8);
+  assert.ok(typeof WORLD_LOADERS[1] === 'function' && typeof WORLD_LOADERS[8] === 'function');
+  const src = readFileSync(new URL('../../src/core/Game.js', import.meta.url), 'utf8');
+  assert.ok(!src.includes("from '../scenes/hospital/HospitalLevel.js'"), 'Game.js não importa HospitalLevel estaticamente');
+  assert.ok(src.includes('loadWorld'));
+  const a1 = chapterAssetKinds(1);
+  assert.ok(a1.cabinets && a1.enemies.includes('interno') && a1.enemies.includes('enfermeiro'));
+  const a2 = chapterAssetKinds(2);
+  assert.deepEqual(a2.enemies, []);
+  assert.deepEqual(a1.audioFiles, []);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

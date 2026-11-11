@@ -8,8 +8,9 @@ export class HUD {
   constructor() {
     this.el = { hud: $('hud'), hp: $('hp'), st: $('st'), weapon: $('weapon'), items: $('items'), objective: $('objective'), objective2: $('objective2'),
       prompt: $('prompt'), hint: $('hint'), toast: $('toast'), boss: $('boss'), bossHp: $('bossHp'), bossName: $('bossName'), struggle: $('struggle'),
-      vignette: $('vignette'), fps: $('fps'), cond: $('cond'), condTrack: $('condTrack'), crosshair: $('crosshair') };
-    this.toastT = 0; this.hintT = 0; this.dmgFlash = 0;
+      vignette: $('vignette'), fps: $('fps'), cond: $('cond'), condTrack: $('condTrack'), crosshair: $('crosshair'),
+      subs: $('subs'), subsWho: $('subsWho'), subsText: $('subsText') };
+    this.toastT = 0; this.hintT = 0; this.subT = 0; this.dmgFlash = 0;
     this._last = {};
     this.lastToast = ''; this.lastHint = '';
   }
@@ -21,7 +22,40 @@ export class HUD {
   flashDamage() { this.dmgFlash = 1; }
   setStruggle(v) { this.el.struggle.classList.toggle('hidden', !v); }
   showBoss(v, name = 'O CIRURGIÃO') { this.el.boss.classList.toggle('hidden', !v); if (v && this.el.bossName) this.el.bossName.textContent = name; }
-  reset() { this.toastT = 0; this.hintT = 0; this.el.toast.classList.add('hidden'); this.el.hint.classList.add('hidden'); this.setStruggle(false); this.showBoss(false); this.el.prompt.classList.add('hidden'); this._last = {}; }
+  reset() { this.toastT = 0; this.hintT = 0; this.subT = 0; this.el.toast.classList.add('hidden'); this.el.hint.classList.add('hidden'); this.hideSubtitle(); this.setStruggle(false); this.showBoss(false); this.el.prompt.classList.add('hidden'); this._last = {}; }
+
+  /** aplica tamanho/fundo da opção de legendas a #subs e à faixa da cinemática */
+  applySubtitleStyle(settings) {
+    const on = settings?.get('subtitles') !== false;
+    const size = settings?.get('subtitleSize') || 'media';
+    const bg = settings?.get('subtitleBg') !== false;
+    const cap = $('csCaption');
+    for (const el of [this.el.subs, cap]) {
+      if (!el) continue;
+      el.classList.toggle('sub-off', !on);
+      el.classList.toggle('sub-sm', size === 'pequena');
+      el.classList.toggle('sub-lg', size === 'grande');
+      el.classList.toggle('sub-bg', !!bg);
+    }
+    if (cap) cap.style.visibility = on ? '' : 'hidden';
+    return { on, size, bg };
+  }
+
+  subtitle(speaker, text, dur = 4, settings) {
+    const st = this.applySubtitleStyle(settings);
+    if (!st.on || !this.el.subs) return;
+    const who = this.el.subsWho, body = this.el.subsText;
+    if (who) { who.textContent = speaker ? speaker + ':' : ''; who.classList.toggle('hidden', !speaker); }
+    if (body) body.textContent = text || '';
+    this.el.subs.classList.toggle('hidden', !text);
+    this.subT = text ? dur : 0;
+    this.lastSubtitle = { speaker: speaker || '', text: text || '' };
+  }
+  hideSubtitle() {
+    this.subT = 0;
+    if (this.el.subs) this.el.subs.classList.add('hidden');
+  }
+
 
   update(dt, game) {
     const p = game.player;
@@ -61,6 +95,7 @@ export class HUD {
     if (game.boss && !this.el.boss.classList.contains('hidden')) this._set('boss', this.el.bossHp.style, 'width', (100 * Math.max(0, game.boss.hp) / game.boss.maxHp).toFixed(1) + '%');
     if (this.toastT > 0 && (this.toastT -= dt) <= 0) this.el.toast.classList.add('hidden');
     if (this.hintT > 0 && (this.hintT -= dt) <= 0) this.el.hint.classList.add('hidden');
+    if (this.subT > 0 && (this.subT -= dt) <= 0) this.hideSubtitle();
     // vinheta: vida baixa + flash de dano
     this.dmgFlash = Math.max(0, this.dmgFlash - dt * 2.5);
     const low = p.hp < 35 ? (1 - p.hp / 35) * 0.7 : 0;

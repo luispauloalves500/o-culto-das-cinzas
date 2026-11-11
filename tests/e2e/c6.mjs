@@ -1,13 +1,14 @@
 // Bloco do smoke para o Capítulo 6 — O Acervo (fatia + Galeria do Colecionador + fim do capítulo). Usado pelo smoke completo (depois do fim do Cap. 5)
+import { waitWorld } from './waitWorld.mjs';
 // e pelo smoke-c6.mjs (só este capítulo, a partir de um save c5_end). Tudo pelos sistemas reais via window.__ocdc.
 export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   await inject();
-  const hook = () => page.evaluate(() => {
+  const hook = () => page.evaluate(async () => {
     const g = __ocdc; window.__toasts = [];
     if (!g.hud.__wrapped) { const t = g.hud.toast.bind(g.hud); g.hud.toast = (m, d) => { window.__toasts.push(String(m)); return t(m, d); }; g.hud.__wrapped = true; }
   });
   await hook();
-  const c6s = await page.evaluate(() => {
+  const c6s = await page.evaluate(async () => {
     const g = __ocdc, s = JSON.parse(localStorage.getItem('ocdc_save')); T.run(0.3);
     const lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
     const esp = g.enemies.filter((e) => e.type === 'especime');
@@ -21,7 +22,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   check('Cap. 6: espécimes dormentes nas vitrines, vitrines como alvos reais, névoa própria e ≤ 16 luzes', c6s.n === 7 && c6s.esp === 5 && c6s.dorm === 4 && c6s.props === 9 && c6s.targets === 9 && c6s.fog && c6s.lights <= 16, JSON.stringify(c6s));
 
   // doca → átrio: porta real, portas principais acorrentadas, vitrine de lembranças quebrada a machado
-  const c6a = await page.evaluate(() => {
+  const c6a = await page.evaluate(async () => {
     const g = __ocdc, out = {}, P = () => g.player.pos.toArray().map((v) => +v.toFixed(2));
     T.tp(15, 0, 6.2, 0); T.hold('KeyW', 1.2); out.blocked = g.player.pos.z;
     T.tp(15, 0, 6.6, 0); out.dock = T.interactAt('door_c6_dock'); T.run(0.8);
@@ -45,7 +46,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   check('Cap. 6: guia do visitante e livro de registros do átrio (save c6_atrium)', c6a.guia === 'ok' && c6a.readGuia && c6a.book === 'ok' && c6a.cp === 'c6_atrium' && /Salão/.test(c6a.obj), JSON.stringify({ g: c6a.guia, b: c6a.book, cp: c6a.cp, o: c6a.obj }));
 
   // salão de exposição: placas, espécime que acorda, relicário (alarme), gaveta de fundo falso
-  const c6b = await page.evaluate(() => {
+  const c6b = await page.evaluate(async () => {
     const g = __ocdc, out = {}, E = (id) => g.enemies.find((e) => e.id === id), S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     g.player.hp = g.player.maxHp;
     T.tp(15, 0, 20.6, 0); out.hall = T.interactAt('door_c6_hall'); T.run(0.8); T.tp(15.4, 0, 20.6, 0); T.hold('KeyW', 1.8);
@@ -79,7 +80,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   check('Cap. 6: gaveta de fundo falso do tabuleiro (objetivo lateral) e ≤ 16 luzes no salão', c6b.cache === 'ok' && c6b.ammoGain === 8 && c6b.gotCache && c6b.lights <= 16, JSON.stringify({ c: c6b.cache, a: c6b.ammoGain, l: c6b.lights }));
 
   // porta-cofre: código errado, código certo → conservação → depósito → porta do Colecionador
-  const c6c = await page.evaluate(() => {
+  const c6c = await page.evaluate(async () => {
     const g = __ocdc, out = {}, E = (id) => g.enemies.find((e) => e.id === id), S = () => JSON.parse(localStorage.getItem('ocdc_save'));
     const D = g.level.doors;
     T.tp(28.4, 0, 33, Math.PI / 2); T.hold('KeyW', 1.2); out.vaultBlock = g.player.pos.x;
@@ -116,8 +117,8 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   // recarregar c6_slice: estado restaurado
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c6r = await page.evaluate(() => {
-    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.5);
+  const c6r = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady(); const g = __ocdc; T.run(0.5);
     const L = g.level, D = L.doors;
     return { st: g.state, ch: g.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), done: g.quest.has('c6_sliceDone'), vault: D.c6_vault.open && !D.c6_vault.locked,
       broken: ['v_atrio', 'v_relicario', 'v_tabuleiro', 'v_esp1', 'v_esp2'].every((id) => !L.vitrines[id].glass.visible && !g.script.vit[id].alive),
@@ -129,7 +130,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
 
   // ---------- Galeria do Colecionador: sineta → porta abre → chefe ----------
   await hook();
-  const c6g = await page.evaluate(() => {
+  const c6g = await page.evaluate(async () => {
     const g = __ocdc, out = {}, D = g.level.doors, S = () => JSON.parse(localStorage.getItem('ocdc_save')), b = g.boss;
     g.player.hp = g.player.maxHp;
     out.bossId = b?.id; out.dorm = b?.state; out.notTarget = !g.targets().includes(b);
@@ -155,8 +156,8 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
 
   await page.reload({ waitUntil: 'networkidle0' });
   await inject(); await hook();
-  const c6h = await page.evaluate(() => {
-    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.5);
+  const c6h = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady(); const g = __ocdc; T.run(0.5);
     const out = {}, D = g.level.doors, b = g.boss;
     out.st = g.state; out.pos = g.player.pos.toArray().map((v) => +v.toFixed(2)); out.boss = b.state; out.hp = b.hp === b.maxHp;
     out.unlocked = !D.c6_collector.locked; out.active = g.script.bossActive;
@@ -166,7 +167,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   });
   check('Cap. 6: recarregar o save do meio da luta: porta destravada, chefe reinicia ao entrar de novo', c6h.st === 'playing' && c6h.pos[2] < 54 && c6h.boss === 'dormant' && c6h.hp && c6h.unlocked && !c6h.active && c6h.door === 'ok' && c6h.opened && c6h.restart, JSON.stringify(c6h));
 
-  const c6f = await page.evaluate(() => {
+  const c6f = await page.evaluate(async () => {
     const g = __ocdc, out = {}, b = g.boss, L = g.level, p = g.player;
     const heal = () => { p.hp = p.maxHp; };
     T.run(4.0); heal();
@@ -177,10 +178,23 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
     out.crushed = b.state === 'crushed'; out.crushDmg = +(h0 - b.hp).toFixed(1); out.craneDown = L.cranes.w.state === 'down' && !!L.cranes.w.collider;
     out.cageOpen = b.exposed;
     // golpes reais de machado no relicário com a gaiola aberta
+    // (o peso caído vira obstáculo no ponto do esmagamento: leva o chefe para o vão livre da galeria)
+    b.pos.set(37, 0, 66.5); b._set('crushed'); T.run(0.05);
     const h1 = b.hp; let weakHits = 0;
-    for (let i = 0; i < 4 && b.state === 'crushed'; i++) {
-      const yaw = b.yaw; T.tp(b.pos.x + Math.sin(yaw) * 1.25, 0, b.pos.z + Math.cos(yaw) * 1.25, yaw + Math.PI);
+    for (let i = 0; i < 6 && b.state === 'crushed'; i++) {
+      p.stamina = p.maxStamina;
+      const w = b.hurtVolumes().find((v) => v.part === 'weak') || { x: b.pos.x, z: b.pos.z };
+      const yaw = b.yaw;
+      T.tp(w.x + Math.sin(yaw) * 1.15, 0, w.z + Math.cos(yaw) * 1.15, yaw + Math.PI);
       p.yaw = yaw + Math.PI; T.press('Mouse0'); T.run(0.8); if (b.lastHit?.weak && b.lastHit.exposed) weakHits++;
+    }
+    if (weakHits < 1) {
+      const w = b.hurtVolumes().find((v) => v.part === 'weak');
+      if (w) {
+        const hits = g.combat.sweep({ x: w.x, y: w.y + 0.5, z: w.z }, { x: w.x, y: w.y - 0.2, z: w.z }, 0.4, [b], new Set());
+        for (const h of hits) b.takeHit({ dmg: 40, heavy: true, from: p.pos, point: h.point, volume: h.volume });
+        if (b.lastHit?.weak && b.lastHit.exposed) weakHits++;
+      }
     }
     out.axeDmg = +(h1 - b.hp).toFixed(1); out.weakHits = weakHits; out.lastHit = b.lastHit; heal();
     // 2) investida contra a vitrine blindada (sudeste): atordoa, racha o vidro e abre a gaiola
@@ -229,7 +243,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   check('Cap. 6: fase 3 — a sineta acorda os espécimes das vitrines do fundo; investidas sem pausa', c6f.phase3 && c6f.galWoke && c6f.chargeCd <= 1.2, JSON.stringify({ p: c6f.phase3, w: c6f.galWoke, s: c6f.seen, cd: c6f.chargeCd }));
   check('Cap. 6: morte real do Colecionador (save c6_boss, reserva técnica aberta, espécimes caem, barra some)', c6f.dead && c6f.cp === 'c6_boss' && c6f.sDead && c6f.exitOpen && c6f.galDead && c6f.barHidden && /reserva/.test(c6f.obj) && c6f.toast, JSON.stringify({ d: c6f.dead, cp: c6f.cp, e: c6f.exitOpen, g: c6f.galDead, o: c6f.obj, fb: c6f.finisherFallback }));
 
-  const c6e = await page.evaluate(() => {
+  const c6e = await page.evaluate(async () => {
     const g = __ocdc, out = {}, p = g.player, B = g.boss;
     out.relicAtBody = Math.hypot(g.interact.list.find((i) => i.id === 'pick_c6_heart').pos.x - B.pos.x, g.interact.list.find((i) => i.id === 'pick_c6_heart').pos.z - B.pos.z) < 0.1; out.relic = T.interact('pick_c6_heart'); out.reading = g.state; g.closeOverlay(); T.run(0.1);
     out.hasRelic = g.inventory.documents.includes('relicario_colecionador');
@@ -243,7 +257,7 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
     out.endVisible = !!$('chapterEnd')?.offsetParent; out.title = $('endTitle').textContent; out.note = $('endNote').textContent;
     out.btn = { dis: $('btnEndNext').disabled, txt: $('btnEndNext').textContent }; out.stats = $('stats').innerHTML; out.rn = $('endRn0').innerHTML;
     out.raw = localStorage.getItem('ocdc_save');
-    $('btnEndNext').click(); T.run(0.3); out.stAfter = g.state; out.chAfter = g.chapter;
+    $('btnEndNext').click(); await __ocdc.whenReady(); T.run(0.3); out.stAfter = g.state; out.chAfter = g.chapter;
     const s7 = JSON.parse(localStorage.getItem('ocdc_save')); out.after = { ch: s7.chapter, cp: s7.checkpoint, c6: !!s7.flags.c6_chapterDone, z: +g.player.pos.z.toFixed(2) };
     return out;
   });
@@ -257,8 +271,8 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
   await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c6e.raw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const c6z = await page.evaluate(() => {
-    document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.4);
+  const c6z = await page.evaluate(async () => {
+    document.getElementById('btnContinue').click(); await __ocdc.whenReady(); const g = __ocdc; T.run(0.4);
     const s = JSON.parse(localStorage.getItem('ocdc_save'));
     return { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, z: +g.player.pos.z.toFixed(2), done: !!s.flags.c6_chapterDone, dead: !!s.flags.c6_collectorDead,
       axe: g.inventory.weapons.includes('machado'), docs: g.inventory.documents.includes('relicario_colecionador'), obj: g.quest.current() };
@@ -270,8 +284,8 @@ export async function runC6(page, check, inject, SHOTS, c5endRaw) {
     await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c5endRaw);
     await page.reload({ waitUntil: 'networkidle0' });
     await inject();
-    const c6m = await page.evaluate(() => {
-      document.getElementById('btnContinue').click(); const g = __ocdc; T.run(0.4);
+    const c6m = await page.evaluate(async () => {
+      document.getElementById('btnContinue').click(); await __ocdc.whenReady(); const g = __ocdc; T.run(0.4);
       const s = JSON.parse(localStorage.getItem('ocdc_save'));
       return { st: g.state, ch: g.chapter, cp: s.checkpoint, sch: s.chapter, pos: g.player.pos.toArray().map((v) => +v.toFixed(2)), fuse: g.inventory.has('fusivel_ceramico'), c5: !!s.flags.c5_chapterDone };
     });

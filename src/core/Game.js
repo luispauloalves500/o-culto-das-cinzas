@@ -18,35 +18,12 @@ import { Inventory } from '../gameplay/Inventory.js';
 import { QuestSystem } from '../gameplay/QuestSystem.js';
 import { PerceptionSystem } from '../ai/PerceptionSystem.js';
 import { EnemyDirector } from '../ai/EnemyDirector.js';
-import { HospitalLevel, CHECKPOINTS } from '../scenes/hospital/HospitalLevel.js';
-import { HospitalScript } from '../scenes/hospital/HospitalScript.js';
-import { BairroLevel, BAIRRO_CHECKPOINTS, BAIRRO_FOG } from '../scenes/bairro/BairroLevel.js';
-import { BairroScript } from '../scenes/bairro/BairroScript.js';
-import { SedeLevel, SEDE_CHECKPOINTS, SEDE_FOG } from '../scenes/sede/SedeLevel.js';
-import { SedeScript } from '../scenes/sede/SedeScript.js';
-import { CidadeLevel, CIDADE_CHECKPOINTS, CIDADE_FOG } from '../scenes/cidade/CidadeLevel.js';
-import { CidadeScript } from '../scenes/cidade/CidadeScript.js';
-import { AguasLevel, AGUAS_CHECKPOINTS, AGUAS_FOG } from '../scenes/aguas/AguasLevel.js';
-import { AguasScript } from '../scenes/aguas/AguasScript.js';
-import { AcervoLevel, ACERVO_CHECKPOINTS, ACERVO_FOG } from '../scenes/acervo/AcervoLevel.js';
-import { AcervoScript } from '../scenes/acervo/AcervoScript.js';
-import { PedraLevel, PEDRA_CHECKPOINTS, PEDRA_FOG } from '../scenes/pedra/PedraLevel.js';
-import { PedraScript } from '../scenes/pedra/PedraScript.js';
-import { UsinaLevel, USINA_CHECKPOINTS, USINA_FOG } from '../scenes/usina/UsinaLevel.js';
-import { UsinaScript } from '../scenes/usina/UsinaScript.js';
 import { setMapChapter } from '../data/map.js';
+import { loadWorld, prefetchWorld } from '../scenes/worlds.js';
+import { prefetchChapterAssets } from '../assets/preload.js';
+import { loadingTip } from '../data/saveMeta.js';
+import { MenuNav } from '../ui/MenuNav.js';
 
-// mundos por capítulo: geometria, roteiro, checkpoints e névoa padrão
-const WORLDS = {
-  1: { Level: HospitalLevel, Script: HospitalScript, checkpoints: CHECKPOINTS, start: 'ward_bed', fog: { fog: 0x050806, density: 0.075 } },
-  2: { Level: BairroLevel, Script: BairroScript, checkpoints: BAIRRO_CHECKPOINTS, start: 'c2_gate', fog: BAIRRO_FOG },
-  3: { Level: SedeLevel, Script: SedeScript, checkpoints: SEDE_CHECKPOINTS, start: 'c3_tram', fog: SEDE_FOG },
-  4: { Level: CidadeLevel, Script: CidadeScript, checkpoints: CIDADE_CHECKPOINTS, start: 'c4_drain', fog: CIDADE_FOG },
-  5: { Level: AguasLevel, Script: AguasScript, checkpoints: AGUAS_CHECKPOINTS, start: 'c5_passage', fog: AGUAS_FOG },
-  6: { Level: AcervoLevel, Script: AcervoScript, checkpoints: ACERVO_CHECKPOINTS, start: 'c6_dock', fog: ACERVO_FOG },
-  7: { Level: PedraLevel, Script: PedraScript, checkpoints: PEDRA_CHECKPOINTS, start: 'c7_ladder', fog: PEDRA_FOG },
-  8: { Level: UsinaLevel, Script: UsinaScript, checkpoints: USINA_CHECKPOINTS, start: 'c8_yard', fog: USINA_FOG },
-};
 import { HUD } from '../ui/HUD.js';
 import { Menus } from '../ui/Menus.js';
 import { playChapterIntro } from '../gameplay/ChapterIntro.js';
@@ -79,6 +56,9 @@ export class Game {
     this.gfx = new Graphics(this);
     this.hud = new HUD();
     this.menus = new Menus(this);
+    this.menuNav = new MenuNav(this);
+    this.loading = false;
+    this._boot = null;
     // em automação (testes) o pointer lock não está disponível; o jogo roda sem ele
     this.requireLock = !navigator.webdriver;
     this.state = 'menu';
@@ -126,11 +106,14 @@ export class Game {
     this.scene = null;
   }
 
-  _buildWorld(save) {
+  async _buildWorld(save, onProg) {
     this._disposeWorld();
     this.bus = new EventBus();
     this.chapter = [2, 3, 4, 5, 6, 7, 8].includes(save.chapter) ? save.chapter : 1;
-    const W = WORLDS[this.chapter];
+    onProg?.(0.15, loadingTip(this.chapter * 3 + (save.checkpoint || '').length));
+    const W = await loadWorld(this.chapter);
+    this._world = W;
+    onProg?.(0.6, 'Montando o cenário…');
     setMapChapter(this.chapter);
     const scene = (this.scene = new THREE.Scene());
     scene.background = new THREE.Color(W.fog.fog).multiplyScalar(0.8);
@@ -170,7 +153,17 @@ export class Game {
     scene.add(this.fill);
     this.gfx.onWorld();
     this.hud.reset();
+    this.hud.applySubtitleStyle?.(this.settings);
     this.combatT = 0;
+    onProg?.(0.85, 'Carregando modelos…');
+    await prefetchChapterAssets(this.chapter);
+    const elias = this.player?.model;
+    if (elias && !elias.ready && !elias.failed) {
+      await new Promise((res) => { const t = setTimeout(res, 8000); elias.whenReady(() => { clearTimeout(t); res(); }); });
+    }
+    prefetchWorld(this.chapter + 1);
+    prefetchChapterAssets(this.chapter + 1);
+    onProg?.(1, '');
     this.bus.on('EnemyAlerted', () => { if (!this.script.bossActive) this.audio.setIntensity(1); this.combatT = 8; if (!this.script.tut.shown.noise) this.script.hint('noise', 'Inimigos <b>ouvem</b> passos de corrida, golpes e portas. Ande devagar para não chamar atenção.', 7); });
     this.bus.on('EnemyDied', (e) => { this.combat.blood({ x: e.pos.x, y: e.pos.y + 1, z: e.pos.z }, 20); });
   }
@@ -209,13 +202,40 @@ export class Game {
     if (this.requireLock) this.input.requestLock();
     this.last = performance.now(); this.acc = 0;
   }
+  whenReady() { return this._boot || Promise.resolve(); }
+  _bootFrom(fn) {
+    if (this.loading && this._boot) return this._boot;
+    this.loading = true;
+    this.state = 'loading';
+    this.input.exitLock();
+    this.input.blockKeys = false;
+    this.menus.showLoading(0.05, loadingTip((Date.now() / 8000) | 0));
+    this._boot = (async () => {
+      try { await fn((p, tip) => this.menus.setLoadProgress(p, tip)); }
+      catch (e) { this.loading = false; this.fatal(e); throw e; }
+      finally { this.loading = false; this._boot = null; }
+    })();
+    return this._boot;
+  }
+  say(speaker, text, dur = 4) { this.hud.subtitle(speaker, text, dur, this.settings); }
+  captureThumb() {
+    try {
+      const src = this.renderer?.domElement; if (!src) return null;
+      const c = Game._thumb || (Game._thumb = document.createElement('canvas'));
+      c.width = 160; c.height = 90;
+      c.getContext('2d').drawImage(src, 0, 0, 160, 90);
+      return c.toDataURL('image/jpeg', 0.55);
+    } catch (e) { return null; }
+  }
   newGame() {
-    const s = createEmptySave();
-    this._buildWorld(s);
-    this.saveGame('ward_bed');
-    this._enterPlay();
-    this.hud.toast('Hospital São Dimas — Véspera, 1934', 4);
-    playChapterIntro(this, 1);
+    return this._bootFrom(async (onProg) => {
+      const s = createEmptySave();
+      await this._buildWorld(s, onProg);
+      this.saveGame('ward_bed');
+      this._enterPlay();
+      this.hud.toast('Hospital São Dimas — Véspera, 1934', 4);
+      playChapterIntro(this, 1);
+    });
   }
   continueGame() {
     const s = this.saves.load();
@@ -232,7 +252,8 @@ export class Game {
     if (s.chapter === 6 && (s.flags.c6_chapterDone || s.checkpoint === 'c6_end')) return this.startChapter7(s);
     // save do Capítulo 7 concluído (de versões em que o Cap. 8 ainda não existia): segue para o Cap. 8
     if (s.chapter === 7 && (s.flags.c7_chapterDone || s.checkpoint === 'c7_end')) return this.startChapter8(s);
-    this._buildWorld(s);
+    return this._bootFrom(async (onProg) => {
+    await this._buildWorld(s, onProg);
     this._enterPlay();
     if (this.chapter === 8 && s.flags.c8_chapterDone) { this.endChapter(); return; }
     if (this.chapter === 8) this.hud.toast(s.flags.c8_cinzaDead ? 'Capítulo 8 — A Última Chama · Sala dos Transmissores (a Primeira Cinza caiu)' : s.flags.c8_vernetDown ? 'Capítulo 8 — A Última Chama · Sala dos Transmissores (a Primeira Cinza)' : s.flags.c8_atTop ? 'Capítulo 8 — A Última Chama · topo da torre' : s.flags.c8_inMachine ? 'Capítulo 8 — A Última Chama · casa de máquinas da torre' : s.flags.c8_sliceDone ? 'Capítulo 8 — A Última Chama · base da torre de transmissão' : s.flags.c8_inTurbine ? 'Capítulo 8 — A Última Chama · Sala da Turbina' : s.flags.c8_inBoiler ? 'Capítulo 8 — A Última Chama · Casa das Caldeiras' : 'Capítulo 8 — A Última Chama · pátio do carvão', 3.5);
@@ -242,76 +263,91 @@ export class Game {
     if (this.chapter === 5) this.hud.toast(s.flags.c5_chapterDone ? 'Capítulo 5 — Águas Negras · galeria de descarga (capítulo concluído)' : s.flags.c5_afogadaDead ? 'Capítulo 5 — Águas Negras · salão das turbinas' : s.flags.c5_sliceDone ? 'Capítulo 5 — Águas Negras · antecâmara das turbinas' : s.flags.c5_power ? 'Capítulo 5 — Águas Negras · casa de bombas' : 'Capítulo 5 — Águas Negras · estação de bombeamento', 3.5);
     if (this.chapter === 6) this.hud.toast(s.flags.c6_chapterDone ? 'Capítulo 6 — O Acervo · reserva técnica (capítulo concluído)' : s.flags.c6_collectorDead ? 'Capítulo 6 — O Acervo · Galeria do Colecionador' : s.flags.c6_galleryOpen ? 'Capítulo 6 — O Acervo · Galeria do Colecionador (aberta)' : s.flags.c6_sliceDone ? 'Capítulo 6 — O Acervo · porta da Galeria do Colecionador' : s.flags.c6_vaultOpen ? 'Capítulo 6 — O Acervo · ala de conservação' : 'Capítulo 6 — O Acervo · Museu de Ciências Proibidas', 3.5);
     if (this.chapter === 4) this.hud.toast(s.flags.c4_sliceDone ? 'Capítulo 4 — Cidade Morta · Torre do Relógio' : 'Capítulo 4 — Cidade Morta · centro antigo de Véspera', 3.5);
+    });
   }
   /** passagem do Capítulo 7 para o 8: a escada de serviço sob a Estação Sob a Pedra sobe até o pátio de carvão da Usina */
   startChapter8(prev) {
     const from = prev || (this.scene && this.chapter === 7 ? this.serialize(this.checkpoint || 'c7_end') : this.saves.load());
     const s = makeChapter8Save(from);
+    return this._bootFrom(async (onProg) => {
     this.saves.write(s);
-    this._buildWorld(s);
+    await this._buildWorld(s, onProg);
     this._enterPlay();
     this.script.intro?.();
     playChapterIntro(this, 8);
+    });
   }
   /** passagem do Capítulo 6 para o 7: o alçapão da reserva técnica desce ao poço de serviço das catacumbas */
   startChapter7(prev) {
     const from = prev || (this.scene && this.chapter === 6 ? this.serialize(this.checkpoint || 'c6_end') : this.saves.load());
     const s = makeChapter7Save(from);
+    return this._bootFrom(async (onProg) => {
     this.saves.write(s);
-    this._buildWorld(s);
+    await this._buildWorld(s, onProg);
     this._enterPlay();
     this.script.intro?.();
     playChapterIntro(this, 7);
+    });
   }
   /** passagem do Capítulo 5 para o 6: a barcaça da galeria de descarga atraca na doca do Museu de Ciências Proibidas */
   startChapter6(prev) {
     const from = prev || (this.scene && this.chapter === 5 ? this.serialize(this.checkpoint || 'c5_end') : this.saves.load());
     const s = makeChapter6Save(from);
+    return this._bootFrom(async (onProg) => {
     this.saves.write(s);
-    this._buildWorld(s);
+    await this._buildWorld(s, onProg);
     this._enterPlay();
     this.script.intro?.();
     playChapterIntro(this, 6);
+    });
   }
   /** passagem do Capítulo 4 para o 5: a escada sob o Relógio desce até os canais da estação de bombeamento */
   startChapter5(prev) {
     const from = prev || (this.scene && this.chapter === 4 ? this.serialize(this.checkpoint || 'c4_end') : this.saves.load());
     const s = makeChapter5Save(from);
+    return this._bootFrom(async (onProg) => {
     this.saves.write(s);
-    this._buildWorld(s);
+    await this._buildWorld(s, onProg);
     this._enterPlay();
     this.script.intro?.();
     playChapterIntro(this, 5);
+    });
   }
   /** passagem do Capítulo 3 para o 4: a galeria das catacumbas termina num bueiro do centro antigo */
   startChapter4(prev) {
     const from = prev || (this.scene && this.chapter === 3 ? this.serialize(this.checkpoint || 'c3_gallery') : this.saves.load());
     const s = makeChapter4Save(from);
+    return this._bootFrom(async (onProg) => {
     this.saves.write(s);
-    this._buildWorld(s);
+    await this._buildWorld(s, onProg);
     this._enterPlay();
     this.script.intro?.();
     playChapterIntro(this, 4);
+    });
   }
   /** passagem do Capítulo 2 para o 3: o passe da Linha 4 leva Elias até o Largo do Véu */
   startChapter3(prev) {
     const from = prev || (this.scene && this.chapter === 2 ? this.serialize(this.checkpoint || 'c2_end') : this.saves.load());
     const s = makeChapter3Save(from);
+    return this._bootFrom(async (onProg) => {
     this.saves.write(s);
-    this._buildWorld(s);
+    await this._buildWorld(s, onProg);
     this._enterPlay();
     this.script.intro?.();
     playChapterIntro(this, 3);
+    });
   }
   /** passagem real do Capítulo 1 para o 2: monta o save inicial do Bairro Operário a partir do estado atual */
   startChapter2(prev) {
     const from = prev || (this.scene && this.chapter === 1 ? this.serialize(this.checkpoint || 'yard') : this.saves.load());
     const s = makeChapter2Save(from);
+    return this._bootFrom(async (onProg) => {
     this.saves.write(s);
-    this._buildWorld(s);
+    await this._buildWorld(s, onProg);
     this._enterPlay();
     this.script.intro?.();
     playChapterIntro(this, 2);
+    });
   }
   pause() {
     if (this.state !== 'playing') return;
@@ -388,6 +424,7 @@ export class Game {
     if (this.fpsAcc > 0.5) { this.fps = this.fpsN / this.fpsAcc; this.fpsAcc = 0; this.fpsN = 0; }
     try {
       this.input.pollGamepad();
+      if (this.menuNav && this.state !== 'playing' && this.state !== 'cutscene' && this.state !== 'dying') this.menuNav.tick(dt);
       this._handleMenuKeys();
       if (this.state === 'playing' || this.state === 'cutscene') {
         this.acc += dt;
@@ -444,6 +481,9 @@ export class Game {
 
   _handleMenuKeys() {
     const i = this.input;
+    if (this.menuNav && this.state !== 'playing' && this.state !== 'cutscene' && this.state !== 'dying' && this.state !== 'loading') {
+      if (this.menuNav.handle(i)) return;
+    }
     if (this.state === 'playing') {
       if (i.wasPressed('pause')) { this.pause(); return; }
       if (i.wasPressed('inventory')) { this.openInventory(); return; }

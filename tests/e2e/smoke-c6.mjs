@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import puppeteer from 'puppeteer-core';
 import { runC6 } from './c6.mjs';
+import { waitWorld } from './waitWorld.mjs';
 
 const PORT = 4183;
 const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome';
@@ -27,6 +28,7 @@ try {
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle0' });
   await page.click('#btnNew'); await new Promise((r) => setTimeout(r, 1500));
+  await waitWorld(page);
   // abertura do Cap. 1 (pt47u) é coberta no smoke principal: aqui pula e desliga as cinemáticas
   await page.evaluate(() => { __ocdc.cutscene?.finish(); __ocdc.settings.set('cinematics', false); });
   const raw = await page.evaluate(() => {

@@ -316,22 +316,143 @@ export function makeChapter8Save(prev) {
   };
 }
 
+// pt63u: 3 espaços manuais + salvamento automático. ocdc_save continua sendo o espelho
+// do automático (e o que "Continuar" prefere), para não quebrar saves e testes antigos.
+export const SLOTS_KEY = 'ocdc_slots_v1';
+export const SLOT_IDS = [1, 2, 3];
+export const AUTO_ID = 'auto';
+
+export function emptySlotsState() {
+  return { v: 1, migrated: false, slots: { 1: null, 2: null, 3: null }, auto: null };
+}
+
 export class SaveManager {
-  constructor(storage = globalThis.localStorage) { this.storage = storage; }
-  hasSave() { return !!this.load(); }
-  load() {
+  constructor(storage = globalThis.localStorage) {
+    this.storage = storage;
+    this.migrateLegacy();
+  }
+
+  _readIndex() {
     try {
-      const raw = this.storage?.getItem(SAVE_KEY);
-      if (!raw) return null;
-      return migrateSave(JSON.parse(raw));
+      const raw = this.storage?.getItem(SLOTS_KEY);
+      if (!raw) return emptySlotsState();
+      const d = JSON.parse(raw);
+      const base = emptySlotsState();
+      return {
+        v: 1,
+        migrated: !!d.migrated,
+        auto: d.auto || null,
+        slots: { 1: d.slots?.[1] ?? null, 2: d.slots?.[2] ?? null, 3: d.slots?.[3] ?? null },
+      };
     } catch (e) {
-      console.warn('[Save] save corrompido ignorado', e);
-      return null;
+      console.warn('[Save] índice de espaços ignorado', e);
+      return emptySlotsState();
     }
   }
-  write(save) {
-    const data = { ...save, version: SAVE_VERSION, savedAt: new Date().toISOString() };
-    try { this.storage?.setItem(SAVE_KEY, JSON.stringify(data)); return true; } catch (e) { console.error('[Save] falha', e); return false; }
+  _writeIndex(idx) {
+    try { this.storage?.setItem(SLOTS_KEY, JSON.stringify(idx)); return true; }
+    catch (e) { console.error('[Save] falha ao gravar espaços', e); return false; }
   }
+  _wrap(save, thumb = null) {
+    const data = migrateSave({ ...save, version: SAVE_VERSION, savedAt: save.savedAt || new Date().toISOString() });
+    if (!data) return null;
+    return { save: data, thumb: thumb || null, savedAt: data.savedAt, chapter: data.chapter, checkpoint: data.checkpoint, playTime: data.playTime || 0 };
+  }
+  _readLegacy() {
+    try {
+      const raw = this.storage?.getItem(SAVE_KEY);
+      if (!raw) return { missing: true, save: null };
+      return { missing: false, save: migrateSave(JSON.parse(raw)) };
+    } catch (e) {
+      console.warn('[Save] save corrompido ignorado', e);
+      return { missing: false, save: null, corrupt: true };
+    }
+  }
+
+  /** copia o save único antigo para o espaço 1 e para o automático, uma vez, sem apagar o progresso */
+  migrateLegacy() {
+    const idx = this._readIndex();
+    if (idx.migrated) return idx;
+    const legacy = this._readLegacy();
+    if (legacy.corrupt) { idx.migrated = true; this._writeIndex(idx); return idx; }
+    if (legacy.save) {
+      const wrap = this._wrap(legacy.save);
+      if (!idx.slots[1]) idx.slots[1] = wrap;
+      if (!idx.auto) idx.auto = wrap;
+    }
+    idx.migrated = true;
+    this._writeIndex(idx);
+    return idx;
+  }
+
+  hasSave() {
+    if (this.load()) return true;
+    const idx = this._readIndex();
+    return !!(idx.auto?.save || SLOT_IDS.some((id) => idx.slots[id]?.save));
+  }
+
+  /** lê o save ativo: prefere ocdc_save (compatível com testes e "Continuar" após mutação); senão o mais recente */
+  load(id) {
+    if (id == null || id === '' || id === 'active') {
+      const legacy = this._readLegacy();
+      if (legacy.corrupt) return null;
+      if (legacy.save) return legacy.save;
+      return this.latest();
+    }
+    const idx = this._readIndex();
+    const wrap = id === AUTO_ID ? idx.auto : idx.slots[id];
+    return wrap?.save ? migrateSave(wrap.save) : null;
+  }
+
+  latest() {
+    const cands = this.list().filter((s) => s.save);
+    if (!cands.length) return null;
+    cands.sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')));
+    return migrateSave(cands[0].save);
+  }
+
+  latestId() {
+    const cands = this.list().filter((s) => s.save);
+    if (!cands.length) return null;
+    cands.sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')));
+    return cands[0].id;
+  }
+
+  list() {
+    const idx = this._readIndex();
+    const out = [{ id: AUTO_ID, ...(idx.auto || {}), save: idx.auto?.save ? migrateSave(idx.auto.save) : null }];
+    for (const id of SLOT_IDS) {
+      const w = idx.slots[id];
+      out.push({ id, ...(w || {}), save: w?.save ? migrateSave(w.save) : null });
+    }
+    return out;
+  }
+
+  write(save, id = AUTO_ID, thumb = null) {
+    const data = { ...save, version: SAVE_VERSION, savedAt: new Date().toISOString() };
+    const wrap = this._wrap(data, thumb);
+    if (!wrap) return false;
+    try {
+      // o automático (e qualquer escrita sem espaço) espelha em ocdc_save, para "Continuar" e testes
+      if (id === AUTO_ID || id == null) this.storage?.setItem(SAVE_KEY, JSON.stringify(wrap.save));
+      else this.storage?.setItem(SAVE_KEY, JSON.stringify(wrap.save));
+      const idx = this._readIndex();
+      if (id === AUTO_ID || id == null) idx.auto = wrap;
+      else if (SLOT_IDS.includes(+id)) idx.slots[+id] = wrap;
+      idx.migrated = true;
+      this._writeIndex(idx);
+      return true;
+    } catch (e) { console.error('[Save] falha', e); return false; }
+  }
+
+  writeSlot(id, save, thumb = null) { return this.write(save, id, thumb); }
+
+  deleteSlot(id) {
+    const idx = this._readIndex();
+    if (id === AUTO_ID) idx.auto = null;
+    else if (SLOT_IDS.includes(+id)) idx.slots[+id] = null;
+    this._writeIndex(idx);
+  }
+
   clear() { try { this.storage?.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } }
 }

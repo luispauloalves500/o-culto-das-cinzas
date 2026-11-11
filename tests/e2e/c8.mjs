@@ -1,12 +1,13 @@
 // Bloco do smoke para o Capítulo 8 — A Última Chama (capítulo completo: Usina, torre, chefes e os três finais). Usado pelo smoke completo (depois do fim do Cap. 7)
 // e pelo smoke-c8.mjs (só este capítulo, a partir de um save c7_end). Tudo pelos sistemas reais via window.__ocdc.
 import { runC8Tower } from './c8tower.mjs';
+import { waitWorld } from './waitWorld.mjs';
 
 export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   await page.evaluate((raw) => localStorage.setItem('ocdc_save', raw), c7endRaw);
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
-  const ext = () => page.evaluate(() => {
+  const ext = () => page.evaluate(async () => {
     const g = __ocdc; window.__toasts = window.__toasts || [];
     if (!g.hud.__wrapped) { const t = g.hud.toast.bind(g.hud); g.hud.toast = (m, d) => { window.__toasts.push(String(m)); return t(m, d); }; g.hud.__wrapped = true; }
     window.T.lights = () => { let v = 0; g.scene.traverse((o) => { if (o.isLight && o.visible && o.layers.isEnabled(0)) v++; }); return v; };
@@ -17,12 +18,12 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
     window.T.last = () => window.__toasts.at(-1) || '';
   });
   await ext();
-  await page.evaluate(() => { window.__toasts = []; document.getElementById('btnContinue').click(); });
+  await page.evaluate(async () => { window.__toasts = []; document.getElementById('btnContinue').click(); await __ocdc.whenReady(); });
   await ext();
   await page.evaluate(() => T.run(0.3));
 
   // ---------- migração c7_end → Cap. 8 e início no pátio ----------
-  const a = await page.evaluate(() => {
+  const a = await page.evaluate(async () => {
     const g = __ocdc, s = T.S(), out = {};
     Object.assign(out, { st: g.state, ch: g.chapter, sch: s.chapter, cp: s.checkpoint, pos: T.P(), obj: g.quest.current(), n: g.enemies.length,
       types: g.enemies.map((e) => e.type).sort().join(','), fog: !!g.scene.fog, ac: typeof g.perception.acoustics === 'function', zone: g.level.zone,
@@ -49,7 +50,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   check('Cap. 8: portão de carga da Casa das Caldeiras trancado por dentro e sólido', a.gate === 'ok' && a.gateLocked && a.gateBlock < 24 && /torre de carvão|esteira|dentro/.test(a.gateT + a.obj2), JSON.stringify({ g: a.gate, t: a.gateT, l: a.gateLocked, b: a.gateBlock }));
 
   // ---------- escalada da torre de carvão ----------
-  const b = await page.evaluate(() => {
+  const b = await page.evaluate(async () => {
     const g = __ocdc, pl = g.player, out = {};
     T.E('c8_aco1').setDeadInstant(); T.heal();
     T.tp(22, 0, 10.3, 0); out.grab = T.interactAt('c8_ladder'); out.st0 = pl.state; out.onX = [+pl.pos.x.toFixed(2), +pl.pos.z.toFixed(2)];
@@ -79,7 +80,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   check('Cap. 8: topo da torre de carvão (y 4,4 — c8_climbed, objetivo do volante); a escada também desce e sobe de novo', b.grab2 === 'ok' && Math.abs(b.top[1] - 4.4) < 0.15 && b.top[2] > 12.4 && b.stTop === 'free' && b.climbed && /volante/.test(b.obj) && b.down === 'ok' && b.stDown === 'climb' && b.bottom[1] < 0.1 && b.bottom[2] < 12.2 && Math.abs(b.top2[1] - 4.4) < 0.15, JSON.stringify(b));
 
   // ---------- esteira → galeria da Casa das Caldeiras ----------
-  const c = await page.evaluate(() => {
+  const c = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     T.E('c8_aco2').setDeadInstant(); T.heal();
     T.tp(22, 4.4, 14, 0); T.hold('KeyW', 2.2); out.p0 = T.P(); out.belt = out.p0[1] > 4.2;
@@ -109,7 +110,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   check('Cap. 8: porta-pistão da turbina travada pela pressão (3/3, sólida); portão de carga destrancado por dentro vira atalho ao pátio', c.sd === 'ok' && /3\/3/.test(c.sdT) && c.sdLocked && c.sdBlock < 52 && c.cg === 'ok' && c.cgOpen && c.cgThrough < 23.6 && /volante/.test(c.obj), JSON.stringify(c));
 
   // ---------- corredor de tubos (jatos de vapor) e oficina ----------
-  const d = await page.evaluate(() => {
+  const d = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, pl = g.player, out = {};
     // o foguista c8_fog1 patrulha perto da porta dos tubos; a fase da patrulha varia com o tempo real gasto antes (cinemáticas/gráficos),
     // então ele fica parado durante este bloco para o teste medir só os jatos (ele volta a agir no bloco das caldeiras)
@@ -146,7 +147,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   check('Cap. 8: registro de alimentação — sem volante só o eixo; com o volante fecha os jatos de vez (sem dano)', d.feed0 === 'ok' && /volante/.test(d.feed0T) && !d.leaksOff0 && d.feed === 'ok' && d.leaksOff && d.afterDmg === 0 && !d.anyLeak && d.lights <= 16, JSON.stringify(d));
 
   // ---------- válvulas de alívio: girar, cancelar, vapor ----------
-  const e = await page.evaluate(() => {
+  const e = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, pl = g.player, S = g.script, out = {};
     T.heal();
     // soltar o volante no meio (afastar-se) cancela
@@ -185,7 +186,7 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   check('Cap. 8: caldeira II e a III pela passarela da galeria — linha zerada (c8_ventedAll), turbina desacelera e a sala fica mais silenciosa', e.v2 === 'ok' && e.vented2 && e.press2 === 1 && e.ac2 > 0.6 && e.v3 === 'ok' && e.vented3 && e.all && e.press3 === 0 && /terceira/.test(e.v3T) && e.speed < 0.5 && e.ac3 > e.ac2 && /porta-pistão|Turbina/.test(e.obj), JSON.stringify(e));
 
   // ---------- Sala da Turbina, sabotagem e base da torre ----------
-  const f = await page.evaluate(() => {
+  const f = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, pl = g.player, out = {}, $ = (id) => document.getElementById(id);
     T.heal(); T.E('c8_fog2').setDeadInstant(); T.E('c8_aco3').alive && T.E('c8_aco3').setDeadInstant();
     T.tp(13, 0, 50.6, 0); out.sd = T.interactAt('door_c8_steamDoor'); T.run(1.5); out.sdOpen = L.doors.c8_steamDoor.open && q.has('c8_steamDoorOpen');
@@ -220,9 +221,9 @@ export async function runC8(page, check, inject, SHOTS, c7endRaw) {
   await page.reload({ waitUntil: 'networkidle0' });
   await inject();
   await ext();
-  await page.evaluate(() => { window.__toasts = []; document.getElementById('btnContinue').click(); });
+  await page.evaluate(async () => { window.__toasts = []; document.getElementById('btnContinue').click(); await __ocdc.whenReady(); });
   await ext();
-  const y = await page.evaluate(() => {
+  const y = await page.evaluate(async () => {
     T.run(0.4);
     const g = __ocdc, L = g.level, D = L.doors, q = g.quest;
     return { st: g.state, ch: g.chapter, pos: T.P(), toast: window.__toasts.join(' | '), press: L.pressurized(), vented: ['I', 'II', 'III'].every((id) => L.boilers[id].vented),

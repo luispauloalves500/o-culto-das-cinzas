@@ -5,7 +5,7 @@ const KEYMAP = {
   interact: ['KeyE'], inventory: ['Tab'], map: ['KeyM'], heal: ['KeyH'], swap: ['KeyR'], reload: ['KeyT'], repair: ['KeyG'], pause: ['Escape', 'KeyP'], debug: ['F3'],
 };
 // Botões padrão (layout "standard" da Gamepad API)
-const PADMAP = { interact: 0, dodge: 1, inventory: 3, light: 5, block: 6, heavy: 7, pause: 9, run: 10, heal: 2, map: 8, swap: 4, reload: 12, repair: 13 }; // 12/13 = direcional cima/baixo
+const PADMAP = { interact: 0, dodge: 1, inventory: 3, light: 5, block: 6, heavy: 7, pause: 9, run: 10, heal: 2, map: 8, swap: 4, reload: 12, repair: 13, left: 14, right: 15 }; // 12–15 = direcional
 
 export class InputManager {
   constructor(canvas) {
@@ -20,9 +20,10 @@ export class InputManager {
     this.enabled = true;
     // só bloqueia Tab/Espaço/setas durante o jogo; no menu/opções o teclado precisa funcionar
     this.blockKeys = false;
+    this.navKeys = false;
 
     window.addEventListener('keydown', (e) => {
-      if (this.blockKeys && ['Tab', 'Space', 'F3', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+      if ((this.blockKeys || this.navKeys) && ['Tab', 'Space', 'F3', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
       if (!this.down.has(e.code)) this.pressed.add(e.code);
       this.down.add(e.code);
     });

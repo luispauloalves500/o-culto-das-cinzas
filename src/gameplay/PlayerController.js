@@ -109,6 +109,7 @@ export class PlayerController {
     this.dodgeDir = { x: 0, z: 0 };
     this.knock = { x: 0, z: 0 };
     this.prevTip = new THREE.Vector3(); this.prevMid = new THREE.Vector3();
+    this._vFrom = new THREE.Vector3(); this._vEye = new THREE.Vector3(); this._vDir = new THREE.Vector3(); this._vHit = new THREE.Vector3();
     this.hitSet = new Set();
     this.stats = { kills: 0, damageTaken: 0 };
   }
@@ -472,9 +473,9 @@ export class PlayerController {
     a.fired = true;
     this.stats.shots = (this.stats.shots || 0) + 1;
     const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
-    const m = this.axe.muzzle ? new THREE.Vector3() : null;
-    if (m) this.axe.muzzle.getWorldPosition(m);
-    const from = m || new THREE.Vector3(this.pos.x + fx * 0.6, this.pos.y + 1.4, this.pos.z + fz * 0.6);
+    const from = this._vFrom;
+    if (this.axe.muzzle) this.axe.muzzle.getWorldPosition(from);
+    else from.set(this.pos.x + fx * 0.6, this.pos.y + 1.4, this.pos.z + fz * 0.6);
     this.muzzle.position.copy(from); this.muzzle.intensity = 6;
     g.combat.muzzleFlash(from, { x: fx, z: fz });
     g.combat.ejectCasing(from, { x: fx, z: fz });
@@ -492,11 +493,11 @@ export class PlayerController {
       return;
     }
     // errou: a bala acerta a parede mais próxima
-    const eye = new THREE.Vector3(this.pos.x, this.pos.y + 1.4, this.pos.z), d = new THREE.Vector3(fx, 0, fz);
+    const eye = this._vEye.set(this.pos.x, this.pos.y + 1.4, this.pos.z), d = this._vDir.set(fx, 0, fz);
     const wall = g.col.raycastHit(eye, d, S.range, (b) => b.tag !== 'prop-low');
     this.lastShot = { hit: null };
     if (wall) {
-      const at = eye.addScaledVector(d, wall.t - 0.05);
+      const at = this._vHit.copy(eye).addScaledVector(d, wall.t - 0.05);
       const surf = surfaceOf(wall.box);
       g.combat.impact(at, surf, 10); g.combat.bulletHole(at, wall, surf);
       g.audio.play('clang', at, { pitch: surf === 'metal' ? 1.7 : surf === 'wood' ? 0.85 : 1.25 });

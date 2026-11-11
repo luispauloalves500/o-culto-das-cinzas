@@ -118,6 +118,9 @@ export class AudioManager {
       case 'stone': if ((d = o(36, opts.vol ?? 0.9))) { this._noise(d, t, opts.dur || 1.4, { type: 'lowpass', f0: 420, f1: 160, vol: 0.9, attack: 0.15 }); this._tone(d, t, opts.dur || 1.4, { type: 'sawtooth', f0: 38, f1: 30, vol: 0.18, attack: 0.2 }); } break;
       // Capítulo 8: vapor escapando da válvula de alívio (chiado agudo longo + ronco grave da caldeira)
       case 'steam': if ((d = o(44, opts.vol ?? 0.9))) { this._noise(d, t, opts.dur || 2.2, { type: 'highpass', f0: 2600, f1: 1800, vol: 0.9, attack: 0.08 }); this._noise(d, t, opts.dur || 2.2, { type: 'lowpass', f0: 260, f1: 120, vol: 0.5, attack: 0.2 }); } break;
+      case 'ui': if ((d = o(8, 0.35))) this._tone(d, t, 0.04, { type: 'sine', f0: 520, f1: 480, vol: 0.16 }); break;
+      case 'ui_ok': if ((d = o(8, 0.4))) { this._tone(d, t, 0.08, { type: 'sine', f0: 660, vol: 0.16 }); this._tone(d, t + 0.05, 0.1, { type: 'sine', f0: 880, vol: 0.12 }); } break;
+      case 'ui_back': if ((d = o(8, 0.35))) this._tone(d, t, 0.07, { type: 'sine', f0: 330, f1: 220, vol: 0.14 }); break;
       default: break;
     }
   }

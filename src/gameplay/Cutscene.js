@@ -38,11 +38,16 @@ export class Cutscene {
     const s = this.shots[i];
     s.onStart?.();
     const cap = $('csCaption');
+    const on = this.game.settings?.get('subtitles') !== false;
+    this.game.hud?.applySubtitleStyle?.(this.game.settings);
     if (cap) {
       cap.innerHTML = s.speaker ? `<b>${s.speaker}:</b> ${s.caption}` : (s.caption || '');
-      cap.classList.remove('reveal'); void cap.offsetWidth; if (s.caption) cap.classList.add('reveal');
+      cap.classList.remove('reveal'); void cap.offsetWidth; if (s.caption && on) cap.classList.add('reveal');
+      cap.style.visibility = on && s.caption ? '' : (on ? '' : 'hidden');
     }
     this.caption = (s.speaker ? s.speaker + ': ' : '') + (s.caption || '');
+    if (s.caption) this.game.hud?.subtitle?.(s.speaker || '', s.caption, s.dur || 4, this.game.settings);
+    else this.game.hud?.hideSubtitle?.();
     // cartela de título (abertura de capítulo): fica só durante o plano que a define
     const tt = $('csTitle');
     this.title = s.title ? { title: s.title, sub: s.sub || '' } : null;

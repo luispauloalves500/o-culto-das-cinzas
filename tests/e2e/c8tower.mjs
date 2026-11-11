@@ -1,9 +1,10 @@
 // Smoke do Capítulo 8 — torre de transmissão: escada de marinheiro, casa de máquinas (Helena, manete, faca), monta-cargas,
+import { waitWorld } from './waitWorld.mjs';
 // Vernet (vapor, ampola), Manifestação da Primeira Cinza (disjuntores, núcleo), Inês, a viagem de Helena, a verdade,
 // os três finais, a tela de fim, os créditos e os saves da torre. Continua do estado c8_slice deixado pelo c8.mjs.
 // Tudo pelos sistemas reais via window.__ocdc (interagíveis, segurar, cutscenes, chefes, saves).
 export async function runC8Tower(page, check, inject, ext, SHOTS) {
-  const tools = () => page.evaluate(() => {
+  const tools = () => page.evaluate(async () => {
     const g = __ocdc;
     window.T.skip = () => { if (g.cutscene) { g.cutscene.skipped = true; g.cutscene.finish(); } };
     window.T.until = (fn, max = 30) => { for (let i = 0; i < max * 60; i++) { if (fn()) return +(i / 60).toFixed(2); T.run(1 / 60); } return -1; };
@@ -16,17 +17,17 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
   // ---------- base: botoeira sem força → escada de marinheiro → casa de máquinas ----------
   // trilha adaptativa (pt45u): mede em tempo real o que o diretor musical agenda e o que sai do analisador
   const probe = async (ms = 2000) => {
-    const a = await page.evaluate(() => { const g = __ocdc; if (g.scene && g.boss?.alive && g.state === 'playing' && g.boss.state !== 'dormant') { g.boss.state = 'stunned'; g.boss.stunDur = 9; g.boss.stateT = 0; } if (g.scene && g.player) g.player.hp = g.player.maxHp; g.syncMusic(); return g.audio.musicDebug(); });
+    const a = await page.evaluate(async () => { const g = __ocdc; if (g.scene && g.boss?.alive && g.state === 'playing' && g.boss.state !== 'dormant') { g.boss.state = 'stunned'; g.boss.stunDur = 9; g.boss.stateT = 0; } if (g.scene && g.player) g.player.hp = g.player.maxHp; g.syncMusic(); return g.audio.musicDebug(); });
     let rms = 0; const t0 = Date.now();
     while (Date.now() - t0 < ms) { await new Promise((r) => setTimeout(r, 120)); rms = Math.max(rms, await page.evaluate(() => __ocdc.audio.director?.rms() || 0)); }
-    const b = await page.evaluate(() => { const g = __ocdc; if (g.scene && g.player) g.player.hp = g.player.maxHp; return __ocdc.audio.musicDebug(); });
+    const b = await page.evaluate(async () => { const g = __ocdc; if (g.scene && g.player) g.player.hp = g.player.maxHp; return __ocdc.audio.musicDebug(); });
     if (!a || !b) return { ok: false, a, b };
     const d = (k) => (b.perLayer[k] || 0) - (a.perLayer[k] || 0);
     const kinds = {}; for (const k of Object.keys(b.perKind)) { const v = b.perKind[k] - (a.perKind[k] || 0); if (v > 0) kinds[k] = v; }
     const x = await page.evaluate(() => ({ st: __ocdc.state, cs: __ocdc.cutscene?.id || null, boss: __ocdc.boss ? [__ocdc.boss.id, __ocdc.boss.state, __ocdc.boss.phase] : null }));
     return { ...x, hist: b.history.slice(-4), key: b.key, theme: b.theme, ctx: b.ctx, bpm: b.bpm, notes: b.notes - a.notes, lead: d('lead'), bass: d('bass'), pad: d('pad'), choir: d('choir'), perc: d('perc'), kinds, rms: +rms.toFixed(4), mix: b.mix, voices: b.voices };
   };
-  const g1 = await page.evaluate(() => {
+  const g1 = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     T.heal();
     out.stop0 = L.lift.stop; out.power0 = !!L.liftPower;
@@ -46,7 +47,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     && /monta-cargas|Sem força|faca/.test(g1.liftMT) && /manete/.test(g1.cabNoT) && g1.liftStill === 'maq' && g1.lights <= 16, JSON.stringify(g1));
 
   // ---------- Helena, diário, livro, faca ----------
-  const g2 = await page.evaluate(() => {
+  const g2 = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     // o acólito de guarda na casa de máquinas: golpes reais do machado
     const a = T.E('c8_aco4'); out.acoAlive0 = a.alive; out.acoY = +a.pos.y.toFixed(1); let sw = 0;
@@ -68,7 +69,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     && g2.diario === 'ok' && g2.readD && g2.book === 'ok' && g2.knife === 'ok' && g2.power && /faca/.test(g2.knifeT), JSON.stringify(g2));
 
   // ---------- subir na cabine até o topo ----------
-  const g3 = await page.evaluate(() => {
+  const g3 = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     T.tp(13.6, 7, 74.1, 0); T.run(0.1);
     out.up = T.interactAt('c8_cab_up'); out.moving = L.lift.moving;
@@ -87,7 +88,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     m3.ctx === 'running' && /^(explore|tension):c8$/.test(m3.key) && m3.theme === 'c8' && m3.notes >= 3 && m3.rms > 0.0005, JSON.stringify(m3));
 
   // ---------- Vernet: intro, vapor, ampola, fases → transformação ----------
-  const g4 = await page.evaluate(() => {
+  const g4 = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     T.tp(13, 13.5, 77.6, 0); T.run(0.1); out.cs = T.cs();
     out.musIntro = g.syncMusic()?.key;
@@ -124,7 +125,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     && g4.tHit > 0 && g4.vHit >= 20 && g4.steamHits === 1 && /recarregar/.test(g4.againT) && g4.bodyDmg <= 10 && g4.p2 > 0 && g4.n < 40, JSON.stringify(g4));
   check('Modelos (pt47u): Vernet com luvas, bigode, colete/corrente/relógio e cauda da sobrecasaca',
     ['stache', 'vest', 'chain', 'watch', 'gloves'].every((k) => g4.vModel.det.includes(k)) && g4.vModel.hands === 2 && g4.vModel.stache && g4.vModel.tail, JSON.stringify(g4.vModel));
-  const mdl = await page.evaluate(() => {
+  const mdl = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, m = g.boss;
     return { he: Object.keys(L.helena.rig.detail || {}), ine: Object.keys(L.ines.rig.detail || {}), heGlasses: !!L.helena.rig.detail?.glasses, heFace: !!L.helena.rig.parts?.face, heHands: L.helena.rig.parts?.hands?.length,
       m: m?.id, mDet: m?.details, crown: !!m?.rig.root.getObjectByName('coroa'), veinOp: m?.veinMat?.opacity, coreNoShadow: !!m?.coreLight?.userData.noShadow };
@@ -142,7 +143,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     m4.key === 'boss:manifestacao:1' && m4.notes >= 4 && m4.bass >= 1 && m4.rms > 0.0005, JSON.stringify(m4));
 
   // ---------- Manifestação: piso de vida pelas bobinas, disjuntores, fase cega, núcleo ----------
-  const g5 = await page.evaluate(() => {
+  const g5 = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, out = {}, m = g.boss;
     out.phase0 = m.phase; out.live0 = m.liveCoils();
     // enquanto as bobinas vivem, o núcleo se refaz (piso de vida)
@@ -161,7 +162,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     return out;
   });
   const m5 = await probe(2400);
-  Object.assign(g5, await page.evaluate(() => {
+  Object.assign(g5, await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, out = {}, m = g.boss;
     T.heal();
     let n = 0; while (m.alive && n < 60) { m.state = 'stunned'; m.stunDur = 5; T.weak(m, 40); n++; }
@@ -183,7 +184,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     g5.mSt === 'dead' && g5.n < 60 && g5.dead && g5.cp === 'c8_free' && !g5.active && g5.unlocked && g5.coilsOff && /cinza fria/.test(g5.toast) && /Inês/.test(g5.obj) && g5.lights <= 16, JSON.stringify(g5));
 
   // ---------- Inês (segurar), a viagem de Helena, a verdade ----------
-  const g6 = await page.evaluate(() => {
+  const g6 = await page.evaluate(async () => {
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     T.tp(11.2, 13.5, 83.6, -Math.PI / 4); out.ines = T.interactAt('c8_ines'); out.hold = !!g.script.tw.hold;
     out.tH = T.until(() => !!g.cutscene, 4); out.cs = T.cs(); out.csT = T.until(() => !g.cutscene, 20);
@@ -204,7 +205,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
   const freeRaw = g6.raw;
 
   // ---------- final 1: segurar a chama (guardião) → tela de fim → créditos ----------
-  const g7 = await page.evaluate(() => {
+  const g7 = await page.evaluate(async () => {
     const g = __ocdc, q = g.quest, out = {};
     g.player.hp = g.player.maxHp; out.hp0 = g.player.hp;
     T.tp(13, 13.5, 85.1, 0); out.flame = T.interactAt('c8_flame'); out.hold = !!g.script.tw.hold;
@@ -238,14 +239,14 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
     if (raw) await page.evaluate((r) => localStorage.setItem('ocdc_save', r), raw);
     await page.reload({ waitUntil: 'networkidle0' });
     await inject(); await ext(); await tools();
-    await page.evaluate(() => { window.__toasts = []; document.getElementById('btnContinue').click(); });
+    await page.evaluate(async () => { window.__toasts = []; document.getElementById('btnContinue').click(); await __ocdc.whenReady(); });
     await ext(); await tools();
   };
   // menu: recarregar a página e só clicar no fundo (gesto real) — o tema do menu começa antes de qualquer botão
   await page.reload({ waitUntil: 'networkidle0' });
   await page.mouse.click(8, 8);
   const m8 = await probe(1800);
-  const sl = await page.evaluate(() => {
+  const sl = await page.evaluate(async () => {
     const el = document.getElementById('optMusic'); el.value = '0.3'; el.dispatchEvent(new Event('input'));
     const s = JSON.parse(localStorage.getItem('ocdc_settings_v1') || '{}');
     const out = { vol: __ocdc.audio.musicVolume, saved: s.musicVolume, label: document.getElementById('optMusicV').textContent };
@@ -254,7 +255,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
   check('Trilha: menu toca a canção de ninar após o primeiro gesto; opção "Música" ajusta e persiste o volume da trilha',
     m8.ctx === 'running' && m8.key === 'menu' && m8.notes >= 3 && m8.rms > 0.0005 && sl.vol === 0.3 && sl.saved === 0.3 && sl.label === '30%', JSON.stringify({ m8, sl }));
   await reload(null);
-  const g8 = await page.evaluate(() => {
+  const g8 = await page.evaluate(async () => {
     const g = __ocdc; const el = document.getElementById('chapterEnd');
     return { st: g.state, vis: !el.classList.contains('hidden'), title: document.getElementById('endTitle').textContent, text: document.getElementById('endText').textContent };
   });
@@ -262,7 +263,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
 
   // ---------- final 2: entregar a Helena (herdeira), a partir do save da decisão ----------
   await reload(freeRaw);
-  const g9 = await page.evaluate(() => {
+  const g9 = await page.evaluate(async () => {
     T.run(0.3);
     const g = __ocdc, L = g.level, q = g.quest, out = {};
     out.st = g.state; out.choice = q.has('c8_choice'); out.toast = window.__toasts.join(' | '); out.bulb = L.tower.bulb.flame.visible; out.hMode = L.helena.mode;
@@ -280,7 +281,7 @@ export async function runC8Tower(page, check, inject, ext, SHOTS) {
 
   // ---------- final 3: quebrar a lâmpada (cinzas) com golpes reais do machado ----------
   await reload(freeRaw);
-  const g10 = await page.evaluate(() => {
+  const g10 = await page.evaluate(async () => {
     T.run(0.3);
     const g = __ocdc, q = g.quest, out = {};
     out.w = g.player.weapon?.id || g.inventory.weapon;

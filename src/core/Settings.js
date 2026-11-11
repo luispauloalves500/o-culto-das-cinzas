@@ -26,7 +26,12 @@ export const DEFAULT_SETTINGS = {
   corpseTime: 20,
   cinematics: true,
   brightness: 1,
+  // pt63u: legendas (falas, rádio, cinemáticas)
+  subtitles: true,
+  subtitleSize: 'media',
+  subtitleBg: true,
 };
+
 
 export class Settings {
   constructor(storage = globalThis.localStorage) {

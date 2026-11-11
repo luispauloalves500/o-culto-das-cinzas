@@ -377,6 +377,14 @@ O GDD previa o **"Retorno do Vigia"** como chefe do Cap. 7, mas neste jogo o Vig
 - **Predefinições**: Baixa quase sem FX; Média/Alta/Ultra com poeira e cinza ao ar livre (sem cartões nem feixes). Tudo em pooling.
 - *(unit: fog/rays = 0 em todas as predefinições, cinza escala; raycastHit com normal; impacto/decal/cápsula/flash em pool. smoke: sem cartões/feixes, cinza e poeira na Média, zero na Baixa, Ultra ≥ Média, teto 128, batches < 280 e tris < 800k.)*
 
+
+### Menus, saves, legendas e carregamento (pt63u)
+
+- **Espaços de save**: 3 espaços manuais + salvamento automático. A tela de carregar/salvar mostra capítulo, local, tempo de jogo, data (fuso America/Sao_Paulo) e miniatura (ao salvar na mão) ou ícone do capítulo. Apagar pede confirmação. O save único antigo (`ocdc_save`) é copiado para o espaço 1 na primeira abertura, sem perder progresso. **Continuar** carrega o registro ativo (`ocdc_save`, espelho do automático — e o mais recente quando esse não existe).
+- **Legendas**: ligar/desligar, tamanho (pequena/média/grande) e fundo. Valem para as falas das cinemáticas (com o nome de quem fala) e para a API `game.say()` (rádio, avisos falados). O áudio do jogo é procedural, sem arquivos de voz.
+- **Navegação de menus**: teclado e gamepad no menu principal, pausa, opções, saves, inventário, documentos, mapa, morte, fim de capítulo e créditos. Foco visível no estilo do jogo, setas/D-pad, confirmar (E/A/Enter) e voltar (Esc/B), sliders com esquerda e direita, sons curtos de navegação.
+- **Carregamento**: cada capítulo entra com `import()` dinâmico; GLBs (Elias, armários, inimigos do Cap. 1) são baixados sob demanda e a tela de loading **espera** o Elias ficar pronto, com prefetch do capítulo seguinte. A tela `#loading` tem barra de progresso e uma dica/lore. O bundle inicial (`index-Cm-6TZ9Y.js`, 1.079.651 bytes) deixa de incluir os oito cenários — era 1.652.647 bytes no bundle monolítico da correção da névoa (pt64u), cerca de 35% menor. Tempo até o menu no smoke local: 378–433 ms. Os chunks de capítulo são servidos sem 404 (HTTP 200 ou 304).
+
 ### Sobre modelos e texturas
 
 Exceção: o **Elias REV6** (GLB do pacote do projeto, ver acima). Fora ele, não foram usados GLB/texturas de terceiros: **o visual é procedural** (geometria low‑poly montada em código, personagens com rig hierárquico animado por código, texturas desenhadas em `<canvas>`). Isso evita problemas de licença e mantém o build leve. Trocar por GLB rigados no futuro é possível sem mexer na lógica (os sistemas usam apenas a hierarquia de ossos do `ProceduralRig`).

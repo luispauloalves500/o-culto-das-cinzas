@@ -5,23 +5,33 @@ import { collectNotes } from './notes.js';
 import { WEAPONS, conditionLabel } from '../data/weapons.js';
 import { MapView } from './MapView.js';
 import { endingEpilogue, CREDITS } from '../data/endings.js';
+import { describeSave } from '../data/saveMeta.js';
 import { GFX_PRESETS, GFX_LABELS, detectPreset } from '../render/Graphics.js';
 
 const $ = (id) => document.getElementById(id);
-const SCREENS = ['menu', 'options', 'pause', 'inventory', 'map', 'reader', 'dead', 'chapterEnd', 'credits', 'loading', 'clickToPlay'];
+const SCREENS = ['menu', 'options', 'pause', 'saves', 'inventory', 'map', 'reader', 'dead', 'chapterEnd', 'credits', 'loading', 'clickToPlay'];
 
 export class Menus {
   constructor(game) {
     this.game = game;
+    this._meta = { describeSave };
     this.optionsReturn = 'menu';
+    this.savesReturn = 'menu';
+    this.savesMode = 'load';
     const g = game, s = g.settings;
     $('btnNew').onclick = () => { g.audio.init(); g.newGame(); };
     $('btnContinue').onclick = () => { g.audio.init(); g.continueGame(); };
+    if ($('btnLoad')) $('btnLoad').onclick = () => this.openSaves('load', 'menu');
     $('btnOptions').onclick = () => this.openOptions('menu');
     $('btnOptBack').onclick = () => this.show(this.optionsReturn);
     $('btnResume').onclick = () => g.resume();
+    if ($('btnSave')) $('btnSave').onclick = () => this.openSaves('save', 'pause');
+    if ($('btnPauseLoad')) $('btnPauseLoad').onclick = () => this.openSaves('load', 'pause');
     $('btnPauseOptions').onclick = () => this.openOptions('pause');
     $('btnQuit').onclick = () => g.toMenu();
+    if ($('btnSavesBack')) $('btnSavesBack').onclick = () => this.closeSaves();
+    if ($('btnSaveDelNo')) $('btnSaveDelNo').onclick = () => this.cancelSaveDelete();
+    if ($('btnSaveDelYes')) $('btnSaveDelYes').onclick = () => this.confirmSaveDelete();
     $('btnDocClose').onclick = () => g.closeOverlay();
     $('btnRetry').onclick = () => g.continueGame();
     $('btnDeadMenu').onclick = () => g.toMenu();
@@ -81,13 +91,31 @@ export class Menus {
     shake.onchange = () => s.set('shake', shake.checked);
     fps.onchange = () => s.set('showFps', fps.checked);
     const cine = $('optCine'); if (cine) { cine.checked = s.get('cinematics') !== false; cine.onchange = () => s.set('cinematics', cine.checked); }
+    const subs = $('optSubs'), subSize = $('optSubSize'), subBg = $('optSubBg');
+    const syncSubs = () => {
+      if (subs) subs.checked = s.get('subtitles') !== false;
+      if (subSize) subSize.value = s.get('subtitleSize') || 'media';
+      if (subBg) subBg.checked = s.get('subtitleBg') !== false;
+      g.hud?.applySubtitleStyle?.(s);
+    };
+    syncSubs();
+    if (subs) subs.onchange = () => { s.set('subtitles', subs.checked); syncSubs(); };
+    if (subSize) subSize.onchange = () => { s.set('subtitleSize', subSize.value); syncSubs(); };
+    if (subBg) subBg.onchange = () => { s.set('subtitleBg', subBg.checked); syncSubs(); };
+    this.syncSubs = syncSubs;
   }
   show(name) {
-    for (const id of SCREENS) $(id).classList.toggle('hidden', id !== name);
-    if (name === 'menu') $('btnContinue').classList.toggle('hidden', !this.game.saves.hasSave());
+    for (const id of SCREENS) $(id)?.classList.toggle('hidden', id !== name);
+    if (name === 'menu') {
+      const has = this.game.saves.hasSave();
+      $('btnContinue').classList.toggle('hidden', !has);
+      $('btnLoad')?.classList.toggle('hidden', !has);
+    }
+    this.game.input.navKeys = !!(name && name !== 'loading');
+    this.game.menuNav?.refresh();
   }
   hideAll() { this.show(null); }
-  openOptions(from) { this.optionsReturn = from; this.show('options'); this.syncGfx?.(); }
+  openOptions(from) { this.optionsReturn = from; this.show('options'); this.syncGfx?.(); this.syncSubs?.(); }
   showDocument(id) {
     const d = DOCUMENTS[id];
     $('docTitle').textContent = d.title; $('docBody').innerHTML = d.body;
@@ -268,5 +296,120 @@ export class Menus {
     if (!w.durability) return '';
     const c = inv.condition(w.id);
     return ` · <span class="${c <= 0 ? 'cond-broken' : c < 0.5 ? 'cond-worn' : ''}">${Math.round(c * 100)}% ${conditionLabel(c)}</span>`;
+  }
+
+  showLoading(progress = 0, tip = '') {
+    const fill = $('loadFill'), hint = $('loadTip');
+    if (fill) fill.style.width = Math.max(0, Math.min(100, progress * 100)).toFixed(1) + '%';
+    if (hint && tip) hint.textContent = tip;
+    this.show('loading');
+  }
+  setLoadProgress(progress, tip) {
+    const fill = $('loadFill'), hint = $('loadTip');
+    if (fill) fill.style.width = Math.max(0, Math.min(100, progress * 100)).toFixed(1) + '%';
+    if (hint && tip) hint.textContent = tip;
+  }
+
+  openSaves(mode = 'load', from = 'menu') {
+    this.savesMode = mode;
+    this.savesReturn = from;
+    this.pendingDelete = null;
+    $('savesTitle').textContent = mode === 'save' ? 'Salvar jogo' : 'Carregar jogo';
+    $('savesConfirm')?.classList.add('hidden');
+    this.renderSaves();
+    this.show('saves');
+  }
+  closeSaves() {
+    const back = this.savesReturn || 'menu';
+    this.pendingDelete = null;
+    if (back === 'pause' && this.game.scene) this.show('pause');
+    else this.game.toMenu();
+  }
+  cancelSaveDelete() { this.pendingDelete = null; this.pendingOverwrite = null; $('savesConfirm')?.classList.add('hidden'); const yes = $('btnSaveDelYes'); if (yes) yes.textContent = 'Apagar'; this.game.menuNav?.refresh(); }
+  confirmSaveDelete() {
+    if (this.pendingOverwrite != null) {
+      const id = this.pendingOverwrite;
+      this.pendingOverwrite = null;
+      $('savesConfirm')?.classList.add('hidden');
+      const yes = $('btnSaveDelYes'); if (yes) yes.textContent = 'Apagar';
+      this._writeToSlot(id);
+      return;
+    }
+    if (this.pendingDelete == null) return;
+    this.game.saves.deleteSlot(this.pendingDelete);
+    this.pendingDelete = null;
+    $('savesConfirm')?.classList.add('hidden');
+    this.renderSaves();
+    this.game.menuNav?.refresh();
+  }
+  renderSaves() {
+    const { describeSave } = this._meta;
+    const list = this.game.saves.list();
+    const mode = this.savesMode || 'load';
+    const html = list.map((slot) => {
+      const d = describeSave(slot.save, slot.id);
+      const thumb = slot.thumb
+        ? `<img class="save-thumb" alt="" src="${slot.thumb}">`
+        : `<div class="save-icon">${d.empty ? '—' : 'C' + d.icon}</div>`;
+      const del = (!d.empty && slot.id !== 'auto')
+        ? `<button class="save-del" data-del="${slot.id}" type="button">Apagar</button>` : '<span></span>';
+      const body = d.empty
+        ? `<div class="save-meta"><b>${d.title}</b><span>Vazio</span></div>`
+        : `<div class="save-meta"><b>${d.title}</b><span>${d.chapter}</span><span>${d.location}</span><span>${d.playTime} · ${d.savedAt}</span></div>`;
+      return `<button type="button" class="save-slot${d.empty ? ' empty' : ''}" data-slot="${slot.id}" data-nav="1">${thumb}${body}${del}</button>`;
+    }).join('');
+    $('savesList').innerHTML = html;
+    for (const el of $('savesList').querySelectorAll('.save-slot')) {
+      el.onclick = (ev) => {
+        if (ev.target?.classList?.contains('save-del')) return;
+        this._pickSlot(el.dataset.slot);
+      };
+    }
+    for (const el of $('savesList').querySelectorAll('.save-del')) {
+      el.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); this._askDelete(el.dataset.del); };
+    }
+    this._savesModeNote = mode;
+    this.game.menuNav?.refresh();
+  }
+  _askDelete(id) {
+    this.pendingDelete = id === 'auto' ? 'auto' : +id;
+    const msg = $('savesConfirmMsg');
+    if (msg) msg.textContent = 'Apagar o registro do ' + (id === 'auto' ? 'salvamento automático' : 'espaço ' + id) + '? Esta ação não se desfaz.';
+    $('savesConfirm')?.classList.remove('hidden');
+    this.game.menuNav?.refresh();
+  }
+  _pickSlot(id) {
+    const g = this.game;
+    const key = id === 'auto' ? 'auto' : +id;
+    if (this.savesMode === 'save') {
+      if (key === 'auto') { g.hud.toast('O salvamento automático é atualizado nos pontos de controle.', 2.2); return; }
+      const existing = g.saves.load(key);
+      if (existing) {
+        this.pendingOverwrite = key;
+        this.pendingDelete = null;
+        if ($('savesConfirmMsg')) $('savesConfirmMsg').textContent = 'Substituir o registro do espaço ' + key + '?';
+        const yes = $('btnSaveDelYes'); if (yes) yes.textContent = 'Substituir';
+        $('savesConfirm')?.classList.remove('hidden');
+        this.game.menuNav?.refresh();
+        return;
+      }
+      this._writeToSlot(key);
+      return;
+    }
+    const s = g.saves.load(key);
+    if (!s) { g.audio.play('ui_back'); return; }
+    g.audio.init();
+    g.saves.write(s, 'auto');
+    g.continueGame();
+  }
+  _writeToSlot(id) {
+    const g = this.game;
+    if (!g.scene) return;
+    const data = g.serialize(g.checkpoint || 'ward_bed');
+    const thumb = g.captureThumb?.() || null;
+    g.saves.writeSlot(id, data, thumb);
+    g.audio.play('save');
+    g.hud.toast('Jogo salvo no espaço ' + id + '.', 2);
+    this.renderSaves();
   }
 }
