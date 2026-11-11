@@ -370,12 +370,12 @@ O GDD previa o **"Retorno do Vigia"** como chefe do Cap. 7, mas neste jogo o Vig
 
 ### Atmosfera, partículas de combate e tetos (pt61u)
 
-- **Névoa volumétrica barata** (`src/render/Atmosphere.js`): cartões em `InstancedMesh` com shader de ruído animado em world-space, cor e opacidade ligadas à `FogExp2` já existente (zonas por cômodo). Camada baixa no chão em porões, necrotério e águas. **Feixes de luz** (god-ray falso, plano aditivo sob as luminárias mais próximas, sem luz permanente nova). **Cinzas caindo ao ar livre** (detecta a ausência de teto); a garoa própria da Sede e da Cidade cedeu lugar a este sistema, que escala com a predefinição.
-- **Poeira** no ar (já existia, cor por capítulo) continua; na Baixa some junto com a névoa/feixes/cinza.
+- **Névoa da cena**: só a `FogExp2` original, escura, com variação por zona/capítulo. **pt64u:** os cartões de névoa volumétrica e os feixes aditivos (god-ray falso) foram removidos em todas as predefinições — o véu claro esverdeado no fundo dos corredores vinha deles (a cor era clareada e o blending era transparente/aditivo, sem frustum cull, o que também pesava no fill-rate).
+- **Poeira** no ar (já existia, cor por capítulo) continua; na Baixa some. **Cinzas caindo ao ar livre** (detecta a ausência de teto) seguem no `Atmosphere.js` e escalam com a predefinição.
 - **Combate** (`CombatSystem`): impacto de bala conforme a superfície (faíscas no metal, lascas na madeira, poeira na pedra), muzzle flash melhor (sprite aditivo + a mesma luz curta de sempre, fora do orçamento permanente), respingos de sangue com sprites e gotas, cápsulas ejetadas e decals de buraco de bala com pool e teto. Sem alocação por quadro.
 - **Tetos e paredes**: mapa do teto em 128 px com manchas de infiltração; mais umidade nas paredes; a detail texture passou a **triplanar** (XY/YZ/XZ) para as paredes deixarem de receber o detalhe só no plano do chão. Resolução e filtro dos mapas **não mudam** ao trocar a predefinição (`texSame`).
-- **Predefinições**: Baixa quase sem atmosfera/FX; Média com cartões, feixes e cinza modestos; Alta/Ultra completos. Tudo em pooling.
-- *(unit: qualidade da atmosfera por predefinição; raycastHit com normal; impacto/decal/cápsula/flash em pool que não cresce; Baixa sem decals; shader triplanar. smoke: névoa/feixes/cinza na Média, zero na Baixa, Ultra ≥ Média, teto 128, batches < 280 e tris < 800k.)*
+- **Predefinições**: Baixa quase sem FX; Média/Alta/Ultra com poeira e cinza ao ar livre (sem cartões nem feixes). Tudo em pooling.
+- *(unit: fog/rays = 0 em todas as predefinições, cinza escala; raycastHit com normal; impacto/decal/cápsula/flash em pool. smoke: sem cartões/feixes, cinza e poeira na Média, zero na Baixa, Ultra ≥ Média, teto 128, batches < 280 e tris < 800k.)*
 
 ### Sobre modelos e texturas
 

@@ -1803,15 +1803,16 @@ test('Adereços (pt60u): peças de cenário com AABB e API intactas (pia, tear, 
 });
 
 
-test('Atmosfera (pt61u): qualidade por predefinição — Baixa vazia, Ultra completa', () => {
+test('Atmosfera (pt64u): cartões de névoa e feixes desligados em todas as predefinições; cinza escala', () => {
   const b = ATMO.atmoQualityFor(GFX.GFX_PRESETS.baixa);
   const m = ATMO.atmoQualityFor(GFX.GFX_PRESETS.media);
   const a = ATMO.atmoQualityFor(GFX.GFX_PRESETS.alta);
   const u = ATMO.atmoQualityFor(GFX.GFX_PRESETS.ultra);
-  assert.equal(b.fog, 0); assert.equal(b.rays, 0); assert.equal(b.ash, 0);
-  assert.ok(m.fog >= 3 && m.rays >= 3 && m.ash >= 80);
-  assert.ok(a.fog >= m.fog && a.rays >= m.rays && a.ash >= m.ash);
-  assert.ok(u.fog >= a.fog && u.rays >= a.rays && u.ash >= a.ash);
+  for (const q of [b, m, a, u]) { assert.equal(q.fog, 0); assert.equal(q.rays, 0); }
+  assert.equal(b.ash, 0);
+  assert.ok(m.ash >= 80);
+  assert.ok(a.ash >= m.ash);
+  assert.ok(u.ash >= a.ash);
   assert.equal(GFX.PARTICLE_LEVELS.baixa.decals, 0);
   assert.ok(GFX.PARTICLE_LEVELS.alta.decals > GFX.PARTICLE_LEVELS.media.decals);
 });

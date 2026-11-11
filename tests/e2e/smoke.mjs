@@ -224,11 +224,13 @@ try {
     && gfx.lodMedia?.n >= 20 && gfx.lodMedia.n === gfx.lodBaixa.n && gfx.lodBaixa.vis < gfx.lodUltra.vis,
     JSON.stringify({ geom: gfx.geom, props: gfx.propStats, lod: { media: gfx.lodMedia, ultra: gfx.lodUltra, baixa: gfx.lodBaixa } }));
 
-  check('Atmosfera (pt61u): névoa volumétrica, feixes e cinza por predefinição, Baixa vazia e orçamento de geometria',
-    gfx.def.atmoQ?.fog > 0 && gfx.def.atmoQ?.rays > 0 && gfx.def.atmoQ?.ash > 0
-    && gfx.def.atmo?.fog > 0
+  check('Atmosfera (pt64u): sem cartões de névoa nem feixes em qualquer predefinição; cinza e poeira permanecem, Baixa vazia, orçamento ok',
+    gfx.def.atmoQ?.fog === 0 && gfx.def.atmoQ?.rays === 0 && gfx.def.atmoQ?.ash > 0
+    && (gfx.def.atmo?.fog || 0) === 0 && (gfx.def.atmo?.rays || 0) === 0
+    && !gfx.def.atmo?.hasFog && !gfx.def.atmo?.hasRays
     && gfx.baixa.atmoQ?.fog === 0 && gfx.baixa.atmoQ?.rays === 0 && gfx.baixa.atmoQ?.ash === 0 && gfx.baixa.dust === 0
-    && gfx.ultra.atmoQ?.fog >= gfx.def.atmoQ.fog && gfx.ultra.atmoQ?.rays >= gfx.def.atmoQ.rays && gfx.ultra.atmoQ?.ash >= gfx.def.atmoQ.ash
+    && gfx.ultra.atmoQ?.fog === 0 && gfx.ultra.atmoQ?.rays === 0 && gfx.ultra.atmoQ?.ash >= gfx.def.atmoQ.ash
+    && gfx.def.dust > 0 && gfx.ultra.dust >= gfx.def.dust
     && gfx.geom.batches < 280 && gfx.geom.tris < 800000,
     JSON.stringify({ def: gfx.def.atmo, atmoQ: { d: gfx.def.atmoQ, b: gfx.baixa.atmoQ, u: gfx.ultra.atmoQ }, geom: gfx.geom, dust: { d: gfx.def.dust, b: gfx.baixa.dust, u: gfx.ultra.dust } }));
 
