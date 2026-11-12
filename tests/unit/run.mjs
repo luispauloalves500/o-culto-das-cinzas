@@ -23,6 +23,10 @@ import { chapterAssetKinds } from '../../src/assets/preload.js';
 import { DEFAULT_SETTINGS } from '../../src/core/Settings.js';
 import { criarSistemaMachado } from '../../src/gameplay/rev6/sistemaMachado.js';
 import { prepareClips, makeIdleClips } from '../../src/gameplay/EliasModel.js';
+import { locoKind, lockSupport, supportSlip, plantFoot, dampLook, lookAnglesTo, interestInFront, turnLean, hitFacing, FOOT_SLIP_LIMIT } from '../../src/gameplay/EliasAnim.js';
+import { createHumanoid, resetPose, poseIdle, poseWalk, poseHit, poseDeath } from '../../src/gameplay/ProceduralRig.js';
+import { STATES } from '../../src/gameplay/PlayerController.js';
+
 import { restPoseFor, POSE_DEFS, ATTACK_DEFS } from '../../src/models/MixamoPoses.js';
 import { ARMARIO_URL, ARMARIO_NATIVE, cabinetsEnabled } from '../../src/world/Cabinets.js';
 import { detailForGfx, setSurfaceDetail, installWorldDetail, textureBytes } from '../../src/world/Textures.js';
@@ -1955,6 +1959,107 @@ test('Carregamento (pt63u): code-split dos 8 capítulos e GLBs só do capítulo 
   const a2 = chapterAssetKinds(2);
   assert.deepEqual(a2.enemies, []);
   assert.deepEqual(a1.audioFiles, []);
+});
+
+
+test('Elias (pt67u): locomoção classifica parado, frente, trás e lados', () => {
+  assert.equal(locoKind(0, 0, 0), 'idle');
+  assert.equal(locoKind(0, 0, 2), 'forward');
+  assert.equal(locoKind(Math.PI, 0, 2), 'back');
+  assert.equal(locoKind(Math.PI / 2, 0, 2), 'left');
+  assert.equal(locoKind(-Math.PI / 2, 0, 2), 'right');
+});
+
+test('Elias (pt67u): trava do pé de apoio limita o deslizamento ao limiar', () => {
+  const frames = [];
+  for (let i = 0; i < 20; i++) {
+    const support = i < 12;
+    frames.push({ x: support ? i * 0.04 : 0.48 + (i - 12) * 0.2, z: 0, support });
+  }
+  const slip = supportSlip(frames, FOOT_SLIP_LIMIT);
+  assert.ok(slip <= FOOT_SLIP_LIMIT + 1e-9, 'deslizamento ' + slip);
+  assert.equal(FOOT_SLIP_LIMIT, 0.1);
+  const lock = lockSupport({ x: 0, z: 0 }, { x: 0.5, z: 0 }, true, 0.1);
+  assert.ok(Math.hypot(lock.x, lock.z) <= 0.1 + 1e-9);
+  assert.equal(lockSupport({ x: 0, z: 0 }, { x: 1, z: 0 }, false), null);
+});
+
+test('Elias (pt67u): IK de pé planta a sola no chão (degrau) com erro residual baixo', () => {
+  const root = new THREE.Group();
+  const upper = new THREE.Object3D(); upper.position.set(0, 1.0, 0); root.add(upper);
+  const mid = new THREE.Object3D(); mid.position.set(0, -0.42, 0.02); upper.add(mid);
+  const end = new THREE.Object3D(); end.position.set(0, -0.42, 0.02); mid.add(end);
+  const toe = new THREE.Object3D(); toe.position.set(0, 0, 0.08); end.add(toe);
+  root.updateMatrixWorld(true);
+  const err = plantFoot(upper, mid, end, 0.2, 0.04, 1);
+  assert.ok(Math.abs(err) < 0.08, 'erro residual ' + err);
+});
+
+test('Elias (pt67u): olhar amortecido, interesse à frente e inclinação na curva', () => {
+  const cur = { yaw: 0, pitch: 0 };
+  dampLook(cur, 1.2, 0.9, 1, 0.55, 0.4, 20);
+  assert.ok(Math.abs(cur.yaw) <= 0.55 + 1e-6 && Math.abs(cur.pitch) <= 0.4 + 1e-6);
+  const a = lookAnglesTo({ x: 0, y: 0, z: 0 }, 0, { x: 2, y: 1.5, z: 4 });
+  assert.ok(a.yaw > 0 && Math.abs(a.pitch) < 1);
+  const origin = { x: 0, y: 1.55, z: 0 };
+  const near = { x: 0.5, y: 1.4, z: 3 }, farSide = { x: 8, y: 1.4, z: 0 }, behind = { x: 0, y: 1.4, z: -3 };
+  assert.equal(interestInFront(origin, 0, [farSide, near, behind], 10, 1.15), near);
+  assert.equal(interestInFront(origin, 0, behind, 10, 1.15), null);
+  const lean = turnLean(2.5, 4);
+  assert.ok(lean < 0 && Math.abs(lean) <= 0.18);
+});
+
+test('Elias (pt67u): dano direcional e morte com queda de 0,8 s (sem alterar o tempo)', () => {
+  const pos = { x: 0, y: 0, z: 0 };
+  const front = hitFacing(pos, 0, { x: 0, z: 2 });
+  const left = hitFacing(pos, 0, { x: 2, z: 0 });
+  const back = hitFacing(pos, { x: 0, z: 1 }, { x: 0, z: -2 });
+  assert.ok(front.fwd > 0.9 && Math.abs(front.side) < 0.15, JSON.stringify(front));
+  assert.ok(left.side > 0.9 && Math.abs(left.fwd) < 0.15, JSON.stringify(left));
+  assert.ok(back.fwd < -0.9);
+  const r = createHumanoid({ scale: 1, mats: { skin: {}, shirt: {}, arms: {}, pants: {}, legs: {}, feet: {}, head: {} } });
+  resetPose(r); poseHit(r, 0.21, left);
+  assert.ok(r.torso.rotation.z < -0.2, 'recua para o lado oposto do golpe esquerdo');
+  resetPose(r); poseDeath(r, 0);
+  assert.ok(Math.abs(r.body.rotation.x) < 1e-6, 'no instante 0 ainda está em pé');
+  poseDeath(r, 0.8);
+  assert.ok(Math.abs(r.body.rotation.x + Math.PI / 2) < 0.05, 'assenta ~90° em 0,8 s');
+});
+
+test('Elias (pt67u): estados conhecidos, arma permanece na mão após poses, idle/andar não T-pose', () => {
+  const expected = ['free', 'attack', 'dodge', 'block', 'aim', 'reload', 'repair', 'hit', 'grabbed', 'heal', 'dead', 'locked', 'climb'];
+  assert.deepEqual(STATES, expected);
+  const r = createHumanoid({ scale: 1, mats: { skin: {}, shirt: {}, arms: {}, pants: {}, legs: {}, feet: {}, head: {} } });
+  const wpn = new THREE.Group(); wpn.name = 'arma_teste';
+  r.armR.end.add(wpn);
+  resetPose(r); poseIdle(r, 1.2, { fatigue: 0.5, limp: 0.4 });
+  poseWalk(r, 1.0, 1, { run: 0, limp: 0.5, fatigue: 0.4, strafe: 1, back: 0 });
+  poseHit(r, 0.2, { fwd: 0, side: -1 });
+  poseDeath(r, 0.8);
+  assert.equal(wpn.parent, r.armR.end, 'arma continua filha da mão');
+  assert.ok(r.body.rotation.x !== 0 || r.armR.upper.rotation.z !== 0, 'morte não deixa T-pose');
+  resetPose(r); poseIdle(r, 0.5);
+  assert.ok(r.torso.rotation.x !== 0 || r.armR.lower.rotation.x !== 0, 'idle não é T-pose rígida');
+});
+
+test('Elias (pt67u): mixer soma peso 1 também no andar para trás; tempos de ataque/dano intactos', () => {
+  const pers = new THREE.Group(); const arma = new THREE.Object3D(); arma.name = 'Machado_Equipado'; pers.add(arma);
+  const names = [...new Set([...Object.keys(CONFIG_MACHADO.clipMap), ...Object.values(CONFIG_MACHADO.clipMap)])];
+  const clipes = names.map((n) => new THREE.AnimationClip(n, 1, []));
+  const S = criarSistemaMachado({ THREE, personagem: pers, mixer: new THREE.AnimationMixer(pers), clipes, config: CONFIG_MACHADO });
+  S.tocar('Elias_Idle', { fade: 0 });
+  S.tocar('Walking', { fade: 0.2 });
+  S.atual.setEffectiveTimeScale(-1);
+  for (let i = 0; i < 8; i++) { S.atualizar(1 / 60); assert.ok(Math.abs(S.pesoTotal() - 1) < 1e-6, 'peso ' + S.pesoTotal()); }
+  assert.ok(S.atual.getEffectiveTimeScale() < 0, 'andar para trás inverte o clipe');
+  // snapshot da jogabilidade (não mexer em weapons.js)
+  const m = WEAPONS.machado.attacks;
+  assert.deepEqual([m.light1.dur, m.light1.active, m.light1.dmg], [0.62, [0.36, 0.56], 24]);
+  assert.deepEqual([m.light2.dur, m.light2.active, m.light2.dmg], [0.66, [0.33, 0.55], 26]);
+  assert.deepEqual([m.light3.dur, m.light3.active, m.light3.dmg], [0.8, [0.38, 0.58], 32]);
+  assert.deepEqual([m.heavy.dur, m.heavy.active, m.heavy.dmg], [1.05, [0.47, 0.62], 58]);
+  assert.equal(WEAPONS.revolver.shot.dmg, 70);
+  assert.equal(WEAPONS.revolver.attacks.heavy.dur, 0.72);
 });
 
 console.log(`\n${ok}/${ok + fail} testes unitários OK`);

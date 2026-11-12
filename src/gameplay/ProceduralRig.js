@@ -79,35 +79,87 @@ export function createHumanoid(o = {}) {
 }
 
 export function resetPose(r) {
-  for (const g of [r.body, r.torso, r.neck, r.head, r.armR.upper, r.armR.lower, r.armL.upper, r.armL.lower, r.legR.upper, r.legR.lower, r.legL.upper, r.legL.lower]) g.rotation.set(0, 0, 0);
+  for (const g of [r.body, r.hips, r.torso, r.neck, r.head, r.armR.upper, r.armR.lower, r.armL.upper, r.armL.lower, r.legR.upper, r.legR.lower, r.legL.upper, r.legL.lower]) g.rotation.set(0, 0, 0);
   r.hips.position.y = r.baseHipY;
   r.body.position.set(0, 0, 0);
   r.torso.rotation.x = r.hunch;
 }
 
 /** ciclo de caminhada: phase em radianos, amt 0..1 (intensidade), run 0..1 */
-export function poseWalk(r, phase, amt, run = 0) {
-  const sw = (0.55 + run * 0.35) * amt;
+/** ciclo de caminhada. o = { run, limp (0..1 no lado direito), fatigue, strafe (−1 esq..+1 dir), back (0..1) } */
+export function poseWalk(r, phase, amt, run = 0, o = {}) {
+  if (typeof run === 'object') { o = run; run = o.run || 0; }
+  const limp = o.limp || 0, fat = o.fatigue || 0, st = o.strafe || 0, back = o.back || 0;
+  const sw = (0.55 + run * 0.35) * amt * (1 - 0.2 * fat);
   const s = Math.sin(phase), c = Math.cos(phase);
-  r.legR.upper.rotation.x = -s * sw;
-  r.legL.upper.rotation.x = s * sw;
-  r.legR.lower.rotation.x = Math.max(0, s) * sw * 1.3;
-  r.legL.lower.rotation.x = Math.max(0, -s) * sw * 1.3;
-  r.armR.upper.rotation.x = s * sw * 0.8;
-  r.armL.upper.rotation.x = -s * sw * 0.8;
-  r.armR.lower.rotation.x = -0.25 - run * 0.6 * amt;
-  r.armL.lower.rotation.x = -0.25 - run * 0.6 * amt;
-  r.hips.position.y = r.baseHipY - Math.abs(c) * 0.05 * amt * r.scale;
-  r.torso.rotation.x = r.hunch + run * 0.18 * amt;
-  r.torso.rotation.y = s * 0.08 * amt;
+  const limpR = 1 - 0.45 * limp, limpL = 1 + 0.15 * limp;
+  r.legR.upper.rotation.x = -s * sw * limpR + 0.12 * limp;
+  r.legL.upper.rotation.x = s * sw * limpL;
+  r.legR.lower.rotation.x = Math.max(0, s) * sw * 1.3 * limpR;
+  r.legL.lower.rotation.x = Math.max(0, -s) * sw * 1.3 * limpL;
+  // atrás: balanço dos braços invertido e mais fechado; lado: um braço se abre
+  const arm = sw * 0.8 * (1 - 0.35 * fat) * (back ? -0.7 : 1);
+  r.armR.upper.rotation.x = s * arm + 0.15 * st;
+  r.armL.upper.rotation.x = -s * arm - 0.15 * st;
+  r.armR.upper.rotation.z = -0.05 - 0.2 * Math.max(0, st);
+  r.armL.upper.rotation.z = 0.05 + 0.2 * Math.max(0, -st);
+  r.armR.lower.rotation.x = -0.25 - run * 0.6 * amt - 0.15 * fat;
+  r.armL.lower.rotation.x = -0.25 - run * 0.6 * amt - 0.15 * fat;
+  r.hips.position.y = r.baseHipY - Math.abs(c) * 0.05 * amt * r.scale - 0.04 * limp * Math.max(0, s) - 0.03 * fat;
+  r.hips.rotation.y = st * 0.35 * amt;
+  r.torso.rotation.x = r.hunch + run * 0.18 * amt + 0.12 * fat + 0.06 * back;
+  r.torso.rotation.y = s * 0.08 * amt + st * 0.12;
+  r.torso.rotation.z = st * 0.08 * amt;
 }
 
-export function poseIdle(r, t) {
-  const b = Math.sin(t * 1.7) * 0.015;
-  r.torso.rotation.x = r.hunch + b;
-  r.armR.upper.rotation.z = -0.06; r.armL.upper.rotation.z = 0.06;
-  r.armR.lower.rotation.x = -0.15; r.armL.lower.rotation.x = -0.15;
-  r.head.rotation.y = Math.sin(t * 0.4) * 0.15;
+export function poseIdle(r, t, o = {}) {
+  const fat = o.fatigue || 0, limp = o.limp || 0;
+  const b = Math.sin(t * 1.7) * (0.015 + 0.012 * fat);
+  r.torso.rotation.x = r.hunch + b + 0.1 * fat + 0.04 * limp;
+  r.torso.rotation.z = Math.sin(t * 0.85) * 0.012;
+  r.armR.upper.rotation.z = -0.06 - 0.08 * fat; r.armL.upper.rotation.z = 0.06 + 0.08 * fat;
+  r.armR.lower.rotation.x = -0.15 - 0.12 * fat; r.armL.lower.rotation.x = -0.15 - 0.12 * fat;
+  r.armR.upper.rotation.x = Math.sin(t * 1.7) * 0.02; r.armL.upper.rotation.x = Math.sin(t * 1.7 + 0.4) * 0.02;
+  r.head.rotation.y = o.lookYaw != null ? o.lookYaw : Math.sin(t * 0.4) * 0.15;
+  r.head.rotation.x = (o.lookPitch || 0) + Math.sin(t * 0.9) * 0.03;
+  r.hips.position.y = r.baseHipY - 0.025 * fat - 0.02 * limp;
+  if (o.turn) {
+    const k = Math.max(-1, Math.min(1, o.turn));
+    r.hips.rotation.y = k * 0.2; r.torso.rotation.y += k * 0.12;
+    r.legR.upper.rotation.y = k * 0.15; r.legL.upper.rotation.y = k * 0.1;
+  }
+}
+
+/** flinch por direção (fwd/side −1..1, atacante à frente = fwd +): o tronco recua para o lado oposto */
+export function poseHit(r, t, dir = { fwd: 1, side: 0 }) {
+  const k = Math.sin(Math.min(1, Math.max(0, t) / 0.42) * Math.PI);
+  const fwd = dir.fwd ?? 1, side = dir.side ?? 0;
+  r.torso.rotation.x = -0.5 * k * fwd;
+  r.torso.rotation.z = -0.45 * k * side;
+  r.torso.rotation.y = -0.2 * k * side;
+  r.head.rotation.x = -0.45 * k * Math.max(0.25, fwd);
+  r.head.rotation.y = 0.35 * k * side;
+  r.armR.upper.rotation.z = -0.65 * k * (1 + 0.3 * Math.max(0, -side));
+  r.armL.upper.rotation.z = 0.65 * k * (1 + 0.3 * Math.max(0, side));
+  r.armR.upper.rotation.x = -0.35 * k; r.armL.upper.rotation.x = -0.35 * k;
+  r.hips.position.y = r.baseHipY - 0.05 * k;
+}
+
+/** queda de 0,8 s: desaba para trás e um pouco de lado, braços soltos, assenta no chão */
+export function poseDeath(r, t) {
+  const u = Math.min(1, Math.max(0, t) / 0.8);
+  const e = u * u * (3 - 2 * u);
+  const bounce = Math.sin(e * Math.PI) * (1 - e);
+  r.body.rotation.x = -Math.PI / 2 * e;
+  r.body.rotation.z = 0.32 * e;
+  r.body.position.y = 0.16 * bounce + 0.07 * e;
+  r.hips.position.y = r.baseHipY - 0.12 * e;
+  r.armR.upper.rotation.z = -1.35 * e; r.armL.upper.rotation.z = 0.95 * e;
+  r.armR.upper.rotation.x = -0.35 * e; r.armL.upper.rotation.x = -0.15 * e;
+  r.armR.lower.rotation.x = -0.3 * e; r.armL.lower.rotation.x = -0.4 * e;
+  r.legR.upper.rotation.x = 0.45 * e; r.legL.upper.rotation.x = 0.18 * e;
+  r.legR.lower.rotation.x = 0.35 * e; r.legL.lower.rotation.x = 0.7 * e;
+  r.head.rotation.x = 0.25 * e; r.head.rotation.z = -0.2 * e;
 }
 
 export const lerp = (a, b, t) => a + (b - a) * t;

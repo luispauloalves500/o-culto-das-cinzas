@@ -8,6 +8,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { criarSistemaMachado } from './rev6/sistemaMachado.js';
 import { CONFIG_MACHADO, CLIP, CLIP_SPEED, ATTACK_CLIPS, ACTION_CLIPS, attackClipTime } from './rev6/configMachado.js';
+import { locoKind, lockSupport, plantFoot, dampLook, lookAnglesTo, turnLean, FOOT_SLIP_LIMIT } from './EliasAnim.js';
 
 export const ELIAS_URL = './models/elias_rev6.glb';
 // marcadores da hitbox no espaço local de Machado_Equipado (cabo em +Y a partir da pegada, lâmina em −X)
@@ -151,6 +152,9 @@ export class EliasModel {
     // água pela cintura (0..1), gesto (porta), esquiva e depuração (clipes tocados / ação atual)
     this.wade = 0; this.wading = false; this._gest = null; this._dodge = null;
     this.used = new Set(); this.action = null;
+    // pt67u: camadas (olhar, curva, mancar, fadiga, recuo, trava dos pés, alcance)
+    this.look = { yaw: 0, pitch: 0 }; this.lean = 0; this.limpW = 0; this.fatW = 0; this.recoil = 0;
+    this._strafe = 0; this._footLock = { L: null, R: null }; this._ctx = {}; this._reach = null;
   }
   whenReady(cb) { if (this.ready) cb(this); else this._cbs.push(cb); }
 
@@ -212,8 +216,23 @@ export class EliasModel {
   /** toca um clipe base e registra o uso (os testes conferem quais clipes do GLB entram em cena) */
   _play(base, opts) { this.used.add(base); return this.sistema.tocar(base, opts); }
 
+  setContext(ctx = {}) { this._ctx = ctx || {}; }
+  addRecoil(amt = 0.22) { this.recoil = Math.min(1, (this.recoil || 0) + amt); }
+  reachTo(pos, kind = 'reach', dur = 0.55) {
+    if (!pos) return false;
+    this._reach = { x: pos.x, y: pos.y ?? 1.0, z: pos.z, kind, t: 0, dur };
+    this.idleT = 0; this.fidget = false;
+    if (kind === 'door') this.gesture('door');
+    return true;
+  }
+
   locomote(hs, running, dt) {
     const S = this.sistema; this._atk = null; this._dodge = null; this.root.rotation.y = 0;
+    const ctx = this._ctx || {};
+    const hpR = (ctx.maxHp > 0 ? ctx.hp / ctx.maxHp : 1);
+    const stR = (ctx.maxSt > 0 ? ctx.st / ctx.maxSt : 1);
+    this.limpW += (((hpR < 0.4 && hpR > 0) ? (0.4 - hpR) / 0.4 : 0) - this.limpW) * Math.min(1, dt * 3);
+    this.fatW += (((stR < 0.35) ? (0.35 - stR) / 0.35 : 0) - this.fatW) * Math.min(1, dt * 4);
     // gesto de porta (open_door_4): parado ou quase; andar de verdade cancela
     if (this._gest) {
       const G = this._gest; G.t += dt;
@@ -225,8 +244,19 @@ export class EliasModel {
       this._gest = null;
     }
     this.action = null;
+    const kind = locoKind(ctx.moveYaw ?? 0, ctx.faceYaw ?? 0, hs);
+    const wantStrafe = (kind === 'left' ? 1 : kind === 'right' ? -1 : 0);
+    this._strafe += (wantStrafe - this._strafe) * Math.min(1, dt * 6);
     if (hs < 0.35) {
       this.idleT += dt;
+      // virar no lugar: um passinho curto do Walking, sem sair do lugar
+      const turn = Math.abs(ctx.turnRate || 0);
+      if (turn > 1.1 && !this.fidget) {
+        const a = this._play(CLIP.walk, { fade: 0.18 });
+        a.setEffectiveTimeScale(THREE.MathUtils.clamp(0.45 + turn * 0.12, 0.4, 0.9) * Math.sign(ctx.turnRate || 1));
+        this.action = 'turn';
+        return;
+      }
       if (this.fidget) {
         const a = S.atual;
         if (!a || S.nomeBase !== CLIP.fidget || a.time >= a.getClip().duration - 0.05) { this.fidget = false; this.idleT = 0; }
@@ -239,10 +269,13 @@ export class EliasModel {
     }
     this.idleT = 0; this.fidget = false;
     // na água: sem correr, passada mais lenta e curta (o quadril baixa em _post)
-    const clip = running && hs > 3.2 && this.wade < 0.5 ? CLIP.run : CLIP.walk;
-    // walk↔run com fade maior que idle→walk (as passadas têm durações diferentes; a fase é casada em tocar)
+    const back = kind === 'back';
+    const canRun = running && hs > 3.2 && this.wade < 0.5 && !back && kind === 'forward' && this.limpW < 0.55;
+    const clip = canRun ? CLIP.run : CLIP.walk;
     const a = this._play(clip, { fade: S.nomeBase === CLIP.idle ? 0.18 : 0.22 });
-    a.setEffectiveTimeScale(THREE.MathUtils.clamp(hs / CLIP_SPEED[clip], 0.55, 1.85) * (1 - 0.22 * this.wade));
+    const sign = back ? -1 : 1;
+    const spd = CLIP_SPEED[clip] * (1 + 0.15 * this.limpW);
+    a.setEffectiveTimeScale(sign * THREE.MathUtils.clamp(hs / spd, 0.55, 1.85) * (1 - 0.22 * this.wade) * (1 - 0.18 * this.fatW));
   }
 
   /** gesto curto por cima da locomoção (porta: open_door_4) */
@@ -334,7 +367,7 @@ export class EliasModel {
   }
 
   /** aplica clipes (+ cópia procedural) já neste quadro, para a hitbox ler a pose final */
-  apply() { this.sistema.atualizar(0); this.mixer.update(0); this._post(); this._retarget(0); this.rig.root.updateMatrixWorld(true); }
+  apply() { this.sistema.atualizar(0); this.mixer.update(0); this._post(); this._retarget(0); this._layers(); this.rig.root.updateMatrixWorld(true); }
 
   update(dt) {
     if (!this.ready) return;
@@ -342,30 +375,161 @@ export class EliasModel {
     this.mixer.update(dt);
     this._post();
     this._retarget(dt);
+    this._layers();
   }
 
-  /** ajustes depois do mixer: altura do pulo na esquiva, postura na água */
+  /** ajustes depois do mixer: pulo da esquiva, água, olhar, curva, pés, recuo, alcance */
   _post() {
     const B = this.b;
     if (this._dodge && this.restHipY != null) {
       const d = B.hips.position.y - this.restHipY;
       if (d > 0) B.hips.position.y = this.restHipY + d * ACTION_CLIPS.dodge.hip;
     }
-    const w = this.wade; if (w <= 0 || this._dodge || this._atk) return; // golpes: a lâmina (hitbox) fica só com o clipe
-    B.hips.position.y -= 0.07 * w; // joelhos mais dobrados, passos rentes (a água esconde os pés)
+    const w = this.wade;
+    if (w > 0 && !this._dodge && !this._atk) {
+      B.hips.position.y -= 0.07 * w;
+      this.root.updateMatrixWorld(true);
+      B.spine.getWorldPosition(_d);
+      for (const arm of [B.armR, B.armL]) {
+        arm.getWorldPosition(_b); _e.subVectors(_b, _d); _e.y = 0;
+        if (_e.lengthSq() < 1e-8) continue;
+        _e.normalize();
+        _ax.crossVectors(_down, _e).normalize();
+        _qt.setFromAxisAngle(_ax, 0.5 * w);
+        arm.getWorldQuaternion(_qw).premultiply(_qt);
+        arm.parent.getWorldQuaternion(_qp);
+        arm.quaternion.copy(_qp.invert().multiply(_qw));
+        arm.updateMatrixWorld(true);
+      }
+    }
+  }
+
+  _layers() {
+    if (!this.ready || !this.b) return;
+    const B = this.b, ctx = this._ctx || {}, dt = ctx.dt || 1 / 60;
     this.root.updateMatrixWorld(true);
-    // braços afastados do corpo e um pouco à frente, acima da linha d'água
-    B.spine.getWorldPosition(_d);
-    for (const arm of [B.armR, B.armL]) {
-      arm.getWorldPosition(_b); _e.subVectors(_b, _d); _e.y = 0;
-      if (_e.lengthSq() < 1e-8) continue;
+    // fadiga / mancar: ombros caem, quadril manca no lado direito
+    if ((this.fatW > 0.02 || this.limpW > 0.02) && !this._dodge) {
+      if (this.restHipY != null) B.hips.position.y -= 0.035 * this.fatW + 0.03 * this.limpW;
+      _qt.setFromAxisAngle(_ax.set(1, 0, 0), 0.12 * this.fatW + 0.06 * this.limpW);
+      B.spine.quaternion.multiply(_qt);
+      B.spine.updateMatrixWorld(true);
+    }
+    // inclinação na curva (aditivo no spine, só em locomoção)
+    const leanWant = (!this._atk && !this._dodge) ? turnLean(ctx.turnRate || 0, ctx.hs || 0) : 0;
+    this.lean += (leanWant - this.lean) * Math.min(1, dt * 8);
+    if (Math.abs(this.lean) > 1e-4) {
+      _qt.setFromAxisAngle(_ax.set(0, 0, 1), this.lean);
+      B.spine.quaternion.multiply(_qt);
+      B.spine.updateMatrixWorld(true);
+    }
+    // strafe: um pouco de yaw no quadril na direção do movimento (pernas acompanham o passo)
+    if (Math.abs(this._strafe) > 0.02 && !this._atk && !this._dodge) {
+      _qt.setFromAxisAngle(_ax.set(0, 1, 0), this._strafe * 0.28);
+      B.hips.quaternion.multiply(_qt);
+      B.hips.updateMatrixWorld(true);
+    }
+    // recuo do tiro: tronco e cabeça para trás, some em ~0,2 s
+    if (this.recoil > 0) {
+      const k = this.recoil;
+      _qt.setFromAxisAngle(_ax.set(1, 0, 0), -0.28 * k);
+      B.spine.quaternion.multiply(_qt); B.spine.updateMatrixWorld(true);
+      _qt.setFromAxisAngle(_ax.set(1, 0, 0), -0.2 * k);
+      B.head.quaternion.multiply(_qt); B.head.updateMatrixWorld(true);
+      this.recoil = Math.max(0, this.recoil - dt * 5);
+    }
+    // olhar: interesse ou inclinação da câmera
+    this._lookLayer(dt, ctx);
+    // mão até o alvo da interação
+    this._reachLayer(dt);
+    // IK dos pés no chão/degraus (não mexe na hitbox de golpe/esquiva nem na queda/escalada)
+    const st = ctx.state || '';
+    if (!this._atk && !this._dodge && !['dead', 'climb', 'grabbed', 'repair'].includes(st)) this._footIK(ctx);
+  }
+
+  _lookLayer(dt, ctx) {
+    const B = this.b;
+    const origin = ctx.origin || { x: 0, y: 0, z: 0 };
+    const face = ctx.faceYaw || 0;
+    if (this._atk || this._dodge) { dampLook(this.look, 0, 0, dt, 0.55, 0.4, 8); return; }
+    let wantY = 0, wantP = (ctx.pitch || 0) * 0.45;
+    if (ctx.interest) {
+      const a = lookAnglesTo(origin, face, ctx.interest);
+      wantY = a.yaw; wantP = a.pitch * 0.8 + wantP * 0.2;
+    } else if (!(ctx.hs > 0.4) && !this._atk) {
+      // parado sem alvo: o clipe já respira; só uma fração da câmera
+      wantP = (ctx.pitch || 0) * 0.25;
+    }
+    dampLook(this.look, wantY, wantP, dt);
+    _qt.setFromAxisAngle(_ax.set(0, 1, 0), this.look.yaw * 0.55);
+    B.neck.quaternion.multiply(_qt); B.neck.updateMatrixWorld(true);
+    _qt.setFromAxisAngle(_ax.set(0, 1, 0), this.look.yaw * 0.7);
+    _qp.setFromAxisAngle(_ax.set(1, 0, 0), this.look.pitch);
+    B.head.quaternion.multiply(_qt).multiply(_qp);
+    B.head.updateMatrixWorld(true);
+  }
+
+  _reachLayer(dt) {
+    const R = this._reach; if (!R) return;
+    R.t += dt;
+    if (R.t > R.dur) { this._reach = null; return; }
+    if (R.kind === 'door') return; // o clipe open_door_4 já estende o braço
+    const u = Math.min(1, R.t / (R.dur * 0.45));
+    const w = u < 1 ? u * u * (3 - 2 * u) : Math.max(0, 1 - (R.t - R.dur * 0.45) / (R.dur * 0.55));
+    const B = this.b;
+    this.root.updateMatrixWorld(true);
+    B.handR.getWorldPosition(_c);
+    _e.set(R.x, R.y, R.z).sub(_c);
+    if (_e.lengthSq() < 1e-6) return;
+    _e.normalize();
+    B.foreR.getWorldPosition(_b);
+    _d.copy(_c).sub(_b).normalize();
+    _q.setFromUnitVectors(_d, _e);
+    // aplica no antebraço e um pouco no braço
+    const apply = (bone, ww) => {
+      bone.getWorldQuaternion(_qw).premultiply(_q);
+      bone.parent.getWorldQuaternion(_qp);
+      const loc = _qp.invert().multiply(_qw);
+      bone.quaternion.slerp(loc, ww);
+      bone.updateMatrixWorld(true);
+    };
+    apply(B.armR, 0.35 * w);
+    this.root.updateMatrixWorld(true);
+    B.handR.getWorldPosition(_c);
+    _e.set(R.x, R.y, R.z).sub(_c);
+    if (_e.lengthSq() > 1e-6) {
       _e.normalize();
-      _ax.crossVectors(_down, _e).normalize();
-      _qt.setFromAxisAngle(_ax, 0.5 * w);
-      arm.getWorldQuaternion(_qw).premultiply(_qt);
-      arm.parent.getWorldQuaternion(_qp);
-      arm.quaternion.copy(_qp.invert().multiply(_qw));
-      arm.updateMatrixWorld(true);
+      B.foreR.getWorldPosition(_b);
+      _d.copy(_c).sub(_b).normalize();
+      _q.setFromUnitVectors(_d, _e);
+      apply(B.foreR, 0.7 * w);
+    }
+  }
+
+  _footIK(ctx) {
+    const col = ctx.col; if (!col || typeof col.groundAt !== 'function') return;
+    const B = this.b;
+    const bodyY = ctx.bodyY ?? 0;
+    const pairs = [
+      { up: B.upLegL, mid: B.legL, end: B.footL, key: 'L' },
+      { up: B.upLegR, mid: B.legR, end: B.footR, key: 'R' },
+    ];
+    this.root.updateMatrixWorld(true);
+    for (const p of pairs) {
+      p.end.getWorldPosition(_c);
+      const gy = col.groundAt(_c.x, _c.z, Math.max(_c.y, bodyY + 0.2), 0.85);
+      if (gy === -Infinity) { this._footLock[p.key] = null; continue; }
+      const support = (_c.y - gy) < 0.14;
+      const lock = lockSupport(this._footLock[p.key], _c, support, FOOT_SLIP_LIMIT);
+      this._footLock[p.key] = lock;
+      if (lock && support) {
+        // puxa o pé de volta se começou a patinar, e planta no piso (degrau)
+        const tx = lock.x, tz = lock.z;
+        _c.x += (tx - _c.x) * 0.85; _c.z += (tz - _c.z) * 0.85;
+        plantFoot(p.up, p.mid, p.end, gy, 0.04, 0.85);
+      } else if (!support && Math.abs((gy + 0.04) - _c.y) < 0.35) {
+        plantFoot(p.up, p.mid, p.end, gy, 0.04, 0.5);
+      }
     }
   }
 

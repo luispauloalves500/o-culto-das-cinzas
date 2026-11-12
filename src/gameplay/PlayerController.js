@@ -1,8 +1,9 @@
 // Elias Varga: locomoção relativa à câmera, máquina de estados, machado com hitbox sincronizada à animação.
 import * as THREE from 'three';
-import { createHumanoid, resetPose, poseWalk, poseIdle, keys } from './ProceduralRig.js';
+import { createHumanoid, resetPose, poseWalk, poseIdle, poseHit, poseDeath, keys } from './ProceduralRig.js';
 import { WEAPONS, weaponDamage, wearCost, conditionLabel } from '../data/weapons.js';
 import { EliasModel, RETARGET } from './EliasModel.js';
+import { hitFacing, interestInFront, locoKind } from './EliasAnim.js';
 import { surfaceOf } from './CombatSystem.js';
 
 const STATES = ['free', 'attack', 'dodge', 'block', 'aim', 'reload', 'repair', 'hit', 'grabbed', 'heal', 'dead', 'locked', 'climb'];
@@ -112,6 +113,8 @@ export class PlayerController {
     this._vFrom = new THREE.Vector3(); this._vEye = new THREE.Vector3(); this._vDir = new THREE.Vector3(); this._vHit = new THREE.Vector3();
     this.hitSet = new Set();
     this.stats = { kills: 0, damageTaken: 0 };
+    this.hitDir = { fwd: 1, side: 0 };
+    this._prevYaw = 0; this._turnRate = 0; this._interest = null;
   }
 
   _buildAxe(M) {
@@ -330,6 +333,7 @@ export class PlayerController {
     g.hud.flashDamage();
     g.cameraCtl.addShake(0.5);
     this.knock.x = -dx / d * knock; this.knock.z = -dz / d * knock;
+    this.hitDir = hitFacing(this.pos, this.yaw, from);
     if (this.hp <= 0) { this.hp = 0; this._die(); return 'dead'; }
     // na escada (Cap. 8): o golpe derruba — Elias solta os degraus e cai pela gravidade
     if (this.state === 'climb') { const l = this.ladder; this.ladder = null; this.vy = 0; this.onGround = false; g.bus?.emit?.('ClimbEnd', { id: l?.id, how: 'knocked' }); }
@@ -481,6 +485,7 @@ export class PlayerController {
     g.combat.ejectCasing(from, { x: fx, z: fz });
     g.audio.play('shot', this.pos);
     g.cameraCtl.addShake(0.3);
+    this.model?.addRecoil?.(0.32);
     g.perception.noise(this.pos, S.noise, 'gunshot');
     g.combat.sparks(from, 6);
     if (a.manual) { this._fireManual(S, w); return; }
@@ -792,12 +797,18 @@ export class PlayerController {
   /** E: interage; se a interação abriu uma porta perto, Elias faz o gesto (open_door_4) virado para ela */
   _interact() {
     const g = this.game; let door = null;
+    const it = g.interact?.findBest?.(this.pos, this.facing());
     const off = g.bus?.on?.('DoorOpened', (d) => { door = d; });
     try { g.tryInteract(); } finally { off?.(); }
     if (door && this.state === 'free' && Math.hypot(door.x - this.pos.x, door.z - this.pos.z) < 3.5) {
       this.yaw = Math.atan2(door.x - this.pos.x, door.z - this.pos.z);
-      this.model?.gesture?.('door');
+      this.model?.reachTo?.({ x: door.x, y: this.pos.y + 1.15, z: door.z }, 'door', 1.2);
       this.lastGesture = 'door';
+    } else if (it && this.state === 'free') {
+      const id = String(it.id || '');
+      const kind = id.startsWith('pick_') ? 'pick' : id.startsWith('cabinet') ? 'cabinet' : /lever|alavanca|gate_/.test(id) ? 'lever' : 'reach';
+      this.model?.reachTo?.(it.pos, kind, 0.55);
+      this.lastGesture = kind;
     }
   }
 
@@ -912,10 +923,52 @@ export class PlayerController {
     r.hips.position.y = r.baseHipY - 0.06;
   }
 
+
+  _updateAnimExtras(dt, hs) {
+    let d = this.yaw - (this._prevYaw || 0);
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    const inst = dt > 1e-4 ? d / dt : 0;
+    this._turnRate += (inst - (this._turnRate || 0)) * Math.min(1, dt * 10);
+    this._prevYaw = this.yaw;
+    this._interest = this._pickInterest();
+  }
+
+  _animCtx(dt, hs) {
+    const moving = Math.hypot(this.vel.x, this.vel.z) > 0.05;
+    return {
+      dt, hs,
+      moveYaw: moving ? Math.atan2(this.vel.x, this.vel.z) : this.yaw,
+      faceYaw: this.yaw,
+      turnRate: this._turnRate || 0,
+      hp: this.hp, maxHp: this.maxHp, st: this.st, maxSt: this.maxSt,
+      pitch: this.game.cameraCtl?.pitch || 0,
+      state: this.state,
+      col: this.game.col,
+      bodyY: this.pos.y,
+      origin: { x: this.pos.x, y: this.pos.y + 1.55, z: this.pos.z },
+      interest: this._interest,
+    };
+  }
+
+  /** inimigo vivo à frente, senão o objeto E mais próximo */
+  _pickInterest() {
+    const g = this.game;
+    const origin = { x: this.pos.x, y: this.pos.y + 1.55, z: this.pos.z };
+    const living = (g.targets?.() || []).filter((e) => e && e !== this && (e.hp == null || e.hp > 0) && e.pos && e.alive !== false);
+    const pts = living.map((e) => ({ x: e.pos.x, y: (e.pos.y || 0) + 1.3, z: e.pos.z }));
+    const enemy = interestInFront(origin, this.yaw, pts, 10, 1.15);
+    if (enemy) return enemy;
+    const it = g.interact?.findBest?.(this.pos, this.facing());
+    return it?.pos || null;
+  }
+
   _animate(dt, adt, hs) {
+    this._updateAnimExtras(dt, hs);
+    const M = this.model;
+    if (M?.ready) M.setContext(this._animCtx(dt, hs));
     if (this.state === 'attack') return; // pose aplicada em _updateAttack
     this._animateProc(dt, adt, hs);
-    const M = this.model;
     if (!M?.ready) return;
     // clipe do GLB por estado; estados sem clipe copiam a pose procedural para os ossos do GLB
     // água pela cintura (Cap. 5): postura de vau (quadril baixo, braços erguidos, passada lenta)
@@ -939,9 +992,14 @@ export class PlayerController {
     switch (this.state) {
       case 'free': case 'block': {
         const amt = Math.min(1, hs / 2.5);
-        this.walkPhase += hs * dt * 2.6;
-        if (amt > 0.05) poseWalk(r, this.walkPhase, amt, this.running ? 1 : 0);
-        else poseIdle(r, this.animT);
+        this.walkPhase += hs * dt * 2.6 * (this.hp < this.maxHp * 0.4 ? 0.85 : 1);
+        const hpR = this.maxHp > 0 ? this.hp / this.maxHp : 1, stR = this.maxSt > 0 ? this.st / this.maxSt : 1;
+        const limp = hpR < 0.4 ? (0.4 - hpR) / 0.4 : 0, fat = stR < 0.35 ? (0.35 - stR) / 0.35 : 0;
+        const mv = Math.hypot(this.vel.x, this.vel.z) > 0.05 ? Math.atan2(this.vel.x, this.vel.z) : this.yaw;
+        const k = locoKind(mv, this.yaw, hs);
+        const wo = { run: this.running ? 1 : 0, limp, fatigue: fat, strafe: k === 'left' ? 1 : k === 'right' ? -1 : 0, back: k === 'back' ? 1 : 0 };
+        if (amt > 0.05) poseWalk(r, this.walkPhase, amt, wo);
+        else poseIdle(r, this.animT, { fatigue: fat, limp, turn: Math.max(-1, Math.min(1, this._turnRate * 0.2)) });
         if (this.weapon && this.state === 'free') { r.armR.lower.rotation.x -= 0.35; }
         if (this.state === 'block') {
           r.armR.upper.rotation.x = -1.25; r.armR.upper.rotation.z = 0.55; r.armR.lower.rotation.x = -0.9;
@@ -969,9 +1027,7 @@ export class PlayerController {
         break;
       }
       case 'hit': {
-        const k = Math.sin(Math.min(1, t / 0.42) * Math.PI);
-        r.torso.rotation.x = -0.45 * k; r.head.rotation.x = -0.4 * k;
-        r.armR.upper.rotation.z = -0.6 * k; r.armL.upper.rotation.z = 0.6 * k;
+        poseHit(r, t, this.hitDir || { fwd: 1, side: 0 });
         break;
       }
       case 'aim': {
@@ -1001,8 +1057,14 @@ export class PlayerController {
         break;
       }
       case 'heal': {
-        r.torso.rotation.x = 0.3; r.armR.upper.rotation.x = -0.9; r.armL.upper.rotation.x = -0.9;
-        r.armR.lower.rotation.x = -1.2 + Math.sin(t * 14) * 0.2; r.armL.lower.rotation.x = -1.2;
+        // 1,1 s inalterados: antecipação (puxa a bandagem) → envolve o antebraço → solta
+        const u = Math.min(1, t / 1.1);
+        const wrap = Math.sin(Math.min(1, Math.max(0, u - 0.15) / 0.7) * Math.PI);
+        r.torso.rotation.x = 0.28 + 0.1 * wrap; r.head.rotation.x = 0.22;
+        r.armR.upper.rotation.x = -0.7 - 0.35 * wrap; r.armL.upper.rotation.x = -0.85 - 0.2 * wrap;
+        r.armR.upper.rotation.z = 0.15 + 0.2 * wrap; r.armL.upper.rotation.z = -0.25;
+        r.armR.lower.rotation.x = -1.0 - 0.35 * wrap + Math.sin(t * 14) * 0.12 * wrap;
+        r.armL.lower.rotation.x = -1.15 - 0.1 * wrap;
         break;
       }
       case 'grabbed': {
@@ -1012,10 +1074,7 @@ export class PlayerController {
         break;
       }
       case 'dead': {
-        const k = Math.min(1, t / 0.8);
-        r.body.rotation.x = -Math.PI / 2 * (k * k);
-        r.body.position.y = 0.12 * k;
-        r.armR.upper.rotation.z = -1.2 * k; r.armL.upper.rotation.z = 1.2 * k;
+        poseDeath(r, t);
         break;
       }
       default: break;
